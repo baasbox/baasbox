@@ -10,7 +10,7 @@ eclipse
 log
 logs
 modules
-precompiled
+precompiled 
 project/project
 project/target
 target
