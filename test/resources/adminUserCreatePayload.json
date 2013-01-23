@@ -1,0 +1,18 @@
+{
+  "username":"user1",
+  "password":"passw1",
+  "visibleByTheUser": {
+     "myPrivateEmail":"me@example.com"
+   },
+  "visibleByFriend": {
+     "mobilePhone":"+39334060606",
+     "address":{
+                 "city":"Rome",
+                 "address":"via delle vie, 56"
+               }
+   },
+  "visibleByRegisteredUsers": {
+       "quote":"I'm very happy!"
+   },
+  "visibleByAnonymousUsers": {}
+}

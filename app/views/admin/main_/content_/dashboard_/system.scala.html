@@ -1,0 +1,111 @@
+				<div class="box span6">
+					<div class="box-header well" data-original-title>
+						<h2><i class="icon-list"></i> System</h2>
+						<div class="box-icon">
+							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+						<ul class="nav nav-tabs" id="systemStatTab">
+							<li class="active"><a href="#memory">Memory</a></li>
+							<li><a href="#os">OS</a></li>
+							<li><a href="#java">Java</a></li>
+						</ul>
+						<div id="systemStatTabContent" class="tab-content">
+							<div class="tab-pane active" id="memory">
+									<ul class="dashboard-list">
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-note"></i>
+												<span class="blue">Used </span>                              
+												<span class="green" style="width:50% !important"> 
+													{{formatSize(data.memory.memory_used)}}
+												</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Max </span>                             
+												<span class="green" style="width:50% !important" >
+													{{formatSize(data.memory.memory_max_heap_size)}}
+												</span>                                    
+											</a>
+										</li>																				
+									</ul>
+							</div><!-- Memory Pane-->
+							<div class="tab-pane" id="os">
+									<ul class="dashboard-list">
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-note"></i>
+												<span class="blue">Name </span>                              
+												<span class="green"  style="width:50% !important"> 
+													{{data.os.os_name}}
+												</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Version </span>                             
+												<span class="green" style="width:50% !important" >
+													{{data.os.os_version}}
+												</span>                                    
+											</a>
+										</li>											
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-lightbulb"></i>
+												<span class="blue">Arch </span>                             
+												<span class="green" style="width:50% !important" >
+													{{data.os.os_arch}}
+												</span>                                    
+											</a>
+										</li>	
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Processor(s) </span>                             
+												<span class="green" style="width:50% !important" >
+													{{data.os.processors}}
+												</span>                                    
+											</a>
+										</li>										
+									</ul>
+							</div><!-- os Pane-->
+							<div class="tab-pane" id="java">
+									<ul class="dashboard-list">
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-note"></i>
+												<span class="blue">Version </span>                              
+												<span class="green"  style="width:50% !important"> 
+													{{data.java.java_version}}
+												</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Vendor </span>                             
+												<span class="green" style="width:50% !important" >
+													{{data.java.java_vendor}}
+												</span>                                    
+											</a>
+										</li>											
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-lightbulb"></i>
+												<span class="blue">ClassVersion </span>                             
+												<span class="green" style="width:50% !important" >
+													{{data.java.java_class_version}}
+												</span>                                    
+											</a>
+										</li>	
+									
+									</ul>
+							</div><!-- java Pane-->	
+						</div><!-- tab-content -->
+					</div><!--/box-content-->
+				</div><!--/span-->

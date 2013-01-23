@@ -1,0 +1,82 @@
+<!-- Add/Edit User starts -->
+	<div class="modal hide fade" id="addUserModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">×</button>
+			<h3 id="userTitle">Add/Edit User</h3>
+		</div>
+		<div class="modal-body">
+			<div class="row-fluid">
+			<div class="box span12" id="UserForm">
+					<div class="box-content">
+						<form class="form-horizontal" id="userForm">
+						<div class="alert alert-info">
+							Please enter the User information
+						</div>
+							<fieldset>
+								<div id="errorAddUser" class="alert alert-error hide">
+
+								</div>
+								<div id="errorAddUser2" class="control-group error hide" >
+									 <span class="help-inline" id="errorAddUserMessage"></span>
+								</div>							
+							  <div class="control-group">
+								<label class="control-label" for="txtUsername">Username*</label>
+								<div class="controls">
+								  <input class="input-xlarge focused" id="txtUsername" type="text" value="" required>
+								</div>
+							  </div>
+							  <div class="control-group groupUserPwd">
+								<label class="control-label" for="txtPassword">Password*</label>
+								<div class="controls">
+								  <input class="input-xlarge" id="txtPassword" type="password" value="" required>
+								</div>
+							  </div>
+							  <div class="control-group groupUserPwd">
+								<label class="control-label" for="txtRetypePassword">Retype Password*</label>
+								<div class="controls">
+								  <input class="input-xlarge" id="txtRetypePassword" type="password" value="" required>
+								</div>
+							  </div>
+							  <div class="control-group">
+								<label class="control-label" for="cmbSelectRole">Role*</label>
+								<div class="controls">
+								  <select id="cmbSelectRole" data-rel="chosen" required>
+								  </select>
+								</div>
+							  </div>							  
+							  <div class="control-group" id="auVisibleByTheUser">
+								<label class="control-label" for="txtVisibleByTheUser">Visible By The User</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtVisibleByTheUser"></textarea>
+								</div>
+							  </div>
+							  <div class="control-group" id="auVisibleByFriend">
+								<label class="control-label" for="txtVisibleByFriend">Visible By Friend</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtVisibleByFriend"></textarea>
+								</div>
+							  </div>
+							  <div class="control-group" id="auVisibleByRegisteredUsers">
+								<label class="control-label" for="txtVisibleByRegisteredUsers">Visible By Registered Users</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtVisibleByRegisteredUsers"></textarea>
+								</div>
+							  </div>
+							  <div class="control-group" id="auVisibleByAnonymousUsers">
+								<label class="control-label" for="txtVisibleByAnonymousUsers">Visible By Anonymous Users</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtVisibleByAnonymousUsers"></textarea>
+								</div>
+							  </div>
+							</fieldset>
+						  </form>
+					</div>
+				</div><!--/span-->
+		</div><!--/row-->
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<a href="#" class="btn btn-primary btn-UserCommit">Save changes</a>
+		</div>
+	</div>
+	<!-- Add/Edit User ends -->

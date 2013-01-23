@@ -1,0 +1,77 @@
+<configuration>
+
+  <!-- returns package.class.method (line number), used for debug level -->
+  <conversionRule conversionWord="classmethod" converterClass="com.baasbox.log.ClassMethodConverter" />
+  
+  <evaluator name="SHOW_CLASS_AND_METHOD_FOR_DEBUG_AND_ERROR_LEVEL">
+    <expression>level==ERROR || level==DEBUG</expression>
+  </evaluator>
+  
+  <!-- log only the info level-->
+		  <appender name="FILE_ONLY_INFO" class="ch.qos.logback.core.FileAppender">
+			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+			      <evaluator> 
+			        <expression>level==INFO</expression>
+			      </evaluator>
+			      <OnMismatch>DENY</OnMismatch>
+			      <OnMatch>ACCEPT</OnMatch>
+			    </filter> 
+			     <file>${application.home}/logs/application.log</file>
+			     <encoder>
+			       <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
+			     </encoder>
+		   </appender>
+		   
+		   <appender name="STDOUT_ONLY_INFO" class="ch.qos.logback.core.ConsoleAppender">
+			<filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+		      <evaluator> 
+		        <expression>level==INFO</expression>
+		      </evaluator>
+		      <OnMismatch>DENY</OnMismatch>
+		      <OnMatch>ACCEPT</OnMatch>
+		    </filter> 
+		    <encoder>
+		      <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
+		    </encoder>
+		  </appender>
+
+  <!-- log all but info level, it's slow so it's active only for debug purpose-->
+		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.FileAppender">
+			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+			      <evaluator> 
+			        <expression>level==INFO</expression>
+			      </evaluator>
+			      <OnMismatch>ACCEPT</OnMismatch>
+			      <OnMatch>DENY</OnMatch>
+			    </filter> 
+			     <file>${application.home}/logs/application.log</file>
+			     <encoder>
+			       <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern>
+			     </encoder>
+		   </appender>
+		
+		  <appender name="STDOUT_BUT_INFO" class="ch.qos.logback.core.ConsoleAppender">
+			<filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+		      <evaluator> 
+		        <expression>level==INFO</expression>
+		      </evaluator>
+		      <OnMismatch>ACCEPT</OnMismatch>
+		      <OnMatch>DENY</OnMatch>
+		    </filter> 
+		    <encoder>
+		      <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern>
+		    </encoder>
+		  </appender>
+    
+  <!-- these are overriden by application.conf -->  
+  <logger name="play" level="INFO" />
+  <logger name="application" level="INFO" />
+
+  <root level="ERROR">
+    <appender-ref ref="STDOUT_ONLY_INFO" />
+    <appender-ref ref="STDOUT_BUT_INFO" />
+    <appender-ref ref="FILE_ONLY_INFO" />
+    <appender-ref ref="FILE_BUT_INFO" />
+  </root>
+ 
+</configuration>

@@ -1,0 +1,66 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Swagger - Root Resources Listing
+GET     /api-docs.json               controllers.ApiHelpController.getResources
+
+GET     /api-docs.json/admin         controllers.ApiHelpController.getResource(path = "/api-docs.json/admin")
+GET     /admin.json/health           controllers.HealthController.getHealth
+GET     /admin.json/ping             controllers.HealthController.ping
+
+GET     /api-docs.json/user           controllers.ApiHelpController.getResource(path = "/api-docs.json/user")
+
+# Admin Panel Static Asset
+GET 	/console						controllers.Default.redirect(to = "/console/")
+GET		/console/index.html				controllers.Default.redirect(to = "/console/")
+GET		/console/login.html				controllers.Default.redirect(to = "/console/")
+GET 	/console/						com.baasbox.controllers.Application.login()
+GET     /console/js/routes      	 	com.baasbox.controllers.AllRoutes.javascriptRoutes()
+GET     /console/*file               	controllers.Assets.at(path="/public/console", file)
+
+
+#Assets action
+POST	/admin/asset				com.baasbox.controllers.Asset.post()
+GET		/admin/asset				com.baasbox.controllers.Asset.getAll()
+DELETE	/admin/asset/:name			com.baasbox.controllers.Asset.delete(name: String)
+GET		/asset/:name/data			com.baasbox.controllers.Asset.get(name: String)
+GET		/asset/:name/download		com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= true)
+GET		/asset/:name				com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
+
+# User actions
+POST	/user						com.baasbox.controllers.User.signUp()
+GET		/user						com.baasbox.controllers.User.getCurrentUser()
+PUT		/user						com.baasbox.controllers.User.updateProfile()
+PUT		/user/password				com.baasbox.controllers.User.changePassword()
+GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: String)
+
+#Storage Actions
+GET		 /document/%23:rid			com.baasbox.controllers.Document.getDocumentByRid(rid: String)
+POST	 /document/:collection	 	com.baasbox.controllers.Document.createDocument(collection: String)
+GET		 /document/:collection		com.baasbox.controllers.Document.getDocuments(collection: String)
+PUT 	 /document/:collection/:rid	com.baasbox.controllers.Document.updateDocument(collection: String, rid: String)
+GET 	 /document/:collection/count  com.baasbox.controllers.Document.getCount(collection: String)
+GET		 /document/:collection/:rid	com.baasbox.controllers.Document.getDocument(collection: String, rid: String)
+DELETE	 /document/:collection/:rid	com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String)
+
+
+#Admin actions
+GET		/admin/user					com.baasbox.controllers.Admin.getUsers()
+POST	/admin/user					com.baasbox.controllers.Admin.createUser()
+PUT		/admin/user/:username		com.baasbox.controllers.Admin.updateUser(username: String)
+POST	/admin/collection/:name		com.baasbox.controllers.Admin.createCollection(name: String)
+GET		/admin/collection			com.baasbox.controllers.Admin.getCollections()
+GET 	/admin/apiVersion			com.baasbox.controllers.Application.apiVersion()
+GET 	/admin/dbStatistics			com.baasbox.controllers.Admin.getDBStatistics()	
+GET		/admin/roles				com.baasbox.controllers.Admin.getRoles()
+
+GET 	/test						com.baasbox.controllers.Application.test()
+#POST    /tasks/:id/delete       controllers.Application.deleteTask(id: Long)
+
+
+
+# Home page & general API
+GET     /                           com.baasbox.controllers.Application.index()
+GET 	/*file						controllers.Assets.at(path="/public/", file)
+OPTIONS /*dummy							com.baasbox.controllers.Generic.getOptions(dummy: String)

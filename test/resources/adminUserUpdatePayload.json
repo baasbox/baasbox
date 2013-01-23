@@ -1,0 +1,17 @@
+{
+  "role":"registereduser",
+  "visibleByTheUser": {
+     "myPrivateEmail":"me@example.com"
+   },
+  "visibleByFriend": {
+     "mobilePhone":"+39334060606",
+     "address":{
+                 "city":"Rome",
+                 "address":"via delle vie, 56"
+               }
+   },
+  "visibleByRegisteredUsers": {
+       "quote":"I am very happy!"
+   },
+  "visibleByAnonymousUsers": {}
+}

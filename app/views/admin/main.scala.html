@@ -1,0 +1,14 @@
+@(version: String)
+<div style="display:none" ng-show="loggedIn" id="mainPage">	
+	@admin.main_.topbar(version)
+		
+		<div class="container-fluid">
+		<div class="row-fluid">
+		@admin.main_.leftmenu(version)
+		@admin.noscript()
+		@admin.main_.content()
+		</div> <!-- /row-fluid -->
+		</div> <!-- /container-fluid -->
+		
+
+</div>

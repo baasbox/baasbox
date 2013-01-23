@@ -1,0 +1,60 @@
+				<div class="box span11">
+					<div class="box-header well" data-original-title>
+						<h2><i class="icon-list"></i> Database</h2>
+						<div class="box-icon">
+							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+						<ul class="nav nav-tabs" id="databaseStatTab">
+							<li class="active"><a href="#stats">Stats</a></li>
+							<li><a href="#configuration">Configuration</a></li>
+						</ul>
+						<div id="databaseStatTabContent" class="tab-content">
+							<div class="tab-pane active" id="stats">
+									<ul class="dashboard-list">
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-note"></i>
+												<span class="blue">Version</span>                              
+												<span class="green"  style="width:50% !important"> {{data.db.properties.version}}</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-lightbulb"></i>
+												<span class="blue">Status</span>                             
+												<span class="green" style="width:50% !important" >{{data.db.status}}</span>                                    
+											</a>
+										</li>	
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-lightbulb"></i>
+												<span class="blue">Path</span>                             
+												<span class="green" style="width:50% !important" >{{data.db.properties.path}}</span>                                    
+											</a>
+										</li>											
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Data Size</span>                             
+												<span class="green" style="width:50% !important" >{{formatSize(data.db.size)}}</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">Physical Size</span>                             
+												<span class="green" style="width:50% !important" >{{formatSize(data.db.physical_size)}}</span>                                    
+											</a>
+										</li>	
+									</ul>
+							</div><!-- Stats Pane-->
+							<div class="tab-pane" id="configuration">
+									<pre>
+{{data.db.configuration}}
+									</pre>
+							</div><!-- Configuration Pane-->							
+						</div><!-- tab-content -->
+					</div><!--/box-content-->
+				</div><!--/span-->

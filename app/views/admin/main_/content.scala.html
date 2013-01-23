@@ -1,0 +1,22 @@
+			<div id="content" class="span10">
+			<div class="row-fluid">
+			<!-- content starts -->
+				@admin.main_.content_.bradcrumbs()
+				<div ng-show="menu=='dashboard'">
+				@admin.main_.content_.dashboard()
+				</div>
+				<div ng-show="menu=='users'">
+				@admin.main_.content_.users()
+				</div>
+				<div ng-show="menu=='collections'">
+				@admin.main_.content_.collections()
+				</div>
+				<div ng-show="menu=='documents'">
+				@admin.main_.content_.documents()
+				</div>
+				<div ng-show="menu=='assets'">
+				@admin.main_.content_.assets()
+				</div>				
+			<!-- content end -->
+			</div>
+			</div><!--/#content.span10-->

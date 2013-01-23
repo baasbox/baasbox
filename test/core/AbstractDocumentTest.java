@@ -1,0 +1,239 @@
+/*
+     Copyright 2012-2013 
+     Claudio Tesoriero - c.tesoriero-at-baasbox.com
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+// @author: Marco Tibuzzi
+
+package core;
+
+import static play.mvc.Http.Status.BAD_REQUEST;
+import static play.mvc.Http.Status.UNAUTHORIZED;
+import static play.test.Helpers.DELETE;
+import static play.test.Helpers.GET;
+import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.POST;
+import static play.test.Helpers.PUT;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+import static play.test.Helpers.testServer;
+
+import java.net.URLEncoder;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import play.libs.F.Callback;
+import play.mvc.Result;
+import play.test.FakeRequest;
+import play.test.TestBrowser;
+
+
+public abstract class AbstractDocumentTest extends AbstractTest 
+{
+	@Test
+	public void testRouteNotValid()
+	{
+		running
+		(
+			fakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					// No AppCode, No Authorization
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					Result result = routeAndCall(request);
+					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+
+					// No Authorization
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					result = routeAndCall(request);
+					assertRoute(result, "No Authorization", UNAUTHORIZED, null, false);
+					
+					// Invalid AppCode
+					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
+					result = routeAndCall(request);
+					assertRoute(result, "Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+
+					// Invalid Authorization
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, "Basic dXNlcjE6cGFzc3c=");
+					result = routeAndCall(request);
+					assertRoute(result, "Invalid Authorization", UNAUTHORIZED, null, false);
+					
+					// No AppCode
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					assertRoute(result, "No AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+				}
+			}
+		);		
+	}
+
+	@Test
+	public void testServerNotValid()
+	{
+		running
+		(
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					// No AppCode, No Authorization
+					removeHeader(TestConfig.KEY_APPCODE);
+					removeHeader(TestConfig.KEY_AUTH);
+					httpRequest(getURLAddress(), getMethod());
+					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+					
+					// No Authorization
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					httpRequest(getURLAddress(), getMethod());
+					assertServer("No Authorization", UNAUTHORIZED, null, false);
+					
+					// Invalid AppCode
+					setHeader(TestConfig.KEY_APPCODE, "1");
+					httpRequest(getURLAddress(), getMethod());
+					assertServer("Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+
+					// Invalid Authorization
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, "Basic dXNlcjE6cGFzc3c=");
+					httpRequest(getURLAddress(), getMethod());
+					assertServer("Invalid Autorization", UNAUTHORIZED, null, false);
+
+					// No AppCode
+					removeHeader(TestConfig.KEY_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					httpRequest(getURLAddress(), getMethod());
+					assertServer("No AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+	            }
+	        }
+		);
+	}
+	
+	protected Result routeCreateDocument(String sAddress)
+	{
+	 	FakeRequest request = new FakeRequest(POST, sAddress);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		request = request.withJsonBody(getPayload("/documentCreatePayload.json"));
+		return routeAndCall(request); 
+	}
+
+	public Result routeModifyDocument(String sAddress)
+	{
+		// Modify created document
+		FakeRequest request = new FakeRequest(PUT, sAddress);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		request = request.withJsonBody(getPayload("/documentModifyPayload.json"), PUT);
+		return routeAndCall(request);
+	}
+	
+	protected Result routeDeleteDocument(String sRid)
+	{
+		Result result = null;
+		try
+		{
+			FakeRequest request = new FakeRequest(DELETE, getRouteAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			result = routeAndCall(request);
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Unexcpeted exception. " + ex.getMessage());
+		}
+		
+		return result;
+	}
+
+	public Result routeGetDocument(String sAddress)
+	{
+		Result result = null;
+		FakeRequest request = new FakeRequest(GET, sAddress);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		result = routeAndCall(request);
+		
+		return result;
+	}
+	
+	public void serverCreateDocument(String sAddress)
+	{
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+		httpRequest
+		( 
+			sAddress,
+			POST,
+			"/documentCreatePayload.json"
+		);
+	}
+
+	public void serverModifyDocument(String sAddress)
+	{
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+		httpRequest
+		( 
+			sAddress,
+			PUT,
+			"/documentModifyPayload.json"
+		);
+	}
+	
+	public void serverDeleteDocument(String sRid)
+	{
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		try
+		{
+			httpRequest
+			( 
+				getURLAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"),
+				DELETE
+			);
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Unexcpeted exception. " + ex.getMessage());
+		}
+	}
+	
+	public void serverGetDocument(String sAddress)
+	{
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		httpRequest
+		( 
+			sAddress,
+			GET
+		);
+	}
+}

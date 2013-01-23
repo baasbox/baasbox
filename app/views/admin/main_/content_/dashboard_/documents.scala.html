@@ -1,0 +1,26 @@
+				<div class="box span5">
+					<div class="box-header well" >
+						<h2><i class="icon-file"></i> Documents</h2>
+						<div class="box-icon">
+							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+						<table class="table table-striped">
+							  <thead>
+								  <tr>
+									  <th>Collection</th>
+									  <th>N. of Documents</th>
+									  <th>Size</th>                                        
+								  </tr>
+							  </thead>   
+							   <tbody>
+								   <tr ng-repeat="collection in data.data.collections_details">
+										<td>{{collection.name}}</td>
+										<td class="center">{{collection.records}}</td>
+										<td class="center">{{formatSize(collection.size)}}</td>                                
+									</tr>
+								</tbody>
+							</table>
+					</div><!--/box-content-->
+				</div><!--/span-->

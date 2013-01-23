@@ -1,0 +1,18 @@
+@(code: Int) 
+
+@import play.api.http.Status
+
+
+    
+    <h1>Error @code</h1>
+	<br />
+	<h2>
+	@{code match {
+		case Status.UNAUTHORIZED => "UNAUTHORIZED"
+		case Status.FORBIDDEN => "FORBIDDEN"
+		
+		case _ => "An error as occurred processing your request"
+	}}
+	</h2>
+    <br />
+    <h3>Resource: @request</h3>

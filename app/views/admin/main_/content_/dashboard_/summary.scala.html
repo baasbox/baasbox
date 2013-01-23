@@ -1,0 +1,29 @@
+
+				<a data-rel="tooltip" title="Registered users" class="well span3 top-block ajax-link" href="#users">
+					<span class="icon32 icon-red icon-user"></span>
+					<div>Users</div>
+					<div id="totalUsers">{{data.data.users}}</div>
+					<!-- <span class="notification" id="notificationUsers"></span>  --> 
+				</a>
+
+				<a data-rel="tooltip" title="Collections" class="well span3 top-block ajax-link" href="#collections">
+					<span class="icon32 icon-orange icon-book"></span>
+					<div>Collections</div>
+					<div id="totalCollections">{{data.data.collections}}</div>
+					<!--<span class="notification green" id="notificationCollections"></span>-->
+				</a>
+
+				<a data-rel="tooltip" title="Documents" class="well span3 top-block ajax-link" href="#documents">
+					<span class="icon32 icon-green icon-copy"></span>
+					<div>Documents</div>
+					<div id="totalDocuments">{{countDocuments(data)}}</div>
+					<!--<span class="notification yellow" id="notificationDocuments"></span>-->
+				</a>
+				
+				<a data-rel="tooltip" title="Assets" class="well span3 top-block ajax-link" href="#assets">
+					<span class="icon32 icon-blue icon-folder-open"></span>
+					<div>Assets</div>
+					<div id="totalAssets">{{data.data.assets}}</div>
+					<!--<span class="notification red" id="notificationFile"></span>-->
+				</a>
+
