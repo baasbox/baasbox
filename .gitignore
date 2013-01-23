@@ -5,7 +5,7 @@
 !.gitignore
 
 # Ignore Play! working directory #
-db
+/db
 eclipse
 log
 logs
@@ -19,7 +19,7 @@ test-result
 server.pid
 *.iml
 *.eml
-dist
-doc
-script
-bin
+/dist
+/doc
+/script
+/bin
