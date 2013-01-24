@@ -485,9 +485,14 @@ $('#assetForm').submit(function() {
 
 	if ($.trim(assetMeta) == "") 
 		assetMeta = "{}";
+	
+	var serverUrl=BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
 
 	var options = {
-		url: BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL(),
+		url: serverUrl,
 		type: "post",
 		dataType: "json",
 		clearForm: true,
@@ -567,7 +572,7 @@ function setBradCrumb(type)
 
 function getAssetIcon(type)
 {
-	var sIcon;
+	var sIcon="";
 	
 	switch (type){
 		case "image/png":
@@ -598,7 +603,8 @@ function getAssetIcon(type)
 			sIcon = "pdf.png";
 		  break;
 	}
-	return "<img src=img/AssetIcons/"+ sIcon +"/>";
+	if (sIcon=="") return "";
+	return "<img src='img/AssetIcons/"+ sIcon +"'/>";
 }
 
 
