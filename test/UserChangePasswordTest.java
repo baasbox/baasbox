@@ -73,20 +73,27 @@ public class UserChangePasswordTest extends AbstractUserTest
 			{
 				public void run() 
 				{
+					String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
 					// Test change password
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, AUTH_USER_ENC);
-					request = request.withJsonBody(getPayload("/userChangePasswordPayload.json"), PUT);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+					request = request.withJsonBody(getPayload("/userChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteChangePassword", Status.OK, null, false);
 
+					String sPwdChanged = getPayloadFieldValue("/userChangePasswordPayload.json", "new");
+					String sAuthChanged = TestConfig.encodeAuth(sFakeUser, sPwdChanged);
+					
 					continueOnFail(true);
 					
 					// Test change password non valid
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, AUTH_USER_CHANGED_ENC);
-					request = request.withJsonBody(getPayload("/userChangePasswordInvalid.json"), PUT);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthChanged);
+					request = request.withJsonBody(getPayload("/userChangePasswordInvalid.json"), getMethod());
 					result = routeAndCall(request);
 					assertRoute(result, "testRouteChangePassword not valid", Status.BAD_REQUEST, TestConfig.MSG_CHANGE_PWD, true);
 
@@ -94,8 +101,8 @@ public class UserChangePasswordTest extends AbstractUserTest
 					
 					// Restore old password
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, AUTH_USER_CHANGED_ENC);
-					request = request.withJsonBody(getPayload("/userRestorePasswordPayload.json"), PUT);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthChanged);
+					request = request.withJsonBody(getPayload("/userRestorePasswordPayload.json"), getMethod());
 					result = routeAndCall(request);
 					assertRoute(result, "testRouteChangePassword restore old password", Status.OK, null, false);
 				}
@@ -114,9 +121,13 @@ public class UserChangePasswordTest extends AbstractUserTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeUser = new AdminUserFunctionalTest().serverCreateNewUser();
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
 					// Test change password
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, AUTH_USER_ENC);
+					setHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					( 
@@ -126,11 +137,14 @@ public class UserChangePasswordTest extends AbstractUserTest
 					);
 					assertServer("testServerChangePassword", Status.OK, null, false);
 
+					String sPwdChanged = getPayloadFieldValue("/userChangePasswordPayload.json", "new");
+					String sAuthChanged = TestConfig.encodeAuth(sFakeUser, sPwdChanged);
+					
 					continueOnFail(true);
 
 					// Test change password non valid
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, AUTH_USER_CHANGED_ENC);
+					setHeader(TestConfig.KEY_AUTH, sAuthChanged);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					( 
@@ -144,7 +158,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 
 					// Restore old password
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, AUTH_USER_CHANGED_ENC);
+					setHeader(TestConfig.KEY_AUTH, sAuthChanged);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					( 

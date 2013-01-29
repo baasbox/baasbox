@@ -162,7 +162,7 @@ public class UserAssetGetTest extends AbstractTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					new AdminAssetCreateTest().routeCreateAsset();
+					new AdminAssetCreateTest().serverCreateAsset();
 
 					continueOnFail(true);
 					
@@ -172,7 +172,7 @@ public class UserAssetGetTest extends AbstractTest
 
 					continueOnFail(false);
 
-					new AdminAssetCreateTest().routeDeleteAsset();
+					new AdminAssetCreateTest().serverDeleteAsset();
 				}
 	        }
 		);

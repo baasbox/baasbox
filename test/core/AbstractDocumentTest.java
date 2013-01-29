@@ -21,7 +21,6 @@ package core;
 
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
-import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
@@ -31,12 +30,9 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
-import java.net.URLEncoder;
-
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -47,6 +43,19 @@ import play.test.TestBrowser;
 
 public abstract class AbstractDocumentTest extends AbstractTest 
 {
+	public static final String SERVICE_ROUTE = "/document/";
+	public static final String COLLECTION_NOT_EXIST = "fakeCollection";
+	
+	public String getRouteAddress(String sCollectionName)
+	{
+		return SERVICE_ROUTE + sCollectionName;
+	}
+
+	public String getURLAddress(String sCollectionName)
+	{
+		return TestConfig.SERVER_URL + getRouteAddress(sCollectionName);
+	}
+	
 	@Test
 	public void testRouteNotValid()
 	{
@@ -150,24 +159,6 @@ public abstract class AbstractDocumentTest extends AbstractTest
 		return routeAndCall(request);
 	}
 	
-	protected Result routeDeleteDocument(String sRid)
-	{
-		Result result = null;
-		try
-		{
-			FakeRequest request = new FakeRequest(DELETE, getRouteAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
-			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-			result = routeAndCall(request);
-		}
-		catch (Exception ex)
-		{
-			Assert.fail("Unexcpeted exception. " + ex.getMessage());
-		}
-		
-		return result;
-	}
-
 	public Result routeGetDocument(String sAddress)
 	{
 		Result result = null;
@@ -204,25 +195,6 @@ public abstract class AbstractDocumentTest extends AbstractTest
 			PUT,
 			"/documentModifyPayload.json"
 		);
-	}
-	
-	public void serverDeleteDocument(String sRid)
-	{
-		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-		try
-		{
-			httpRequest
-			( 
-				getURLAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"),
-				DELETE
-			);
-		}
-		catch (Exception ex)
-		{
-			Assert.fail("Unexcpeted exception. " + ex.getMessage());
-		}
 	}
 	
 	public void serverGetDocument(String sAddress)

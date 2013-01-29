@@ -42,7 +42,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	@Override
 	public String getRouteAddress()
 	{
-		return DocumentCMDFunctionalTest.SERVICE_ROUTE + TestConfig.TEST_COLLECTION_NAME + "/count";
+		return SERVICE_ROUTE + TestConfig.TEST_COLLECTION_NAME + "/count";
 	}
 	
 	@Override
@@ -55,7 +55,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	protected void assertContent(String s)
 	{
 		Object json = toJSON(s);
-		assertJSON(json, "count");
+		assertJSONString(json, "count");
 	}
 
 	@Test 
@@ -68,7 +68,9 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(GET, getRouteAddress());
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					
+					FakeRequest request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/count");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
@@ -90,10 +92,12 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress(), GET);
+					httpRequest(getURLAddress(sFakeCollection) + "/count", GET);
 					assertServer("testServerGetDocumentsCount", Status.OK, null, true);
 				}
 	        }

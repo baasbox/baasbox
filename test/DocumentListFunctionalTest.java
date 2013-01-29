@@ -69,12 +69,26 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(GET, getRouteAddress());
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+				
+					// Test list documents in empty collection
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress(sFakeCollection));
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testRouteListDocuments", Status.OK, null, true);
+					assertRoute(result, "testRouteListDocuments empty collection", Status.OK, null, false);
+					
+					result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteListDocuments CREATE document in fake collection", Status.OK, null, true);
+					
+					// Test list documents in empty collection
+					request = new FakeRequest(getMethod(), getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteListDocuments not empty collection", Status.OK, null, true);
 				}
 			}
 		);
@@ -90,7 +104,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(GET, DocumentCMDFunctionalTest.SERVICE_ROUTE + DocumentCMDFunctionalTest.COLLECTION_NOT_EXIST);
+					FakeRequest request = new FakeRequest(getMethod(), SERVICE_ROUTE + COLLECTION_NOT_EXIST);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
@@ -112,11 +126,24 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().serverCreateCollection();
+					
+					// Test list documents in empty collection
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress(), GET);
-					assertServer("testServerListDocuments", Status.OK, null, true);
+					httpRequest(getURLAddress(sFakeCollection), getMethod());
+					assertServer("testServerListDocuments empty collection", Status.OK, null, false);
+					
+					serverCreateDocument(getURLAddress(sFakeCollection));
+					assertServer("testServerListDocuments CREATE document in fake collection", Status.OK, null, true);
+
+					// Test list documents in not empty collection
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					httpRequest(getURLAddress(sFakeCollection), getMethod());
+					assertServer("testServerListDocuments not empty collection", Status.OK, null, true);
 				}
 	        }
 		);
@@ -138,8 +165,8 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 					httpRequest
 					( 
-						TestConfig.SERVER_URL + DocumentCMDFunctionalTest.SERVICE_ROUTE + DocumentCMDFunctionalTest.COLLECTION_NOT_EXIST,
-						GET
+						TestConfig.SERVER_URL + SERVICE_ROUTE + COLLECTION_NOT_EXIST,
+						getMethod()
 					);
 					assertServer("testServerListDocumentsBadCollection", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
 				}

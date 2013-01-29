@@ -22,16 +22,15 @@ import java.util.List;
 
 import play.Logger;
 
-
 import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.db.hook.Audit;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -140,27 +139,29 @@ public abstract class NodeDao  {
 
 	public ODocument get(ORID rid) throws InvalidModelException {
 		Logger.trace("Method Start");
-		ODocument doc=db.load(rid);
+		Object doc=db.load(rid);
+		if (!(doc instanceof ODocument)) throw new IllegalArgumentException(rid +" is a rid not referencing a valid Document");
 		try{
-			checkModelDocument(doc);
-		}catch(ClassCastException e){
+			checkModelDocument((ODocument)doc);
+		}catch(InvalidModelException e){
 			//the rid may reference a ORecordBytes which is not a ODocument
-			throw new InvalidModelException("the rid " + rid + " is not valid");
+			throw new InvalidModelException("the rid " + rid + " is not valid belong to the collection " + this.MODEL_NAME);
 		}
 		Logger.trace("Method End");
-		return doc;
+		return (ODocument)doc;
 	}
 
 
-	public ODocument get(String rid) throws InvalidModelException,	IllegalArgumentException {
+	public ODocument get(String rid) throws InvalidModelException, ODatabaseException {
 		Logger.trace("Method Start");
 		Object orid=OSQLHelper.parseValue(rid, null);
-		if (!(orid instanceof ORecordId)) throw new IllegalArgumentException(rid +" is not a valid rid");
-		ODocument doc=get((ORecordId)orid);
+		if ((orid==null) || !(orid instanceof ORecordId) || (orid.toString().equals(OSQLHelper.VALUE_NOT_PARSED))) throw new IllegalArgumentException(rid +" is not a valid rid");
+		Object odoc=get((ORecordId)orid);
+		
 		Logger.trace("Method End");
-		return doc;
+		return (ODocument)odoc;
 	}
-
+ 
 
 	public boolean exists(ODocument document) throws InvalidModelException {
 		return exists(document.getRecord().getIdentity());

@@ -42,6 +42,7 @@ import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -133,6 +134,8 @@ public class Document extends Controller {
 				return notFound(collectionName + " is not a valid collection name");
 		  } catch (InvalidModelException e) {
 			  return notFound("Document " + rid + " is not a " + collectionName + " document");
+		  }catch (ODatabaseException e){
+			  return notFound(rid + " unknown");  
 		} 
 		  Logger.trace("Method End");
 		  
@@ -151,6 +154,8 @@ public class Document extends Controller {
 			if (doc==null) return notFound();
 		  } catch (IllegalArgumentException e) {
 				return badRequest(e.getMessage());
+		  }catch (ODatabaseException e){
+			  return notFound(rid + " unknown");  
 		 } 
 		  Logger.trace("Method End");
 		  
@@ -205,8 +210,14 @@ public class Document extends Controller {
 			  document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson); 
 		  }catch (InvalidCollectionException e){
 			  return notFound(collectionName + " is not a valid collection name");
+		  }catch (InvalidModelException e){
+			  return notFound(rid + " is not a valid belongs to " + collectionName);
 		  }catch (InvalidParameterException e){
-			  return notFound(rid + " is not a document");
+			  return badRequest(rid + " is not a document");
+		  }catch (IllegalArgumentException e){
+			  return badRequest(rid + " is not a document");  
+		  }catch (ODatabaseException e){
+			  return notFound(rid + " unknown");  
 		  }catch (Throwable e){
 			  Logger.error(ExceptionUtils.getFullStackTrace(e));
 			  return internalServerError(ExceptionUtils.getFullStackTrace(e));

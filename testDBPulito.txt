@@ -1,0 +1,490 @@
+[info] Loading project definition from C:\Play\projects\baasbox\project
+[info] Set current project to BaasBox (in build file:/C:/Play/projects/baasbox/)
+[info] UserAssetGetTest
+[WARN] [01/26/2013 10:15:10.893] [pool-4-thread-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:11.88] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + UserAssetGetTest.testRouteGetFakeAsset
+[info] + UserAssetGetTest.testRouteGetAsset
+[info] + UserAssetGetTest.testRouteDownloadFakeAsset
+[info] + UserAssetGetTest.testServerGetFakeAsset
+[info] + UserAssetGetTest.testServerGetAsset
+[info] + UserAssetGetTest.testServerDownloadAsset
+[info] + UserAssetGetTest.testServerDownloadFakeAsset
+[info] 
+[info] 
+[info] Total for test UserAssetGetTest
+[info] Finished in 21.658 seconds
+[info] 7 tests, 0 failures, 0 errors
+[info] DocumentListFunctionalTest
+[WARN] [01/26/2013 10:15:25.248] [promise-akka.actor.default-dispatcher-12] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:25.249] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:27.79] [promise-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:27.80] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[error] Test DocumentListFunctionalTest.testRouteListDocuments failed: testRouteListDocuments. Http status code. Response <documents is not a valid collection name> expected:<200> but was:<404>
+[error] Test DocumentListFunctionalTest.testServerListDocuments failed: java.lang.AssertionError: testServerListDocuments. Http status code. Response <documents is not a valid collection name> expected:<200> but was:<404>
+[error]     at play.test.Helpers.running(Helpers.java:350)
+[error]     at DocumentListFunctionalTest.testServerListDocuments(DocumentListFunctionalTest.java:107)
+[error]     ...
+[error] Caused by: java.lang.AssertionError: testServerListDocuments. Http status code. Response <documents is not a valid collection name> expected:<200> but was:<404>
+[error]     ...
+[info] x DocumentListFunctionalTest.testRouteListDocuments
+[info] + DocumentListFunctionalTest.testRouteListDocumentsBadCollection
+[info] x DocumentListFunctionalTest.testServerListDocuments
+[info] + DocumentListFunctionalTest.testServerListDocumentsBadCollection
+[info] + DocumentListFunctionalTest.testRouteNotValid
+[info] + DocumentListFunctionalTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test DocumentListFunctionalTest
+[info] Finished in 3.015 seconds
+[info] 6 tests, 2 failures, 0 errors
+[info] DocumentCMDFunctionalTest
+[WARN] [01/26/2013 10:15:28.387] [promise-akka.actor.default-dispatcher-12] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:28.388] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:32.967] [promise-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:32.967] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[error] Test DocumentCMDFunctionalTest.testRouteCMDDocument failed: testRouteCMDDocument not existent RID. MODIFY RID. Http status code: Expected is: 404 got: 500 Response <com.orientechnologies.orient.core.exception.ODatabaseException: RecordId cannot support cluster id major than 32767. You've used: 123456
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.checkClusterLimits(ORecordId.java:183)
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.fromString(ORecordId.java:261)
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.<init>(ORecordId.java:62)
+[error] 	at com.orientechnologies.orient.core.sql.OSQLHelper.parseValue(OSQLHelper.java:119)
+[error] 	at com.baasbox.dao.NodeDao.get(NodeDao.java:158)
+[error] 	at com.baasbox.service.storage.DocumentService.get(DocumentService.java:72)
+[error] 	at com.baasbox.service.storage.DocumentService.update(DocumentService.java:61)
+[error] 	at com.baasbox.controllers.Document.updateDocument(Document.java:205)
+[error] 	at Routes$$anonfun$routes$1$$anonfun$apply$51$$anonfun$apply$52.apply(routes_routing.scala:388)
+[error] 	at Routes$$anonfun$routes$1$$anonfun$apply$51$$anonfun$apply$52.apply(routes_routing.scala:388)
+[error] 	at play.core.Router$HandlerInvoker$$anon$5$$anon$1.invocation(Router.scala:1090)
+[error] 	at play.core.j.JavaAction$$anon$1.call(JavaAction.scala:33)
+[error] 	at play.GlobalSettings$1.call(GlobalSettings.java:57)
+[error] 	at com.baasbox.controllers.actions.filters.ConnectToDB.call(ConnectToDB.java:70)
+[error] 	at com.baasbox.controllers.actions.filters.BasicAuthHeader.call(BasicAuthHeader.java:72)
+[error] 	at com.baasbox.controllers.actions.filters.CheckAPPCode.call(CheckAPPCode.java:52)
+[error] 	at play.core.j.JavaAction$class.apply(JavaAction.scala:74)
+[error] 	at play.core.Router$HandlerInvoker$$anon$5$$anon$1.apply(Router.scala:1089)
+[error] 	at play.test.Helpers.invokeHandler(Helpers.java:34)
+[error] 	at play.test.Helpers.routeAndCall(Helpers.java:263)
+[error] 	at play.test.Helpers.routeAndCall(Helpers.java:248)
+[error] 	at core.AbstractDocumentTest.routeModifyDocument(AbstractDocumentTest.java:159)
+[error] 	at DocumentCMDFunctionalTest$2.run(DocumentCMDFunctionalTest.java:136)
+[error] 	at play.test.Helpers.running(Helpers.java:294)
+[error] 	at DocumentCMDFunctionalTest.testRouteCMDDocument(DocumentCMDFunctionalTest.java:95)
+[error] 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+[error] 	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+[error] 	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+[error] 	at java.lang.reflect.Method.invoke(Unknown Source)
+[error] 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:44)
+[error] 	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:15)
+[error] 	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:41)
+[error] 	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:20)
+[error] 	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:28)
+[error] 	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:31)
+[error] 	at org.junit.rules.Verifier$1.evaluate(Verifier.java:34)
+[error] 	at org.junit.runners.BlockJUnit4ClassRunner.runNotIgnored(BlockJUnit4ClassRunner.java:79)
+[error] 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:71)
+[error] 	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:49)
+[error] 	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:193)
+[error] 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:52)
+[error] 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:191)
+[error] 	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:42)
+[error] 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:184)
+[error] 	at org.junit.runners.ParentRunner.run(ParentRunner.java:236)
+[error] 	at org.junit.runners.Suite.runChild(Suite.java:128)
+[error] 	at org.junit.runners.Suite.runChild(Suite.java:24)
+[error] 	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:193)
+[error] 	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:52)
+[error] 	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:191)
+[error] 	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:42)
+[error] 	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:184)
+[error] 	at org.junit.runners.ParentRunner.run(ParentRunner.java:236)
+[error] 	at org.junit.runner.JUnitCore.run(JUnitCore.java:157)
+[error] 	at org.junit.runner.JUnitCore.run(JUnitCore.java:136)
+[error] 	at com.novocode.junit.JUnitRunner.run(JUnitRunner.java:50)
+[error] 	at sbt.TestRunner.delegateRun(TestFramework.scala:63)
+[error] 	at sbt.TestRunner.run(TestFramework.scala:56)
+[error] 	at sbt.TestRunner.runTest$1(TestFramework.scala:76)
+[error] 	at sbt.TestRunner.run(TestFramework.scala:85)
+[error] 	at sbt.TestFramework$$anonfun$6$$anonfun$apply$8$$anonfun$7$$anonfun$apply$9.apply(TestFramework.scala:184)
+[error] 	at sbt.TestFramework$$anonfun$6$$anonfun$apply$8$$anonfun$7$$anonfun$apply$9.apply(TestFramework.scala:184)
+[error] 	at sbt.TestFramework$.sbt$TestFramework$$withContextLoader(TestFramework.scala:196)
+[error] 	at sbt.TestFramework$$anonfun$6$$anonfun$apply$8$$anonfun$7.apply(TestFramework.scala:184)
+[error] 	at sbt.TestFramework$$anonfun$6$$anonfun$apply$8$$anonfun$7.apply(TestFramework.scala:184)
+[error] 	at sbt.Tests$$anonfun$makeSerial$1$$anonfun$apply$8.apply(Tests.scala:115)
+[error] 	at sbt.Tests$$anonfun$makeSerial$1$$anonfun$apply$8.apply(Tests.scala:115)
+[error] 	at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:194)
+[error] 	at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:194)
+[error] 	at scala.collection.LinearSeqOptimized$class.foreach(LinearSeqOptimized.scala:59)
+[error] 	at scala.collection.immutable.List.foreach(List.scala:45)
+[error] 	at scala.collection.TraversableLike$class.map(TraversableLike.scala:194)
+[error] 	at scala.collection.immutable.List.map(List.scala:45)
+[error] 	at sbt.Tests$$anonfun$makeSerial$1.apply(Tests.scala:115)
+[error] 	at sbt.Tests$$anonfun$makeSerial$1.apply(Tests.scala:115)
+[error] 	at sbt.std.Transform$$anon$3$$anonfun$apply$2.apply(System.scala:47)
+[error] 	at sbt.std.Transform$$anon$3$$anonfun$apply$2.apply(System.scala:47)
+[error] 	at sbt.std.Transform$$anon$5.work(System.scala:67)
+[error] 	at sbt.Execute$$anonfun$submit$1$$anonfun$apply$1.apply(Execute.scala:221)
+[error] 	at sbt.Execute$$anonfun$submit$1$$anonfun$apply$1.apply(Execute.scala:221)
+[error] 	at sbt.ErrorHandling$.wideConvert(ErrorHandling.scala:18)
+[error] 	at sbt.Execute.work(Execute.scala:227)
+[error] 	at sbt.Execute$$anonfun$submit$1.apply(Execute.scala:221)
+[error] 	at sbt.Execute$$anonfun$submit$1.apply(Execute.scala:221)
+[error] 	at sbt.CompletionService$$anon$1$$anon$2.call(CompletionService.scala:26)
+[error] 	at java.util.concurrent.FutureTask$Sync.innerRun(Unknown Source)
+[error] 	at java.util.concurrent.FutureTask.run(Unknown Source)
+[error] 	at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+[error] 	at java.util.concurrent.FutureTask$Sync.innerRun(Unknown Source)
+[error] 	at java.util.concurrent.FutureTask.run(Unknown Source)
+[error] 	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(Unknown Source)
+[error] 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+[error] 	at java.lang.Thread.run(Unknown Source)
+[error] >
+[error]     at core.AbstractTest.assertRoute(AbstractTest.java:467)
+[error]     at DocumentCMDFunctionalTest.access$1200(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$2.run(DocumentCMDFunctionalTest.java:137)
+[error]     at play.test.Helpers.running(Helpers.java:294)
+[error]     at DocumentCMDFunctionalTest.testRouteCMDDocument(DocumentCMDFunctionalTest.java:95)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testRouteCMDDocument failed: testServerCMDDocument bad RID. MODIFY RID. Unexpected content <#1 is not a document> was expcted <is not a RecordId in form of string.>
+[error]     at core.AbstractTest.assertRoute(AbstractTest.java:485)
+[error]     at DocumentCMDFunctionalTest.access$1400(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$2.run(DocumentCMDFunctionalTest.java:148)
+[error]     at play.test.Helpers.running(Helpers.java:294)
+[error]     at DocumentCMDFunctionalTest.testRouteCMDDocument(DocumentCMDFunctionalTest.java:95)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testRouteCMDDocument failed: testRouteCMDDocument get document not existent RID. Http status code: Expected is: 404 got: 500 Response <>
+[error]     at core.AbstractTest.assertRoute(AbstractTest.java:467)
+[error]     at DocumentCMDFunctionalTest.access$2100(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$2.run(DocumentCMDFunctionalTest.java:182)
+[error]     at play.test.Helpers.running(Helpers.java:294)
+[error]     at DocumentCMDFunctionalTest.testRouteCMDDocument(DocumentCMDFunctionalTest.java:95)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testRouteCMDDocument failed: testRouteCMDDocument get document2 not existent RID. Http status code: Expected is: 404 got: 500 Response <>
+[error]     at core.AbstractTest.assertRoute(AbstractTest.java:467)
+[error]     at DocumentCMDFunctionalTest.access$2800(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$2.run(DocumentCMDFunctionalTest.java:216)
+[error]     at play.test.Helpers.running(Helpers.java:294)
+[error]     at DocumentCMDFunctionalTest.testRouteCMDDocument(DocumentCMDFunctionalTest.java:95)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testServerCMDDocument failed: testServerCMDDocument not existent RID. MODIFY. Http status code: Expected was: 404 got: 500 Response <com.orientechnologies.orient.core.exception.ODatabaseException: RecordId cannot support cluster id major than 32767. You've used: 12345678
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.checkClusterLimits(ORecordId.java:183)
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.fromString(ORecordId.java:261)
+[error] 	at com.orientechnologies.orient.core.id.ORecordId.<init>(ORecordId.java:62)
+[error] 	at com.orientechnologies.orient.core.sql.OSQLHelper.parseValue(OSQLHelper.java:119)
+[error] 	at com.baasbox.dao.NodeDao.get(NodeDao.java:158)
+[error] 	at com.baasbox.service.storage.DocumentService.get(DocumentService.java:72)
+[error] 	at com.baasbox.service.storage.DocumentService.update(DocumentService.java:61)
+[error] 	at com.baasbox.controllers.Document.updateDocument(Document.java:205)
+[error] 	at Routes$$anonfun$routes$1$$anonfun$apply$51$$anonfun$apply$52.apply(routes_routing.scala:388)
+[error] 	at Routes$$anonfun$routes$1$$anonfun$apply$51$$anonfun$apply$52.apply(routes_routing.scala:388)
+[error] 	at play.core.Router$HandlerInvoker$$anon$5$$anon$1.invocation(Router.scala:1090)
+[error] 	at play.core.j.JavaAction$$anon$1.call(JavaAction.scala:33)
+[error] 	at play.GlobalSettings$1.call(GlobalSettings.java:57)
+[error] 	at com.baasbox.controllers.actions.filters.ConnectToDB.call(ConnectToDB.java:70)
+[error] 	at com.baasbox.controllers.actions.filters.BasicAuthHeader.call(BasicAuthHeader.java:72)
+[error] 	at com.baasbox.controllers.actions.filters.CheckAPPCode.call(CheckAPPCode.java:52)
+[error] 	at play.core.j.JavaAction$class.apply(JavaAction.scala:74)
+[error] 	at play.core.Router$HandlerInvoker$$anon$5$$anon$1.apply(Router.scala:1089)
+[error] 	at play.core.ActionInvoker$$anonfun$receive$1$$anonfun$6.apply(Invoker.scala:126)
+[error] 	at play.core.ActionInvoker$$anonfun$receive$1$$anonfun$6.apply(Invoker.scala:126)
+[error] 	at play.utils.Threads$.withContextClassLoader(Threads.scala:17)
+[error] 	at play.core.ActionInvoker$$anonfun$receive$1.apply(Invoker.scala:125)
+[error] 	at play.core.ActionInvoker$$anonfun$receive$1.apply(Invoker.scala:115)
+[error] 	at akka.actor.Actor$class.apply(Actor.scala:318)
+[error] 	at play.core.ActionInvoker.apply(Invoker.scala:113)
+[error] 	at akka.actor.ActorCell.invoke(ActorCell.scala:626)
+[error] 	at akka.dispatch.Mailbox.processMailbox(Mailbox.scala:197)
+[error] 	at akka.dispatch.Mailbox.run(Mailbox.scala:179)
+[error] 	at akka.dispatch.ForkJoinExecutorConfigurator$MailboxExecutionTask.exec(AbstractDispatcher.scala:516)
+[error] 	at akka.jsr166y.ForkJoinTask.doExec(ForkJoinTask.java:259)
+[error] 	at akka.jsr166y.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:975)
+[error] 	at akka.jsr166y.ForkJoinPool.runWorker(ForkJoinPool.java:1479)
+[error] 	at akka.jsr166y.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:104)>
+[error]     at core.AbstractTest.assertServer(AbstractTest.java:506)
+[error]     at DocumentCMDFunctionalTest.access$4200(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:308)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:270)
+[error]     at play.test.Helpers.running(Helpers.java:348)
+[error]     at DocumentCMDFunctionalTest.testServerCMDDocument(DocumentCMDFunctionalTest.java:265)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testServerCMDDocument failed: testServerCMDDocument bad RID. MODIFY RID. Unexpected content <#1 is not a document> was expcted <is not a RecordId in form of string.>
+[error]     at core.AbstractTest.assertServer(AbstractTest.java:523)
+[error]     at DocumentCMDFunctionalTest.access$4400(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:319)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:270)
+[error]     at play.test.Helpers.running(Helpers.java:348)
+[error]     at DocumentCMDFunctionalTest.testServerCMDDocument(DocumentCMDFunctionalTest.java:265)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testServerCMDDocument failed: testServerCMDDocument get document not existent RID. Http status code: Expected was: 404 got: 500 Response <null>
+[error]     at core.AbstractTest.assertServer(AbstractTest.java:506)
+[error]     at DocumentCMDFunctionalTest.access$5100(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:353)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:270)
+[error]     at play.test.Helpers.running(Helpers.java:348)
+[error]     at DocumentCMDFunctionalTest.testServerCMDDocument(DocumentCMDFunctionalTest.java:265)
+[error]     ...
+[error] Test DocumentCMDFunctionalTest.testServerCMDDocument failed: testServerCMDDocument get document2 not existent RID. Http status code: Expected was: 404 got: 500 Response <null>
+[error]     at core.AbstractTest.assertServer(AbstractTest.java:506)
+[error]     at DocumentCMDFunctionalTest.access$5800(DocumentCMDFunctionalTest.java:48)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:387)
+[error]     at DocumentCMDFunctionalTest$4.invoke(DocumentCMDFunctionalTest.java:270)
+[error]     at play.test.Helpers.running(Helpers.java:348)
+[error]     at DocumentCMDFunctionalTest.testServerCMDDocument(DocumentCMDFunctionalTest.java:265)
+[error]     ...
+[info] + DocumentCMDFunctionalTest.testRouteCollectionNotExists
+[info] x DocumentCMDFunctionalTest.testRouteCMDDocument
+[info] + DocumentCMDFunctionalTest.testServerCollectionNotExists
+[info] x DocumentCMDFunctionalTest.testServerCMDDocument
+[info] + DocumentCMDFunctionalTest.testRouteNotValid
+[info] + DocumentCMDFunctionalTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test DocumentCMDFunctionalTest
+[info] Finished in 5.83 seconds
+[info] 6 tests, 2 failures, 0 errors
+[info] AdminAssetCreateTest
+[WARN] [01/26/2013 10:15:34.242] [promise-akka.actor.default-dispatcher-3] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:34.242] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:37.109] [promise-akka.actor.default-dispatcher-12] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:37.110] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminAssetCreateTest.testRouteCreateSimpleAsset
+[info] + AdminAssetCreateTest.testServerCreateSimpleAsset
+[info] + AdminAssetCreateTest.testServerCreateFileAsset
+[info] + AdminAssetCreateTest.testRouteDefaultUser
+[info] + AdminAssetCreateTest.testRouteNotValid
+[info] + AdminAssetCreateTest.testServerDefaultUser
+[info] + AdminAssetCreateTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test AdminAssetCreateTest
+[info] Finished in 6.021 seconds
+[info] 7 tests, 0 failures, 0 errors
+[info] UserUpdateTest
+[WARN] [01/26/2013 10:15:40.288] [promise-akka.actor.default-dispatcher-5] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:40.289] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:41.93] [promise-akka.actor.default-dispatcher-8] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:41.96] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[error] Test UserUpdateTest.testRouteUpdateUser failed: testRouteUpdateUser. Http status code. Response <> expected:<200> but was:<401>
+[error] Test UserUpdateTest.testServerUpdateUser failed: java.lang.AssertionError: testServerUpdateUser. Http status code. Response <null> expected:<200> but was:<401>
+[error]     at play.test.Helpers.running(Helpers.java:350)
+[error]     at UserUpdateTest.testServerUpdateUser(UserUpdateTest.java:106)
+[error]     ...
+[error] Caused by: java.lang.AssertionError: testServerUpdateUser. Http status code. Response <null> expected:<200> but was:<401>
+[error]     ...
+[info] x UserUpdateTest.testRouteUpdateUser
+[info] x UserUpdateTest.testServerUpdateUser
+[info] + UserUpdateTest.testRouteNotValid
+[info] + UserUpdateTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test UserUpdateTest
+[info] Finished in 2.072 seconds
+[info] 4 tests, 2 failures, 0 errors
+[info] AdminApiVersionFunctionalTest
+[WARN] [01/26/2013 10:15:42.77] [pool-4-thread-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:42.78] [play-akka.actor.default-dispatcher-4] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:42.626] [pool-4-thread-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:42.626] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:43.198] [promise-akka.actor.default-dispatcher-4] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:43.198] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminApiVersionFunctionalTest.testRouteDefaultUser
+[info] + AdminApiVersionFunctionalTest.testServerDefaultUser
+[info] + AdminApiVersionFunctionalTest.testRouteNotValid
+[info] + AdminApiVersionFunctionalTest.testServerNotValid
+[info] + AdminApiVersionFunctionalTest.testRouteOK
+[info] + AdminApiVersionFunctionalTest.testServerOK
+[info] 
+[info] 
+[info] Total for test AdminApiVersionFunctionalTest
+[info] Finished in 1.8 seconds
+[info] 6 tests, 0 failures, 0 errors
+[info] AdminAssetDeleteTest
+[WARN] [01/26/2013 10:15:43.845] [promise-akka.actor.default-dispatcher-12] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:43.845] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminAssetDeleteTest.testRouteDefaultUser
+[info] + AdminAssetDeleteTest.testRouteNotValid
+[info] + AdminAssetDeleteTest.testServerDefaultUser
+[info] + AdminAssetDeleteTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test AdminAssetDeleteTest
+[info] Finished in 1.983 seconds
+[info] 4 tests, 0 failures, 0 errors
+[info] AdminCollectionFunctionalTest
+[WARN] [01/26/2013 10:15:45.923] [promise-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:45.923] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:47.68] [promise-akka.actor.default-dispatcher-10] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:47.68] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminCollectionFunctionalTest.testRouteOK
+[info] + AdminCollectionFunctionalTest.testServerOK
+[info] + AdminCollectionFunctionalTest.testRouteDefaultUser
+[info] + AdminCollectionFunctionalTest.testRouteNotValid
+[info] + AdminCollectionFunctionalTest.testServerDefaultUser
+[info] + AdminCollectionFunctionalTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test AdminCollectionFunctionalTest
+[info] Finished in 3.456 seconds
+[info] 6 tests, 0 failures, 0 errors
+[info] UserChangePasswordTest
+[WARN] [01/26/2013 10:15:49.551] [promise-akka.actor.default-dispatcher-4] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:49.557] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:50.390] [pool-4-thread-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:50.390] [play-akka.actor.default-dispatcher-3] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[error] Test UserChangePasswordTest.testRouteChangePassword failed: testRouteChangePassword. Http status code. Response <> expected:<200> but was:<401>
+[error] Test UserChangePasswordTest.testServerChangePassword failed: java.lang.AssertionError: testServerChangePassword. Http status code. Response <null> expected:<200> but was:<401>
+[error]     at play.test.Helpers.running(Helpers.java:350)
+[error]     at UserChangePasswordTest.testServerChangePassword(UserChangePasswordTest.java:116)
+[error]     ...
+[error] Caused by: java.lang.AssertionError: testServerChangePassword. Http status code. Response <null> expected:<200> but was:<401>
+[error]     ...
+[info] x UserChangePasswordTest.testRouteChangePassword
+[info] x UserChangePasswordTest.testServerChangePassword
+[info] + UserChangePasswordTest.testRouteNotValid
+[info] + UserChangePasswordTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test UserChangePasswordTest
+[info] Finished in 2.003 seconds
+[info] 4 tests, 2 failures, 0 errors
+[info] UserCreateTest
+[WARN] [01/26/2013 10:15:51.212] [promise-akka.actor.default-dispatcher-12] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:51.213] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:52.16] [promise-akka.actor.default-dispatcher-3] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:52.17] [play-akka.actor.default-dispatcher-3] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + UserCreateTest.testRouteNotValid
+[info] + UserCreateTest.testServerNotValid
+[info] + UserCreateTest.routeCreateUser
+[info] + UserCreateTest.serverCreateUser
+[info] 
+[info] 
+[info] Total for test UserCreateTest
+[info] Finished in 1.645 seconds
+[info] 4 tests, 0 failures, 0 errors
+[info] AdminDBStatisticsFunctionalTest
+[WARN] [01/26/2013 10:15:53.33] [promise-akka.actor.default-dispatcher-7] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:53.33] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:55.487] [promise-akka.actor.default-dispatcher-6] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:55.488] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminDBStatisticsFunctionalTest.testRouteDefaultUser
+[info] + AdminDBStatisticsFunctionalTest.testRouteNotValid
+[info] + AdminDBStatisticsFunctionalTest.testServerDefaultUser
+[info] + AdminDBStatisticsFunctionalTest.testServerNotValid
+[info] + AdminDBStatisticsFunctionalTest.testRouteOK
+[info] + AdminDBStatisticsFunctionalTest.testServerOK
+[info] 
+[info] 
+[info] Total for test AdminDBStatisticsFunctionalTest
+[info] Finished in 3.34 seconds
+[info] 6 tests, 0 failures, 0 errors
+[info] UserGetCurrentTest
+[WARN] [01/26/2013 10:15:56.443] [promise-akka.actor.default-dispatcher-9] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:56.445] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:57.346] [promise-akka.actor.default-dispatcher-7] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:57.347] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + UserGetCurrentTest.testRouteGetCurrentUser
+[info] + UserGetCurrentTest.testServerGetCurrentUser
+[info] + UserGetCurrentTest.testRouteNotValid
+[info] + UserGetCurrentTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test UserGetCurrentTest
+[info] Finished in 1.947 seconds
+[info] 4 tests, 0 failures, 0 errors
+[info] AdminRolesFunctionalTest
+[WARN] [01/26/2013 10:15:58.317] [promise-akka.actor.default-dispatcher-4] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:15:58.317] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:00.336] [promise-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:00.337] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminRolesFunctionalTest.testRouteDefaultUser
+[info] + AdminRolesFunctionalTest.testRouteNotValid
+[info] + AdminRolesFunctionalTest.testServerDefaultUser
+[info] + AdminRolesFunctionalTest.testServerNotValid
+[info] + AdminRolesFunctionalTest.testRouteOK
+[info] + AdminRolesFunctionalTest.testServerOK
+[info] 
+[info] 
+[info] Total for test AdminRolesFunctionalTest
+[info] Finished in 2.838 seconds
+[info] 6 tests, 0 failures, 0 errors
+[info] AdminAssetGetTest
+[WARN] [01/26/2013 10:16:01.117] [pool-4-thread-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:01.118] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:01.863] [promise-akka.actor.default-dispatcher-9] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:01.864] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + AdminAssetGetTest.testRouteGet
+[info] + AdminAssetGetTest.testServerGet
+[info] + AdminAssetGetTest.testRouteDefaultUser
+[info] + AdminAssetGetTest.testRouteNotValid
+[info] + AdminAssetGetTest.testServerDefaultUser
+[info] + AdminAssetGetTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test AdminAssetGetTest
+[info] Finished in 2.752 seconds
+[info] 6 tests, 0 failures, 0 errors
+[info] AdminUserFunctionalTest
+[WARN] [01/26/2013 10:16:03.939] [promise-akka.actor.default-dispatcher-3] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:03.939] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:07.557] [promise-akka.actor.default-dispatcher-8] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:07.557] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:09.569] [promise-akka.actor.default-dispatcher-9] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:09.569] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[error] Test AdminUserFunctionalTest.testRouteCreateAndUpdateUser failed: testRouteCreateAndUpdateUser: Check updated user.. Http status code. Response <> expected:<200> but was:<401>
+[error] Test AdminUserFunctionalTest.testServerCreateAndUpdateUser failed: java.lang.AssertionError: testServerCreateAndUpdateUser: Check updated user.. Http status code. Response <<h1>Error 401</h1>
+[error] 	<br />
+[error] 	<h2>
+[error] 	UNAUTHORIZED
+[error] 	</h2>
+[error]     <br />
+[error]     <h3>Resource: GET /user</h3>> expected:<200> but was:<401>
+[error]     at play.test.Helpers.running(Helpers.java:350)
+[error]     at AdminUserFunctionalTest.testServerCreateAndUpdateUser(AdminUserFunctionalTest.java:166)
+[error]     ...
+[error] Caused by: java.lang.AssertionError: testServerCreateAndUpdateUser: Check updated user.. Http status code. Response <<h1>Error 401</h1>
+[error] 	<br />
+[error] 	<h2>
+[error] 	UNAUTHORIZED
+[error] 	</h2>
+[error]     <br />
+[error]     <h3>Resource: GET /user</h3>> expected:<200> but was:<401>
+[error]     ...
+[info] + AdminUserFunctionalTest.testRouteUpdateNotExistentUser
+[info] x AdminUserFunctionalTest.testRouteCreateAndUpdateUser
+[info] + AdminUserFunctionalTest.testServerUpdateNotExistentUser
+[info] x AdminUserFunctionalTest.testServerCreateAndUpdateUser
+[info] + AdminUserFunctionalTest.testServerUpdateUserNoRole
+[info] + AdminUserFunctionalTest.testServerUpdateUserNotExistentRole
+[info] + AdminUserFunctionalTest.testRouteDefaultUser
+[info] + AdminUserFunctionalTest.testRouteNotValid
+[info] + AdminUserFunctionalTest.testServerDefaultUser
+[info] + AdminUserFunctionalTest.testServerNotValid
+[info] + AdminUserFunctionalTest.testRouteOK
+[info] + AdminUserFunctionalTest.testServerOK
+[info] 
+[info] 
+[info] Total for test AdminUserFunctionalTest
+[info] Finished in 6.517 seconds
+[info] 12 tests, 2 failures, 0 errors
+[info] DocumentCountFunctionalTest
+[WARN] [01/26/2013 10:16:10.635] [promise-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:10.637] [play-akka.actor.default-dispatcher-1] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:11.964] [promise-akka.actor.default-dispatcher-4] [Dispatchers] Dispatcher [akka.actor.promises-dispatcher] not configured, using default-dispatcher
+[WARN] [01/26/2013 10:16:11.964] [play-akka.actor.default-dispatcher-2] [Dispatchers] Dispatcher [akka.actor.actions-dispatcher] not configured, using default-dispatcher
+[info] + DocumentCountFunctionalTest.testRouteGetDocumentsCount
+[info] + DocumentCountFunctionalTest.testServerGetDocumentsCount
+[info] + DocumentCountFunctionalTest.testRouteNotValid
+[info] + DocumentCountFunctionalTest.testServerNotValid
+[info] 
+[info] 
+[info] Total for test DocumentCountFunctionalTest
+[info] Finished in 2.495 seconds
+[info] 4 tests, 0 failures, 0 errors
+[error] Failed: : Total 92, Failed 10, Errors 0, Passed 82, Skipped 0
+[error] Failed tests:
+[error] 	UserChangePasswordTest
+[error] 	UserUpdateTest
+[error] 	AdminUserFunctionalTest
+[error] 	DocumentCMDFunctionalTest
+[error] 	DocumentListFunctionalTest
+[error] {file:/C:/Play/projects/baasbox/}BaasBox/test:test: Tests unsuccessful
+[error] Total time: 74 s, completed 26-gen-2013 10.16.12

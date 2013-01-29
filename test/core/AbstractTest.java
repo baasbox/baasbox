@@ -43,6 +43,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.fluentlenium.adapter.FluentTest;
 import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
@@ -51,7 +52,6 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.matchers.JUnitMatchers;
 import org.junit.rules.ErrorCollector;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
@@ -155,14 +155,23 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected int httpRequest(String sUrl, String sMethod, String sPayload)
 	{
-		return httpRequest(sUrl, sMethod, sPayload, null);
+		JsonNode node = null;
+		if (sPayload != null)
+		{
+			node = getPayload(sPayload);
+		}
+		return httpRequest(sUrl, sMethod, node, null);
+	}
+
+	protected int httpRequest(String sUrl, String sMethod, JsonNode payload)
+	{
+		return httpRequest(sUrl, sMethod, payload, null);
 	}
 	
-	private int httpRequest(String sUrl, String sMethod, String sPayload, Map<String, String> mParameters)
+	private int httpRequest(String sUrl, String sMethod, JsonNode payload, Map<String, String> mParameters)
 	{
 		HttpURLConnection conn = null;
         BufferedReader br = null;
-	    JsonNode node = null;
 	    int nRet = 0;
 	    boolean fIsMultipart = false;
 	    
@@ -187,17 +196,16 @@ public abstract class AbstractTest extends FluentTest
 	    		}
 	    	}
 
-	    	if (sPayload != null || mParameters != null)
+	    	if (payload != null || mParameters != null)
 	    	{
 				DataOutputStream out = new DataOutputStream(conn.getOutputStream());
 				
 				try
 				{
-			    	if(sPayload != null)
+			    	if(payload != null)
 			    	{
-			    		node = getPayload(sPayload);
 			    		//conn.setRequestProperty("Content-Length", "" + node.toString().length());
-						out.writeBytes(node.toString());
+						out.writeBytes(payload.toString());
 		            }
 			    	
 			    	if (mParameters != null)
@@ -377,6 +385,20 @@ public abstract class AbstractTest extends FluentTest
 		return node;
 	}
 
+	protected String getPayloadFieldValue(String sPayload, String sFieldName)
+	{
+		JsonNode node = getPayload(sPayload);
+		return node.get(sFieldName).asText();
+	}
+	
+	protected JsonNode updatePayloadFieldValue(String sPayload, String sFieldName, String sValue)
+	{
+		JsonNode node = getPayload(sPayload);
+		((ObjectNode)node).put(sFieldName, sValue);
+		
+		return node;
+	}
+	
 	private byte[] getResource(String sName)
 	{
 		InputStream is = null;
@@ -442,13 +464,13 @@ public abstract class AbstractTest extends FluentTest
 			}
 			else if (status(result) !=  nExptedStatus)
 			{
-				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result)));
+				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result) + " Response <" + contentAsString(result) + ">"));
 			}
 		}
 		else
 		{
 			Assert.assertNotNull(sTestName + ". Cannot route to specified address.", result);
-			Assert.assertEquals(sTestName + ". Http status code", nExptedStatus, status(result));
+			Assert.assertEquals(sTestName + ". Http status code. Response <" + contentAsString(result) + ">", nExptedStatus, status(result));
 		}
 
 		if (fCheckContent && result != null)
@@ -481,12 +503,12 @@ public abstract class AbstractTest extends FluentTest
 		{
 			if (getStatusCode() != nExptedStatus)
 			{
-				collector.addError(new Exception(sTestName + ". Http status code: Expected was: " + nExptedStatus + " got: " + getStatusCode()));
+				collector.addError(new Exception(sTestName + ". Http status code: Expected was: " + nExptedStatus + " got: " + getStatusCode() + " Response <" + getResponse() + ">"));
 			}
 		}
 		else
 		{
-			Assert.assertEquals(sTestName + ". Http status code", nExptedStatus, getStatusCode());
+			Assert.assertEquals(sTestName + ". Http status code. Response <" + getResponse() + ">", nExptedStatus, getStatusCode());
 		}
 		
 		if (fCheckContent)
@@ -535,35 +557,6 @@ public abstract class AbstractTest extends FluentTest
 		catch (Exception ex)
 		{
 			assertFail("Exception parsing JSON: " + ex);
-		}
-		
-		return objRet;
-	}
-	
-	protected JSONObject jsonFindElementByValue(JSONArray jarray, String sContainerKey, String sKey, String sValue)
-	{
-		JSONObject objRet = null;
-		JSONObject objElement = null;
-		JSONObject objInner = null;
-		String s;
-		
-		try
-		{
-			for (int i=0; i<jarray.length(); i++)
-			{
-				objElement = (JSONObject)jarray.get(i);
-				objInner = (JSONObject)objElement.get(sContainerKey);
-				s = objInner.getString(sKey);
-				if (s.equals(sValue))
-				{
-					objRet = objElement;
-					break;
-				}
-			}
-		}
-		catch (JSONException jex)
-		{
-			assertFail("jsonFindElementByValue: " + jex.getMessage());
 		}
 		
 		return objRet;

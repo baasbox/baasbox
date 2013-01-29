@@ -39,7 +39,7 @@ import core.TestConfig;
 
 public class UserUpdateTest extends AbstractUserTest 
 {
-	private static String JSON_MODIFIED_ATTRIBUTE = "\"visibleByAnonymousUsers\":{}";
+	private static String JSON_MODIFIED_ATTRIBUTE = "visibleByAnonymousUsers\":{\"_allowRead\":";
 	private Object json;
 	
 	@Override
@@ -83,10 +83,14 @@ public class UserUpdateTest extends AbstractUserTest
 			{
 				public void run() 
 				{
+					String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
 					// Test update user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, AUTH_USER_ENC);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					request = request.withJsonBody(getPayload("/adminUserUpdateNoRolePayload.json"), PUT);
 					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteUpdateUser", Status.OK, null, true);
@@ -107,9 +111,13 @@ public class UserUpdateTest extends AbstractUserTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeUser = new AdminUserFunctionalTest().serverCreateNewUser();
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
 					// Test change password
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, AUTH_USER_ENC);
+					setHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					( 
@@ -117,7 +125,7 @@ public class UserUpdateTest extends AbstractUserTest
 						getMethod(),
 						"/adminUserUpdateNoRolePayload.json"
 					);
-					assertServer("testServerChangePassword", Status.OK, null, true);
+					assertServer("testServerUpdateUser", Status.OK, null, true);
 					assertJSONString(json, JSON_MODIFIED_ATTRIBUTE);
 	            }
 	        }

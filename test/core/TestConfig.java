@@ -35,7 +35,7 @@ public class TestConfig
 	public static final String AUTH_ADMIN = "admin:admin";
 	public static final String AUTH_DEFAULT = "baasbox:baasbox";
 	
-	public static final String TEST_COLLECTION_NAME = "testCollection";
+	public static final String TEST_COLLECTION_NAME = "documents";
 	
 	public static final String AUTH_ADMIN_ENC;
 	public static final String AUTH_DEFAULT_ENC;
@@ -44,6 +44,7 @@ public class TestConfig
 	public static final String MSG_USER_MODIDY_NOT_PRESENT = " is not a user";
 	public static final String MSG_INVALID_COLLECTION = "is not a valid collection name";
 	public static final String MSG_BAD_RID = "is not a RecordId in form of string.";
+	public static final String MSG_BAD_RID_MODIFY = "is not a document";
 	public static final String MSG_CHANGE_PWD = "The old password does not match with the current one";
 	public static final String MSG_ASSET_ALREADY_EXISTS = "An asset with the same name already exists";
 
@@ -56,5 +57,16 @@ public class TestConfig
 	public static String encodeAuth(String s)
 	{
 		return "Basic " + new String(Base64.encodeBase64(s.getBytes()));
+	}
+	
+	public static String encodeAuth(String sUserName, String sPassword)
+	{
+		StringBuilder sb = new StringBuilder();
+		sb.append(sUserName);
+		sb.append(":");
+		sb.append(sPassword);
+		String sRet = "Basic " + new String(Base64.encodeBase64(sb.toString().getBytes()));
+		
+		return sRet.replace("\n", "");
 	}
 }

@@ -139,12 +139,8 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress(), getMethod(), mParametersSimple);
-					assertServer("testServerCreateSimpleAsset", Status.CREATED, null, true);
-
+					serverCreateAsset();
+					
 					continueOnFail(true);
 
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -160,12 +156,8 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 					assertServer("testServerCreateSimpleAsset. wrong media type", Status.BAD_REQUEST, null, false);
 					
 					continueOnFail(false);
-					
-					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress() + "/" + mParametersSimple.get(PARAM_NAME), DELETE);
-					assertServer("testServerCreateSimpleAsset. Delete", Status.OK, null, false);
+
+					serverDeleteAsset();
 				}
 	        }
 		);
@@ -235,9 +227,33 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 		
 	}
 	
+	public void serverCreateAsset()
+	{
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
+		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
+
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		httpRequest(getURLAddress(), getMethod(), mParametersSimple);
+		assertServer("testServerCreateSimpleAsset", Status.CREATED, null, true);
+	}
+	
+	public void serverDeleteAsset()
+	{
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
+		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
+
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		httpRequest(getURLAddress() + "/" + mParametersSimple.get(PARAM_NAME), DELETE);
+		assertServer("testServerCreateSimpleAsset. Delete", Status.OK, null, false);
+	}
+	
 	public void serverCreateFileAsset()
 	{
-		mParametersFile.put(PARAM_NAME, "testFileAsset");
+		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME);
 		mParametersFile.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -250,7 +266,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void serverDeleteFileAsset()
 	{
-		mParametersFile.put(PARAM_NAME, "testFileAsset");
+		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME);
 		
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);

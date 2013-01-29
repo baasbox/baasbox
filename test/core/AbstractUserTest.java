@@ -36,17 +36,7 @@ import play.test.TestBrowser;
 
 public abstract class AbstractUserTest extends AbstractTest 
 {
-	public static final String AUTH_USER = "user1:passw1";
-	public static final String AUTH_USER_CHANGED = "user1:passw2";
-	public static final String AUTH_USER_ENC;
-	public static final String AUTH_USER_CHANGED_ENC;
 	protected static final String ROUTE_USER = "/user"; 
-	
-	static
-	{
-		AUTH_USER_ENC = TestConfig.encodeAuth(AUTH_USER);
-		AUTH_USER_CHANGED_ENC = TestConfig.encodeAuth(AUTH_USER_CHANGED);
-	}
 	
 	@Test
 	public void testRouteNotValid()
@@ -101,8 +91,7 @@ public abstract class AbstractUserTest extends AbstractTest
 				public void invoke(TestBrowser browser) 
 				{
 					// No AppCode, No Authorization
-					removeHeader(TestConfig.KEY_APPCODE);
-					removeHeader(TestConfig.KEY_AUTH);
+					removeAllHeaders();
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
 					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
 					

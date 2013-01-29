@@ -24,22 +24,22 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses
 (
 	{
-		AdminApiVersionFunctionalTest.class,
+	/*	AdminApiVersionFunctionalTest.class,
 		AdminAssetCreateTest.class,
 		AdminAssetDeleteTest.class,
 		AdminAssetGetTest.class,
 		AdminCollectionFunctionalTest.class,
 		AdminDBStatisticsFunctionalTest.class,
 		AdminRolesFunctionalTest.class,
-		AdminUserFunctionalTest.class,
-		DocumentCMDFunctionalTest.class,
-		DocumentCountFunctionalTest.class,
+		AdminUserFunctionalTest.class,*/
+		DocumentCMDFunctionalTest.class
+		/*,DocumentCountFunctionalTest.class,
 		DocumentListFunctionalTest.class,
 		UserAssetGetTest.class,
 		UserChangePasswordTest.class,
 		UserCreateTest.class,
 		UserGetCurrentTest.class,
-		UserUpdateTest.class
+		UserUpdateTest.class*/
 	}
 )
 public class BaasBoxTestSuite 

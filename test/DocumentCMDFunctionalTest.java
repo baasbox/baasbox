@@ -17,6 +17,7 @@
 
 // @author: Marco Tibuzzi
 
+import static play.test.Helpers.DELETE;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.POST;
@@ -46,8 +47,6 @@ import core.TestConfig;
 
 public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 {
-	public static final String SERVICE_ROUTE = "/document/";
-	public static final String COLLECTION_NOT_EXIST = "fakeCollection";
 	private static final String TEST_MODIFY_JSON = "\"shape\":\"round\"";
 	
 	private Object json = null;
@@ -72,7 +71,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		assertJSON(json, "color");
 		assertJSON(json, "shape");
 	}
-
+	
 	@Test
 	public void testRouteCollectionNotExists()
 	{
@@ -100,7 +99,9 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 			{
 				public void run() 
 				{
-					Result result = routeCreateDocument(getRouteAddress());
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					
+					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
 					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
 				
@@ -109,7 +110,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test successful modify
-						Result sucessModify = routeModifyDocument(getRouteAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						Result sucessModify = routeModifyDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertRoute(sucessModify, "testRouteCMDDocument MODIFY RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
@@ -132,7 +133,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test modify with non existent RID
-						Result badModify = routeModifyDocument(getRouteAddress() + "/" + URLEncoder.encode("#1:1", "ISO-8859-1"));
+						Result badModify = routeModifyDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode("#1235:1", "ISO-8859-1"));
 						assertRoute(badModify, "testRouteCMDDocument not existent RID. MODIFY RID", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -143,8 +144,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test modify with inconsistent RID
-						result = routeModifyDocument(getRouteAddress() + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertRoute(result, "testServerCMDDocument bad RID. MODIFY RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						result = routeModifyDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
+						assertRoute(result, "testServerCMDDocument bad RID. MODIFY RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID_MODIFY, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -154,7 +155,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Retrieve document in a collection
-						result = routeGetDocument(getRouteAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
@@ -165,7 +166,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					
 					try
 					{
-						// Retrieve document in a collection not existent
+						// Retrieve document in a not existent collection 
 						result = routeGetDocument(SERVICE_ROUTE + COLLECTION_NOT_EXIST + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertRoute(result, "testRouteCMDDocument not existent collection get document RID <" + sRid + ">", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
 					}
@@ -176,8 +177,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 
 					try
 					{
-						// Retrieve document in a collection with not existent RID
-						result = routeGetDocument(getRouteAddress() + "/" + URLEncoder.encode("#1:1", "ISO-8859-1"));
+						// Retrieve document in a collection using a not existent RID
+						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode("#1236:1", "ISO-8859-1"));
 						assertRoute(result, "testRouteCMDDocument get document not existent RID", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -188,8 +189,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Retrieve document in a collection with not existent RID
-						result = routeGetDocument(getRouteAddress() + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document bad RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
+						assertRoute(result, "testRouteCMDDocument get document bad RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -200,7 +201,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Mode 2 Retrieve document in a collection
 						result = routeGetDocument(SERVICE_ROUTE + URLEncoder.encode(sRid, "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document 2 RID <" + sRid + ">", Status.OK, null, true);
+						assertRoute(result, "testRouteCMDDocument get document2 RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -211,8 +212,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Mode 2 Retrieve document in a collection not existent RID
-						result = routeGetDocument(SERVICE_ROUTE + URLEncoder.encode("#1:1", "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document 2 not existent RID", Status.NOT_FOUND, null, false);
+						result = routeGetDocument(SERVICE_ROUTE + URLEncoder.encode("#1237:1", "ISO-8859-1"));
+						assertRoute(result, "testRouteCMDDocument get document2 not existent RID", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -221,9 +222,9 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 
 					try
 					{
-						// Mode 2 Retrieve document in a collection not existent RID
+						// Mode 2 Retrieve document in a collection using invalid RID
 						result = routeGetDocument(SERVICE_ROUTE + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document 2 bad RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						assertRoute(result, "testRouteCMDDocument get document2 bad RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -233,7 +234,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					continueOnFail(false);
 					
 					// Delete document
-					result = routeDeleteDocument(sRid);
+					result = routeDeleteDocument(sFakeCollection, sRid);
 					assertRoute(result, "testRouteCMDDocument DELETE RID <" + sRid + ">", Status.NO_CONTENT, null, false);
 				}
 			}
@@ -269,7 +270,9 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					serverCreateDocument(getURLAddress());
+					String sFakeCollection = new AdminCollectionFunctionalTest().serverCreateCollection();
+
+					serverCreateDocument(getURLAddress(sFakeCollection));
 					assertServer("testServerCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
 
@@ -278,7 +281,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test successful modify
-						serverModifyDocument(getURLAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertServer("testServerCMDDocument MODIFY RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
@@ -301,7 +304,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test modify with non existent RID
-						serverModifyDocument(getURLAddress() + "/" + URLEncoder.encode("#1:1", "ISO-8859-1"));
+						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("#1238:1", "ISO-8859-1"));
 						assertServer("testServerCMDDocument not existent RID. MODIFY", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -312,8 +315,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Test modify with inconsistent RID
-						serverModifyDocument(getURLAddress() + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertServer("testServerCMDDocument bad RID. MODIFY RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
+						assertServer("testServerCMDDocument bad RID. MODIFY RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID_MODIFY, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -323,7 +326,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Retrieve document in a collection
-						serverGetDocument(getURLAddress() + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						serverGetDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertServer("testServerCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
@@ -334,7 +337,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					
 					try
 					{
-						// Retrieve document in a collection not existent
+						// Retrieve document in a not existent collection
 						serverGetDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + COLLECTION_NOT_EXIST + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertServer("testServerCMDDocument not existent collection get document RID <" + sRid + ">", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
 					}
@@ -346,7 +349,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Retrieve document in a collection with not existent RID
-						serverGetDocument(getURLAddress() + "/" + URLEncoder.encode("#1:1", "ISO-8859-1"));
+						serverGetDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("#1239:1", "ISO-8859-1"));
 						assertServer("testServerCMDDocument get document not existent RID", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -357,8 +360,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Retrieve document in a collection with not existent RID
-						serverGetDocument(getURLAddress() + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertServer("testServerCMDDocument get document incosistent RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						serverGetDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("#1", "ISO-8859-1"));
+						assertServer("testServerCMDDocument get document incosistent RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -369,7 +372,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Mode 2 Retrieve document in a collection
 						serverGetDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + URLEncoder.encode(sRid, "ISO-8859-1"));
-						assertServer("testServerCMDDocument get document 2 RID <" + sRid + ">", Status.OK, null, true);
+						assertServer("testServerCMDDocument get document2 RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -380,8 +383,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					try
 					{
 						// Mode 2 Retrieve document in a collection not existent RID
-						serverGetDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + URLEncoder.encode("#1:1", "ISO-8859-1"));
-						assertServer("testServerCMDDocument get document 2 not existent RID", Status.NOT_FOUND, null, false);
+						serverGetDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + URLEncoder.encode("#1234:1", "ISO-8859-1"));
+						assertServer("testServerCMDDocument get document2 not existent RID", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -392,7 +395,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Mode 2 Retrieve document in a collection bad RID
 						serverGetDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + URLEncoder.encode("#1", "ISO-8859-1"));
-						assertServer("testServerCMDDocument get document 2 bad RID", Status.NOT_FOUND, TestConfig.MSG_BAD_RID, true);
+						assertServer("testServerCMDDocument get document2 bad RID", Status.BAD_REQUEST, TestConfig.MSG_BAD_RID, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -402,7 +405,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					continueOnFail(false);
 
 					// Delete created document
-					serverDeleteDocument(sRid);
+					serverDeleteDocument(sFakeCollection, sRid);
 					assertServer("testServerCMDDocument DELETE RID <" + sRid + ">", Status.NO_CONTENT, null, false);
 				}
 	        }
@@ -446,6 +449,43 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);		
 	}
 
+	protected Result routeDeleteDocument(String sCollectionName, String sRid)
+	{
+		Result result = null;
+		try
+		{
+			FakeRequest request = new FakeRequest(DELETE, getRouteAddress(sCollectionName) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			result = routeAndCall(request);
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Unexcpeted exception. " + ex.getMessage());
+		}
+		
+		return result;
+	}
+	
+	protected void serverDeleteDocument(String sCollectionName, String sRid)
+	{
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+		try
+		{
+			httpRequest
+			( 
+		 		getURLAddress(sCollectionName) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"),
+				DELETE
+			);
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Unexcpeted exception. " + ex.getMessage());
+		}
+	}
+	
 	private String getRid()
 	{
 		String sRet = null;
@@ -461,17 +501,5 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		
 		return sRet;
-	}
-	
-	public static void main(String[] asArgs)
-	{
-		try
-		{
-			System.out.println(java.net.URLEncoder.encode("#1", "ISO-8859-1"));
-		}
-		catch (Exception ex)
-		{
-			ex.printStackTrace();
-		}
 	}
 }

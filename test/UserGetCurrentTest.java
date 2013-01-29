@@ -74,7 +74,7 @@ public class UserGetCurrentTest extends AbstractUserTest
 					
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "RouteOK BassBox user", Status.OK, null, true);
+					assertRoute(result, "RouteOK BaasBox user", Status.OK, null, true);
 				}
 			}
 		);		

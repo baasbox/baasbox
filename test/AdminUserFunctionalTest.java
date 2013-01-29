@@ -19,18 +19,20 @@
 
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.util.UUID;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Assert;
+import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -43,8 +45,8 @@ import core.TestConfig;
 
 public class AdminUserFunctionalTest extends AbstractAdminTest
 {
+	private static final String USER_TEST = "user";
 	private static final String USER_NOT_PRESENT = "userNotPresent";
-	private static final String USER_TEST = "user1";
 	
 	@Override
 	public String getRouteAddress()
@@ -64,10 +66,15 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 		Object obj = toJSON(sContent);
 		assertJSON(obj, "user");
 	}
-	
-	public void beforeTest()
+
+	protected void assertCheckUserUpdate(String sContent, String sUserName)
 	{
-		// @Todo create test user
+		Object obj = toJSON(sContent);
+		assertJSON(obj, "user");
+		// Change role check
+		assertJSONString(obj, "\"name\":\"registereduser\"");
+		// Change attribute check
+		assertJSONString(obj, "\"quote\":\"I am very happy!\"");
 	}
 	
 	@Test
@@ -92,7 +99,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	}
 
 	@Test
-	public void testRouteUpdateUserOK()
+	public void testRouteCreateAndUpdateUser()
 	{
 		running
 		(
@@ -101,17 +108,32 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(PUT, getRouteAddress() + "/" + USER_TEST);
+					String sFakeUser = routeCreateNewUser();
+					
+					// Update user
+					FakeRequest request = new FakeRequest(PUT, getRouteAddress() + "/" + sFakeUser);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withJsonBody(getPayload("/adminUserUpdatePayload.json"), PUT);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testRouteUpdateUserOK", Status.OK, null, false);
+					assertRoute(result, "testRouteCreateAndUpdateUser: Update user.", Status.OK, null, false);
+					
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					
+					// Updates check
+					request = new FakeRequest(GET, "/user");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(sFakeUser, sPwd));
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteCreateAndUpdateUser: Check updated user.", Status.OK, null, false);
+
+					assertCheckUserUpdate(contentAsString(result), sFakeUser);
 				}
 			}
 		);		
 	}
-	
+
 	@Test
 	public void testServerUpdateNotExistentUser()
 	{
@@ -139,7 +161,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	}
 	
 	@Test 
-	public void testServerUpdateUserOK()
+	public void testServerCreateAndUpdateUser()
 	{
 		running
 		(
@@ -149,31 +171,30 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeUser = serverCreateNewUser();
+					
+					// Update user
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					(
-						getURLAddress() + "/" + USER_TEST,
+						getURLAddress() + "/" + sFakeUser,
 						PUT,
 						"/adminUserUpdatePayload.json"
 					);
-					assertServer("testServerUpdateUserOK", Status.OK, null, false);
+					assertServer("testServerCreateAndUpdateUser: Update user.", Status.OK, null, false);
+					
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
 					
 					// Updates check
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(sFakeUser, sPwd));
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress(), GET);
-					assertServer("testServerUpdateUserOK check", Status.OK, null, false);
-					Object obj = toJSON(getResponse());
-					assertJSON(obj, "user");
-					JSONObject jElement = jsonFindElementByValue((JSONArray)obj, "user", "name", USER_TEST);					
-					Assert.assertNotNull("Test user not found", jElement);
-					// Change role check
-					assertJSONString(jElement, "\"name\":\"registereduser\"");
-					// Change attribute check
-					assertJSONString(jElement, "\"quote\":\"I am very happy!\"");
+					httpRequest(TestConfig.SERVER_URL + "/user", GET);
+					assertServer("testServerCreateAndUpdateUser: Check updated user.", Status.OK, null, false);
+					
+					assertCheckUserUpdate(getResponse(), sFakeUser);
 				}
 	        }
 		);
@@ -190,12 +211,14 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeUser = serverCreateNewUser();
+					
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					(
-						getURLAddress() + "/" + USER_TEST,
+						getURLAddress() + "/" + sFakeUser,
 						PUT,
 						"/adminUserUpdateNoRolePayload.json"
 					);
@@ -216,12 +239,14 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					String sFakeUser = serverCreateNewUser();
+					
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					httpRequest
 					(
-						getURLAddress() + "/" + USER_TEST,
+						getURLAddress() + "/" + sFakeUser,
 						PUT,
 						"/adminUserUpdateNotExistentRole.json"
 					);
@@ -231,8 +256,41 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 		);
 	}
 	
-	public void afterTest()
+	public String routeCreateNewUser()
 	{
-		// @Todo remove test user
+		String sFakeUser = USER_TEST + UUID.randomUUID();
+		// Prepare test user
+		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+		
+		// Create user
+		FakeRequest request = new FakeRequest(POST, getRouteAddress());
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		request = request.withJsonBody(node, POST);
+		Result result = routeAndCall(request);
+		assertRoute(result, "Create user.", Status.CREATED, null, false);
+
+		return sFakeUser;
+	}
+	
+	public String serverCreateNewUser()
+	{
+		String sFakeUser = USER_TEST + UUID.randomUUID();
+		// Prepare test user
+		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+
+		// Create user
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+		httpRequest
+		(
+			getURLAddress(),
+			POST,
+			node
+		);
+		assertServer("Create user.", Status.CREATED, null, false);
+
+		return sFakeUser;
 	}
 }
