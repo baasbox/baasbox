@@ -472,9 +472,9 @@ $('#assetForm').submit(function() {
 		$("#divAssetMeta").removeClass("error");
 
 	var ext = $('#fuAsset').val().split('.').pop().toLowerCase();
-	if($.inArray(ext, ['gif','png','jpg','jpeg','tif','eps','pdf','doc','docx','xls','xlsx','ppt','pptx','txt','']) == -1) {
+	/*if($.inArray(ext, ['gif','png','jpg','jpeg','tif','eps','pdf','doc','docx','xls','xlsx','ppt','pptx','txt','']) == -1) {
 		errorMessage += "Invalid File Extension<br/>"
-	}		
+	}*/		
 		
 	if(errorMessage != "")
 	{
