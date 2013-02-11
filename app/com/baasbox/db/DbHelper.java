@@ -199,7 +199,7 @@ public class DbHelper {
 		//the baasbox default user used to connect to the DB like anonymous user
 		String username=BBConfiguration.getBaasBoxUsername();
 		String password=BBConfiguration.getBaasBoxPassword();
-		UserService.signUp(username, password, null,null,null,null);
+		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
 		Logger.trace("Method End");
 	}
 	

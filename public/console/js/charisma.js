@@ -103,15 +103,10 @@ function docReady(){
 	$('[rel="tooltip"],[data-rel="tooltip"]').tooltip({"placement":"bottom",delay: { show: 400, hide: 200 }});
 
 	//auto grow textarea
-	$('textarea.autogrow').autogrow();
+	$('.autogrow').autogrow();
 
 	//popover
 	$('[rel="popover"],[data-rel="popover"]').popover();
-
-	//file manager
-	var elf = $('.file-manager').elfinder({
-		url : 'misc/elfinder-connector/connector.php'  // connector URL (REQUIRED)
-	}).elfinder('instance');
 
 	//iOS / iPhone style toggle switch
 	$('.iphone-toggle').iphoneStyle();
@@ -121,12 +116,6 @@ function docReady(){
 		score : 4 //default stars
 	});
 
-	//uploadify - multiple uploads
-	$('#file_upload').uploadify({
-		'swf'      : 'misc/uploadify.swf',
-		'uploader' : 'misc/uploadify.php'
-		// Put your options here
-	});
 
 	//gallery controlls container animation
 	$('ul.gallery li').hover(function(){
