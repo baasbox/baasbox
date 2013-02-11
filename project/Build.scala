@@ -9,7 +9,7 @@ object ApplicationBuild extends Build {
 
     val appDependencies = Seq(
         
-    			
+    			"commons-io" % "commons-io" % "2.4",
     			"com.wordnik" %% "swagger-play2" % "1.2.0",
     			"com.wordnik" %% "swagger-play2-utils" % "1.2.0"
     )
