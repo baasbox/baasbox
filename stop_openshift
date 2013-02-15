@@ -1,0 +1,6 @@
+#!/bin/bash
+# Put this file into the directory $OPENSHIFT_REPO_DIR/.openshift/action_hooks/
+# Rename it as "stop" and give to it the eXecution permission (chmod +x ./stop)
+
+kill `ps -ef | grep java | grep -v grep | awk '{ print $2 }'` > /dev/null 2>&1
+exit 0
