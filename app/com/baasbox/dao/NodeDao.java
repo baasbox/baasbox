@@ -222,13 +222,13 @@ public abstract class NodeDao  {
 		Logger.trace("Method Start");
 		//retrieve the vertex associated to this node
 		try{
-			db.begin(TXTYPE.OPTIMISTIC);
-			ODocument vertex = (ODocument)((ODocument)db.load(rid)).field(CLASS_VERTEX_NAME);
+			DbHelper.requestTransaction();
+			ODocument vertex = (ODocument)((ODocument)db.load(rid)).field(FIELD_LINK_TO_VERTEX);
 			db.removeVertex(vertex);
 			db.delete(rid);
-			db.commit();
+			DbHelper.commitTransaction();
 		}catch (Throwable e){
-			db.rollback();
+			DbHelper.rollbackTransaction();
 			throw e;
 		}
 		Logger.trace("Method End");

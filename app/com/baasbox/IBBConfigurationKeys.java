@@ -21,6 +21,7 @@ public interface IBBConfigurationKeys {
 	public static final String ADMIN_PASSWORD = "orient.baasbox.admin_password";
 	public static final String ANONYMOUS_USERNAME = "orient.baasbox.user";
 	public static final String ANONYMOUS_PASSWORD = "orient.baasbox.password";
+	public static final String DB_PATH = "orient.baasbox.path";
 	public static final String REALM = "authorization.basic.realm";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";

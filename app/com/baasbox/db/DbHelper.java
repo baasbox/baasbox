@@ -119,7 +119,7 @@ public class DbHelper {
 	}
 
 	public static OGraphDatabase open(String username,String password){
-		OGraphDatabase db=new OGraphDatabase("local:db/baasbox").open(username, password);
+		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username, password);
 		HooksManager.registerAll(db);
 		return db;
 	}

@@ -49,7 +49,7 @@ public class Application extends Controller {
   public static Result test() {
 		//create the new role for the friends
 	  Logger.trace("Method Start");
-	  	OGraphDatabase db=new OGraphDatabase("local:db/baasbox").open("admin", "admin");
+	  	OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(IBBConfigurationKeys.ADMIN_USERNAME, IBBConfigurationKeys.ADMIN_PASSWORD);
 		HooksManager.registerAll(db);
 		
 		db.begin(TXTYPE.OPTIMISTIC);

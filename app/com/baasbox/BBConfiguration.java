@@ -36,7 +36,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static String getDBDir(){
-		return "db/baasbox";
+		return configuration.getString(DB_PATH);
 	}
 
 }

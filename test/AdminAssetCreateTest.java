@@ -91,6 +91,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 		);		
 	}
 	
+	
 	@Test
 	public void testRouteCreateSimpleAsset()
 	{
@@ -128,6 +129,8 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 		);		
 	}
 	
+	
+	
 	@Test
 	public void testServerCreateSimpleAsset()
 	{
@@ -163,6 +166,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 		);
 	}
 	
+	
 	@Test
 	public void testServerCreateFileAsset()
 	{
@@ -177,13 +181,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 					serverCreateFileAsset();
 
 					continueOnFail(true);
-/*
-					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					setMultipartFormData();
-					httpRequest(getURLAddress(), getMethod(), mParametersFile);
-					assertServer("testServerCreateFileAsset. Already extists", Status.BAD_REQUEST, TestConfig.MSG_ASSET_ALREADY_EXISTS, true);
-*/					
+				
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
