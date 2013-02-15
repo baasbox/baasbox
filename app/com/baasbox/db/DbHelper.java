@@ -200,6 +200,10 @@ public class DbHelper {
 		String username=BBConfiguration.getBaasBoxUsername();
 		String password=BBConfiguration.getBaasBoxPassword();
 		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
+		OGraphDatabase db = DbHelper.getConnection();
+		OUser admin=db.getMetadata().getSecurity().getUser("admin");
+		admin.setPassword(BBConfiguration.configuration.getString(BBConfiguration.ADMIN_PASSWORD));
+		admin.save();
 		Logger.trace("Method End");
 	}
 	
