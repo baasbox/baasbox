@@ -322,7 +322,7 @@
 .icon {background-image : url('../img/opa-icons-gray16.png') ;background-repeat : no-repeat ;display : inline-block ;height : 16px ;vertical-align : text-top ;width : 16px ;}
 .icon32.icon-black,.icons-black .icon32,.icon32.icon-darkgray:hover {background-image : url('../img/opa-icons-black32.png') !important;}
 .icon32.icon-blue,.icons-blue .icon32 {background-image : url('../img/opa-icons-blue32.png') ;}
-.icon32.icon-color,.icons-color .icon32,.active .icon32 {background-image : url('../img/opa-icons-color32.png') ;}
+.icon32.icon-color,.icons-color .icon32,.active .icon32 {background-image : url('../img/opa-icons-color32.png') ; margin-top: -9px;}
 .icon32.icon-green,.icons-green .icon32 {background-image : url('../img/opa-icons-green32.png') ;}
 .icon32.icon-orange,.icons-orange .icon32 {background-image : url('../img/opa-icons-orange32.png') ;}
 .icon32.icon-red,.icons-red .icon32 {background-image : url('../img/opa-icons-red32.png') ;}
