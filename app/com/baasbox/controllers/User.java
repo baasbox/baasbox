@@ -77,8 +77,8 @@ public class User extends Controller {
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.debug("signUp bodyJson: " + bodyJson);
-	
+		  Logger.trace("signUp bodyJson: " + bodyJson);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  //check and validate input
 		  if (!bodyJson.has("username"))
 			  return badRequest("The 'username' field is missing");
@@ -113,7 +113,8 @@ public class User extends Controller {
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.debug("updateProfile bodyJson: " + bodyJson);
+		  Logger.trace("updateProfile bodyJson: " + bodyJson);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  
 		  //extract the profile	 fields
 		  JsonNode nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
@@ -162,7 +163,8 @@ public class User extends Controller {
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.debug("changePassword bodyJson: " + bodyJson);
+		  Logger.trace("changePassword bodyJson: " + bodyJson);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  
 		  //check and validate input
 		  if (!bodyJson.has("old"))

@@ -183,6 +183,7 @@ public class Document extends Controller {
 		  JsonNode bodyJson= body.asJson();
 		  Logger.trace("creating document in collection: " + collection);
 		  Logger.trace("bodyJson: " + bodyJson);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  ODocument document;
 		  try{
 			  document=DocumentService.create(collection, bodyJson); 
@@ -205,6 +206,7 @@ public class Document extends Controller {
 		  JsonNode bodyJson= body.asJson();
 		  Logger.trace("updateDocument collectionName: " + collectionName);
 		  Logger.trace("updateDocument rid: " + rid);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  ODocument document=null;
 		  try{
 			  document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson); 
