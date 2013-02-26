@@ -5,7 +5,7 @@ import PlayProject._
 object ApplicationBuild extends Build {
 
     val appName         = "BaasBox"
-    val appVersion      = "0.5.4-SNAPSHOT"
+    val appVersion      = "0.5.5-SNAPSHOT"
 
     val appDependencies = Seq(
         
