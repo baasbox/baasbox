@@ -148,7 +148,7 @@ border-radius:3px 3px 0 0;
 height:12px;
 min-height:12px;
 margin-bottom: 0;
-cursor:move;
+/*cursor:move;*/
 font-weight:bold;
 font-size:16px;
 background: -moz-linear-gradient(top,  rgba(255,255,255,0) 0%, rgba(0,0,0,0.1) 100%);
