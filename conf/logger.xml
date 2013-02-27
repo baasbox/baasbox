@@ -1,8 +1,9 @@
 <configuration>
 
   <!-- returns package.class.method (line number), used for debug level -->
+  <!-- with Play 2.1 logback does not load che custom converter 
   <conversionRule conversionWord="classmethod" converterClass="com.baasbox.log.ClassMethodConverter" />
-  
+ -->  
   <evaluator name="SHOW_CLASS_AND_METHOD_FOR_DEBUG_AND_ERROR_LEVEL">
     <expression>level==ERROR || level==DEBUG</expression>
   </evaluator>
@@ -46,7 +47,8 @@
 			    </filter> 
 			     <file>${application.home}/logs/application.log</file>
 			     <encoder>
-			       <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern>
+			       <!-- <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern> -->
+			     	<pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t  %message %n%rootException</pattern>
 			     </encoder>
 		   </appender>
 		
@@ -59,7 +61,8 @@
 		      <OnMatch>DENY</OnMatch>
 		    </filter> 
 		    <encoder>
-		      <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern>
+		      <!-- <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern> -->
+		    	<pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t  %message %n%rootException</pattern> 
 		    </encoder>
 		  </appender>
     

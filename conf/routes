@@ -3,13 +3,13 @@
 # ~~~~
 
 # Swagger - Root Resources Listing
-GET     /api-docs.json               controllers.ApiHelpController.getResources
+# GET     /api-docs.json               controllers.ApiHelpController.getResources
 
-GET     /api-docs.json/admin         controllers.ApiHelpController.getResource(path = "/api-docs.json/admin")
-GET     /admin.json/health           controllers.HealthController.getHealth
-GET     /admin.json/ping             controllers.HealthController.ping
+# GET     /api-docs.json/admin         controllers.ApiHelpController.getResource(path = "/api-docs.json/admin")
+# GET     /admin.json/health           controllers.HealthController.getHealth
+# GET     /admin.json/ping             controllers.HealthController.ping
 
-GET     /api-docs.json/user           controllers.ApiHelpController.getResource(path = "/api-docs.json/user")
+# GET     /api-docs.json/user           controllers.ApiHelpController.getResource(path = "/api-docs.json/user")
 
 # Admin Panel Static Asset
 GET 	/console						controllers.Default.redirect(to = "/console/")

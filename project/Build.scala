@@ -1,6 +1,6 @@
 import sbt._
 import Keys._
-import PlayProject._
+import play.Project._
 
 object ApplicationBuild extends Build {
 
@@ -8,15 +8,17 @@ object ApplicationBuild extends Build {
     val appVersion      = "0.5.5-SNAPSHOT"
 
     val appDependencies = Seq(
-        
+    			javaCore,filters,
     			"commons-io" % "commons-io" % "2.4",
-    			"com.wordnik" %% "swagger-play2" % "1.2.0",
-    			"com.wordnik" %% "swagger-play2-utils" % "1.2.0"
+    			"commons-lang" % "commons-lang" % "2.6"
+    		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
+    		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT"
     )
 
-    val main = PlayProject(appName, appVersion, appDependencies, mainLang = JAVA).settings(
+    val main = play.Project(appName, appVersion, appDependencies).settings(
       resolvers := Seq(
-          "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases"
+          "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
+          "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
     ))
 
 }

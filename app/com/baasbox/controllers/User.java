@@ -19,8 +19,6 @@ package com.baasbox.controllers;
 import java.io.IOException;
 import java.util.List;
 
-import javax.ws.rs.Path;
-
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
 
@@ -41,13 +39,10 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
-import com.baasbox.util.JSONFormats.Formats;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiOperation;
 
 
-@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
+//@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
 	private static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
@@ -58,9 +53,11 @@ public class User extends Controller {
 		response().setContentType("application/json");
 		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
 	}
-		
+
+	/*
 	  @Path("/{id}")
 	  @ApiOperation(value = "Get info about current user", notes = "", httpMethod = "GET")
+	  */
 	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})	
 	  public static Result getCurrentUser() throws SqlInjectionException{
 		  Logger.trace("Method Start");
@@ -69,6 +66,7 @@ public class User extends Controller {
 		  Logger.trace("Method End");
 		  return ok(result);
 	  }
+
 
 	  @With ({CheckAPPCode.class, AdminLogin.class, ConnectToDB.class})
 	  @BodyParser.Of(BodyParser.Json.class)
@@ -105,7 +103,7 @@ public class User extends Controller {
 		  return created();
 	  }
 	  
- 
+
 	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
@@ -155,6 +153,7 @@ public class User extends Controller {
 	  public static Result resetPasswordStep2(){
 		  return status(NOT_IMPLEMENTED);
 	  }
+	
 	  
 	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  @BodyParser.Of(BodyParser.Json.class)
