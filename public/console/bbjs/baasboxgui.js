@@ -63,7 +63,6 @@ $(".btn-action").live("click", function() {
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
 
-//	alert(action +" "+ actionType +" "+ parameters);
 	
 	switch (action)	{
 		case "insert":
@@ -516,10 +515,22 @@ function make_base_auth(user, password) {
 	}
 
 function setup(){
+    
 	setupAjax();
 	setupMenu();
 	setupTables();
 	setupSelects();
+
+	$('.logout').click(function(e){
+		sessionStorage.username="";
+		sessionStorage.password="";
+		sessionStorage.appcode="";
+		location.reload();
+	});
+	
+	if (sessionStorage.username && sessionStorage.username!="") {
+		tryToLogin();
+	}	
 }
 
 function getActionButton(action, actionType,parameters){
@@ -845,14 +856,8 @@ function CollectionsController($scope){
 }
 function DocumentsController($scope){
 }
-function LoginController($scope) {
-	  $scope.login = function() {
-			var username=$scope.username;
-			var password=$scope.password;
-			var appCode=$scope.appcode;
-			sessionStorage.username=username;
-			sessionStorage.password=password;
-			sessionStorage.appcode=appCode;
+
+	  function tryToLogin(){
 			BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 				success: function(data) {
 					         var scope=$("#loggedIn").scope();
@@ -865,8 +870,18 @@ function LoginController($scope) {
 				error: function() {
 					$("#errorLogin").removeClass("hide");
 				}
+			});	 //ajax
+	  }//tryToLogin	
 
-			});
+function LoginController($scope) {
+	  $scope.login = function() {
+			var username=$scope.username;
+			var password=$scope.password;
+			var appCode=$scope.appcode;
+			sessionStorage.username=username;
+			sessionStorage.password=password;
+			sessionStorage.appcode=appCode;
+			tryToLogin();
 	  }; //login
 }	//LoginController
 
