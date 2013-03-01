@@ -522,13 +522,12 @@ function setup(){
 	setupSelects();
 
 	$('.logout').click(function(e){
-		sessionStorage.username="";
-		sessionStorage.password="";
+		sessionStorage.up="";
 		sessionStorage.appcode="";
 		location.reload();
 	});
 	
-	if (sessionStorage.username && sessionStorage.username!="") {
+	if (sessionStorage.up && sessionStorage.up!="") {
 		tryToLogin();
 	}	
 }
@@ -740,7 +739,7 @@ function setupSelects(){
 function setupAjax(){
 	$.ajaxSetup({
 	    beforeSend: function (xhr){ 
-	        xhr.setRequestHeader('Authorization', make_base_auth(sessionStorage.username, sessionStorage.password)); 
+	        xhr.setRequestHeader('Authorization', sessionStorage.up); 
 	        xhr.setRequestHeader('X-BAASBOX-APPCODE', sessionStorage.appcode);
 	    }
 	});
@@ -878,8 +877,7 @@ function LoginController($scope) {
 			var username=$scope.username;
 			var password=$scope.password;
 			var appCode=$scope.appcode;
-			sessionStorage.username=username;
-			sessionStorage.password=password;
+			sessionStorage.up=make_base_auth(username, password);
 			sessionStorage.appcode=appCode;
 			tryToLogin();
 	  }; //login
