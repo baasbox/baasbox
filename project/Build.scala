@@ -19,6 +19,6 @@ object ApplicationBuild extends Build {
       resolvers := Seq(
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-    ))
+    ),requireJs += "main.js")
 
 }

@@ -25,11 +25,17 @@ import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
 import com.baasbox.dao.PermissionsHelper;
+import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -56,8 +62,11 @@ public class DocumentService {
 	 * @param bodyJson
 	 * @return the updated document, null if the document is not found or belongs to another collection
 	 * @throws InvalidCollectionException
+	 * @throws DocumentNotFoundException 
+	 * @throws IllegalArgumentException 
+	 * @throws ODatabaseException 
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException {
+	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
@@ -67,7 +76,7 @@ public class DocumentService {
 	}//update
 
 	
-	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException {
+	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
 		return doc;
@@ -106,5 +115,21 @@ public class DocumentService {
 		} catch (InvalidModelException e) {
 			throw new InvalidCollectionException("The document " + rid + " does no belong to the collection " + collectionName);
 		}
+	}
+	
+	public static ODocument grantPermission(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
+		OUser user=UserService.getOUserByUsername(username);
+		if (user==null) throw new UserNotFoundException(username);
+		ODocument doc = get(collectionName, rid);
+		if (doc==null) throw new DocumentNotFoundException(rid);
+		return PermissionsHelper.grant(doc, permission, user);
+	}
+	
+	public static ODocument revokePermission(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
+		OUser user=UserService.getOUserByUsername(username);
+		if (user==null) throw new UserNotFoundException(username);
+		ODocument doc = get(collectionName, rid);
+		if (doc==null) throw new DocumentNotFoundException(rid);
+		return PermissionsHelper.revoke(doc, permission, user);
 	}
 }

@@ -26,7 +26,7 @@ public class HooksManager {
 	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
 		db.registerHook(Audit.getIstance());
-		db.registerHook(HidePassword.getIstance());
+		//db.registerHook(HidePassword.getIstance());
 		Logger.trace("Method End");
 	}
 }

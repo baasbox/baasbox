@@ -36,13 +36,17 @@ PUT		/user/password				com.baasbox.controllers.User.changePassword()
 GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: String)
 
 #Storage Actions
-GET		 /document/%23:rid			com.baasbox.controllers.Document.getDocumentByRid(rid: String)
-POST	 /document/:collection	 	com.baasbox.controllers.Document.createDocument(collection: String)
-GET		 /document/:collection		com.baasbox.controllers.Document.getDocuments(collection: String)
-PUT 	 /document/:collection/:rid	com.baasbox.controllers.Document.updateDocument(collection: String, rid: String)
-GET 	 /document/:collection/count  com.baasbox.controllers.Document.getCount(collection: String)
-GET		 /document/:collection/:rid	com.baasbox.controllers.Document.getDocument(collection: String, rid: String)
-DELETE	 /document/:collection/:rid	com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String)
+GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
+POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
+GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
+PUT 	 /document/:collection/:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String)
+GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
+GET		 /document/:collection/:rid					com.baasbox.controllers.Document.getDocument(collection: String, rid: String)
+DELETE	 /document/:collection/:rid					com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String)
+#grant and revoke permissions
+PUT		/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String)
+DELETE	/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String)
+
 
 
 #Admin actions

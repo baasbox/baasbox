@@ -27,8 +27,10 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.AssetNotFoundException;
+import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -61,7 +63,7 @@ public class AssetService {
 		return doc;
 	}
 	
-	public static ODocument get(String rid) throws SqlInjectionException, IllegalArgumentException, InvalidModelException {
+	public static ODocument get(String rid) throws SqlInjectionException, IllegalArgumentException, InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		AssetDao dao = AssetDao.getInstance();
 		return dao.get(rid);
 	}

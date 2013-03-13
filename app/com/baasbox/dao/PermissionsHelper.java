@@ -16,13 +16,14 @@
  */
 package com.baasbox.dao;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import play.Logger;
 
-import com.baasbox.db.DbHelper;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -51,7 +52,15 @@ public class PermissionsHelper {
 	    }
 	    
 	    private String name;
+	    
 	}
+	
+	public static final Map<String, Permissions> permissionsFromString = ImmutableMap.of(
+	        "read", Permissions.ALLOW_READ,
+	        "update", Permissions.ALLOW_UPDATE,
+	        "delete",Permissions.ALLOW_DELETE,
+	        "all",Permissions.ALLOW
+	); 
 	
 	public static ODocument grantRead(ODocument document,ORole role){
 		return grant(document,Permissions.ALLOW_READ,role);	
