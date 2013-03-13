@@ -41,6 +41,7 @@ import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.DocumentNotFoundException;
+import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
@@ -253,7 +254,7 @@ public class Document extends Controller {
 		Logger.trace("grant rid: " + rid);
 		Logger.trace("grant username: " + username);
 		Logger.trace("grant action: " + action);
-		Result res=grantOrRevoke(collectionName,rid,username,action,true);
+		Result res=grantOrRevokeToUser(collectionName,rid,username,action,true);
 		Logger.trace("Method End");
 		return res;
 	  }
@@ -265,18 +266,42 @@ public class Document extends Controller {
 			Logger.trace("grant rid: " + rid);
 			Logger.trace("grant username: " + username);
 			Logger.trace("grant action: " + action);	  
-			Result res=grantOrRevoke(collectionName,rid,username,action,false);
+			Result res=grantOrRevokeToUser(collectionName,rid,username,action,false);
 			Logger.trace("Method End");
 			return res;
 	  }
-
-	private static Result grantOrRevoke(String collectionName, String rid,
+	  
+	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
+	  public static Result grantToRole(String collectionName, String rid, String rolename, String action){
+		Logger.trace("Method Start");
+		Logger.trace("grant collectionName: " + collectionName);
+		Logger.trace("grant rid: " + rid);
+		Logger.trace("grant rolename: " + rolename);
+		Logger.trace("grant action: " + action);
+		Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,true);
+		Logger.trace("Method End");
+		return res;
+	  }
+	  
+	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
+	  public static Result revokeToRole(String collectionName, String rid, String rolename, String action){
+			Logger.trace("Method Start");
+			Logger.trace("grant collectionName: " + collectionName);
+			Logger.trace("grant rid: " + rid);
+			Logger.trace("grant rolename: " + rolename);
+			Logger.trace("grant action: " + action);	  
+			Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,false);
+			Logger.trace("Method End");
+			return res;
+	  }
+	  
+	private static Result grantOrRevokeToUser(String collectionName, String rid,
 			String username, String action, boolean grant) {
 		try {
 			Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
 			if (permission==null) return badRequest(action + " is not a valid action");
-			if (grant) DocumentService.grantPermission(collectionName, rid, permission, username);
-			else       DocumentService.revokePermission(collectionName, rid, permission, username);
+			if (grant) DocumentService.grantPermissionToUser(collectionName, rid, permission, username);
+			else       DocumentService.revokePermissionToUser(collectionName, rid, permission, username);
 		} catch (IllegalArgumentException e) {
 			return badRequest(e.getMessage());
 		} catch (UserNotFoundException e) {
@@ -286,7 +311,7 @@ public class Document extends Controller {
 		} catch (InvalidModelException e) {
 			return badRequest(rid + " does not belong to the " + collectionName + " collection");
 		} catch (DocumentNotFoundException e) {
-			return notFound("document " + rid + " not found. Hint: has " + username + " the correct rights on it?");
+			return notFound("document " + rid + " not found. Hint: has the user the correct rights on it?");
 		} catch (OSecurityAccessException e ){
 			return Results.forbidden();
 		} catch (OSecurityException e ){
@@ -295,6 +320,32 @@ public class Document extends Controller {
 			return internalServerError(e.getMessage());
 		}
 		return ok();
-	}
+	}//grantOrRevokeToUser
 
+	private static Result grantOrRevokeToRole(String collectionName, String rid,
+			String rolename, String action, boolean grant) {
+		try {
+			Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
+			if (permission==null) return badRequest(action + " is not a valid action");
+			if (grant) DocumentService.grantPermissionToRole(collectionName, rid, permission, rolename);
+			else       DocumentService.revokePermissionToRole(collectionName, rid, permission, rolename);
+		} catch (IllegalArgumentException e) {
+			return badRequest(e.getMessage());
+		} catch (RoleNotFoundException e) {
+			return notFound("role " + rolename + " not found");
+		} catch (InvalidCollectionException e) {
+			return notFound("collection " + collectionName + " not found");
+		} catch (InvalidModelException e) {
+			return badRequest(rid + " does not belong to the " + collectionName + " collection");
+		} catch (DocumentNotFoundException e) {
+			return notFound("document " + rid + " not found. Hint: has the user the correct rights on it?");
+		} catch (OSecurityAccessException e ){
+			return Results.forbidden();
+		} catch (OSecurityException e ){
+			return Results.forbidden();				
+		} catch (Throwable e ){
+			return internalServerError(e.getMessage());
+		}
+		return ok();
+	}//grantOrRevokeToRole
 }

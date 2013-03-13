@@ -46,6 +46,8 @@ DELETE	 /document/:collection/:rid					com.baasbox.controllers.Document.deleteDo
 #grant and revoke permissions
 PUT		/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String)
 DELETE	/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String)
+PUT		/document/:collection/:rid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, rid:String, rolename:String, action:String)
+DELETE	/document/:collection/:rid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, rid:String, rolename:String, action:String)
 
 
 

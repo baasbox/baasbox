@@ -30,11 +30,13 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.DocumentNotFoundException;
+import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -117,7 +119,7 @@ public class DocumentService {
 		}
 	}
 	
-	public static ODocument grantPermission(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
+	public static ODocument grantPermissionToUser(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
 		OUser user=UserService.getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException(username);
 		ODocument doc = get(collectionName, rid);
@@ -125,11 +127,27 @@ public class DocumentService {
 		return PermissionsHelper.grant(doc, permission, user);
 	}
 	
-	public static ODocument revokePermission(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
+	public static ODocument revokePermissionToUser(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
 		OUser user=UserService.getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException(username);
 		ODocument doc = get(collectionName, rid);
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.revoke(doc, permission, user);
+	}
+	
+	public static ODocument grantPermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws RoleNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
+		ORole role=RoleDao.getRole(rolename);
+		if (role==null) throw new RoleNotFoundException(rolename);
+		ODocument doc = get(collectionName, rid);
+		if (doc==null) throw new DocumentNotFoundException(rid);
+		return PermissionsHelper.grant(doc, permission, role);
+	}
+	
+	public static ODocument revokePermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws  IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, RoleNotFoundException {
+		ORole role=RoleDao.getRole(rolename);
+		if (role==null) throw new RoleNotFoundException(rolename);
+		ODocument doc = get(collectionName, rid);
+		if (doc==null) throw new DocumentNotFoundException(rid);
+		return PermissionsHelper.revoke(doc, permission, role);
 	}
 }
