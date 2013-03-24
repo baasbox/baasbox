@@ -26,6 +26,7 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;

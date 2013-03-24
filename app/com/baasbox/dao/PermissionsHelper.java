@@ -16,13 +16,13 @@
  */
 package com.baasbox.dao;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import play.Logger;
 
+import com.baasbox.enumerations.Permissions;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,26 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
 public class PermissionsHelper {
-	public enum Permissions {
-		ALLOW ("_allow"),
-	    ALLOW_READ ("_allowRead"),
-	    ALLOW_UPDATE ("_allowUpdate"),
-	    ALLOW_DELETE ("_allowDelete"),
-		FULL_ACCESS ("_allow");
-	    
-	    private Permissions(String name)
-	    {
-	        this.name = name;
-	    }
-	    
-	    public String toString()
-	    {
-	        return name;
-	    }
-	    
-	    private String name;
-	    
-	}
+
 	
 	public static final Map<String, Permissions> permissionsFromString = ImmutableMap.of(
 	        "read", Permissions.ALLOW_READ,

@@ -33,6 +33,8 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
+import com.baasbox.configuration.PasswordRecovery;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.BasicAuthHeader;
 import com.baasbox.controllers.actions.filters.CheckAPPCode;
 import com.baasbox.controllers.actions.filters.CheckAdminRole;
@@ -204,6 +206,7 @@ public class Admin extends Controller {
 		  return created();
 	  }//createUser
 	  
+	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
 	  public static Result updateUser(String username){
 		  Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
@@ -222,7 +225,7 @@ public class Admin extends Controller {
 		  String role=(String)  bodyJson.findValuesAsText("role").get(0);
 		  
 		  
-		  //try to signup new user
+		  //try to update new user
 		  try {
 			  UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		  }catch(InvalidParameterException e){
@@ -241,7 +244,7 @@ public class Admin extends Controller {
 		  }
 		  Logger.trace("Method End");
 		  return ok();
-	  }//createUser
+	  }//updateUser
 
 	  
 	  public static Result dropUser(){
@@ -260,7 +263,18 @@ public class Admin extends Controller {
 		  return status(NOT_IMPLEMENTED);
 	  }
 
-
+	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
+	  public static Result dumpConfiguration(String returnType){
+		  String dump="";
+		  if (returnType.equals("txt")) {
+			 dump= PropertiesConfigurationHelper.dumpConfiguration();
+			 response().setContentType("application/text");
+		 }else if (returnType.equals("json")){
+			 dump = PropertiesConfigurationHelper.dumpConfigurationAsJson();
+			 response().setContentType("application/json");
+		 }
+		 return ok(dump);
+	  }
 
 
 }

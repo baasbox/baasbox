@@ -19,8 +19,13 @@ package com.baasbox.db;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalINIConfiguration;
+import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.IOUtils;
 
 import play.Logger;
@@ -28,8 +33,9 @@ import play.Play;
 import play.mvc.Http;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.dao.DefaultRoles;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -50,6 +56,8 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME="db.sql";
+	private static final String CONFIGURATION_FILE_NAME="configuration.conf";
+	
 	private static final String fetchPlan = "*:?";
 
 	public static boolean isInTransaction(){
@@ -223,6 +231,7 @@ public class DbHelper {
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
 		else is = new FileInputStream(Play.application().getFile("conf/"+SCRIPT_FILE_NAME));
 		List<String> script=IOUtils.readLines(is, "UTF-8");
+		is.close();
 		
 		for (String line:script){
 			Logger.debug(line);
@@ -233,5 +242,38 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
-
+	public static void populateConfiguration (OGraphDatabase db) throws IOException, ConfigurationException{
+		Logger.info("Load initial configuration...");
+		InputStream is;
+		if (Play.application().isProd()) is	=Play.application().resourceAsStream(CONFIGURATION_FILE_NAME);
+		else is = new FileInputStream(Play.application().getFile("conf/"+CONFIGURATION_FILE_NAME));
+        HierarchicalINIConfiguration c = new HierarchicalINIConfiguration();
+        c.setEncoding("UTF-8");
+        c.load(is);
+        CharSequence doubleDot = "..";
+        CharSequence dot = ".";
+        
+        Set<String> sections= c.getSections();
+        for (String section: sections){
+        	Class en = PropertiesConfigurationHelper.configurationSections.get(section);
+        	if (en==null){
+        		Logger.warn(section  + " is not a valid configuration section, it will be skipped!");
+        		continue;
+        	}
+        	SubnodeConfiguration subConf=c.getSection(section);
+        	Iterator<String> it = subConf.getKeys();
+        	while (it.hasNext()){
+        		String key = (it.next()); 
+        		Object value =subConf.getString(key);
+        		key=key.replace(doubleDot, dot);//bug on the Apache library: if the key contain a dot, it will be doubled!
+        		try {
+					PropertiesConfigurationHelper.setByKey(en, key, value);
+				} catch (Exception e) {
+					Logger.warn("Error loading initial configuration: Section " + section + ", key: " + key +", value: " + value, e);
+				}
+        	}
+        }
+        is.close();
+		Logger.info("...done");
+	}
 }

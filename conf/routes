@@ -52,14 +52,17 @@ DELETE	/document/:collection/:rid/:action/role/:rolename		com.baasbox.controller
 
 
 #Admin actions
-GET		/admin/user					com.baasbox.controllers.Admin.getUsers()
-POST	/admin/user					com.baasbox.controllers.Admin.createUser()
-PUT		/admin/user/:username		com.baasbox.controllers.Admin.updateUser(username: String)
-POST	/admin/collection/:name		com.baasbox.controllers.Admin.createCollection(name: String)
-GET		/admin/collection			com.baasbox.controllers.Admin.getCollections()
-GET 	/admin/apiVersion			com.baasbox.controllers.Application.apiVersion()
-GET 	/admin/dbStatistics			com.baasbox.controllers.Admin.getDBStatistics()	
-GET		/admin/roles				com.baasbox.controllers.Admin.getRoles()
+GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
+POST	/admin/user						com.baasbox.controllers.Admin.createUser()
+PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
+POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(name: String)
+GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
+GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
+GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
+
+GET		/admin/configuration/dump.json	com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
+GET		/admin/configuration/dump.txt	com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
 
 GET 	/test						com.baasbox.controllers.Application.test()
 #POST    /tasks/:id/delete       controllers.Application.deleteTask(id: Long)
