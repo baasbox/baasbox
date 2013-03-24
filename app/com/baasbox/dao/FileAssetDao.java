@@ -16,8 +16,9 @@
  */
 package com.baasbox.dao;
 
-import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.enumerations.Permissions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 

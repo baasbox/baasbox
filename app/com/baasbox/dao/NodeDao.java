@@ -22,9 +22,9 @@ import java.util.List;
 
 import play.Logger;
 
-import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 
 public abstract class NodeDao  {
