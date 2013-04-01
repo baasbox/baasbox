@@ -17,8 +17,12 @@
 package com.baasbox.controllers;
 
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 
@@ -136,10 +140,14 @@ public class Asset extends Controller{
 			if (meta!=null && meta.length>0){
 				metaJson = meta[0];
 			}
-			String fileName = file.getFilename();
-		    String contentType = file.getContentType(); 
 		    java.io.File fileContent=file.getFile();
 		    byte [] fileContentAsByteArray=Files.toByteArray(fileContent);
+			String fileName = file.getFilename();
+		    String contentType = file.getContentType(); 
+		    if (contentType==null || contentType.isEmpty()){	//try to guess the content type
+		    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
+		    	contentType = URLConnection.guessContentTypeFromStream(is);
+		    }
 		    try{
 		    	ODocument doc=AssetService.createFile(name[0],fileName,metaJson,contentType, fileContentAsByteArray);
 		    	ret=prepareResponseToJson(doc);
