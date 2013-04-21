@@ -30,7 +30,7 @@ public class JSONFormats {
 	public enum Formats{
 		USER("fetchPlan:user.password:-2 user.roles.name:1 user.roles.rules:-2 user.roles:0 visibleByAnonymousUsers:1 visibleByTheUser:1 visibleByFriend:1 visibleByRegisteredUsers:1,indent:0"),
 		DOCUMENT("fetchPlan:audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0,rid,version,class,keepTypes,attribSameRow,alwaysFetchEmbedded,indent:0"),
-		ASSET("fetchPlan:audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0 file:0,rid,version,class,keepTypes,attribSameRow,indent:0"),
+		ASSET("fetchPlan:resized:-2 audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0 file:0,rid,version,class,keepTypes,attribSameRow,indent:0"),
 		ROLES("rid,indent:0,fetchPlan:rules:0");
 		
 		private String format;

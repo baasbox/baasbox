@@ -1,6 +1,7 @@
 package com.baasbox.configuration;
 
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.EnumSet;
@@ -12,6 +13,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import play.Logger;
 
+import com.baasbox.exception.ConfigurationException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -167,17 +169,18 @@ public class PropertiesConfigurationHelper {
 	 * The Enumerator must implement the IProperties interface
 	 * @param en
 	 * @param iKey
-	 * @return the enumeratov value
+	 * @return the enumerator value
+	 * @throws ConfigurationException 
 	 * @throws Exception if the en Class is not an Enumerator that implements the IProperties interface
 	 */
-	public static Object findByKey(Class en,String iKey) throws Exception {
+	public static Object findByKey(Class en,String iKey) throws ConfigurationException {
 		EnumSet values = EnumSet.allOf( en );
 	    for (Object v : values) {
 	        try {
 				if ( ((String)en.getMethod("getKey").invoke(v)).equalsIgnoreCase(iKey)  )
 				  return v;
 			} catch (Exception e) {
-				throw new Exception ("Is it " + en.getCanonicalName() + " an Enum that implements the IProperties interface?",e );
+				throw new ConfigurationException ("Is it " + en.getCanonicalName() + " an Enum that implements the IProperties interface?",e );
 			}
 	      }
 		return null;
@@ -189,11 +192,16 @@ public class PropertiesConfigurationHelper {
 	 * @param en The Enumerator class
 	 * @param iKey
 	 * @param value
+	 * @throws ConfigurationException 
 	 * @throws Exception
 	 */
-	public static void setByKey(Class en,String iKey,Object value) throws Exception {
+	public static void setByKey(Class en,String iKey,Object value) throws ConfigurationException  {
 		Object enumValue = findByKey(en,iKey);
-		en.getMethod("setValue",Object.class).invoke(enumValue,value);
+		try {
+			en.getMethod("setValue",Object.class).invoke(enumValue,value);
+		} catch (Exception e) {
+			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value  ,e );
+		}
 	}	//setByKey
 	
 }//PropertiesConfigurationHelper

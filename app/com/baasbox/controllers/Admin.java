@@ -44,6 +44,7 @@ import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
@@ -279,6 +280,13 @@ public class Admin extends Controller {
 	  
 	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
 	  public static Result setConfiguration(String section, String subSection, String key, String value){
+		  Class conf = PropertiesConfigurationHelper.configurationSections.get(section);
+		  if (conf==null) return notFound(section + " is not a valid configuration section");
+		  try {
+			PropertiesConfigurationHelper.setByKey(conf, key, value);
+		} catch (ConfigurationException e) {
+			return badRequest(e.getMessage());
+		}
 		  return ok();
 	  }
 
