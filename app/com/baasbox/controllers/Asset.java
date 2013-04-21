@@ -140,6 +140,7 @@ public class Asset extends Controller{
 	@With ({AnonymousLogin.class, ConnectToDB.class})
 	public static Result downloadResizedInPerc(String name,boolean forceDownload,String dimensionsInPerc) throws InvalidModelException, IOException {
 		try{
+			if (!dimensionsInPerc.endsWith("%")) return badRequest("The format must be a % (hint: put a % at the end of the url)");
 			ODocument doc=AssetService.getByName(name);
 			if (doc==null || doc.field("file")==null) return notFound();
 			byte[] output = AssetService.getResizedPictureInPerc(name, dimensionsInPerc);
