@@ -21,13 +21,19 @@ GET     /console/*file               	controllers.Assets.at(path="/public/consol
 
 
 #Assets action
-POST	/admin/asset				com.baasbox.controllers.Asset.post()
-GET		/admin/asset				com.baasbox.controllers.Asset.getAll()
-DELETE	/admin/asset/:name			com.baasbox.controllers.Asset.delete(name: String)
-GET		/asset/:name/data			com.baasbox.controllers.Asset.get(name: String)
-GET		/asset/:name/download		com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= true)
-GET		/asset/:name				com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
-
+POST	/admin/asset						com.baasbox.controllers.Asset.post()
+GET		/admin/asset						com.baasbox.controllers.Asset.getAll()
+DELETE	/admin/asset/:name					com.baasbox.controllers.Asset.delete(name: String)
+GET		/asset/:name/data					com.baasbox.controllers.Asset.get(name: String)
+GET		/asset/:name/download/resize/:w/:h	com.baasbox.controllers.Asset.downloadResizedWH(name: String, download: Boolean ?= true, w: String,h: String)
+GET		/asset/:name/download/resize/:perc	com.baasbox.controllers.Asset.downloadResizedInPerc(name: String, download: Boolean ?= true, perc: String)
+GET		/asset/:name/download/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId(name: String, download: Boolean ?= true, sizeId: Integer)
+GET		/asset/:name/download				com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= true)
+GET		/asset/:name/resize/:w/:h			com.baasbox.controllers.Asset.downloadResizedWH(name: String, download: Boolean ?= false, w: String, h: String)
+GET		/asset/:name/resize/:perc			com.baasbox.controllers.Asset.downloadResizedInPerc(name: String, download: Boolean ?= false, perc: String)
+GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId(name: String, download: Boolean ?= false, sizeId: Integer)
+GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
+ 
 # User actions
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
@@ -61,10 +67,11 @@ GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 
-GET		/admin/configuration/dump.json	com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
-GET		/admin/configuration/dump.txt	com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
+GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
+GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
+PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
 
-GET 	/test						com.baasbox.controllers.Application.test()
+#GET 	/test							com.baasbox.controllers.Application.test()
 #POST    /tasks/:id/delete       controllers.Application.deleteTask(id: Long)
 
 

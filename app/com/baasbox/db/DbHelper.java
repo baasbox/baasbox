@@ -193,10 +193,11 @@ public class DbHelper {
 		  anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
 		  anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
 		  anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-		  anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
+		  anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, 7);
 		  anonymousUserRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 		  anonymousUserRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-	      
+
+		  
 		anonymousUserRole.save();
 		registeredUserRole.save();
 		Logger.trace("Method End");

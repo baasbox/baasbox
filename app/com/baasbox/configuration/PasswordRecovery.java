@@ -37,18 +37,21 @@ public enum PasswordRecovery implements IProperties{
 	public void setValue(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (newValue != null)
-	      if (type == Boolean.class)
-	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
-	      else if (type == Integer.class)
-	    	  parsedValue = Integer.parseInt(newValue.toString());
-	      else if (type == Float.class)
-	    	  parsedValue = Float.parseFloat(newValue.toString());
-	      else if (type == String.class)
-	    	  parsedValue = newValue.toString();
-	      else
-	    	  parsedValue = newValue;
-
+	    try{
+		    if (newValue != null)
+		      if (type == Boolean.class)
+		    	  parsedValue = Boolean.parseBoolean(newValue.toString());
+		      else if (type == Integer.class)
+		    	  parsedValue = Integer.parseInt(newValue.toString());
+		      else if (type == Float.class)
+		    	  parsedValue = Float.parseFloat(newValue.toString());
+		      else if (type == String.class)
+		    	  parsedValue = newValue.toString();
+		      else
+		    	  parsedValue = newValue;
+	    }catch (Exception e){
+	    	Logger.warn(newValue + " value is invalid for key " + key + "\nNULL will be stored");
+	    }
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);		
 		IndexPasswordRecoveryConfiguration idx;
 		try {
