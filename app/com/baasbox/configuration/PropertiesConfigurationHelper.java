@@ -19,21 +19,29 @@ import com.google.common.collect.ImmutableMap;
 
 public class PropertiesConfigurationHelper {
 
+	/***
+	 * This are the [sections] inside the configuration.conf file.
+	 * Each of them maps an Enum
+	 */
 	public static final ImmutableMap<String,Class> configurationSections = ImmutableMap.of(
 														 "PasswordRecovery",(Class)PasswordRecovery.class
 														,"Application",(Class)Application.class
+														,"Images",(Class)ImagesConfiguration.class
 	);
 	
 	
+
+	
 	/***
+	 *
 	 * Returns a json representation of the Enumerator
 	 * The Enumerator must implements the IProperties interface
 	 * @param en 	the Enumerator to serialize. It must implements the IProperties interface
 	 * @return 		the representation of the Enumerator 
 	 */
 	@SuppressWarnings("unchecked")
-	public static String dumpConfigurationAsJson(Class en) {
-		
+	public static String dumpConfigurationAsJson(String section) {
+		Class en = configurationSections.get(section);
 		try {
 			JsonFactory jfactory = new JsonFactory();
 			StringWriter sw = new StringWriter();
@@ -44,9 +52,9 @@ public class PropertiesConfigurationHelper {
 			if (getEnumDescription!=null  && getEnumDescription.getReturnType()==String.class && Modifier.isStatic(getEnumDescription.getModifiers()))
 					enumDescription=(String) getEnumDescription.invoke(null);
 			gen.writeStartObject();																						//{
-			gen.writeStringField("configuration", en.getSimpleName());													//	 "configuration":"EnumName"
+			gen.writeStringField("section", section);													//	 "configuration":"EnumName"
 			gen.writeStringField("description", enumDescription);														//	,"description": "EnumDescription"
-			gen.writeFieldName("sections");																				//  ,"sections":
+			gen.writeFieldName("sub sections");																				//  ,"sections":
 			gen.writeStartObject();																						//		{
 			String lastSection = "";
 			EnumSet values = EnumSet.allOf( en );
@@ -55,12 +63,12 @@ public class PropertiesConfigurationHelper {
 				  String valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
 				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
 				  Class type = (Class) en.getMethod("getType").invoke(v);
-			      String section = key.substring(0, key.indexOf('.'));
-			      if (!lastSection.equals(section)) {
+			      String subsection = key.substring(0, key.indexOf('.'));
+			      if (!lastSection.equals(subsection)) {
 			    	if (gen.getOutputContext().inArray()) gen.writeEndArray();
-			        gen.writeFieldName(section);																		//			"sectionName":
+			        gen.writeFieldName(subsection);																		//			"sectionName":
 			        gen.writeStartArray();																				//				[
-			        lastSection = section;
+			        lastSection = subsection;
 			      }	
 			      gen.writeStartObject();																				//					{
 			      gen.writeStringField(key,valueAsString);															//							"key": "value"	
@@ -80,14 +88,14 @@ public class PropertiesConfigurationHelper {
 	}//dumpConfigurationAsJson(en)
 	
 	public static String dumpConfigurationAsJson(){
-		ImmutableCollection<Class> values = configurationSections.values(); 
+		ImmutableCollection<String> keys = configurationSections.keySet();  
 		ObjectMapper mapper = new ObjectMapper();
 		JsonFactory jfactory = mapper.getJsonFactory();
 		StringWriter sw = new StringWriter();	
 		try{
 			JsonGenerator gen = jfactory.createJsonGenerator(sw);
 			gen.writeStartArray();	
-			for (Class v: values){
+			for (String v: keys){
 				String st = dumpConfigurationAsJson(v);
 				JsonParser jp = jfactory.createJsonParser(st);
 				gen.writeTree(jp.readValueAsTree());
@@ -102,17 +110,19 @@ public class PropertiesConfigurationHelper {
 	}//dumpConfigurationAsJson()	
 	
 	public static String dumpConfiguration(){
-		ImmutableCollection<Class> values = configurationSections.values(); 
+		ImmutableCollection<String> keys = configurationSections.keySet(); 
 		StringBuilder sb = new StringBuilder();
-		for (Class v: values){
+		for (String v: keys){
 			sb.append(dumpConfiguration(v));
 			sb.append("\n");
 		}
 		return sb.toString();
 	}//dumpConfiguration()
 	
-	public static String dumpConfiguration(Class en) {
 
+	
+	public static String dumpConfiguration(String section) {
+		Class en = configurationSections.get(section);
 		try {
 			StringBuilder sb = new StringBuilder();
 			String enumDescription = "";			
@@ -123,19 +133,21 @@ public class PropertiesConfigurationHelper {
 			
 		    sb.append(enumDescription);
 		    sb.append("\n");
-	
+		    sb.append(section.toUpperCase());
+		    sb.append("\n");
+		    
 		    String lastSection = "";
 		    EnumSet values = EnumSet.allOf( en );
 	    	for (Object  v : values) {
 				String key=(String) ((Method)v.getClass().getMethod("getKey")).invoke(v);
 				Object value=((Method)en.getMethod("getValue")).invoke(v);
-				String section = key.substring(0, key.indexOf('.'));
+				String subsection = key.substring(0, key.indexOf('.'));
 	
-			      if (!lastSection.equals(section)) {
+			      if (!lastSection.equals(subsection)) {
 			        sb.append("  - ");
-			        sb.append(section.toUpperCase());
+			        sb.append(subsection.toUpperCase());
 			        sb.append("\n");
-			        lastSection = section;
+			        lastSection = subsection;
 			      }
 			      sb.append("      + ");
 			      sb.append(key);

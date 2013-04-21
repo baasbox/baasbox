@@ -275,6 +275,12 @@ public class Admin extends Controller {
 		 }
 		 return ok(dump);
 	  }
+	  
+	  
+	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
+	  public static Result setConfiguration(String section, String subSection, String key, String value){
+		  return ok();
+	  }
 
 
 }

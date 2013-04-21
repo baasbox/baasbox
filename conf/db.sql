@@ -108,4 +108,5 @@ create index asset.name unique;
 --configuration
 create index bb_password_recovery dictionary
 create index bb_application dictionary
+create index bb_images dictionary
 
