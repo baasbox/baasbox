@@ -42,6 +42,7 @@ import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -127,7 +128,7 @@ public class DbHelper {
 	}
 
 	public static OGraphDatabase open(String username,String password){
-		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username, password);
+		OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
