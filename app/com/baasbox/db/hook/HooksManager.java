@@ -21,11 +21,12 @@ import play.Logger;
 
 import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager {
 	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
-		db.registerHook(Audit.getIstance());
+		db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
 		//db.registerHook(HidePassword.getIstance());
 		Logger.trace("Method End");
 	}
