@@ -10,7 +10,9 @@ object ApplicationBuild extends Build {
     val appDependencies = Seq(
     			javaCore,filters,
     			"commons-io" % "commons-io" % "2.4",
-    			"commons-lang" % "commons-lang" % "2.6"
+    			"commons-lang" % "commons-lang" % "2.6",
+    			"xalan"  % "xalan"  % "2.7.1",
+    			"org.imgscalr" % "imgscalr-lib" % "4.2"
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT"
     )
@@ -19,6 +21,6 @@ object ApplicationBuild extends Build {
       resolvers := Seq(
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-    ))
+    ),requireJs += "main.js")
 
 }

@@ -23,3 +23,4 @@ server.pid
 /doc
 /script
 /bin
+conf/generated.keystore

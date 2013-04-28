@@ -17,8 +17,12 @@
 package com.baasbox.controllers;
 
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +35,6 @@ import play.mvc.Http.Context;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
-import play.mvc.Results;
 import play.mvc.With;
 
 import com.baasbox.controllers.actions.filters.AnonymousLogin;
@@ -42,6 +45,10 @@ import com.baasbox.controllers.actions.filters.ConnectToDB;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.AssetNotFoundException;
+import com.baasbox.exception.DocumentIsNotAFileException;
+import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.InvalidSizePatternException;
+import com.baasbox.exception.OperationDisabledException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.AssetService;
 import com.baasbox.util.IQueryParametersKeys;
@@ -66,6 +73,15 @@ public class Asset extends Controller{
 		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.ASSET);
 	}
 	
+	
+	
+	//---------------------ACTIONS------------------------
+	/**
+	 * Returns the Asset. If the Asset is a file, returns its metadata
+	 * @param name
+	 * @return
+	 * @throws InvalidModelException
+	 */
 	@With ({AnonymousLogin.class, ConnectToDB.class})
 	public static Result get(String name) throws InvalidModelException{
 		ODocument doc = null;
@@ -85,19 +101,133 @@ public class Asset extends Controller{
 		return ok(ret);
 	}
 	
-	
+	@With ({AnonymousLogin.class, ConnectToDB.class})
+	public static Result downloadResizedWH(String name,boolean forceDownload,String width, String height) throws InvalidModelException, IOException {
+		try{
+			ODocument doc=AssetService.getByName(name);
+			if (doc==null || doc.field("file")==null) return notFound();
+			byte[] output = AssetService.getResizedPicture(name, width, height);
+			response().setContentType(AssetService.getContentType(doc));
+			if(forceDownload) {
+				String[] fileName=((String)doc.field("fileName")).split("\\.");
+				String newFileName=fileName[0] + "_" + width + "-" + height + "." + fileName[1];
+				response().setHeader("Content-Disposition", "attachment; filename=\""+newFileName+"\"");
+			}
+			response().setHeader("Content-Length", Long.toString(output.length));
+			return ok(output);
+		} catch (IllegalArgumentException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (SqlInjectionException e) {
+			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+		} catch (InvalidModelException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (IOException e) {
+			Logger.error("error retrieving asset file content " + name, e);
+			throw e;
+		} catch (DocumentIsNotAnImageException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (DocumentIsNotAFileException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (InvalidSizePatternException e) {
+			return badRequest("The requested resized dimensions are not allowed");
+		} catch (OperationDisabledException e) {
+			return badRequest("The picture resize is disable");
+		}
+	}
 	
 	@With ({AnonymousLogin.class, ConnectToDB.class})
-	public static Result download(String name,boolean download) throws InvalidModelException, IOException {
-		ODocument doc = null;
+	public static Result downloadResizedInPerc(String name,boolean forceDownload,String dimensionsInPerc) throws InvalidModelException, IOException {
+		try{
+			if (!dimensionsInPerc.endsWith("%")) return badRequest("The format must be a % (hint: put a % at the end of the url)");
+			ODocument doc=AssetService.getByName(name);
+			if (doc==null || doc.field("file")==null) return notFound();
+			byte[] output = AssetService.getResizedPictureInPerc(name, dimensionsInPerc);
+			response().setContentType(AssetService.getContentType(doc));
+			if(forceDownload) {
+				String[] fileName=((String)doc.field("fileName")).split("\\.");
+				String newFileName=fileName[0] + "_" + dimensionsInPerc  + "%." + fileName[1];
+				response().setHeader("Content-Disposition", "attachment; filename=\""+newFileName+"\"");
+			}
+			response().setHeader("Content-Length", Long.toString(output.length));
+			return ok(output);
+		} catch (IllegalArgumentException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (SqlInjectionException e) {
+			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+		} catch (InvalidModelException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (IOException e) {
+			Logger.error("error retrieving asset file content " + name, e);
+			throw e;
+		} catch (DocumentIsNotAnImageException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (DocumentIsNotAFileException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (InvalidSizePatternException e) {
+			return badRequest("The requested resized dimensions are not allowed");
+		} catch (OperationDisabledException e) {
+			return badRequest("The picture resize is disable");
+		}
+	}
+
+	@With ({AnonymousLogin.class, ConnectToDB.class})
+	public static Result downloadSizeId(String name,boolean forceDownload,int sizeId ) throws InvalidModelException, IOException {
+		try{
+			ODocument doc=AssetService.getByName(name);
+			if (doc==null || doc.field("file")==null) return notFound();
+			byte[] output = AssetService.getResizedPicture(name, sizeId);
+			response().setContentType(AssetService.getContentType(doc));
+			if(forceDownload) {
+				String[] fileName=((String)doc.field("fileName")).split("\\.");
+				String newFileName=fileName[0] + "_thumb_" + sizeId  + "." + fileName[1];
+				response().setHeader("Content-Disposition", "attachment; filename=\""+newFileName+"\"");
+			}
+			response().setHeader("Content-Length", Long.toString(output.length));
+			return ok(output);
+		} catch (IllegalArgumentException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (SqlInjectionException e) {
+			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+		} catch (InvalidModelException e) {
+			Logger.error("error retrieving asset " + name, e);
+			throw e;
+		} catch (IOException e) {
+			Logger.error("error retrieving asset file content " + name, e);
+			throw e;
+		} catch (DocumentIsNotAnImageException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (DocumentIsNotAFileException e) {
+			return badRequest("The requested asset is not an image and cannot be resized");
+		} catch (InvalidSizePatternException e) {
+			return badRequest("The requested resized dimensions are not allowed");
+		} catch (OperationDisabledException e) {
+			return badRequest("The picture resize is disable");
+		}
+	}
+
+	/***
+	 * Sends the requested file to the client.
+	 * @param name the name of the asset
+	 * @param forceDownload if true, force the UA to download the file adding the Content-Disposition header 
+	 * @return
+	 * @throws InvalidModelException
+	 * @throws IOException
+	 */
+	@With ({AnonymousLogin.class, ConnectToDB.class})
+	public static Result download(String name,boolean forceDownload) throws InvalidModelException, IOException {
 		try {
-			doc=AssetService.getByName(name);
+			ODocument doc=AssetService.getByName(name);
 			if (doc==null || doc.field("file")==null) return notFound();
 			ORecordBytes record = doc.field("file");
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			record.toOutputStream(out);
-			response().setContentType((String)doc.field("contentType"));
-			if(download) response().setHeader("Content-Disposition", "attachment; filename=\""+(String)doc.field("fileName")+"\"");
+			response().setContentType(AssetService.getContentType(doc));
+			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+(String)doc.field("fileName")+"\"");
 			response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
 			return ok(new ByteArrayInputStream(out.toByteArray()));
 		} catch (IllegalArgumentException e) {
@@ -122,6 +252,7 @@ public class Asset extends Controller{
 		return ok(prepareResponseToJson(listOfDocs));
 	}
 	
+	
 	private static Result postFile() throws  Throwable{
 		MultipartFormData  body = request().body().asMultipartFormData();
 		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
@@ -136,10 +267,15 @@ public class Asset extends Controller{
 			if (meta!=null && meta.length>0){
 				metaJson = meta[0];
 			}
-			String fileName = file.getFilename();
-		    String contentType = file.getContentType(); 
 		    java.io.File fileContent=file.getFile();
 		    byte [] fileContentAsByteArray=Files.toByteArray(fileContent);
+			String fileName = file.getFilename();
+		    String contentType = file.getContentType(); 
+		    if (contentType==null || contentType.isEmpty()){	//try to guess the content type
+		    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
+		    	contentType = URLConnection.guessContentTypeFromStream(is);
+		    	if (contentType==null) contentType="application/octet-stream";
+		    }
 		    try{
 		    	ODocument doc=AssetService.createFile(name[0],fileName,metaJson,contentType, fileContentAsByteArray);
 		    	ret=prepareResponseToJson(doc);

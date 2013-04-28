@@ -23,14 +23,14 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
 
-import com.baasbox.dao.DefaultRoles;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
-import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;

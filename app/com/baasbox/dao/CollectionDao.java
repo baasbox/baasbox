@@ -26,6 +26,7 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -41,6 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class CollectionDao extends NodeDao {
 	private final static String MODEL_NAME="collection";
 	public final static String NAME="name";
+	private static final String COLLECTION_NAME_INDEX = "collection.name";
 	
 	public static CollectionDao getInstance(){
 		return new CollectionDao();
@@ -92,19 +94,17 @@ public class CollectionDao extends NodeDao {
 	
 	public boolean existsCollection(String collectionName) throws SqlInjectionException{
 		Logger.trace("Method Start");
-		QueryParams criteria = QueryParams.getInstance().where(NAME + "=?").params(new String [] {collectionName});
-		List<ODocument> resultList= super.get(criteria);
+		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
+		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
 		Logger.trace("Method End");
-		return (resultList.size()>0) ;
+		return (record!=null) ;
 	}
 	
 	public ODocument getByName(String collectionName) throws SqlInjectionException{
 		Logger.trace("Method Start");
-		ODocument result=null;
-		QueryParams criteria = QueryParams.getInstance().where(NAME + "=?").params(new String [] {collectionName});
-		List<ODocument> resultList= super.get(criteria);
-		if (resultList!=null && resultList.size()>0) result=resultList.get(0);
-		Logger.trace("Method End");
-		return result;
+		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
+		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
+		if (record==null) return null;
+		return db.load(record.getIdentity());
 	}
 }

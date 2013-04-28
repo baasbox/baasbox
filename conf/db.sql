@@ -100,9 +100,13 @@ create class Like extends ographedge;
 --analytics
 --create class call;
 
---indexes
+--indices
 create index ouser.name unique;
 create index collection.name unique;
 create index asset.name unique;
 
+--configuration
+create index bb_password_recovery dictionary
+create index bb_application dictionary
+create index bb_images dictionary
 
