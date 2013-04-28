@@ -16,8 +16,13 @@
  */
 package com.baasbox.dao;
 
-import com.baasbox.dao.PermissionsHelper.Permissions;
+import java.util.List;
+
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class AssetDao extends NodeDao {
@@ -48,5 +53,11 @@ public class AssetDao extends NodeDao {
 	public  void save(ODocument document) throws InvalidModelException{
 		super.save(document);
 	}
-
+	
+	public ODocument getByName (String name) throws SqlInjectionException{
+		QueryParams criteria=QueryParams.getInstance().where("name=?").params(new String[]{name});
+		List<ODocument> listOfAssets = this.get(criteria);
+		if (listOfAssets==null || listOfAssets.size()==0) return null;
+		return listOfAssets.get(0);
+	}
 }

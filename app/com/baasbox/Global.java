@@ -65,6 +65,7 @@ public class Global extends GlobalSettings {
 		    	try {
 					DbHelper.populateDB(db);
 			    	DbHelper.createDefaultUsers();
+			    	DbHelper.populateConfiguration(db);
 				} catch (IOException e) {
 					Logger.error("!! Error initializing BaasBox!", e);
 					Logger.error(ExceptionUtils.getFullStackTrace(e));

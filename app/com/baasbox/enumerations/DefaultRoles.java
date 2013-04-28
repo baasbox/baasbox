@@ -14,10 +14,11 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package com.baasbox.dao;
+package com.baasbox.enumerations;
 
 import java.util.ArrayList;
 
+import com.baasbox.dao.RoleDao;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
 public enum DefaultRoles {

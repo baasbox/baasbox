@@ -22,9 +22,10 @@ import java.util.List;
 
 import play.Logger;
 
-import com.baasbox.dao.PermissionsHelper.Permissions;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
@@ -37,7 +38,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 
 public abstract class NodeDao  {
@@ -137,9 +137,10 @@ public abstract class NodeDao  {
 	}
 
 
-	public ODocument get(ORID rid) throws InvalidModelException {
+	public ODocument get(ORID rid) throws InvalidModelException, DocumentNotFoundException {
 		Logger.trace("Method Start");
 		Object doc=db.load(rid);
+		if (doc==null) throw new DocumentNotFoundException();
 		if (!(doc instanceof ODocument)) throw new IllegalArgumentException(rid +" is a rid not referencing a valid Document");
 		try{
 			checkModelDocument((ODocument)doc);
@@ -152,7 +153,7 @@ public abstract class NodeDao  {
 	}
 
 
-	public ODocument get(String rid) throws InvalidModelException, ODatabaseException {
+	public ODocument get(String rid) throws InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		Logger.trace("Method Start");
 		Object orid=OSQLHelper.parseValue(rid, null);
 		if ((orid==null) || !(orid instanceof ORecordId) || (orid.toString().equals(OSQLHelper.VALUE_NOT_PARSED))) throw new IllegalArgumentException(rid +" is not a valid rid");
@@ -163,28 +164,34 @@ public abstract class NodeDao  {
 	}
  
 
-	public boolean exists(ODocument document) throws InvalidModelException {
+	public boolean exists(ODocument document) throws InvalidModelException, DocumentNotFoundException {
 		return exists(document.getRecord().getIdentity());
 	}
 
 
-	public boolean exists(ORID rid) throws InvalidModelException {
+	public boolean exists(ORID rid) throws InvalidModelException, DocumentNotFoundException {
 		ODocument doc = get(rid);
 		return (doc!=null);
 	}
 
 
-	public boolean exists(String rid) throws InvalidModelException {
+	public boolean exists(String rid) throws InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		ODocument doc = get(rid);
 		return (doc!=null);
 	}
 
+	public ODocument revokePermission(ODocument document, Permissions permission, OUser user) {
+		return PermissionsHelper.revoke(document, permission, user); 
+	}
+
+	public ODocument revokePermission(ODocument document, Permissions permission, ORole role) {
+		return PermissionsHelper.revoke(document, permission, role);
+	}
+	
 	public ODocument grantPermission(ODocument document, Permissions permission, OUser user) {
 		return PermissionsHelper.grant(document, permission, user);
 		 
 	}
-
-	
 
 	public ODocument grantPermission(ODocument document, Permissions permission, ORole role) {
 		return PermissionsHelper.grant(document, permission, role);
