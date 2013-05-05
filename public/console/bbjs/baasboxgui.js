@@ -522,9 +522,13 @@ function setup(){
 	setupSelects();
 
 	$('.logout').click(function(e){
-		sessionStorage.up="";
-		sessionStorage.appcode="";
-		location.reload();
+		BBRoutes.com.baasbox.controllers.User.logout().ajax({}).always(
+				function() { 
+					sessionStorage.up="";
+					sessionStorage.appcode="";
+					sessionStorage.sessionToken="";
+					location.reload(); 
+				});
 	});
 	
 	if (sessionStorage.up && sessionStorage.up!="") {
@@ -739,8 +743,7 @@ function setupSelects(){
 function setupAjax(){
 	$.ajaxSetup({
 	    beforeSend: function (xhr){ 
-	        xhr.setRequestHeader('Authorization', sessionStorage.up); 
-	        xhr.setRequestHeader('X-BAASBOX-APPCODE', sessionStorage.appcode);
+	        xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
 	    }
 	});
 	//hack for charisma menu
@@ -856,30 +859,34 @@ function CollectionsController($scope){
 function DocumentsController($scope){
 }
 
-	  function tryToLogin(){
-			BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
-				success: function(data) {
-					         var scope=$("#loggedIn").scope();
-					         scope.$apply(function(){
-					        	 scope.loggedIn=true;
-					         });
-					         applySuccessMenu("#dashboard",data);
-					         $("#errorLogin").addClass("hide");
-					     },
-				error: function() {
-					$("#errorLogin").removeClass("hide");
-				}
-			});	 //ajax
-	  }//tryToLogin	
+  function tryToLogin(user, pass,appCode){
+		BBRoutes.com.baasbox.controllers.User.login().ajax({
+			data:{username:user,password:pass,appcode:appCode},
+			success: function(data) {
+				         sessionStorage.sessionToken=data["X-BB-SESSION"];
+				         BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
+				        	 success: function(data) {
+						         var scope=$("#loggedIn").scope();
+						         scope.$apply(function(){
+						        	 scope.loggedIn=true;
+						         });
+						         applySuccessMenu("#dashboard",data);
+						         $("#errorLogin").addClass("hide");
+				        	 }
+				         })
+				     },
+			error: function() {
+				$("#errorLogin").removeClass("hide");
+			}
+		});	 //ajax
+  }//tryToLogin	
 
 function LoginController($scope) {
 	  $scope.login = function() {
 			var username=$scope.username;
 			var password=$scope.password;
 			var appCode=$scope.appcode;
-			sessionStorage.up=make_base_auth(username, password);
-			sessionStorage.appcode=appCode;
-			tryToLogin();
+			tryToLogin(username, password,appCode);
 	  }; //login
 }	//LoginController
 

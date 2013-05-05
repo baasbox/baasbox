@@ -38,11 +38,11 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.controllers.actions.filters.AnonymousLogin;
-import com.baasbox.controllers.actions.filters.BasicAuthHeader;
-import com.baasbox.controllers.actions.filters.CheckAPPCode;
 import com.baasbox.controllers.actions.filters.CheckAdminRole;
 import com.baasbox.controllers.actions.filters.ConnectToDB;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.InjectSession;
+import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
@@ -82,7 +82,7 @@ public class Asset extends Controller{
 	 * @return
 	 * @throws InvalidModelException
 	 */
-	@With ({AnonymousLogin.class, ConnectToDB.class})
+	@With ({AnonymousLogin.class, ConnectToDB.class,WrapResponse.class})
 	public static Result get(String name) throws InvalidModelException{
 		ODocument doc = null;
 		try {
@@ -95,13 +95,14 @@ public class Asset extends Controller{
 		} catch (InvalidModelException e) {
 			Logger.error("error retrieving asset " + name, e);
 			throw e;
+			
 		}
 		if (doc==null) return notFound();
 		String ret= prepareResponseToJson(doc);
 		return ok(ret);
 	}
 	
-	@With ({AnonymousLogin.class, ConnectToDB.class})
+	@With ({AnonymousLogin.class, ConnectToDB.class,WrapResponse.class})
 	public static Result downloadResizedWH(String name,boolean forceDownload,String width, String height) throws InvalidModelException, IOException {
 		try{
 			ODocument doc=AssetService.getByName(name);
@@ -137,7 +138,7 @@ public class Asset extends Controller{
 		}
 	}
 	
-	@With ({AnonymousLogin.class, ConnectToDB.class})
+	@With ({AnonymousLogin.class, ConnectToDB.class,WrapResponse.class})
 	public static Result downloadResizedInPerc(String name,boolean forceDownload,String dimensionsInPerc) throws InvalidModelException, IOException {
 		try{
 			if (!dimensionsInPerc.endsWith("%")) return badRequest("The format must be a % (hint: put a % at the end of the url)");
@@ -174,7 +175,7 @@ public class Asset extends Controller{
 		}
 	}
 
-	@With ({AnonymousLogin.class, ConnectToDB.class})
+	@With ({AnonymousLogin.class, ConnectToDB.class,WrapResponse.class})
 	public static Result downloadSizeId(String name,boolean forceDownload,int sizeId ) throws InvalidModelException, IOException {
 		try{
 			ODocument doc=AssetService.getByName(name);
@@ -218,7 +219,7 @@ public class Asset extends Controller{
 	 * @throws InvalidModelException
 	 * @throws IOException
 	 */
-	@With ({AnonymousLogin.class, ConnectToDB.class})
+	@With ({AnonymousLogin.class, ConnectToDB.class,WrapResponse.class})
 	public static Result download(String name,boolean forceDownload) throws InvalidModelException, IOException {
 		try {
 			ODocument doc=AssetService.getByName(name);
@@ -244,7 +245,7 @@ public class Asset extends Controller{
 		}
 	}
 
-	@With  ({CheckAPPCode.class,BasicAuthHeader.class, ConnectToDB.class, CheckAdminRole.class, ExtractQueryParameters.class})
+	@With  ({InjectSession.class,ConnectToDB.class, CheckAdminRole.class, ExtractQueryParameters.class,WrapResponse.class})
 	public static Result getAll() throws  Throwable{
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
@@ -288,7 +289,7 @@ public class Asset extends Controller{
 	  return created(ret);
 	}
 
-	@With  ({CheckAPPCode.class,BasicAuthHeader.class, ConnectToDB.class, CheckAdminRole.class})
+	@With  ({InjectSession.class,ConnectToDB.class, CheckAdminRole.class,WrapResponse.class})
 	public static Result post() throws  Throwable{
 		String ct = request().getHeader(CONTENT_TYPE);
 		if (ct.indexOf("multipart/form-data")!=-1) return postFile();
@@ -316,7 +317,7 @@ public class Asset extends Controller{
 	  return created(ret);
 	}
 	
-	@With  ({CheckAPPCode.class,BasicAuthHeader.class, ConnectToDB.class, CheckAdminRole.class})
+	@With  ({InjectSession.class,ConnectToDB.class, CheckAdminRole.class,WrapResponse.class})
 	public static Result delete(String name) throws Throwable{
 		try{
 			AssetService.deleteByName(name);

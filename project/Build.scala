@@ -5,7 +5,7 @@ import play.Project._
 object ApplicationBuild extends Build {
 
     val appName         = "BaasBox"
-    val appVersion      = "0.5.5-SNAPSHOT"
+    val appVersion      = "0.5.6-SNAPSHOT"
 
     val appDependencies = Seq(
     			javaCore,filters,

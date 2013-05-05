@@ -22,9 +22,12 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
-import com.baasbox.BBConfiguration;
+import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionTokenProvider;
+import com.google.common.collect.ImmutableMap;
 
-public class AnonymousLogin extends Action.Simple {
+
+public class InjectSession extends Action.Simple {
 
 
 	@Override
@@ -32,17 +35,24 @@ public class AnonymousLogin extends Action.Simple {
 		Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
-		
-		
-		String user=BBConfiguration.getBaasBoxUsername();
-		String password = BBConfiguration.getBaasBoxPassword();
+		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
+		//injects the user data & credential into the context
+		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		if (token!=null) {
+			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  if (sessionData!=null){
+					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
+					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
+					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
+					ctx.args.put("token", token);
+			  }
+		}
+	    
+		//executes the request
+		Result result = delegate.call(ctx);
 
-		ctx.args.put("username", user);
-		ctx.args.put("password", password);
-		
 		Logger.trace("Method End");
-		return delegate.call(ctx);
+	    return result;
 	}
 
 }

@@ -32,10 +32,10 @@ import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.With;
 
-import com.baasbox.controllers.actions.filters.BasicAuthHeader;
-import com.baasbox.controllers.actions.filters.CheckAPPCode;
 import com.baasbox.controllers.actions.filters.ConnectToDB;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.InjectSession;
+import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-
+@With ({InjectSession.class,WrapResponse.class,ConnectToDB.class,ExtractQueryParameters.class})
 public class Document extends Controller {
 	
 		private static String prepareResponseToJson(ODocument doc){
@@ -71,7 +71,6 @@ public class Document extends Controller {
 		 * @param collectionName
 		 * @return the number of documents in the collection
 		 */
-		@With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,ExtractQueryParameters.class})
 		public static Result getCount(String collectionName){
 			 Logger.trace("Method Start");
 			 Logger.trace("collectionName: " + collectionName);
@@ -94,7 +93,7 @@ public class Document extends Controller {
 			 return ok("{\"count\":\""+ count +"\"}");
 		}
 	
-		@With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,ExtractQueryParameters.class})
+
 		public static Result getDocuments(String collectionName){
 			 Logger.trace("Method Start");
 			 Logger.trace("collectionName: " + collectionName);
@@ -125,7 +124,6 @@ public class Document extends Controller {
 		}		
 		
 		
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result getDocument(String collectionName, String rid){
 		  Logger.trace("Method Start");
 		  Logger.trace("collectionName: " + collectionName);
@@ -151,7 +149,6 @@ public class Document extends Controller {
 	  }
 
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result getDocumentByRid(String rid){
 		  Logger.trace("Method Start");
 		  rid="#"+rid;
@@ -171,7 +168,6 @@ public class Document extends Controller {
 	  }
 	  
 
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result createDocument(String collection){
 		  Logger.trace("Method Start");
@@ -195,7 +191,6 @@ public class Document extends Controller {
 		  return ok(prepareResponseToJson(document));
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateDocument(String collectionName, String rid){
 		  Logger.trace("Method Start");
@@ -229,7 +224,6 @@ public class Document extends Controller {
 	  }
 	 
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result deleteDocument(String collectionName, String rid){
 		  Logger.trace("Method Start");
 		  Logger.trace("deleteDocument collectionName: " + collectionName);
@@ -247,7 +241,6 @@ public class Document extends Controller {
 		  return status(204);
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result grantToUser(String collectionName, String rid, String username, String action){
 		Logger.trace("Method Start");
 		Logger.trace("grant collectionName: " + collectionName);
@@ -259,7 +252,6 @@ public class Document extends Controller {
 		return res;
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result revokeToUser(String collectionName, String rid, String username, String action){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);
@@ -271,7 +263,6 @@ public class Document extends Controller {
 			return res;
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result grantToRole(String collectionName, String rid, String rolename, String action){
 		Logger.trace("Method Start");
 		Logger.trace("grant collectionName: " + collectionName);
@@ -283,7 +274,6 @@ public class Document extends Controller {
 		return res;
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
 	  public static Result revokeToRole(String collectionName, String rid, String rolename, String action){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);

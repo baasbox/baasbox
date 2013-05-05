@@ -42,9 +42,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
  * @author claudio
  */
 public class ConnectToDB extends Action.Simple {
-    private static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-    private static final String REALM = "BB-Basic realm=\""+ BBConfiguration.getRealm() +"\"";
-
+ 
 	@Override
 	public Result call(Context ctx) throws Throwable {
 		Logger.trace("Method Start");
@@ -52,38 +50,28 @@ public class ConnectToDB extends Action.Simple {
 		Http.Context.current.set(ctx);
 		
 		Logger.debug("UserLogin for resource " + Http.Context.current().request());
-		
+		String username=(String) Http.Context.current().args.get("username");
+		String password=(String)Http.Context.current().args.get("password");
+		String appcode=(String)Http.Context.current().args.get("appcode");
 		OGraphDatabase database = null;
-		String username = (String) ctx.args.get("username");
-		String password = (String) ctx.args.get("password");
-		
 		Result result=null;
 		try{
 			
 	        try{
-	        	database=DbHelper.open(username, password);
+	        	database=DbHelper.open(appcode,username,password);
 	        }catch (OSecurityAccessException e){
-	        	ctx.response().setHeader(WWW_AUTHENTICATE, REALM); 
-	        	throw new BadCredentialsException(e);
+	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
 	        }
 			
 			result = delegate.call(ctx);
-			
-		}catch (BadCredentialsException e){
-			Logger.error("UserLogin", e);
-			Http.Context.current.set(ctx); 
-			result = unauthorized(views.html.error.render(Http.Status.UNAUTHORIZED));
+
 		}catch (OSecurityAccessException e){
 			Logger.error("UserLogin", e);
-			Http.Context.current.set(ctx); 
-			result = forbidden(views.html.error.render(Http.Status.FORBIDDEN));
+			result = forbidden(e.getMessage());
 		}catch (Throwable e){
-			Logger.error("UserLogin", e);
-			if (Play.isDev()) 
-				result=internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else 
-				result=internalServerError();
+			throw e;
 		}finally{
+			Http.Context.current.set(ctx); 
 			if (database!=null && !database.isClosed()) database.close();
 		}
 		Logger.trace("Method End");
