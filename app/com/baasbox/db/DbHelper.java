@@ -127,11 +127,13 @@ public class DbHelper {
 		return queryResult;
 	}
 
-	public static OGraphDatabase open(String username,String password){
+	public static OGraphDatabase open(String appcode, String username,String password) {
 		OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
+	
+
 	
 	public static OGraphDatabase getConnection(){
 		return new OGraphDatabase ((ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get());
@@ -278,4 +280,6 @@ public class DbHelper {
         is.close();
 		Logger.info("...done");
 	}
+
+
 }

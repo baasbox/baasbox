@@ -17,20 +17,13 @@
 package com.baasbox.controllers;
 
 import play.mvc.Controller;
-import play.mvc.Result;
 import play.mvc.With;
-import play.mvc.Action;
 
-
-import com.baasbox.controllers.actions.filters.CheckAPPCode;
 import com.baasbox.controllers.actions.filters.CheckAdminRole;
 import com.baasbox.controllers.actions.filters.ConnectToDB;
 
-/**
- * @author Claudio Tesoriero
- *
- */
-@With  ({CheckAPPCode.class, ConnectToDB.class, CheckAdminRole.class})
+
+@With  ({ConnectToDB.class, CheckAdminRole.class})
 public class Swagger extends Controller{
 	/*
 	public static Result health(){

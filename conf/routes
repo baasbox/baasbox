@@ -35,6 +35,8 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
+POST	/login						com.baasbox.controllers.User.login()
+POST	/logout						com.baasbox.controllers.User.logout()
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
 PUT		/user						com.baasbox.controllers.User.updateProfile()
