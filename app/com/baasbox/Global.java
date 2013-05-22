@@ -112,6 +112,7 @@ public class Global extends GlobalSettings {
 	  
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
+		result.put("result", "error");
 		  result.put("bb_code", "");
 		  result.put("message", error);
 		  result.put("resource", request.path());
@@ -127,6 +128,7 @@ public class Global extends GlobalSettings {
 	// 404
 	  @Override
 	    public Result onHandlerNotFound(RequestHeader request) {
+		  Logger.debug("API not found: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
 		  return notFound(result);
@@ -135,9 +137,11 @@ public class Global extends GlobalSettings {
 	  // 500 - internal server error
 	  @Override
 	  public Result onError(RequestHeader request, Throwable throwable) {
+		  Logger.error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, throwable.getMessage());
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
+		  Logger.error(ExceptionUtils.getFullStackTrace(throwable));
 		  return internalServerError(result);
 	  }
 	  

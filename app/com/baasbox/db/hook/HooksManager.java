@@ -17,17 +17,38 @@
 package com.baasbox.db.hook;
 
 
+import java.util.Iterator;
+import java.util.Set;
+
 import play.Logger;
 
-import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager {
 	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
+		Logger.debug("Registering hooks...");
 		db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
+		Logger.debug("Hooks: "+ db.getHooks());
 		//db.registerHook(HidePassword.getIstance());
+		Logger.trace("Method End");
+	}
+	
+	public static void unregisteredAll(OGraphDatabase db){
+		Logger.trace("Method Start");
+		Logger.debug("unregistering hooks...");
+		Set<ORecordHook> hooks = db.getHooks();
+		Iterator<ORecordHook> it =hooks.iterator();
+		while (it.hasNext()){
+			ORecordHook h = it.next();
+			if (h instanceof Audit) {
+				Logger.debug("Removing Audit hook");
+				db.unregisterHook(h);
+				break;
+			}
+		}
 		Logger.trace("Method End");
 	}
 }

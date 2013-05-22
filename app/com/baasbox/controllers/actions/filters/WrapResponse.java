@@ -16,78 +16,82 @@
  */
 package com.baasbox.controllers.actions.filters;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import play.Logger;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
-import play.mvc.Action;
-import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
 
 
-public class WrapResponse extends Action.Simple {
+public class WrapResponse {
 
 	private ObjectNode prepareError(RequestHeader request, String error) {
+		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode result = Json.newObject();
-		  result.put("bb_code", "");
-		  result.put("message", error);
-		  result.put("resource", request.path());
+		result.put("result", "error");
+		result.put("bb_code", "");
+		result.put("message", error);
+		result.put("resource", request.path());
+		result.put("method", request.method());
+		result.put("request_header", mapper.valueToTree(request.headers()));
 		return result;
 	} 
 	
 	private Result onUnauthorized(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 401);
-		  return unauthorized(result);
+		  return Results.unauthorized(result);
 	}  
 	  
 	private Result onForbidden(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 403);
-		  return forbidden(result);
+		  return Results.forbidden(result);
 	}
 	  
 	private Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
-		  return badRequest(result);
+		  return Results.badRequest(result);
 	} 
 	
   
-    public Result onResourceNotFound(RequestHeader request,String error) {
+    private Result onResourceNotFound(RequestHeader request,String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 404);
-		  return notFound(result);
+		  return Results.notFound(result);
     }
     
-    public Result onDefaultError(int statusCode,RequestHeader request,String error) {
+    private Result onDefaultError(int statusCode,RequestHeader request,String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", statusCode);
 		  return Results.status(statusCode,result);
 	}
 
-	@Override
-	public Result call(Context ctx) throws Throwable {
+
+	public Result wrap(Context ctx, Result result) throws Throwable {
 		Logger.trace("Method Start");
-		Http.Context.current.set(ctx);
 		
-		Result result = delegate.call(ctx);
+		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		
 		final int statusCode = JavaResultExtractor.getStatus(result);
+		Logger.debug("Executed API: " + ctx.request().method() + " " + ctx.request() + " return code " + statusCode);
 	    if (statusCode>399){	//an error has occured
 		      final byte[] body = JavaResultExtractor.getBody(result);
 		      String stringBody = new String(body, "UTF-8");
 		      switch (statusCode) {
-		      	case 400: return onBadRequest(ctx.request(),stringBody);
-		      	case 401: return onUnauthorized(ctx.request(),stringBody);
-		      	case 403: return onForbidden(ctx.request(),stringBody);
-		      	case 404: return onResourceNotFound(ctx.request(),stringBody);
-		      	default:  return onDefaultError(statusCode,ctx.request(),stringBody);
+		      	case 400: result =onBadRequest(ctx.request(),stringBody);
+		      	case 401: result =onUnauthorized(ctx.request(),stringBody);
+		      	case 403: result =onForbidden(ctx.request(),stringBody);
+		      	case 404: result =onResourceNotFound(ctx.request(),stringBody);
+		      	default:  result =onDefaultError(statusCode,ctx.request(),stringBody);
 		      }
 	    }
+	    Logger.debug("  + result: \n" + result.toString());
 		Logger.trace("Method End");
 	    return result;
 	}

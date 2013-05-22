@@ -56,6 +56,7 @@ import org.junit.rules.ErrorCollector;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import play.Logger;
 import play.Play;
 import play.mvc.Result;
 
@@ -170,6 +171,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	private int httpRequest(String sUrl, String sMethod, JsonNode payload, Map<String, String> mParameters)
 	{
+		Logger.info("\n\nREQUEST:\n"+sMethod+ " " + sUrl+"\nHEADERS: " + mHeaders+"\nParameters: " +mParameters + "\nPayload: " + payload+"\n");
 		HttpURLConnection conn = null;
         BufferedReader br = null;
 	    int nRet = 0;
@@ -300,6 +302,7 @@ public abstract class AbstractTest extends FluentTest
 		        }
 		        setResponse(sb.toString().trim());
 	    	}
+	    	Logger.info("\nRESPONSE\nHTTP code: "+nRet+"\nContent: " + sResponse + "\n");
 	    } 
 	    catch (Exception ex) 
 	    {
@@ -456,11 +459,12 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected void assertRoute(Result result, String sTestName, int nExptedStatus, String sExpctedContent, boolean fCheckContent)
 	{
+		sTestName= "Test name: " + sTestName+"  -  ";
 		if (fUseCollector)
 		{
 			if (result == null)
 			{
-				collector.addError(new Exception(sTestName + ". Cannot ruoute to specified address."));
+				collector.addError(new Exception(sTestName + ". Cannot route to specified address."));
 			}
 			else if (status(result) !=  nExptedStatus)
 			{
@@ -487,7 +491,7 @@ public abstract class AbstractTest extends FluentTest
 				}
 				else
 				{
-					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + ">", sContent.contains(sExpctedContent));
+					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + "> was expcted <" + sExpctedContent + ">", sContent.contains(sExpctedContent));
 				}
 			}
 			else
@@ -499,6 +503,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected void assertServer(String sTestName, int nExptedStatus, String sExpctedContent, boolean fCheckContent)
 	{
+		sTestName="Test name: " +sTestName+"  -  ";
 		if (fUseCollector)
 		{
 			if (getStatusCode() != nExptedStatus)
@@ -520,12 +525,12 @@ public abstract class AbstractTest extends FluentTest
 				{
 					if (!sContent.contains(sExpctedContent))
 					{
-						collector.addError(new Exception(sTestName + ". Unexpected content <" + sContent + "> was expcted <" + sExpctedContent + ">"));
+						collector.addError(new Exception(sTestName + ". Unexpected content <" + sContent + "> was expected <" + sExpctedContent + ">"));
 					}
 				}
 				else
 				{
-					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + ">", sContent.contains(sExpctedContent));
+					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + "> was expected <"+sExpctedContent+">", sContent.contains(sExpctedContent));
 				}
 			}
 			else
@@ -643,7 +648,7 @@ public abstract class AbstractTest extends FluentTest
 			else
 			{
 				Assert.assertNotNull("Missed info: " + sKey + " in JSON object <" + jo.toString() + ">", obj);
-			}
+			} 
 		}
 		catch (Exception ex)
 		{

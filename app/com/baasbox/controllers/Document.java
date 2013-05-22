@@ -32,9 +32,9 @@ import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.With;
 
-import com.baasbox.controllers.actions.filters.ConnectToDB;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.InjectSession;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@With ({InjectSession.class,WrapResponse.class,ConnectToDB.class,ExtractQueryParameters.class})
+@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 public class Document extends Controller {
 	
 		private static String prepareResponseToJson(ODocument doc){

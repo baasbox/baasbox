@@ -34,10 +34,10 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.controllers.actions.filters.CheckAdminRole;
-import com.baasbox.controllers.actions.filters.ConnectToDB;
+import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.InjectSession;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 
-@With  ({InjectSession.class,WrapResponse.class,ConnectToDB.class, CheckAdminRole.class,ExtractQueryParameters.class})
+@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
 
 
