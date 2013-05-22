@@ -34,12 +34,14 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.filters.AdminLogin;
-import com.baasbox.controllers.actions.filters.ConnectToDB;
-import com.baasbox.controllers.actions.filters.InjectSession;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.RequestHeaderHelper;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
@@ -67,7 +69,7 @@ public class User extends Controller {
 	  @Path("/{id}")
 	  @ApiOperation(value = "Get info about current user", notes = "", httpMethod = "GET")
 	  */
-	  @With ({InjectSession.class,ConnectToDB.class,WrapResponse.class})	
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	  public static Result getCurrentUser() throws SqlInjectionException{
 		  Logger.trace("Method Start");
 		  ODocument profile = UserService.getCurrentUser();
@@ -77,7 +79,7 @@ public class User extends Controller {
 	  }
 
 
-	  @With ({AdminLogin.class, ConnectToDB.class,WrapResponse.class})
+	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class,})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp(){
 		  Logger.trace("Method Start");
@@ -113,7 +115,7 @@ public class User extends Controller {
 	  }
 	  
 
-	  @With ({InjectSession.class,ConnectToDB.class,WrapResponse.class})
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
 		  Logger.trace("Method Start");
@@ -144,7 +146,7 @@ public class User extends Controller {
 	 
 
 	  
-	  @With ({AdminLogin.class, ConnectToDB.class,WrapResponse.class})
+	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  public static Result exists(String username){
 		  return status(NOT_IMPLEMENTED);
 		  /*
@@ -164,7 +166,7 @@ public class User extends Controller {
 	  }
 	
 	  
-	  @With ({InjectSession.class,ConnectToDB.class,WrapResponse.class})
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result changePassword(){
 		  Logger.trace("Method Start");
@@ -193,7 +195,7 @@ public class User extends Controller {
 		  return ok();
 	  }	  
 
-	  @With ({InjectSession.class,ConnectToDB.class,WrapResponse.class})
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logout() {
 		  String token=(String) Http.Context.current().args.get("token");
 		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
@@ -210,22 +212,24 @@ public class User extends Controller {
 		 try{
 			 username=body.get("username")[0];
 			 password=body.get("password")[0];
-			 appcode=body.get("appcode")[0];
+			 appcode=RequestHeaderHelper.getAppCode(Http.Context.current());
 		 }catch(NullPointerException e){
 			 return badRequest("Some information is missing");
 		 }
 
 		  /* other useful parameter to receive and to store...*/
 		  
-		  if (!appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
-			  return badRequest("Invalid AppCode");
+		  
 		  //validate user credentials
 		  OGraphDatabase db=null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
 		  }catch (OSecurityAccessException e){
-			  Logger.error("UserLogin", e);
+			  Logger.debug("UserLogin: " +  e.getMessage());
 			  return unauthorized("user " + username + " unauthorized");
+		  } catch (InvalidAppCodeException e) {
+			  Logger.debug("UserLogin: " + e.getMessage());
+			  return badRequest("user " + username + " unauthorized");
 		  }finally{
 			  if (db!=null && !db.isClosed()) db.close();
 		  }

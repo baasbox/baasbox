@@ -14,20 +14,28 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package com.baasbox.controllers;
+package com.baasbox.exception;
 
-import play.mvc.Controller;
-import play.mvc.With;
+public class InvalidAppCodeException extends Exception {
 
-import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-
-
-@With  ({ConnectToDBFilter.class, CheckAdminRoleFilter.class})
-public class Swagger extends Controller{
-	/*
-	public static Result health(){
-		return controllers.HealthController.getHealth();
+	public InvalidAppCodeException() {
+		super();
+		// TODO Auto-generated constructor stub
 	}
-	*/
+
+	public InvalidAppCodeException(String arg0, Throwable arg1) {
+		super(arg0, arg1);
+		// TODO Auto-generated constructor stub
+	}
+
+	public InvalidAppCodeException(String arg0) {
+		super(arg0);
+		// TODO Auto-generated constructor stub
+	}
+
+	public InvalidAppCodeException(Throwable arg0) {
+		super(arg0);
+		// TODO Auto-generated constructor stub
+	}
+
 }

@@ -36,6 +36,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -127,13 +128,23 @@ public class DbHelper {
 		return queryResult;
 	}
 
-	public static OGraphDatabase open(String appcode, String username,String password) {
+	public static OGraphDatabase open(String appcode, String username,String password) throws InvalidAppCodeException {
+		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
+			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
+		String databaseName=BBConfiguration.getDBDir();
+		Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
 	
-
+	public static void close(OGraphDatabase db) {
+		Logger.debug("closing connection");
+		if (db!=null && !db.isClosed()){
+		  HooksManager.unregisteredAll(db);
+		  db.close();
+		}else Logger.debug("connection already close or null");
+	}
 	
 	public static OGraphDatabase getConnection(){
 		return new OGraphDatabase ((ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get());
