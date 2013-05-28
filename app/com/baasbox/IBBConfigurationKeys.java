@@ -22,9 +22,11 @@ public interface IBBConfigurationKeys {
 	public static final String ANONYMOUS_USERNAME = "orient.baasbox.user";
 	public static final String ANONYMOUS_PASSWORD = "orient.baasbox.password";
 	public static final String DB_PATH = "orient.baasbox.path";
+	@Deprecated
 	public static final String REALM = "authorization.basic.realm";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
+	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
 }

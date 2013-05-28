@@ -22,6 +22,7 @@ import play.Play;
 public class BBConfiguration implements IBBConfigurationKeys {
 	public static Configuration configuration = Play.application().configuration();
 	
+	@Deprecated
 	public static String getRealm(){
 		return configuration.getString(REALM);
 	}
@@ -38,5 +39,8 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getDBDir(){
 		return configuration.getString(DB_PATH);
 	}
-
+	
+	public static Boolean getWrapResponse(){
+		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
+	}
 }
