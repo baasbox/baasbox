@@ -608,7 +608,14 @@ public abstract class AbstractTest extends FluentTest
 		}
 		else if (json instanceof JSONObject)
 		{
-			assertJSONElement((JSONObject)json, sKey);
+			try{
+
+				Object data = ((JSONObject)json).get("data");
+				assertJSON(data, sKey);
+			}catch (JSONException e){
+				assertJSONElement((JSONObject)json, sKey);
+			}
+			
 		}
 	}
 	
@@ -629,7 +636,7 @@ public abstract class AbstractTest extends FluentTest
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Unexcpeted content. " + ex.getMessage());
+			Assert.fail("(assertJSONElement - JSONArray)  Error: " + ex.getMessage()+ ". Unexpected content: object " + sKey + " not found in JSON: " + ja.toString());
 		}
 	}
 
@@ -637,7 +644,8 @@ public abstract class AbstractTest extends FluentTest
 	{
 		try
 		{
-			Object obj = jo.get(sKey);
+			JSONObject data = jo;
+			Object obj = data.get(sKey);
 			if (fUseCollector)
 			{
 				if (obj == null)
@@ -652,7 +660,7 @@ public abstract class AbstractTest extends FluentTest
 		}
 		catch (Exception ex)
 		{
-			assertFail("Unexcpeted content." + ex.getMessage());
+			assertFail("(assertJSONElement - JSONObject) Error: " + ex.getMessage()+ ". Unexpected content: object " + sKey + " not found in JSON: " + jo.toString());
 		}
 	}
 }

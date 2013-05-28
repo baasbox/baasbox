@@ -33,12 +33,9 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.RequestHeaderHelper;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
@@ -212,7 +209,7 @@ public class User extends Controller {
 		 try{
 			 username=body.get("username")[0];
 			 password=body.get("password")[0];
-			 appcode=RequestHeaderHelper.getAppCode(Http.Context.current());
+			 appcode=body.get("appcode")[0];
 		 }catch(NullPointerException e){
 			 return badRequest("Some information is missing");
 		 }

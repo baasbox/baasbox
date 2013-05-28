@@ -493,11 +493,11 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		try
 		{
 			JSONObject jo = (JSONObject)json;
-			sRet = jo.getString("@rid");
+			sRet = jo.getJSONObject("data").getString("@rid");
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Cannot get RID value");
+			Assert.fail("Cannot get RID value: " + ex.getMessage());
 		}
 		
 		return sRet;

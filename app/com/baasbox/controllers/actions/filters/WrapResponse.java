@@ -16,13 +16,19 @@
  */
 package com.baasbox.controllers.actions.filters;
 
+import java.io.IOException;
+
+import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+
+import com.baasbox.BBConfiguration;
 
 import play.Logger;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.Context;
+import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
@@ -72,28 +78,65 @@ public class WrapResponse {
 		  return Results.status(statusCode,result);
 	}
 
+	private Result onOk(int statusCode,Request request, String stringBody) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode result = Json.newObject();
+		result.put("result", "ok");
+		result.put("http_code", statusCode);
+		try {
+			result.put("data", mapper.readTree(stringBody));
+		} catch (JsonProcessingException e) {
+			result.put("data", stringBody);
+		} catch (IOException e) {
+			if (stringBody.isEmpty()) result.put("data", "");
+			else throw new IOException("Error parsing stringBody: " + stringBody,e);
+		}
+		return Results.status(statusCode,result);
+	}
 
 	public Result wrap(Context ctx, Result result) throws Throwable {
 		Logger.trace("Method Start");
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		
-		final int statusCode = JavaResultExtractor.getStatus(result);
-		Logger.debug("Executed API: " + ctx.request().method() + " " + ctx.request() + " return code " + statusCode);
-	    if (statusCode>399){	//an error has occured
-		      final byte[] body = JavaResultExtractor.getBody(result);
-		      String stringBody = new String(body, "UTF-8");
-		      switch (statusCode) {
-		      	case 400: result =onBadRequest(ctx.request(),stringBody);
-		      	case 401: result =onUnauthorized(ctx.request(),stringBody);
-		      	case 403: result =onForbidden(ctx.request(),stringBody);
-		      	case 404: result =onResourceNotFound(ctx.request(),stringBody);
-		      	default:  result =onDefaultError(statusCode,ctx.request(),stringBody);
-		      }
-	    }
+		if (BBConfiguration.getWrapResponse()){
+			Logger.debug("Wrapping the response");
+			final int statusCode = JavaResultExtractor.getStatus(result);
+			Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
+		    if (ctx.response().getHeaders().get("Content-Type")!=null 
+		    		&& 
+		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
+		    	Logger.debug("The response is a file, no wrap will be applied");
+		    	return result;
+		    }
+		    	
+			final byte[] body = JavaResultExtractor.getBody(result);
+		    String stringBody = new String(body, "UTF-8");
+		    Logger.debug ("stringBody: " +stringBody);
+			if (statusCode>399){	//an error has occured
+			      switch (statusCode) {
+			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
+			      				break;
+			      	case 401: 	result =onUnauthorized(ctx.request(),stringBody);
+			      				break;
+			      	case 403: 	result =onForbidden(ctx.request(),stringBody);
+			      				break;
+			      	case 404: 	result =onResourceNotFound(ctx.request(),stringBody);
+			      				break;
+			      	default:  	result =onDefaultError(statusCode,ctx.request(),stringBody);
+			      				break;
+			      }
+		    }else{ //status is not an error
+		    	result=onOk(statusCode,ctx.request(),stringBody);
+		    } //if (statusCode>399)
+		}else{ //if (BBConfiguration.getWrapResponse())
+			Logger.debug("The response will not be wrapped due configuration parameter");
+		}
 	    Logger.debug("  + result: \n" + result.toString());
 		Logger.trace("Method End");
 	    return result;
-	}
+	}//wrap
+
+
 
 }
