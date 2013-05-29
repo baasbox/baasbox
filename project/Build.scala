@@ -1,11 +1,13 @@
 import sbt._
 import Keys._
 import play.Project._
+import com.typesafe.config._
 
 object ApplicationBuild extends Build {
-
-    val appName         = "BaasBox"
-    val appVersion      = "0.5.6-SNAPSHOT"
+	val conf = ConfigFactory.parseFile(new File("conf/application.conf")).resolve()
+    
+	val appName         = "BaasBox"
+    val appVersion      = conf.getString("api.version")
 
     val appDependencies = Seq(
     			javaCore,filters,

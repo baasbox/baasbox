@@ -33,9 +33,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	public static String getBaasBoxPassword(){
 		return configuration.getString(ANONYMOUS_PASSWORD);
-	
 	}
-	
+	public static String getApiVersion(){
+		return configuration.getString(API_VERSION);
+	}
 	public static String getDBDir(){
 		return configuration.getString(DB_PATH);
 	}
