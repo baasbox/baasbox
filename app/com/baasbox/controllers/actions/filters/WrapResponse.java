@@ -45,6 +45,7 @@ public class WrapResponse {
 		result.put("resource", request.path());
 		result.put("method", request.method());
 		result.put("request_header", mapper.valueToTree(request.headers()));
+		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 		return result;
 	} 
 	
