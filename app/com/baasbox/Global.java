@@ -23,6 +23,7 @@ import static play.mvc.Results.notFound;
 import java.io.IOException;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import play.Application;
@@ -112,10 +113,14 @@ public class Global extends GlobalSettings {
 	  
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
-		result.put("result", "error");
-		  result.put("bb_code", "");
-		  result.put("message", error);
-		  result.put("resource", request.path());
+		ObjectMapper mapper = new ObjectMapper();
+			result.put("result", "error");
+			result.put("bb_code", "");
+			result.put("message", error);
+			result.put("resource", request.path());
+			result.put("method", request.method());
+			result.put("request_header", mapper.valueToTree(request.headers()));
+			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 		return result;
 	} 
 		
