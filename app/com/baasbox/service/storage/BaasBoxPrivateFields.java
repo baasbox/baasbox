@@ -19,6 +19,7 @@ package com.baasbox.service.storage;
 import java.util.ArrayList;
 
 public enum BaasBoxPrivateFields {
+	ID	("id",true),
 	LINKS	("_links") ,
 	AUDIT	("_audit") ,
 	ALLOW	("_allow"),
@@ -29,15 +30,25 @@ public enum BaasBoxPrivateFields {
 	CREATION_DATE	("_creation_date"); 
 	
 	private String field;
+	private boolean visibleByTheClient=false;
 	
+
+
 	private BaasBoxPrivateFields(String field){
 		this.field=field;
+	}
+	
+	private BaasBoxPrivateFields(String field, boolean exportToClient){
+		this.field=field;
+		this.visibleByTheClient=exportToClient;
 	}
 	
 	public String toString(){
 		return field;
 	}
-	
+	public boolean isVisibleByTheClient() {
+		return visibleByTheClient;
+	}
 	public static String[] getFields(){
 		ArrayList<String> fields=new ArrayList<String>();
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){

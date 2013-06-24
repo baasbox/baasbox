@@ -20,15 +20,12 @@ import java.util.Date;
 
 import play.Logger;
 
+import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.NodeDao;
-import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 
-public class Audit extends ORecordHookAbstract {
-
-	public static final String FIELD_AUDIT = "_audit";
+public class Audit extends BaasBoxHook {
 	
 	public static Audit getIstance(){
 		return new Audit();
@@ -44,7 +41,7 @@ public class Audit extends ORecordHookAbstract {
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
 				if ( 
-					 ( doc.field("type")!=null && !doc.field("type").equals(FIELD_AUDIT) )
+					 ( doc.field("type")!=null && !doc.field("type").equals(BBInternalConstants.FIELD_AUDIT) )
 					||
 					 ( doc.field("type")==null )
 					){
@@ -52,12 +49,12 @@ public class Audit extends ORecordHookAbstract {
 						Logger.debug("  AuditHook.onRecordBeforeCreate: creation of audit fields for document " + doc.getIdentity());
 						ODocument auditDoc = new ODocument();
 						Date data = new Date();
-						auditDoc.field("type",FIELD_AUDIT);
+						auditDoc.field("type",BBInternalConstants.FIELD_AUDIT);
 						auditDoc.field("createdBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("createdOn",data); 
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
-						doc.field(FIELD_AUDIT,auditDoc);		
+						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);		
 						return RESULT.RECORD_CHANGED;
 					}//doc.getClassName()
 				}
@@ -72,18 +69,18 @@ public class Audit extends ORecordHookAbstract {
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
 				if ( 
-					 ( doc.field("type")!=null && !doc.field("type").equals(FIELD_AUDIT) )
+					 ( doc.field("type")!=null && !doc.field("type").equals(BBInternalConstants.FIELD_AUDIT) )
 					||
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
 						Logger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
-						ODocument auditDoc = doc.field(FIELD_AUDIT);
+						ODocument auditDoc = doc.field(BBInternalConstants.FIELD_AUDIT);
 						if (auditDoc==null) auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
-						doc.field(FIELD_AUDIT,auditDoc);	
+						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
 						return RESULT.RECORD_CHANGED;
 					}
 				}
@@ -91,4 +88,9 @@ public class Audit extends ORecordHookAbstract {
 		Logger.trace("Method End");
 		return RESULT.RECORD_NOT_CHANGED;
 	 }//onRecordBeforeUpdate
+
+	@Override
+	public String getHookName() {
+		return "Audit";
+	}
 }
