@@ -44,6 +44,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 					
 					// Invalid AppCode
 					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
 					assertRoute(result, "Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
 	
@@ -85,6 +86,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 					
 					// Invalid AppCode
 					setHeader(TestConfig.KEY_APPCODE, "1");
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
 					assertServer("Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
 	

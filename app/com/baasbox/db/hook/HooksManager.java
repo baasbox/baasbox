@@ -30,25 +30,42 @@ public class HooksManager {
 	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
 		Logger.debug("Registering hooks...");
-		db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
+		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
+		Set<ORecordHook> hooks = db.getHooks();
+		Iterator<ORecordHook> it =hooks.iterator();
+		boolean register=true;
+		while (it.hasNext()){		
+			if (it.next() instanceof BaasBoxHook) {
+				Logger.debug("BaasBox hooks already registerd for this connection");
+				register=false;
+				break;
+			}
+		}
+		if (register){
+			Logger.debug("Registering BaasBox hooks... start");
+			db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
+			Logger.debug("Registering BaasBox hooks... done");
+		}
 		Logger.debug("Hooks: "+ db.getHooks());
-		//db.registerHook(HidePassword.getIstance());
 		Logger.trace("Method End");
 	}
 	
 	public static void unregisteredAll(OGraphDatabase db){
+
 		Logger.trace("Method Start");
+		/*
 		Logger.debug("unregistering hooks...");
 		Set<ORecordHook> hooks = db.getHooks();
 		Iterator<ORecordHook> it =hooks.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
-			if (h instanceof Audit) {
-				Logger.debug("Removing Audit hook");
+			if (h instanceof BaasBoxHook) {
+				Logger.debug("Removing "+ ((BaasBoxHook) h).getHookName() + " hook");
 				db.unregisterHook(h);
-				break;
 			}
 		}
+				*/
 		Logger.trace("Method End");
+
 	}
 }
