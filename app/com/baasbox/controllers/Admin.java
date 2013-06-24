@@ -33,13 +33,12 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.controllers.actions.filters.BasicAuthHeader;
-import com.baasbox.controllers.actions.filters.CheckAPPCode;
-import com.baasbox.controllers.actions.filters.CheckAdminRole;
-import com.baasbox.controllers.actions.filters.ConnectToDB;
+import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -59,9 +58,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 
-@With  ({CheckAPPCode.class,BasicAuthHeader.class, ConnectToDB.class, CheckAdminRole.class,ExtractQueryParameters.class})
+@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
-	
+
+
 	  public static Result getUsers(){
 		  Logger.trace("Method Start");
 		  Context ctx=Http.Context.current.get();
@@ -83,7 +83,6 @@ public class Admin extends Controller {
 		  return ok(ret);
 	  }
 
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class,ExtractQueryParameters.class})
 	  public static Result getCollections(){
 		  	Logger.trace("Method Start");
 
@@ -151,7 +150,7 @@ public class Admin extends Controller {
 		  return status(NOT_IMPLEMENTED);
 	  }
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
+
 	  public static Result getRoles() throws SqlInjectionException{
 		  List<ODocument> listOfRoles=UserService.getRoles();
 		  String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
@@ -160,7 +159,7 @@ public class Admin extends Controller {
 	  }
 	  
 	  /* create user in any role */
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
+	  
 	  public static Result createUser(){
 		  Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
@@ -207,7 +206,7 @@ public class Admin extends Controller {
 		  return created();
 	  }//createUser
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
+	  
 	  public static Result updateUser(String username){
 		  Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
@@ -264,7 +263,6 @@ public class Admin extends Controller {
 		  return status(NOT_IMPLEMENTED);
 	  }
 
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
 	  public static Result dumpConfiguration(String returnType){
 		  String dump="";
 		  if (returnType.equals("txt")) {
@@ -278,8 +276,7 @@ public class Admin extends Controller {
 	  }
 	  
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class,CheckAdminRole.class})
-	  public static Result setConfiguration(String section, String subSection, String key, String value){
+	   public static Result setConfiguration(String section, String subSection, String key, String value){
 		  Class conf = PropertiesConfigurationHelper.configurationSections.get(section);
 		  if (conf==null) return notFound(section + " is not a valid configuration section");
 		  try {

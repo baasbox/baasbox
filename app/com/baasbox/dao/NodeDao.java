@@ -19,9 +19,11 @@ package com.baasbox.dao;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import play.Logger;
 
+import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -93,6 +95,9 @@ public abstract class NodeDao  {
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
 				doc.field(FIELD_CREATION_DATE,new Date());
 				vertex.field(FIELD_TO_DOCUMENT_FIELD,doc);
+				UUID token = UUID.randomUUID();
+				Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
+				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				//crates a link (an edge) between the current user and the document  
 				UserDao udao = new UserDao();
 				ODocument user=udao.getByUserName(DbHelper.getCurrentUserName());
@@ -110,7 +115,6 @@ public abstract class NodeDao  {
 	protected  void save(ODocument document) throws InvalidModelException {
 		Logger.trace("Method Start");
 		checkModelDocument(document);
-		document.fields(DocumentDao.FIELD_CREATION_DATE, new Date());
 		document.save();
 		Logger.trace("Method End");
 	}

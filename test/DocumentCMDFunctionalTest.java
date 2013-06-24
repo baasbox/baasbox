@@ -68,6 +68,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		json = toJSON(s);
 		assertJSON(json, "@rid");
+		assertJSON(json, "id");
 		assertJSON(json, "color");
 		assertJSON(json, "shape");
 	}
@@ -275,7 +276,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					serverCreateDocument(getURLAddress(sFakeCollection));
 					assertServer("testServerCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
-
+					String sUuid = getUuid();
 					continueOnFail(true);
 					
 					try
@@ -284,6 +285,12 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertServer("testServerCMDDocument MODIFY RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
+						
+						// Test successful modify UUID
+						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode(sUuid, "ISO-8859-1"));
+						assertServer("testServerCMDDocument MODIFY UUID <" + sUuid + ">", Status.OK, null, true);
+						assertJSONString(json, TEST_MODIFY_JSON);
+						
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -295,6 +302,10 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 						// Test modify with non existent collection
 						serverModifyDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + COLLECTION_NOT_EXIST + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
 						assertServer("testServerCMDDocument no collection MODIFY RID <" + sRid + ">", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
+						
+						// Test modify with non existent collection UUID
+						serverModifyDocument(TestConfig.SERVER_URL + SERVICE_ROUTE + COLLECTION_NOT_EXIST + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						assertServer("testServerCMDDocument no collection MODIFY UUID <" + sUuid + ">", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -306,6 +317,10 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 						// Test modify with non existent RID
 						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("#1238:1", "ISO-8859-1"));
 						assertServer("testServerCMDDocument not existent RID. MODIFY", Status.NOT_FOUND, null, false);
+						
+						// Test modify with non existent UUID
+						serverModifyDocument(getURLAddress(sFakeCollection) + "/" + URLEncoder.encode("056e4b19-5c32-4d25-b70b-135e011d72a2", "ISO-8859-1"));
+						assertServer("testServerCMDDocument not existent UUID. MODIFY", Status.NOT_FOUND, null, false);
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -493,13 +508,30 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		try
 		{
 			JSONObject jo = (JSONObject)json;
-			sRet = jo.getString("@rid");
+			sRet = jo.getJSONObject("data").getString("@rid");
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Cannot get RID value");
+			Assert.fail("Cannot get RID value: " + ex.getMessage());
 		}
 		
 		return sRet;
+	}
+	
+	private String getUuid()
+	{
+		String sUuid = null;
+
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sUuid = jo.getJSONObject("data").getString("id");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get UUID (id) value: " + ex.getMessage() + "\n The json object is: \n" + json);
+		}
+		
+		return sUuid;
 	}
 }

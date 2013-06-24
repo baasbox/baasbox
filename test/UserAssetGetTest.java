@@ -73,7 +73,7 @@ public class UserAssetGetTest extends AbstractTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + FAKE_ASSET);
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + FAKE_ASSET+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE);
 					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteGetFakeAsset", Status.NOT_FOUND, null, false);
 				}
@@ -95,7 +95,7 @@ public class UserAssetGetTest extends AbstractTest
 
 					continueOnFail(true);
 					
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + AdminAssetCreateTest.TEST_ASSET_NAME + "/data");
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + AdminAssetCreateTest.TEST_ASSET_NAME + "/data"+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE);
 					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteGetAsset", Status.OK, null, true);
 
@@ -121,7 +121,7 @@ public class UserAssetGetTest extends AbstractTest
 
 					continueOnFail(true);
 					
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + FAKE_ASSET + "/download");
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "/" + FAKE_ASSET + "/download"+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE);
 					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteDownloadFakeAsset", Status.NOT_FOUND, null, false);
 
@@ -144,7 +144,7 @@ public class UserAssetGetTest extends AbstractTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					httpRequest(getURLAddress()  + "/" + FAKE_ASSET, getMethod());
+					httpRequest(getURLAddress()  + "/" + FAKE_ASSET+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE, getMethod());
 					assertServer("testServerGetFakeAsset", Status.NOT_FOUND, null, false);
 				}
 	        }
@@ -167,7 +167,7 @@ public class UserAssetGetTest extends AbstractTest
 					continueOnFail(true);
 					
 					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress()  + "/" + AdminAssetCreateTest.TEST_ASSET_NAME + "/data", getMethod());
+					httpRequest(getURLAddress()  + "/" + AdminAssetCreateTest.TEST_ASSET_NAME + "/data"+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE, getMethod());
 					assertServer("testServerGetAsset", Status.OK, null, true);
 
 					continueOnFail(false);
@@ -194,7 +194,7 @@ public class UserAssetGetTest extends AbstractTest
 					continueOnFail(true);
 
 					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress()  + "/" + AdminAssetCreateTest.TEST_FILE_ASSET_NAME + "/download", getMethod());
+					httpRequest(getURLAddress()  + "/" + AdminAssetCreateTest.TEST_FILE_ASSET_NAME + "/download"+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE, getMethod());
 					assertServer("testServerGetAsset", Status.OK, null, false);
 					
 					continueOnFail(false);
@@ -217,7 +217,7 @@ public class UserAssetGetTest extends AbstractTest
 				public void invoke(TestBrowser browser) 
 				{
 					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					httpRequest(getURLAddress()  + "/" + FAKE_ASSET + "/download", getMethod());
+					httpRequest(getURLAddress()  + "/" + FAKE_ASSET + "/download"+"?"+TestConfig.KEY_APPCODE+"="+TestConfig.VALUE_APPCODE, getMethod());
 					assertServer("testServerDownloadFakeAsset", Status.NOT_FOUND, null, false);
 				}
 	        }

@@ -35,6 +35,8 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
+POST	/login						com.baasbox.controllers.User.login()
+POST	/logout						com.baasbox.controllers.User.logout()
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
 PUT		/user						com.baasbox.controllers.User.updateProfile()
@@ -45,16 +47,26 @@ GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: Strin
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
 POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
-PUT 	 /document/:collection/:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
-GET		 /document/:collection/:rid					com.baasbox.controllers.Document.getDocument(collection: String, rid: String)
-DELETE	 /document/:collection/:rid					com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String)
-#grant and revoke permissions
-PUT		/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String)
-DELETE	/document/:collection/:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String)
-PUT		/document/:collection/:rid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, rid:String, rolename:String, action:String)
-DELETE	/document/:collection/:rid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, rid:String, rolename:String, action:String)
+PUT 	 /document/:collection/%23:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String, isUUID: Boolean ?= false)
+GET		 /document/:collection/%23:rid					com.baasbox.controllers.Document.getDocument(collection: String, rid: String, isUUID: Boolean ?= false)
+DELETE	 /document/:collection/%23:rid					com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String, isUUID: Boolean ?= false)
 
+PUT 	 /document/:collection/:uuid					com.baasbox.controllers.Document.updateDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+
+
+#grant and revoke permissions
+PUT		/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
+DELETE	/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
+PUT		/document/:collection/%23:rid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, rid:String, rolename:String, action:String, isUUID: Boolean ?= false)
+DELETE	/document/:collection/%23:rid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, rid:String, rolename:String, action:String, isUUID: Boolean ?= false)
+
+PUT		/document/:collection/:uuid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, uuid:String, username:String, action:String, isUUID: Boolean ?= true)
+DELETE	/document/:collection/:uuid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, uuid:String, username:String, action:String, isUUID: Boolean ?= true)
+PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
+DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
 
 #Admin actions
