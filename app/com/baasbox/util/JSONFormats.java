@@ -46,7 +46,7 @@ public class JSONFormats {
 
 	public static ODocument cutBaasBoxFields(ODocument doc){
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
-			doc.removeField(r.toString());
+			if (!r.isVisibleByTheClient())doc.removeField(r.toString());
 		}
 		return doc;
 	}

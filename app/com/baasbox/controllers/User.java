@@ -18,27 +18,35 @@ package com.baasbox.controllers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
 
 import play.Logger;
 import play.Play;
+import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.controllers.actions.filters.AdminLogin;
-import com.baasbox.controllers.actions.filters.BasicAuthHeader;
-import com.baasbox.controllers.actions.filters.CheckAPPCode;
-import com.baasbox.controllers.actions.filters.ConnectToDB;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
+import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -58,7 +66,7 @@ public class User extends Controller {
 	  @Path("/{id}")
 	  @ApiOperation(value = "Get info about current user", notes = "", httpMethod = "GET")
 	  */
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})	
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	  public static Result getCurrentUser() throws SqlInjectionException{
 		  Logger.trace("Method Start");
 		  ODocument profile = UserService.getCurrentUser();
@@ -68,7 +76,7 @@ public class User extends Controller {
 	  }
 
 
-	  @With ({CheckAPPCode.class, AdminLogin.class, ConnectToDB.class})
+	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class,})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp(){
 		  Logger.trace("Method Start");
@@ -104,7 +112,7 @@ public class User extends Controller {
 	  }
 	  
 
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
 		  Logger.trace("Method Start");
@@ -135,7 +143,7 @@ public class User extends Controller {
 	 
 
 	  
-	  @With ({CheckAPPCode.class, AdminLogin.class, ConnectToDB.class})
+	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  public static Result exists(String username){
 		  return status(NOT_IMPLEMENTED);
 		  /*
@@ -155,7 +163,7 @@ public class User extends Controller {
 	  }
 	
 	  
-	  @With ({CheckAPPCode.class, BasicAuthHeader.class, ConnectToDB.class})
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result changePassword(){
 		  Logger.trace("Method Start");
@@ -183,13 +191,50 @@ public class User extends Controller {
 		  Logger.trace("Method End");
 		  return ok();
 	  }	  
-	  
-		 /*Postponed: now we use only the Basic Auth 
-	  @With ({CheckAPPCode.class, ApplicationDefaultCredentials.class, ConnectToOrientDB.class})
-	  public static Result login(){
-		  boolean result = service.user.User.exists(username);
-		  return ok ("{\"response\": \""+result+"\"}");
+
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result logout() {
+		  String token=(String) Http.Context.current().args.get("token");
+		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  return noContent();
 	  }
-	   */
+	  
+	  @BodyParser.Of(BodyParser.FormUrlEncoded.class)
+	  public static Result login() {
+		 Map<String, String[]> body = request().body().asFormUrlEncoded();
+		 if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
+		 String username="";
+		 String password="";
+		 String appcode="";
+		 try{
+			 username=body.get("username")[0];
+			 password=body.get("password")[0];
+			 appcode=body.get("appcode")[0];
+		 }catch(NullPointerException e){
+			 return badRequest("Some information is missing");
+		 }
+
+		  /* other useful parameter to receive and to store...*/
+		  
+		  
+		  //validate user credentials
+		  OGraphDatabase db=null;
+		  try{
+			 db = DbHelper.open(appcode,username, password);
+		  }catch (OSecurityAccessException e){
+			  Logger.debug("UserLogin: " +  e.getMessage());
+			  return unauthorized("user " + username + " unauthorized");
+		  } catch (InvalidAppCodeException e) {
+			  Logger.debug("UserLogin: " + e.getMessage());
+			  return badRequest("user " + username + " unauthorized");
+		  }finally{
+			  if (db!=null && !db.isClosed()) db.close();
+		  }
+		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  ObjectNode result = Json.newObject();
+		  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  return ok(result);
+	  }
 
 }

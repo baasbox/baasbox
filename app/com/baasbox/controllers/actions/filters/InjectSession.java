@@ -16,44 +16,43 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import org.slf4j.MDC;
-
-import com.baasbox.IBBConfigurationKeys;
-
-import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
-/**
- * Inject the admin credentials into the args argument
- * @author claudio
- */
-public class CheckAPPCode extends Action.Simple {
+import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionTokenProvider;
+import com.google.common.collect.ImmutableMap;
 
-	private final String X_HEADER = "X-BAASBOX-APPCODE";
+
+public class InjectSession extends Action.Simple {
+
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
 		Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
-		String codeSent[] = ctx.request().headers().get(X_HEADER);
 		
-		Logger.debug("CheckAPPCode for resource " + Http.Context.current().request());
-		Logger.debug("codeSent: " + ((codeSent==null)?"null":codeSent.toString()));
-		Result result = badRequest("Invalid App Code: " + ((codeSent==null)?"null":codeSent[0]));
-
-		String codeExpected = Play.application().configuration().getString(IBBConfigurationKeys.APP_CODE);
-		if (codeSent!=null && codeSent.length>0 && codeSent[0].equals(codeExpected)){	
-			MDC.put("appid", codeSent[0]);
-			result = delegate.call(ctx);
-		}
-		Logger.trace("Method End");
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
-		return result;
+		//injects the user data & credential into the context
+		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		if (token!=null) {
+			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  if (sessionData!=null){
+					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
+					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
+					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
+					ctx.args.put("token", token);
+			  }
+		}
+	    
+		//executes the request
+		Result result = delegate.call(ctx);
+
+		Logger.trace("Method End");
+	    return result;
 	}
 
 }

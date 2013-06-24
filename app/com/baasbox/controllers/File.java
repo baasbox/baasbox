@@ -19,10 +19,7 @@ package com.baasbox.controllers;
 import play.mvc.Controller;
 import play.mvc.Result;
 
-/**
- * @author Claudio Tesoriero
- *
- */
+
 public class File extends Controller {
 	  /*------------------FILE--------------------*/
 	  public static Result storeFile(){

@@ -46,7 +46,7 @@ public class CheckAdminRole extends Action.Simple{
 		Result result=null;
 		if (roles.contains(RoleDao.getRole("admin"))){
 			result = delegate.call(ctx);
-		}else result=forbidden(views.html.error.render(Http.Status.FORBIDDEN));
+		}else result=forbidden("User " + ctx.args.get("username") + " is not an administrator");
 		Logger.trace("Method End");
 		return result;
 	}

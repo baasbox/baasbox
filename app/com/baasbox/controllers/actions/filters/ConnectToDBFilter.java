@@ -17,21 +17,14 @@
 package com.baasbox.controllers.actions.filters;
 
 
-import org.apache.commons.lang.exception.ExceptionUtils;
-
 import play.Logger;
-import play.Play;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
-
-import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.exceptions.BadCredentialsException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.db.hook.Audit;
-import com.baasbox.db.hook.HooksManager;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
@@ -41,7 +34,7 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
  * Inject the user credentials into the args argument
  * @author claudio
  */
-public class ConnectToDB extends Action.Simple {
+public class ConnectToDBFilter extends Action.Simple {
  
 	@Override
 	public Result call(Context ctx) throws Throwable {
@@ -49,7 +42,7 @@ public class ConnectToDB extends Action.Simple {
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("UserLogin for resource " + Http.Context.current().request());
+		Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
@@ -60,19 +53,24 @@ public class ConnectToDB extends Action.Simple {
 	        try{
 	        	database=DbHelper.open(appcode,username,password);
 	        }catch (OSecurityAccessException e){
+	        	Logger.debug(e.getMessage());
 	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
 	        }
 			
 			result = delegate.call(ctx);
 
 		}catch (OSecurityAccessException e){
-			Logger.error("UserLogin", e);
+			Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
 			result = forbidden(e.getMessage());
+		}catch (InvalidAppCodeException e){
+			Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
+			result = unauthorized(e.getMessage());	
 		}catch (Throwable e){
+			Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
 			throw e;
 		}finally{
 			Http.Context.current.set(ctx); 
-			if (database!=null && !database.isClosed()) database.close();
+			DbHelper.close(database);
 		}
 		Logger.trace("Method End");
 		return result;

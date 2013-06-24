@@ -17,6 +17,7 @@
 package com.baasbox.dao;
 
 import java.util.List;
+import java.util.UUID;
 
 import play.Logger;
 
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -52,6 +54,18 @@ public class GenericDao {
 		ODocument doc=db.load(rid);
 		Logger.trace("Method End");
 		return doc;
+	}
+	
+	public ORID getRidByUUID(UUID id){
+		OGraphDatabase db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Node.id");
+		ORID rid = (ORID) index.get(id.toString());
+		return rid;
+	}
+	
+	public ORID getRidByUUID(String id){
+		  UUID uuid=UUID.fromString(id);
+		  return getRidByUUID(uuid);
 	}
 	
 	public List<ODocument>query(String oclass, QueryParams criteria) throws SqlInjectionException{
