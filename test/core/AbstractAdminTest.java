@@ -19,10 +19,8 @@
 
 package core;
 
-import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.FORBIDDEN;
 import static play.mvc.Http.Status.OK;
-import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
@@ -36,7 +34,7 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
-public abstract class AbstractAdminTest extends AbstractTest
+public abstract class AbstractAdminTest extends AbstractRouteHeaderTest
 {
 	@Test
 	public void testRouteOK()
@@ -80,47 +78,6 @@ public abstract class AbstractAdminTest extends AbstractTest
 	}
 	
 	@Test
-	public void testRouteNotValid()
-	{
-		running
-		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
-				{
-					// No AppCode, No Authorization
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
-					Result result = routeAndCall(request);
-					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
-
-					// No Authorization
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					result = routeAndCall(request);
-					assertRoute(result, "No Authorization", UNAUTHORIZED, null, false);
-					
-					// Invalid AppCode
-					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
-					result = routeAndCall(request);
-					assertRoute(result, "Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
-
-					// Invalid Authorization
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, "Basic YWRtaW46YWRtaW");
-					result = routeAndCall(request);
-					assertRoute(result, "Invalid Authorization", UNAUTHORIZED, null, false);
-					
-					// No AppCode
-					request = new FakeRequest(getMethod(), getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "No AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
-				}
-			}
-		);		
-	}
-
-	@Test
 	public void testServerOK()
 	{
 		running
@@ -155,49 +112,6 @@ public abstract class AbstractAdminTest extends AbstractTest
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					httpRequest(getURLAddress(), getMethod());
 					assertServer("testServerDefaultUser", FORBIDDEN, null, false);
-	            }
-	        }
-		);
-	}
-
-	@Test
-	public void testServerNotValid()
-	{
-		running
-		(
-			testServer(TestConfig.SERVER_PORT), 
-			HTMLUNIT, 
-			new Callback<TestBrowser>() 
-	        {
-				public void invoke(TestBrowser browser) 
-				{
-					// No AppCode, No Authorization
-					removeHeader(TestConfig.KEY_APPCODE);
-					removeHeader(TestConfig.KEY_AUTH);
-					httpRequest(getURLAddress(), getMethod());
-					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
-					
-					// No Authorization
-					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					httpRequest(getURLAddress(), getMethod());
-					assertServer("No Authorization", UNAUTHORIZED, null, false);
-					
-					// Invalid AppCode
-					setHeader(TestConfig.KEY_APPCODE, "1");
-					httpRequest(getURLAddress(), getMethod());
-					assertServer("Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
-
-					// Invalid Authorization
-					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, "Basic YWRtaW46YWRtaW");
-					httpRequest(getURLAddress(), getMethod());
-					assertServer("Invalid Autorization", UNAUTHORIZED, null, false);
-
-					// No AppCode
-					removeHeader(TestConfig.KEY_APPCODE);
-					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					httpRequest(getURLAddress(), getMethod());
-					assertServer("No AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
 	            }
 	        }
 		);

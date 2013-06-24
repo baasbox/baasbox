@@ -3,12 +3,12 @@
 --Node
 create class NodeVertex extends ographvertex;
 
-
-create class Node abstract extends ORestricted;
+--Node class should be abstract but we cannot declare it as abstrat due the index on the id field
+create class Node  extends ORestricted;
 create property NodeVertex._node link Node;
 create property Node._creation_date datetime;
 create property Node._links link NodeVertex;
-
+create property Node.id String;
 
 --user
 create class User extends Node;
@@ -104,6 +104,7 @@ create class Like extends ographedge;
 create index ouser.name unique;
 create index collection.name unique;
 create index asset.name unique;
+create index Node.id unique;
 
 --configuration
 create index bb_password_recovery dictionary

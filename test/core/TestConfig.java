@@ -39,8 +39,10 @@ public class TestConfig
 	
 	public static final String AUTH_ADMIN_ENC;
 	public static final String AUTH_DEFAULT_ENC;
-	
+	 
 	public static final String MSG_INVALID_APP_CODE = "Invalid App Code";
+	public static final String MSG_NO_APP_CODE = "AppCode is empty";
+	 
 	public static final String MSG_USER_MODIDY_NOT_PRESENT = " is not a user";
 	public static final String MSG_INVALID_COLLECTION = "is not a valid collection name";
 	public static final String MSG_BAD_RID = "is not a RecordId in form of string.";

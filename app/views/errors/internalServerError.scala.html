@@ -1,0 +1,8 @@
+@(throwable: Throwable)
+{
+	"http_code":"500",
+	"bb_code":"",
+	"message":"@throwable.getMessage()",
+	"stacktrace":"@throwable.printStackTrace()",
+	"resource":"@request"
+}

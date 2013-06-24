@@ -18,6 +18,7 @@
 // @author: Marco Tibuzzi
 
 import static play.mvc.Http.Status.BAD_REQUEST;
+import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.fakeApplication;
@@ -34,11 +35,10 @@ import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
-
 import core.AbstractUserTest;
 import core.TestConfig;
 
@@ -82,12 +82,12 @@ public class UserCreateTest extends AbstractUserTest
 					// No AppCode, No Authorization
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					Result result = routeAndCall(request);
-					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
 
 					// Invalid AppCode
 					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
 					result = routeAndCall(request);
-					assertRoute(result, "Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertRoute(result, "Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
 				}
 			}
 		);		
@@ -166,12 +166,12 @@ public class UserCreateTest extends AbstractUserTest
 					removeHeader(TestConfig.KEY_APPCODE);
 					removeHeader(TestConfig.KEY_AUTH);
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
 					
 					// Invalid AppCode
 					setHeader(TestConfig.KEY_APPCODE, "1");
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("Invalid AppCode", BAD_REQUEST, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertServer("Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
 	            }
 	        }
 		);

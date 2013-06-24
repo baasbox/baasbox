@@ -522,9 +522,13 @@ function setup(){
 	setupSelects();
 
 	$('.logout').click(function(e){
-		sessionStorage.up="";
-		sessionStorage.appcode="";
-		location.reload();
+		BBRoutes.com.baasbox.controllers.User.logout().ajax({}).always(
+				function() { 
+					sessionStorage.up="";
+					sessionStorage.appcode="";
+					sessionStorage.sessionToken="";
+					location.reload(); 
+				});
 	});
 	
 	if (sessionStorage.up && sessionStorage.up!="") {
@@ -725,6 +729,7 @@ function setupSelects(){
 			BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
 				data: {orderBy: "name asc"},
 				success: function(data) {
+											data=data["data"];
 											var scope=$("#documents").scope();
 											scope.$apply(function(){
 										    	 scope.collectioName=val;
@@ -739,8 +744,7 @@ function setupSelects(){
 function setupAjax(){
 	$.ajaxSetup({
 	    beforeSend: function (xhr){ 
-	        xhr.setRequestHeader('Authorization', sessionStorage.up); 
-	        xhr.setRequestHeader('X-BAASBOX-APPCODE', sessionStorage.appcode);
+	        xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
 	    }
 	});
 	//hack for charisma menu
@@ -792,7 +796,7 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
-										userDataArray = data;
+										userDataArray = data["data"];
 										applySuccessMenu(action,data);
 										$('#userTable').dataTable().fnClearTable();
 										$('#userTable').dataTable().fnAddData(data);
@@ -801,16 +805,16 @@ function callMenu(action){
 	  break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
-			success: function(data) {applySuccessMenu(action,data);}
+			success: function(data) {applySuccessMenu(action,data["data"]);}
 		});
 	  break;	//#dashboard
 	case "#collections":
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 		data: {orderBy: "name asc"},
 		success: function(data) {
-									applySuccessMenu(action,data);
+									applySuccessMenu(action,data["data"]);
 									$('#collectionTable').dataTable().fnClearTable();
-									$('#collectionTable').dataTable().fnAddData(data);
+									$('#collectionTable').dataTable().fnAddData(data["data"]);
 								}
 		});
 	  break;//#collections
@@ -819,6 +823,7 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
+										data=data["data"];
 										applySuccessMenu(action,data);
 										var sel=$('#selectCollection');
 										sel.empty();
@@ -837,6 +842,7 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Asset.getAll().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
+										data=data["data"];
 										applySuccessMenu(action,data);
 										//console.log("getAll");
 										//console.log(data);
@@ -856,30 +862,35 @@ function CollectionsController($scope){
 function DocumentsController($scope){
 }
 
-	  function tryToLogin(){
-			BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
-				success: function(data) {
-					         var scope=$("#loggedIn").scope();
-					         scope.$apply(function(){
-					        	 scope.loggedIn=true;
-					         });
-					         applySuccessMenu("#dashboard",data);
-					         $("#errorLogin").addClass("hide");
-					     },
-				error: function() {
-					$("#errorLogin").removeClass("hide");
-				}
-			});	 //ajax
-	  }//tryToLogin	
+  function tryToLogin(user, pass,appCode){
+		BBRoutes.com.baasbox.controllers.User.login().ajax({
+			data:{username:user,password:pass,appcode:appCode},
+			success: function(data) {
+				         sessionStorage.sessionToken=data["X-BB-SESSION"];
+				         BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
+				        	 success: function(data) {
+				        		 data=data["data"];
+						         var scope=$("#loggedIn").scope();
+						         scope.$apply(function(){
+						        	 scope.loggedIn=true;
+						         });
+						         applySuccessMenu("#dashboard",data);
+						         $("#errorLogin").addClass("hide");
+				        	 }
+				         })
+				     },
+			error: function() {
+				$("#errorLogin").removeClass("hide");
+			}
+		});	 //ajax
+  }//tryToLogin	
 
 function LoginController($scope) {
 	  $scope.login = function() {
 			var username=$scope.username;
 			var password=$scope.password;
 			var appCode=$scope.appcode;
-			sessionStorage.up=make_base_auth(username, password);
-			sessionStorage.appcode=appCode;
-			tryToLogin();
+			tryToLogin(username, password,appCode);
 	  }; //login
 }	//LoginController
 

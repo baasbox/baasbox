@@ -16,22 +16,16 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import com.baasbox.BBConfiguration;
-import com.baasbox.IBBConfigurationKeys;
-
-import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
-/**
- * Inject the admin credentials into the args argument
- * @author claudio
- */
-public class AdminLogin extends Action.Simple {
+import com.baasbox.BBConfiguration;
+import com.baasbox.security.SessionKeys;
+
+public class AnonymousCredentialWrapFilter extends Action.Simple {
 
 
 	@Override
@@ -39,16 +33,31 @@ public class AdminLogin extends Action.Simple {
 		Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("AdminLogin  for resource " + Http.Context.current().request());
+		Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
+		String user=BBConfiguration.getBaasBoxUsername();
+		String password = BBConfiguration.getBaasBoxPassword();
 		
-		String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-		String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
-		ctx.args.put("username", adminUser);
-		ctx.args.put("password", adminPassword);
+		//retrieve AppCode
+		String appCode=RequestHeaderHelper.getAppCode(ctx);
+			
+		ctx.args.put("username", user);
+		ctx.args.put("password", password);
+		ctx.args.put("appcode", appCode);
 		
+		Logger.debug("username (defined in conf file): " + user);
+		Logger.debug("password (defined in conf file): " + password);
+		Logger.debug("appcode (from header or querystring): " + appCode);
+		Logger.debug("token: N/A");
+		
+		//executes the request
+		Result tempResult = delegate.call(ctx);
+
+		WrapResponse wr = new WrapResponse();
+		Result result=wr.wrap(ctx, tempResult);
+				
 		Logger.trace("Method End");
-		return delegate.call(ctx);
+	    return result;
 	}
 
 }
