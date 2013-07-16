@@ -17,8 +17,11 @@
 package com.baasbox.controllers;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
@@ -35,6 +38,7 @@ import play.mvc.With;
 
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.db.DbHelper;
@@ -193,23 +197,110 @@ public class User extends Controller {
 	  }	  
 
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	  public static Result logout() {
+	  public static Result logout2() {
 		  String token=(String) Http.Context.current().args.get("token");
+		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  //UserService.logout(deviceId);
+		  return noContent();
+	  }
+	  /////////////////////////////////////////////////////////////////////////////
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result logout(String deviceId) throws SqlInjectionException { 
+		  String token=(String) Http.Context.current().args.get("token");
+		  UserService.logout(deviceId);
 		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  return noContent();
 	  }
 	  
+	  @With ({NoUserCredentialWrapFilter.class})
+	  public static Result loginGet( String username, String password, String appcode,String deviceId, String os)throws SqlInjectionException {
+			 String loginData=null;
+			 try{
+				
+				 Logger.debug("Username " + username);
+				 Logger.debug("Password " + password);
+				 Logger.debug("Appcode" + appcode);
+			
+				 if (deviceId!=null || os!=null)
+					 loginData="{\"deviceId\":\"" + deviceId + "\", \"os\":\""+os+"\"}";
+				 Logger.debug("LoginData" + loginData);
+			 }catch(NullPointerException e){
+				 return badRequest("Some information is missing");
+			 }
+
+			  //validate user credentials
+			  OGraphDatabase db=null;
+			  try{
+				 db = DbHelper.open(appcode,username, password);
+				 if (loginData!=null){
+					 JsonNode loginInfo=null;
+					 try{
+						 loginInfo = Json.parse(loginData);
+					 }catch(Exception e){
+						 Logger.debug ("Error parsong login_data field");
+						 Logger.debug (ExceptionUtils.getFullStackTrace(e));
+						 return badRequest("login_data field is not a valid json string");
+					 }
+					 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
+					 HashMap<String, Object> data = new HashMap<String, Object>();
+					 while (it.hasNext()){
+						 Entry<String, JsonNode> element = it.next();
+						 String key=element.getKey();
+						 Object value=element.getValue().asText();
+						 data.put(key,value);
+					 }
+					 UserService.login(data);
+				 }
+			  }catch (OSecurityAccessException e){
+				  Logger.debug("UserLogin: " +  e.getMessage());
+				  return unauthorized("user " + username + " unauthorized");
+			  } catch (InvalidAppCodeException e) {
+				  Logger.debug("UserLogin: " + e.getMessage());
+				  return badRequest("user " + username + " unauthorized");
+			  }finally{
+				  if (db!=null && !db.isClosed()) db.close();
+			  }
+			  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+			  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			  ObjectNode result = Json.newObject();
+			  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			  return ok(result);
+		 } 
+	  
+	  
+	  /***
+	   * Login the user.
+	   * parameters: 
+	   * username
+	   * password
+	   * appcode: the App Code (API KEY)
+	   * login_data: json serialized string containing info related to the device used by the user. In particular, for push notification, must by supplied:
+	   * 	deviceId
+	   *    os: (android|ios)
+	   * @return
+	 * @throws SqlInjectionException 
+	   */
+	  @With ({NoUserCredentialWrapFilter.class})
 	  @BodyParser.Of(BodyParser.FormUrlEncoded.class)
-	  public static Result login() {
+	  public static Result login() throws SqlInjectionException {
 		 Map<String, String[]> body = request().body().asFormUrlEncoded();
 		 if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
 		 String username="";
 		 String password="";
 		 String appcode="";
+		 String loginData=null;
 		 try{
 			 username=body.get("username")[0];
 			 password=body.get("password")[0];
 			 appcode=body.get("appcode")[0];
+			 Logger.debug("Username " + username);
+			 Logger.debug("Password " + password);
+			 Logger.debug("Appcode" + appcode);
+		
+			 if (body.get("login_data")!=null)
+				 loginData=body.get("login_data")[0];
+			 Logger.debug("LoginData" + loginData);
 		 }catch(NullPointerException e){
 			 return badRequest("Some information is missing");
 		 }
@@ -221,6 +312,25 @@ public class User extends Controller {
 		  OGraphDatabase db=null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
+			 if (loginData!=null){
+				 JsonNode loginInfo=null;
+				 try{
+					 loginInfo = Json.parse(loginData);
+				 }catch(Exception e){
+					 Logger.debug ("Error parsong login_data field");
+					 Logger.debug (ExceptionUtils.getFullStackTrace(e));
+					 return badRequest("login_data field is not a valid json string");
+				 }
+				 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
+				 HashMap<String, Object> data = new HashMap<String, Object>();
+				 while (it.hasNext()){
+					 Entry<String, JsonNode> element = it.next();
+					 String key=element.getKey();
+					 Object value=element.getValue().asText();
+					 data.put(key,value);
+				 }
+				 UserService.login(data);
+			 }
 		  }catch (OSecurityAccessException e){
 			  Logger.debug("UserLogin: " +  e.getMessage());
 			  return unauthorized("user " + username + " unauthorized");

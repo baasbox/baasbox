@@ -18,11 +18,14 @@ package com.baasbox.service.user;
 
 
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
 
+import com.baasbox.configuration.Push;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
@@ -32,6 +35,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.service.push.PushService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -89,6 +93,38 @@ public class UserService {
 				privateAttributes,
 				friendsAttributes,
 				appUsersAttributes) ;
+	}
+	
+	public static void login(HashMap<String,Object> data) throws SqlInjectionException{
+		ODocument user=getCurrentUser();
+		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
+		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+		String deviceId=(String) data.get(UserDao.USER_DEVICE_ID);
+		boolean found=false;
+		for (ODocument loginInfo : loginInfos){
+			
+			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+				found=true;
+				break;
+			}
+		}
+		if (!found){
+			loginInfos.add(new ODocument(data));
+			systemProps.save();
+		}
+	}
+	
+	public static void logout(String deviceId) throws SqlInjectionException {
+		ODocument user=getCurrentUser();
+		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
+		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+		for (ODocument loginInfo : loginInfos){
+			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+				loginInfos.remove(loginInfo);
+				break;
+			}
+		}
+		systemProps.save();
 	}
 	
 	public static ODocument  signUp (
@@ -186,6 +222,12 @@ public class UserService {
 					attrObj.save();
 				}
 				  
+				ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+				attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
+				PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
+				PermissionsHelper.changeOwner(attrObj, userRid);
+				profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);
+				
 				PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
 				PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
 				PermissionsHelper.changeOwner(profile, userRid);
