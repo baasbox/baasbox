@@ -28,6 +28,7 @@ public class PropertiesConfigurationHelper {
 	public static final ImmutableMap<String,Class> configurationSections = ImmutableMap.of(
 														 "PasswordRecovery",(Class)PasswordRecovery.class
 														,"Application",(Class)Application.class
+														,"Push",(Class)Push.class
 														,"Images",(Class)ImagesConfiguration.class
 	);
 	
@@ -203,5 +204,35 @@ public class PropertiesConfigurationHelper {
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value  ,e );
 		}
 	}	//setByKey
+	
+	public static String dumpConfigurationSectionAsFlatJson(String section){
+		Class en = configurationSections.get(section);
+		try {
+			JsonFactory jfactory = new JsonFactory();
+			StringWriter sw = new StringWriter();
+			String enumDescription = "";			
+			JsonGenerator gen = jfactory.createJsonGenerator(sw);
+			gen.writeStartArray();	
+			EnumSet values = EnumSet.allOf( en );
+			for (Object v : values) {
+				  String key=(String) (en.getMethod("getKey")).invoke(v);
+				  String valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
+				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
+				  Class type = (Class) en.getMethod("getType").invoke(v);
+			      gen.writeStartObject();																				//					{
+			      gen.writeStringField("key", key);	
+			      gen.writeStringField("value",valueAsString);
+			      gen.writeStringField("description", valueDescription);												//						,"description":"description"
+			      gen.writeStringField("type",type.getSimpleName());													//						,"type":"type"
+			      gen.writeEndObject();																					//					}
+			}
+			if (gen.getOutputContext().inArray()) gen.writeEndArray();													//				]
+			gen.close();
+			return sw.toString();
+		} catch (Exception e) {
+			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+		}
+		return "{}";
+	}//dumpConfigurationSectionAsJson(String)()
 	
 }//PropertiesConfigurationHelper

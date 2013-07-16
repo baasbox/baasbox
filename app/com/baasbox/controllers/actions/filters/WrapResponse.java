@@ -37,7 +37,7 @@ import play.mvc.Results;
 public class WrapResponse {
 
 	private ObjectNode prepareError(RequestHeader request, String error) {
-		ObjectMapper mapper = new ObjectMapper();
+		org.codehaus.jackson.map.ObjectMapper mapper = new org.codehaus.jackson.map.ObjectMapper();
 		ObjectNode result = Json.newObject();
 		result.put("result", "error");
 		result.put("bb_code", "");

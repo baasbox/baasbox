@@ -281,11 +281,14 @@ public class Admin extends Controller {
 		  if (conf==null) return notFound(section + " is not a valid configuration section");
 		  try {
 			PropertiesConfigurationHelper.setByKey(conf, key, value);
-		} catch (ConfigurationException e) {
-			return badRequest(e.getMessage());
-		}
+		  } catch (ConfigurationException e) {
+				return badRequest(e.getMessage());
+	      }
 		  return ok();
-	  }
+	   }
 
-
+		public static Result getConfiguration(String section) throws  Throwable{
+		  response().setContentType("application/json");
+		  return ok(PropertiesConfigurationHelper.dumpConfigurationSectionAsFlatJson(section));
+		}
 }

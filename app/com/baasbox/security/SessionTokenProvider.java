@@ -98,8 +98,9 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 
 	@Override
 	public void removeSession(String token) {
-		sessions.remove(token);
 		Logger.debug("SessionTokenProvider: " + token + " removed");
+		sessions.remove(token);
+
 	}
 
 	@Override
