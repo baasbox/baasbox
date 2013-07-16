@@ -36,12 +36,18 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
  
 # User actions
 POST	/login						com.baasbox.controllers.User.login()
-POST	/logout						com.baasbox.controllers.User.logout()
+GET 	/login/:username/:password/:appcode/:deviceid/:os	com.baasbox.controllers.User.loginGet(username: String, password: String, appcode: String, deviceid: String, os: String)
+POST	/logout2					com.baasbox.controllers.User.logout2()
+POST	/logout/:deviceid			com.baasbox.controllers.User.logout(deviceid: String)
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
 PUT		/user						com.baasbox.controllers.User.updateProfile()
 PUT		/user/password				com.baasbox.controllers.User.changePassword()
 GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: String)
+
+# Push
+GET		/push/:message/:username	com.baasbox.controllers.Push.send(message: String, username: String)
+
 
 #Storage Actions
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
@@ -81,7 +87,10 @@ GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
 GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
+GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfiguration(section: String)
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
+PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+
 
 #GET 	/test							com.baasbox.controllers.Application.test()
 #POST    /tasks/:id/delete       controllers.Application.deleteTask(id: Long)

@@ -2,7 +2,11 @@
  * javascript functions for the Admin GUI 
  */
 var userDataArray;
-
+var settingDataArray;
+var settingPwdDataArray;
+var settingImgDataArray;
+var settingSectionChanged;
+var settingPushDataArray;
 
 $(document).ready(function(){
 	setup();
@@ -84,6 +88,8 @@ $(".btn-action").live("click", function() {
 					break;
 				case "collection":
 					break;
+				case "setting":
+					openSettingEditForm(parameters);
 				case "document":
 					break;
 				case "asset":
@@ -153,6 +159,48 @@ function openUserEditForm(editUserName)
 	$('#addUserModal').modal('show');
 }
 
+function openSettingEditForm(editSettingName)
+{
+	var settingObject;
+	
+	for(i=0;i<settingDataArray.length;i++)
+	{
+		if(settingDataArray[i].key == editSettingName){
+			settingSectionChanged = 'Application';
+			settingObject = settingDataArray[i];
+		}
+	}
+	for(i=0;i<settingPwdDataArray.length;i++)
+	{
+		if(settingPwdDataArray[i].key == editSettingName) {
+			settingSectionChanged = 'PasswordRecovery';
+			settingObject = settingPwdDataArray[i];
+		}
+	}
+	for(i=0;i<settingImgDataArray.length;i++)
+	{
+		if(settingImgDataArray[i].key == editSettingName) {
+			settingSectionChanged = 'Images';
+			settingObject = settingImgDataArray[i];
+		}
+			
+	}
+	for(i=0;i<settingPushDataArray.length;i++)
+	{
+		if(settingPushDataArray[i].key == editSettingName) {
+			settingSectionChanged = 'Push';
+			settingObject = settingPushDataArray[i];
+		}
+			
+	}	
+	$("#lblDescription").text(settingObject.description);
+	$("#txtKey").val(settingObject.key);
+	$("#txtKey").addClass("disabled");
+	$("#txtValue").val(settingObject.value);
+	
+	$('#EditSettingModal').modal('show');
+}
+
 function reverseJSON(objJSON)
 {
 	var strJSON = JSON.stringify(objJSON);
@@ -177,6 +225,11 @@ function loadUserTable()
 	callMenu("#users");
 }
 
+function loadSettingTable()
+{
+	callMenu("#settings");
+}
+
 function loadCollectionsTable()
 {
 	callMenu("#collections");
@@ -199,6 +252,7 @@ function loadUserRole()
 										var sel=$('#cmbSelectRole');
 										sel.empty();
 										sel.append($("<option/>"));
+										data=data["data"];
 										$.each(data, function(index, item) {
 										    sel.append($("<option/>", {
 										        value: item["name"],
@@ -280,6 +334,32 @@ function closeUserForm()
 {
 	$('#addUserModal').modal('hide');
 	loadUserTable();
+}
+
+function updateSetting()
+{
+	var key = $("#txtKey").val();
+	var value = $("#txtValue").val();
+		
+	BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key, value).ajax(
+	{
+		
+		error: function(data)
+		{
+			//console.log(data)
+			alert("Error updating settings:" + data["message"]);
+		},
+		success: function(data)
+		{
+			closeSettingForm();
+		}
+	})	
+}
+
+function closeSettingForm()
+{
+	$('#EditSettingModal').modal('hide');
+	loadSettingTable();
 }
 
 $('.btn-UserCommit').click(function(e){
@@ -366,6 +446,33 @@ $('.btn-UserCommit').click(function(e){
 	
 	return;
 }); // Validate and Ajax submit for Insert/Update User
+
+$('.btn-SettingCommit').click(function(e){
+	var action;
+
+	var key = $("#txtKey").val();
+	var value = $("#txtValue").val();
+	
+	var errorMessage = '';
+	
+	if($.trim(key) == "")
+		errorMessage = "The field 'Key' is required<br/>"
+
+	if($.trim(value) == "")
+		errorMessage += "The field 'Value' is required<br/>"
+	
+	if(errorMessage != "")
+	{
+		$("#errorEditSetting").html(errorMessage);
+		$("#errorEditSetting").removeClass("hide");
+		return;
+	}
+	$("#txtKey").removeClass("disabled");
+	updateSetting();
+	
+	return;
+}); // Validate and Ajax submit for Update Setting
+
 
 function isValidJson(code)
 {
@@ -570,6 +677,9 @@ function setBradCrumb(type)
 		case "#dashboard":
 			sBradCrumb = "Dashboard";
 		  break;
+		case "#settings":
+			sBradCrumb = "Settings";
+		  break;
 		case "#collections":
 			sBradCrumb = "Collections";
 		  break;
@@ -646,6 +756,72 @@ function setupTables(){
         "bRetrieve": true,
   		"bDestroy":true
         } ).makeEditable();
+
+    $('#settingsTable').dataTable( {
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+    	"aoColumns": [ {"mData": "key"},
+    	               {"mData": "description"},
+    	               {"mData": "value"},
+					   {"mData": "key", "mRender": function ( data, type, full ) {
+															return getActionButton("edit","setting",data);
+					   										}
+    	               }],
+    	               
+        "bRetrieve": true,
+  		"bDestroy":false
+        } ).makeEditable();
+
+    $('#settingsPwdTable').dataTable( {
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+    	"aoColumns": [ {"mData": "key"},
+    	               {"mData": "description"},
+    	               {"mData": "value"},
+					   {"mData": "key", "mRender": function ( data, type, full ) {
+															return getActionButton("edit","setting",data);
+					   										}
+    	               }],
+    	               
+        "bRetrieve": true,
+  		"bDestroy":false
+        } ).makeEditable();
+    
+    $('#settingsImgTable').dataTable( {
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+    	"aoColumns": [ {"mData": "key"},
+    	               {"mData": "description"},
+    	               {"mData": "value"},
+					   {"mData": "key", "mRender": function ( data, type, full ) {
+															return getActionButton("edit","setting",data);
+					   										}
+    	               }],
+    	               
+        "bRetrieve": true,
+  		"bDestroy":false
+        } ).makeEditable();
+
+    $('#settingsPushTable').dataTable( {
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+    	"aoColumns": [ {"mData": "key"},
+    	               {"mData": "description"},
+    	               {"mData": "value"},
+					   {"mData": "key", "mRender": function ( data, type, full ) {
+															return getActionButton("edit","setting",data);
+					   										}
+    	               }],
+    	               
+        "bRetrieve": true,
+  		"bDestroy":false
+        } ).makeEditable();
+
+    
     $('#collectionTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -745,6 +921,7 @@ function setupAjax(){
 	$.ajaxSetup({
 	    beforeSend: function (xhr){ 
 	        xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
+	        console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 	    }
 	});
 	//hack for charisma menu
@@ -797,9 +974,11 @@ function callMenu(action){
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
 										userDataArray = data["data"];
-										applySuccessMenu(action,data);
+										console.log("Admin.getUsers success:");
+										console.log(data);
+										applySuccessMenu(action,userDataArray);
 										$('#userTable').dataTable().fnClearTable();
-										$('#userTable').dataTable().fnAddData(data);
+										$('#userTable').dataTable().fnAddData(userDataArray);
 									}
 		});
 	  break;//#users
@@ -808,6 +987,52 @@ function callMenu(action){
 			success: function(data) {applySuccessMenu(action,data["data"]);}
 		});
 	  break;	//#dashboard
+	case "#settings":		
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
+			success: function(data) {
+				console.log("dumpConfiguration Application success:");
+				console.log(data);
+				settingDataArray = data["data"];
+				
+				//applySuccessMenu(action,data);
+				$('#settingsTable').dataTable().fnClearTable();
+				$('#settingsTable').dataTable().fnAddData(settingDataArray);
+			}
+		});
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("PasswordRecovery").ajax({
+			success: function(data) {
+				console.log("dumpConfiguration PasswordRecovery success:");
+				console.log(data);
+				settingPwdDataArray = data["data"];
+				//applySuccessMenu(action,data);
+				$('#settingsPwdTable').dataTable().fnClearTable();
+				$('#settingsPwdTable').dataTable().fnAddData(settingPwdDataArray);
+			}
+		});
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
+			success: function(data) {
+				console.log("dumpConfiguration Push success:");
+				console.log(data);
+				settingPushDataArray = data["data"];
+				//applySuccessMenu(action,data);
+				$('#settingsPushTable').dataTable().fnClearTable();
+				$('#settingsPushTable').dataTable().fnAddData(settingPushDataArray);
+			}
+		});
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
+			success: function(data) {
+				console.log("dumpConfiguration Images success:");
+				console.log(data);
+				settingImgDataArray = data["data"];
+				console.log("action: ");
+				console.log(action);
+				applySuccessMenu(action,settingImgDataArray);
+				$('#settingsImgTable').dataTable().fnClearTable();
+				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
+			}
+		});
+	  break;	//#settings
+	  
 	case "#collections":
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 		data: {orderBy: "name asc"},
@@ -866,7 +1091,11 @@ function DocumentsController($scope){
 		BBRoutes.com.baasbox.controllers.User.login().ajax({
 			data:{username:user,password:pass,appcode:appCode},
 			success: function(data) {
-				         sessionStorage.sessionToken=data["X-BB-SESSION"];
+				         sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+				         console.log("login success");
+				         console.log("data received: ");
+				         console.log(data);
+				         console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 				         BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 				        	 success: function(data) {
 				        		 data=data["data"];
@@ -893,6 +1122,9 @@ function LoginController($scope) {
 			tryToLogin(username, password,appCode);
 	  }; //login
 }	//LoginController
+
+function SettingsController($scope){
+}
 
 function DashboardController($scope) {
 	

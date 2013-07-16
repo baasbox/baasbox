@@ -24,6 +24,8 @@ import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.NodeDao;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
+
 
 public class Audit extends BaasBoxHook {
 	
@@ -36,7 +38,7 @@ public class Audit extends BaasBoxHook {
 	}
 	
 	@Override
-	 public RESULT onRecordBeforeCreate(ORecord<?> iRecord){
+	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord<?> iRecord){
 		Logger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
@@ -64,7 +66,7 @@ public class Audit extends BaasBoxHook {
 	 }//onRecordBeforeCreate
 
 	@Override
-	 public RESULT onRecordBeforeUpdate (ORecord<?> iRecord){
+	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeUpdate (ORecord<?> iRecord){
 		Logger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;

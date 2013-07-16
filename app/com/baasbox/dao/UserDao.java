@@ -40,11 +40,17 @@ public class UserDao extends NodeDao  {
 	private final static String MODEL_NAME="user";
 	private final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
+	
+	public final static String USER_DEVICE_ID="deviceId";
+	public final static String USER_DEVICE_OS="os";
+	public final static String USER_LOGIN_INFO="login_info";
+	
 	public final static String USER_ATTRIBUTES_CLASS = "UserAttributes";
 	public final static String ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER="visibleByAnonymousUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_REGISTERED_USER="visibleByRegisteredUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_FRIENDS_USER="visibleByFriend";
 	public final static String ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER="visibleByTheUser";
+	public final static String ATTRIBUTES_SYSTEM="system";
 	
 	public static UserDao getInstance(){
 		return new UserDao();
