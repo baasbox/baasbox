@@ -110,4 +110,5 @@ create index Node.id unique;
 create index bb_password_recovery dictionary
 create index bb_application dictionary
 create index bb_images dictionary
+create index bb_push dictionary
 
