@@ -764,7 +764,11 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
     	"aoColumns": [ {"mData": "key"},
     	               {"mData": "description"},
-    	               {"mData": "value"},
+    	               {"mData": "value", "mRender":function ( data, type, full ) {
+															return $('<div/>').text(data).html();
+					   								}
+					   },
+					   
 					   {"mData": "key", "mRender": function ( data, type, full ) {
 															return getActionButton("edit","setting",data);
 					   										}
@@ -780,7 +784,10 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
     	"aoColumns": [ {"mData": "key"},
     	               {"mData": "description"},
-    	               {"mData": "value"},
+    	               {"mData": "value", "mRender":function ( data, type, full ) {
+															return $('<div/>').text(data).html();
+					   								}
+					   },
 					   {"mData": "key", "mRender": function ( data, type, full ) {
 															return getActionButton("edit","setting",data);
 					   										}
@@ -796,7 +803,10 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
     	"aoColumns": [ {"mData": "key"},
     	               {"mData": "description"},
-    	               {"mData": "value"},
+    	               {"mData": "value", "mRender":function ( data, type, full ) {
+															return $('<div/>').text(data).html();
+					   								}
+					   },
 					   {"mData": "key", "mRender": function ( data, type, full ) {
 															return getActionButton("edit","setting",data);
 					   										}
@@ -812,7 +822,10 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
     	"aoColumns": [ {"mData": "key"},
     	               {"mData": "description"},
-    	               {"mData": "value"},
+    	               {"mData": "value", "mRender":function ( data, type, full ) {
+															return $('<div/>').text(data).html();
+					   								}
+					   },
 					   {"mData": "key", "mRender": function ( data, type, full ) {
 															return getActionButton("edit","setting",data);
 					   										}

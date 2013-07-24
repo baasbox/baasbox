@@ -406,12 +406,12 @@ public class UserService {
 				//HTML Email Text
 				ST htmlMailTemplate = new ST(htmlEmail, '$', '$');
 				htmlMailTemplate.add("link", resetUrl);
-				htmlMailTemplate.add("username", username);
+				htmlMailTemplate.add("user_name", username);
 	
 				//Plain text Email Text
 				ST textMailTemplate = new ST(textEmail, '$', '$');
 				textMailTemplate.add("link", resetUrl);
-				textMailTemplate.add("username", username);
+				textMailTemplate.add("user_name", username);
 				
 				email = new HtmlEmail();
 	

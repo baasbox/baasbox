@@ -215,30 +215,43 @@ public class User extends Controller {
     //Filters to extract username/appcode/atc.. from the headers have no sense in this case
 	  public static Result resetPasswordStep2(String base64) throws ResetPasswordException {
 		  //loads the received token and extracts data by the hashcode in the url
-		  
-	  	  String tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-	  	  Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
-	  	  
-	  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
-	  	  String[] tokens = tokenReceived.split("%%%%");
-	  	  if (tokens.length!=3) return badRequest("The reset password code is invalid.");
-	  	  String appCode= tokens[0];
-	  	  String username = tokens [1];
-	  	  String tokenId= tokens [2];
-	  	  
-		  String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-          String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
-          
-          
-	  	  try {
-			DbHelper.open(appCode, adminUser, adminPassword);
-	      } catch (InvalidAppCodeException e1) {
-			return badRequest("The code to reset the password seems to be invalid");
+		  String tokenReceived="";
+		  String appCode= "";
+	  	  String username = "";
+	  	  String tokenId= "";
+	  	  String adminUser="";
+          String adminPassword = "";
+        
+		  try{
+		  	  tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
+		  	  Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
+		  	  
+		  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
+		  	  String[] tokens = tokenReceived.split("%%%%");
+		  	  if (tokens.length!=3) throw new Exception("The reset password code is invalid. Please repeat the reset password procedure");
+		  	  appCode= tokens[0];
+		  	  username = tokens [1];
+		  	  tokenId= tokens [2];
+		  	  
+			  adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
+	          adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
+	          
+		  	  try {
+				DbHelper.open(appCode, adminUser, adminPassword);
+		      } catch (InvalidAppCodeException e1) {
+		    	  throw new Exception("The code to reset the password seems to be invalid. Please repeat the reset password procedure");
+			  }
+		  	  
+			  boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
+			  if (!isTokenValid) throw new Exception("Reset password procedure is expired! Please repeat the reset password procedure");
+			  
+		  }catch (Exception e){
+		  	  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
+		  	  pageTemplate.add("user_name",username);
+		  	  pageTemplate.add("error",e.getMessage());
+		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+			  return badRequest(Html.apply(pageTemplate.render()));
 		  }
-	  	  
-		  boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
-		  if (!isTokenValid) return badRequest("Reset Code not found or it is expired!");
-		  
 		  String tokenStep2 = ResetPwdDao.getInstance().setTokenStep2(username, appCode);
 		  
 	  	  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_TEMPLATE.getValueAsString(), '$', '$');
@@ -249,7 +262,11 @@ public class User extends Controller {
 	  	  											"<input type='password' id='repeat-password' name='repeat-password' />" +
 	  	  											"<button type='submit' id='reset_pwd_submit'>Reset the password</button>" +
 	  	  									  "</form>");
-	  	  
+	  	 pageTemplate.add("user_name",username);
+	      pageTemplate.add("link","/user/password/reset/" + tokenStep2);
+	      pageTemplate.add("password","password");
+	      pageTemplate.add("repeat_password","repeat-password");
+	      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 		  return ok(Html.apply(pageTemplate.render()));
 		  
 	  }
@@ -257,52 +274,82 @@ public class User extends Controller {
       //NOTE: this controller is called via a web form by a browser to reset the user's password
       //Filters to extract username/appcode/atc.. from the headers have no sense in this case
 	  public static Result resetPasswordStep3(String base64) {
-	  	  
-		  //loads the received token and extracts data by the hashcode in the url
-		  
-	  	  String tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-	  	  Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
-	  	  
-	  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
-	  	  String[] tokens = tokenReceived.split("%%%%");
-	  	  if (tokens.length!=3) return badRequest("The reset password code is invalid.");
-	  	  String appCode= tokens[0];
-	  	  String username = tokens [1];
-	  	  String tokenId= tokens [2];
-	  	  
-		  String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-          String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
-
-	  	  try {
-			DbHelper.open(appCode, adminUser, adminPassword);
-	      } catch (InvalidAppCodeException e1) {
-			return badRequest("The code to reset the password seems to be invalid");
-		  }
-	  	  
-	  	  if (!UserService.exists(username))
-	  		  return badRequest("User not found!");
-
-		  boolean isTokenValid = ResetPwdDao.getInstance().verifyTokenStep2(base64, username);
-		  if (!isTokenValid)  return badRequest("Reset Code not found or expired!");
+		  String tokenReceived="";
+	  	  String appCode= "";
+	  	  String username = "";
+	  	  String tokenId= "";
+	  	  Map<String, String[]> bodyForm=null;
+	  	  try{
+			  //loads the received token and extracts data by the hashcode in the url
+			  
+		  	  tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
+		  	  Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
+		  	  
+		  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
+		  	  String[] tokens = tokenReceived.split("%%%%");
+		  	  if (tokens.length!=3) return badRequest("The reset password code is invalid.");
+		  	  appCode= tokens[0];
+		  	  username = tokens [1];
+		  	  tokenId= tokens [2];
+		  	  
+			  String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
+	          String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
 	
-	  	  Http.RequestBody body = request().body();
+		  	  try {
+				DbHelper.open(appCode, adminUser, adminPassword);
+		      } catch (InvalidAppCodeException e1) {
+		    	  throw new Exception("The code to reset the password seems to be invalid");
+			  }
+		  	  
+		  	  if (!UserService.exists(username))
+		  		throw new Exception("User not found!");
+	
+			  boolean isTokenValid = ResetPwdDao.getInstance().verifyTokenStep2(base64, username);
+			  if (!isTokenValid)  throw new Exception("Reset Code not found or expired! Please repeat the reset password procedure");
+		
+		  	  Http.RequestBody body = request().body();
+			  
+		  	  bodyForm= body.asFormUrlEncoded(); 
+		  	  if (bodyForm==null) throw new Exception("Error getting submitted data. Please repeat the reset password procedure");
 		  
-	  	  Map<String, String[]> bodyForm= body.asFormUrlEncoded(); 
-	  	  if (bodyForm==null) return badRequest("Error getting data.");
-		  
+		  }catch (Exception e){
+		  	  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
+		  	  pageTemplate.add("user_name",username);
+		  	  pageTemplate.add("error",e.getMessage());
+		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+			  return badRequest(Html.apply(pageTemplate.render()));
+		  }
 		  //check and validate input
+	  	  String errorString="";
 		  if (bodyForm.get("password").length != 1)
-			  return badRequest("The 'new password' field is missing");
+			  errorString="The 'new password' field is missing";
 		  if (bodyForm.get("repeat-password").length != 1)
-			  return badRequest("The 'repeat password' field is missing");	
+			  errorString="The 'repeat password' field is missing";	
 		  
 		  String password=(String) bodyForm.get("password")[0];
 		  String repeatPassword=(String)  bodyForm.get("repeat-password")[0];
 		  
 		  if (!password.equals(repeatPassword)){
-			  return badRequest("The new \"password\" field and the \"repeat password\" field must be the same.");
+			  errorString="The new \"password\" field and the \"repeat password\" field must be the same.";
 		  }
-		  
+		  if (!errorString.isEmpty()){
+			  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_TEMPLATE.getValueAsString(), '$', '$');
+		  	  pageTemplate.add("form_template", "<form action='/user/password/reset/" + base64 + "' method='POST' id='reset_pwd_form'>" +
+		  			  									"<label for='password'>New password</label>"+
+		  	  											"<input type='password' id='password' name='password' />" +
+		  	  											"<label for='repeat-password'>Repeat the new password</label>"+
+		  	  											"<input type='password' id='repeat-password' name='repeat-password' />" +
+		  	  											"<button type='submit' id='reset_pwd_submit'>Reset the password</button>" +
+		  	  									  "</form>");
+		  	 pageTemplate.add("user_name",username);
+		      pageTemplate.add("link","/user/password/reset/" + base64);
+		      pageTemplate.add("password","password");
+		      pageTemplate.add("repeat_password","repeat-password");
+		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+		      pageTemplate.add("error",errorString);
+		      
+			  return badRequest(Html.apply(pageTemplate.render()));
+		  }
 		  try {
 			  UserService.resetUserPasswordFinalStep(username, password);
 		  } catch (Throwable e){
@@ -313,7 +360,11 @@ public class User extends Controller {
 		  Logger.trace("Method End");
 	  	  
 		  String ok_message = "Password changed";
-		  return ok(ok_message);
+		  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
+	  	  pageTemplate.add("user_name",username);
+	  	  pageTemplate.add("message",ok_message);
+	      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+		  return ok(Html.apply(pageTemplate.render()));
 	  }
 	
 	  

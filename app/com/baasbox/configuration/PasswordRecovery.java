@@ -11,8 +11,9 @@ public enum PasswordRecovery implements IProperties{
 	EMAIL_SUBJECT("email.subject", "The subject of the email to be send.", String.class),
 	EMAIL_EXPIRATION_TIME("email.expiration.time", "Minutes before the reset code expires.", Integer.class),
 
-	PAGE_HTML_TEMPLATE("page.html.template","The HTML template of the reset password page. Don't forget to insert the token  $form_template$. This keyword will be replaced with the html form full of text boxes and button for the submission of the new password.", String.class),
-
+	PAGE_HTML_TEMPLATE("page.html.template","The HTML template of the reset password page. You coud use the following placeholder: $user_name$, $link$, $error$, $password$, $repeat_password$, $application_name$.", String.class),
+	PAGE_HTML_FEEDBACK_TEMPLATE("page.html.feedback.template","The HTML template feedback page. It should contain the $error$ and $message$ placeholders.", String.class),
+	
 	NETWORK_SMTP_HOST("network.smtp.host", "IP ADDRESS or fully qualified name of the SMTP server.", String.class),
 	NETWORK_SMTP_PORT("network.smtp.port", "The TCP port of the SMTP server. Used only if network.smtp.enable is set to TRUE", Integer.class),
 	NETWORK_SMTP_SSL("network.smtp.ssl", "Enable or disable the SSL protocol for the SMTP server. Used only if network.smtp.enable is set to TRUE", Boolean.class),
