@@ -16,10 +16,6 @@
  */
 package com.baasbox.dao;
 
-import java.security.InvalidParameterException;
-import java.util.Date;
-import java.util.List;
-
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
@@ -30,6 +26,10 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.security.InvalidParameterException;
+import java.util.Date;
+import java.util.List;
+
 
 
 
@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class UserDao extends NodeDao  {
 
-	private final static String MODEL_NAME="user";
+	public final static String MODEL_NAME="user";
 	private final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
 	
@@ -50,7 +50,8 @@ public class UserDao extends NodeDao  {
 	public final static String ATTRIBUTES_VISIBLE_BY_REGISTERED_USER="visibleByRegisteredUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_FRIENDS_USER="visibleByFriend";
 	public final static String ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER="visibleByTheUser";
-	public final static String ATTRIBUTES_SYSTEM="system";
+	public final static String USER_SIGNUP_DATE="signUpDate";
+    public final static String ATTRIBUTES_SYSTEM="system";
 	
 	public static UserDao getInstance(){
 		return new UserDao();

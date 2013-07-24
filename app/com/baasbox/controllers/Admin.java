@@ -16,29 +16,11 @@
  */
 package com.baasbox.controllers;
 
-import static play.libs.Json.toJson;
-
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.util.List;
-
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
-
-import play.Logger;
-import play.Play;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Result;
-import play.mvc.With;
-
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -51,11 +33,27 @@ import com.baasbox.service.user.UserService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.baasbox.util.Util;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.codehaus.jackson.JsonNode;
+import play.Logger;
+import play.Play;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Result;
+import play.mvc.With;
+
+import java.io.IOException;
+import java.security.InvalidParameterException;
+import java.util.List;
+
+import static play.libs.Json.toJson;
 
 
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
@@ -184,6 +182,11 @@ public class Admin extends Controller {
 		  String password=(String)  bodyJson.findValuesAsText("password").get(0);
 		  String role=(String)  bodyJson.findValuesAsText("role").get(0);
 		  
+		  if (privateAttributes.has("email")) {
+			  //check if email address is valid
+			  if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
+				  return badRequest("The email address must be valid.");
+		  }
 		  
 		  //try to signup new user
 		  try {
@@ -224,6 +227,11 @@ public class Admin extends Controller {
 		  JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 		  String role=(String)  bodyJson.findValuesAsText("role").get(0);
 		  
+		  if (privateAttributes.has("email")) {
+			  //check if email address is valid
+			  if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
+				  return badRequest("The email address must be valid.");
+		  }
 		  
 		  //try to update new user
 		  try {

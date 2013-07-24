@@ -136,6 +136,7 @@ function openUserEditForm(editUserName)
 	var userObject;
 
 	resetAddUserForm();
+	loadUserRole();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
 	$("#userTitle").text("Edit User information");

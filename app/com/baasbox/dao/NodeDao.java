@@ -115,6 +115,7 @@ public abstract class NodeDao  {
 	protected  void save(ODocument document) throws InvalidModelException {
 		Logger.trace("Method Start");
 		checkModelDocument(document);
+		document.fields(DocumentDao.FIELD_CREATION_DATE, new Date());
 		document.save();
 		Logger.trace("Method End");
 	}

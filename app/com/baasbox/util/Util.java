@@ -17,6 +17,9 @@
 package com.baasbox.util;
 
 import java.io.IOException;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.StringWriter;
 import java.util.Collection;
 
@@ -61,4 +64,15 @@ public class Util {
 		    return buffer.toString();
 		  }//listToJSON
 		  */
+		private static final String EMAIL_PATTERN = 
+			"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+			+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+			
+		public static boolean validateEmail(final String hex) {
+
+			Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+			Matcher matcher = pattern.matcher(hex);
+			return matcher.matches();
+
+		}
 }
