@@ -189,21 +189,11 @@ public class User extends Controller {
 		  
 		  if (!oldPassword.equals(currentPassword)){
 			  return badRequest("The old password does not match with the current one");
-		  }
-		  
+		  }	  
 		  UserService.changePassword(newPassword);
 		  Logger.trace("Method End");
 		  return ok();
 	  }	  
-
-	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	  public static Result logout2() {
-		  String token=(String) Http.Context.current().args.get("token");
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
-		  //UserService.logout(deviceId);
-		  return noContent();
-	  }
-	  /////////////////////////////////////////////////////////////////////////////
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logout(String deviceId) throws SqlInjectionException { 
@@ -212,62 +202,6 @@ public class User extends Controller {
 		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  return noContent();
 	  }
-	  
-	  @With ({NoUserCredentialWrapFilter.class})
-	  public static Result loginGet( String username, String password, String appcode,String deviceId, String os)throws SqlInjectionException {
-			 String loginData=null;
-			 try{
-				
-				 Logger.debug("Username " + username);
-				 Logger.debug("Password " + password);
-				 Logger.debug("Appcode" + appcode);
-			
-				 if (deviceId!=null || os!=null)
-					 loginData="{\"deviceId\":\"" + deviceId + "\", \"os\":\""+os+"\"}";
-				 Logger.debug("LoginData" + loginData);
-			 }catch(NullPointerException e){
-				 return badRequest("Some information is missing");
-			 }
-
-			  //validate user credentials
-			  OGraphDatabase db=null;
-			  try{
-				 db = DbHelper.open(appcode,username, password);
-				 if (loginData!=null){
-					 JsonNode loginInfo=null;
-					 try{
-						 loginInfo = Json.parse(loginData);
-					 }catch(Exception e){
-						 Logger.debug ("Error parsong login_data field");
-						 Logger.debug (ExceptionUtils.getFullStackTrace(e));
-						 return badRequest("login_data field is not a valid json string");
-					 }
-					 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
-					 HashMap<String, Object> data = new HashMap<String, Object>();
-					 while (it.hasNext()){
-						 Entry<String, JsonNode> element = it.next();
-						 String key=element.getKey();
-						 Object value=element.getValue().asText();
-						 data.put(key,value);
-					 }
-					 UserService.login(data);
-				 }
-			  }catch (OSecurityAccessException e){
-				  Logger.debug("UserLogin: " +  e.getMessage());
-				  return unauthorized("user " + username + " unauthorized");
-			  } catch (InvalidAppCodeException e) {
-				  Logger.debug("UserLogin: " + e.getMessage());
-				  return badRequest("user " + username + " unauthorized");
-			  }finally{
-				  if (db!=null && !db.isClosed()) db.close();
-			  }
-			  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-			  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-			  ObjectNode result = Json.newObject();
-			  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-			  return ok(result);
-		 } 
-	  
 	  
 	  /***
 	   * Login the user.
@@ -290,24 +224,17 @@ public class User extends Controller {
 		 String password="";
 		 String appcode="";
 		 String loginData=null;
-		 try{
 			 username=body.get("username")[0];
 			 password=body.get("password")[0];
 			 appcode=body.get("appcode")[0];
 			 Logger.debug("Username " + username);
 			 Logger.debug("Password " + password);
-			 Logger.debug("Appcode" + appcode);
-		
+			 Logger.debug("Appcode" + appcode);		
 			 if (body.get("login_data")!=null)
 				 loginData=body.get("login_data")[0];
 			 Logger.debug("LoginData" + loginData);
-		 }catch(NullPointerException e){
-			 return badRequest("Some information is missing");
-		 }
 
-		  /* other useful parameter to receive and to store...*/
-		  
-		  
+		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  OGraphDatabase db=null;
 		  try{
@@ -329,7 +256,7 @@ public class User extends Controller {
 					 Object value=element.getValue().asText();
 					 data.put(key,value);
 				 }
-				 UserService.login(data);
+				 UserService.registerDevice(data);
 			 }
 		  }catch (OSecurityAccessException e){
 			  Logger.debug("UserLogin: " +  e.getMessage());
@@ -346,5 +273,7 @@ public class User extends Controller {
 		  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  return ok(result);
 	  }
+	  
+	 
 
 }
