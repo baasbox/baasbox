@@ -17,20 +17,32 @@
 package com.baasbox.service.user;
 
 
+import java.net.URL;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
 import org.codehaus.jackson.JsonNode;
+import org.stringtemplate.v4.ST;
 
-import com.baasbox.configuration.Push;
+import com.baasbox.configuration.Application;
+import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
+import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
@@ -232,6 +244,7 @@ public class UserService {
 				PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
 				PermissionsHelper.changeOwner(profile, userRid);
 				
+				profile.field(dao.USER_SIGNUP_DATE, new Date());
 				profile.save();
 			  
 			  db.commit();
@@ -332,10 +345,113 @@ public class UserService {
 		}
 	}//updateProfile with role
 
-	public static void changePassword(String newPassword) {
+	public static void changePasswordCurrentUser(String newPassword) {
 		OGraphDatabase db =  DbHelper.getConnection();
 		db.getUser().setPassword(newPassword).save();
 	}
 	
+	public static boolean exists(String username) {
+		UserDao udao=UserDao.getInstance();
+		return udao.existsUserName(username);
+	}
+	
+
+	public static void sendResetPwdMail(String appCode, ODocument user) throws Exception {
+		final String errorString ="Cannot send mail to reset the password: ";
+
+			//check method input
+			if (!user.getSchemaClass().getName().equalsIgnoreCase(UserDao.MODEL_NAME)) throw new Exception (errorString + " invalid user object");
+
+			//initialization
+			String siteUrl = Application.NETWORK_HTTP_URL.getValueAsString();
+			int sitePort = Application.NETWORK_HTTP_PORT.getValueAsInteger();
+			if (StringUtils.isEmpty(siteUrl)) throw  new Exception (errorString + " invalid site url (is empty)");
+			
+			String textEmail = PasswordRecovery.EMAIL_TEMPLATE_TEXT.getValueAsString();
+			String htmlEmail = PasswordRecovery.EMAIL_TEMPLATE_HTML.getValueAsString();
+			if (StringUtils.isEmpty(htmlEmail)) htmlEmail=textEmail;
+			if (StringUtils.isEmpty(htmlEmail)) throw  new Exception (errorString + " text to send is not configured");
+			
+			boolean useSSL = PasswordRecovery.NETWORK_SMTP_SSL.getValueAsBoolean();
+			boolean useTLS = PasswordRecovery.NETWORK_SMTP_TLS.getValueAsBoolean();
+			String smtpHost = PasswordRecovery.NETWORK_SMTP_HOST.getValueAsString();
+			int smtpPort = PasswordRecovery.NETWORK_SMTP_PORT.getValueAsInteger();
+			if (StringUtils.isEmpty(smtpHost)) throw  new Exception (errorString + " SMTP host is not configured");
+			
+			
+			String username_smtp = null;
+			String password_smtp = null;
+			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
+				username_smtp = PasswordRecovery.NETWORK_SMTP_USER.getValueAsString();
+				password_smtp = PasswordRecovery.NETWORK_SMTP_PASSWORD.getValueAsString();
+				if (StringUtils.isEmpty(username_smtp)) throw  new Exception (errorString + " SMTP username is not configured");
+			}
+			String emailFrom = PasswordRecovery.EMAIL_FROM.getValueAsString();
+			String emailSubject = PasswordRecovery.EMAIL_SUBJECT.getValueAsString();
+			if (StringUtils.isEmpty(emailFrom)) throw  new Exception (errorString + " sender email is not configured");
+			
+			try {
+				String userEmail=((ODocument) user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER)).field("email").toString();
+				
+				String username = (String) ((ODocument) user.field("user")).field("name");
+				
+				//Random
+				String sRandom = appCode + "%%%%" + username + "%%%%" + UUID.randomUUID();
+				String sBase64Random = new String(Base64.encodeBase64(sRandom.getBytes()));
+				
+				//Send mail
+				HtmlEmail email = null;
+				
+				URL resetUrl = new URL(Application.NETWORK_HTTP_SSL.getValueAsBoolean()? "https" : "http", siteUrl, sitePort, "/user/password/reset/"+sBase64Random); 
+				
+				//HTML Email Text
+				ST htmlMailTemplate = new ST(htmlEmail, '$', '$');
+				htmlMailTemplate.add("link", resetUrl);
+				htmlMailTemplate.add("user_name", username);
+	
+				//Plain text Email Text
+				ST textMailTemplate = new ST(textEmail, '$', '$');
+				textMailTemplate.add("link", resetUrl);
+				textMailTemplate.add("user_name", username);
+				
+				email = new HtmlEmail();
+	
+				email.setHtmlMsg(htmlMailTemplate.render());
+				email.setTextMsg(textMailTemplate.render());
+				
+				//Email Configuration
+				email.setSSLOnConnect(useSSL);
+				email.setStartTLSEnabled(useTLS);
+				email.setHostName(smtpHost);
+				email.setSmtpPort(smtpPort);
+				
+				if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
+					email.setAuthenticator(new DefaultAuthenticator(username_smtp, password_smtp));
+				}
+				email.setFrom(emailFrom);			
+				email.addTo(userEmail);
+				
+				email.setSubject(emailSubject);
+				email.send();
+				
+				//Save on DB
+				ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
+			
+		}  catch (EmailException authEx){
+			throw new Exception (errorString + " Could not reach the mail server. Please contact the server administrator");
+		}
+			catch (Exception e) {
+			throw new Exception (errorString,e);
+		}
+		
+		
+	}
+
+	public static void resetUserPasswordFinalStep(String username, String newPassword) throws SqlInjectionException, ResetPasswordException {
+		ODocument user = UserDao.getInstance().getByUserName(username);
+		ODocument ouser = ((ODocument) user.field("user"));
+		ouser.field("password",newPassword).save();
+		ResetPwdDao.getInstance().setResetPasswordDone(username);
+	}
 
 }
