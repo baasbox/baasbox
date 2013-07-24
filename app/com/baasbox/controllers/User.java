@@ -224,9 +224,12 @@ public class User extends Controller {
 		 String password="";
 		 String appcode="";
 		 String loginData=null;
-			 username=body.get("username")[0];
-			 password=body.get("password")[0];
-			 appcode=body.get("appcode")[0];
+		 	 if(body.get("username")==null) return badRequest("The 'username' field is missing");
+			 else username=body.get("username")[0];
+			 if(body.get("password")==null) return badRequest("The 'password' field is missing");
+			 else password=body.get("password")[0];
+			 if(body.get("appcode")==null) return badRequest("The 'appcode' field is missing");
+			 else appcode=body.get("appcode")[0];
 			 Logger.debug("Username " + username);
 			 Logger.debug("Password " + password);
 			 Logger.debug("Appcode" + appcode);		
