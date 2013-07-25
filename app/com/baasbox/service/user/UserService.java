@@ -107,7 +107,7 @@ public class UserService {
 				appUsersAttributes) ;
 	}
 	
-	public static void login(HashMap<String,Object> data) throws SqlInjectionException{
+	public static void registerDevice(HashMap<String,Object> data) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);

@@ -5,6 +5,8 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
+import play.mvc.Http;
+import play.mvc.Http.Context;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
@@ -15,6 +17,8 @@ import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -73,19 +77,7 @@ public class PushService {
 	}//send
 		
 	
-	
-	/*public void sendAll(String message) throws PushNotInitializedException{
-		UserDao udao = UserDao.getInstance();
-		List<ODocument> user=udao.get("username");
-		
-		
-		
-		Logger.debug("Try to send a message (" + message + ") to all!");
-		List<Device> list = Ebean.find(Device.class).findList();
-		Logger.debug("sending to " + list.size() + " devices");
-		for (Device d : list){
-			send (message,d.getDeviceId());
-		}
+	/*public void sendAll(String message) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{		 			
 	}*/
 
 }

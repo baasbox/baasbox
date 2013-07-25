@@ -20,6 +20,25 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
+
+
+import play.Logger;
+import play.Play;
+import play.api.templates.Html;
+import play.libs.Json;
+import play.mvc.BodyParser;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Result;
+import play.mvc.With;
+
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
@@ -30,6 +49,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.ResetPasswordException;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
@@ -43,50 +63,8 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.stringtemplate.v4.ST;
-
-import play.Logger;
-import play.Play;
-import play.libs.Json;
-import play.mvc.BodyParser;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.With;
-import play.api.templates.Html;
-import play.libs.Json;
-import play.mvc.*;
-
-import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.dao.UserDao;
-import com.baasbox.db.DbHelper;
-import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.exception.SqlInjectionException;
-import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.user.UserService;
-import com.baasbox.util.JSONFormats;
-import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -137,7 +115,7 @@ public class User extends Controller {
 		  String username=(String) bodyJson.findValuesAsText("username").get(0);
 		  String password=(String)  bodyJson.findValuesAsText("password").get(0);
 		  
-		  if (privateAttributes.has("email")) {
+		  if (privateAttributes!=null && privateAttributes.has("email")) {
 			  //check if email address is valid
 			  if (!Util.validateEmail((String) privateAttributes.findValuesAsText("email").get(0)))
 				  return badRequest("The email address must be valid.");
@@ -146,6 +124,9 @@ public class User extends Controller {
 		  //try to signup new user
 		  try {
 			  UserService.signUp(username, password, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+		  } catch (UserAlreadyExistsException e){
+			  Logger.debug("signUp", e);
+			  return badRequest(username + " already exists");
 		  } catch (Throwable e){
 			  Logger.warn("signUp", e);
 			  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -201,8 +182,9 @@ public class User extends Controller {
 		  return ok ("{\"response\": \""+result+"\"}");
 		  */
 	  }
+	  
 
-
+	  
 
     @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  public static Result resetPasswordStep1(String username){
@@ -234,10 +216,11 @@ public class User extends Controller {
 	  		  Logger.warn("resetPasswordStep1", e);
 	  		  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 	  		  else return internalServerError(e.getMessage());
-	  	  }
+	  }
 	  	  Logger.trace("Method End");
 	  	  return ok();
 	  }
+	  
 
     //NOTE: this controller is called via a web link by a mail client to reset the user's password
     //Filters to extract username/appcode/atc.. from the headers have no sense in this case
@@ -268,11 +251,11 @@ public class User extends Controller {
 				DbHelper.open(appCode, adminUser, adminPassword);
 		      } catch (InvalidAppCodeException e1) {
 		    	  throw new Exception("The code to reset the password seems to be invalid. Please repeat the reset password procedure");
-			  }
-		  	  
+	  }
+	
 			  boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
 			  if (!isTokenValid) throw new Exception("Reset password procedure is expired! Please repeat the reset password procedure");
-			  
+	  
 		  }catch (Exception e){
 		  	  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
 		  	  pageTemplate.add("user_name",username);
@@ -418,23 +401,15 @@ public class User extends Controller {
 		  
 		  if (!oldPassword.equals(currentPassword)){
 			  return badRequest("The old password does not match with the current one");
-		  }
-		  
+		  }	  
+
 		  UserService.changePasswordCurrentUser(newPassword);
 		  Logger.trace("Method End");
 		  return ok();
 	  }	  
-
-	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	  public static Result logout2() {
-		  String token=(String) Http.Context.current().args.get("token");
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
-		  //UserService.logout(deviceId);
-		  return noContent();
-	  }
-	  /////////////////////////////////////////////////////////////////////////////
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+
 	  public static Result logout(String deviceId) throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
 		  UserService.logout(deviceId);
@@ -442,62 +417,7 @@ public class User extends Controller {
 		  return noContent();
 	  }
 	  
-	  @With ({NoUserCredentialWrapFilter.class})
-	  public static Result loginGet( String username, String password, String appcode,String deviceId, String os)throws SqlInjectionException {
-			 String loginData=null;
-			 try{
-				
-				 Logger.debug("Username " + username);
-				 Logger.debug("Password " + password);
-				 Logger.debug("Appcode" + appcode);
-			
-				 if (deviceId!=null || os!=null)
-					 loginData="{\"deviceId\":\"" + deviceId + "\", \"os\":\""+os+"\"}";
-				 Logger.debug("LoginData" + loginData);
-			 }catch(NullPointerException e){
-				 return badRequest("Some information is missing");
-			 }
 
-			  //validate user credentials
-			  OGraphDatabase db=null;
-			  try{
-				 db = DbHelper.open(appcode,username, password);
-				 if (loginData!=null){
-					 JsonNode loginInfo=null;
-					 try{
-						 loginInfo = Json.parse(loginData);
-					 }catch(Exception e){
-						 Logger.debug ("Error parsong login_data field");
-						 Logger.debug (ExceptionUtils.getFullStackTrace(e));
-						 return badRequest("login_data field is not a valid json string");
-					 }
-					 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
-					 HashMap<String, Object> data = new HashMap<String, Object>();
-					 while (it.hasNext()){
-						 Entry<String, JsonNode> element = it.next();
-						 String key=element.getKey();
-						 Object value=element.getValue().asText();
-						 data.put(key,value);
-					 }
-					 UserService.login(data);
-				 }
-			  }catch (OSecurityAccessException e){
-				  Logger.debug("UserLogin: " +  e.getMessage());
-				  return unauthorized("user " + username + " unauthorized");
-			  } catch (InvalidAppCodeException e) {
-				  Logger.debug("UserLogin: " + e.getMessage());
-				  return badRequest("user " + username + " unauthorized");
-			  }finally{
-				  if (db!=null && !db.isClosed()) db.close();
-			  }
-			  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-			  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-			  ObjectNode result = Json.newObject();
-			  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-			  return ok(result);
-		 } 
-	  
-	  
 	  /***
 	   * Login the user.
 	   * parameters: 
@@ -519,24 +439,20 @@ public class User extends Controller {
 		 String password="";
 		 String appcode="";
 		 String loginData=null;
-		 try{
-			 username=body.get("username")[0];
-			 password=body.get("password")[0];
-			 appcode=body.get("appcode")[0];
+		 	 if(body.get("username")==null) return badRequest("The 'username' field is missing");
+			 else username=body.get("username")[0];
+			 if(body.get("password")==null) return badRequest("The 'password' field is missing");
+			 else password=body.get("password")[0];
+			 if(body.get("appcode")==null) return badRequest("The 'appcode' field is missing");
+			 else appcode=body.get("appcode")[0];
 			 Logger.debug("Username " + username);
 			 Logger.debug("Password " + password);
-			 Logger.debug("Appcode" + appcode);
-		
+			 Logger.debug("Appcode" + appcode);		
 			 if (body.get("login_data")!=null)
 				 loginData=body.get("login_data")[0];
 			 Logger.debug("LoginData" + loginData);
-		 }catch(NullPointerException e){
-			 return badRequest("Some information is missing");
-		 }
 
-		  /* other useful parameter to receive and to store...*/
-		  
-		  
+		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  OGraphDatabase db=null;
 		  try{
@@ -558,7 +474,7 @@ public class User extends Controller {
 					 Object value=element.getValue().asText();
 					 data.put(key,value);
 				 }
-				 UserService.login(data);
+				 UserService.registerDevice(data);
 			 }
 		  }catch (OSecurityAccessException e){
 			  Logger.debug("UserLogin: " +  e.getMessage());
@@ -575,5 +491,7 @@ public class User extends Controller {
 		  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  return ok(result);
 	  }
+	  
+	 
 
 }

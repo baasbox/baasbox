@@ -36,9 +36,7 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
  
 # User actions
 POST	/login						com.baasbox.controllers.User.login()
-GET 	/login/:username/:password/:appcode/:deviceid/:os	com.baasbox.controllers.User.loginGet(username: String, password: String, appcode: String, deviceid: String, os: String)
-POST	/logout2					com.baasbox.controllers.User.logout2()
-POST	/logout/:deviceid			com.baasbox.controllers.User.logout(deviceid: String)
+POST	/logout/:deviceid		    com.baasbox.controllers.User.logout(deviceid: String)
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
 PUT		/user						com.baasbox.controllers.User.updateProfile()
@@ -49,8 +47,8 @@ GET		/user/password/reset/:base64     			com.baasbox.controllers.User.resetPassw
 POST	/user/password/reset/:base64     			com.baasbox.controllers.User.resetPasswordStep3(base64: String)
 
 # Push
-GET		/push/:message/:username	com.baasbox.controllers.Push.send(message: String, username: String)
-
+POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
+PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 
 #Storage Actions
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
