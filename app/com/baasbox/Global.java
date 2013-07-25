@@ -16,98 +16,101 @@
  */
 package com.baasbox;
 
-import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.IOException;
-
+import com.baasbox.db.DbHelper;
+import com.baasbox.security.SessionTokenProvider;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
-
 import play.Application;
 import play.GlobalSettings;
-import play.Logger;
 import play.libs.Json;
+
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
-import com.baasbox.db.CustomSqlFunctions;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import java.io.IOException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionTokenProvider;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
+import static play.mvc.Results.*;
+import static play.Logger.*;
 
 public class Global extends GlobalSettings {
 	
 	
 	  @Override
 	  public void beforeStart(Application app) {
-		  Logger.info("BaasBox is starting...");
-		  Logger.info("Loading plugin...");
+		  info("BaasBox is starting...");
+		  info("Loading plugin...");
 	  }
 	  
 	  @Override
 	  public void onStart(Application app) {
 	    
 	    try{
-		    OGlobalConfiguration.TX_LOG_SYNCH.setValue(true);
-		    OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
+		    OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
+		    OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
 		    final OGraphDatabase db = new OGraphDatabase ( "local:" + BBConfiguration.getDBDir() ) ; 
 		    if (!db.exists()) {
-		    	Logger.info ("DB does not exist, BaasBox will create a new one");
+		    	info("DB does not exist, BaasBox will create a new one");
 		    	db.create();
-		    	Logger.debug("Creating default roles...");
+		    	debug("Creating default roles...");
 		    	DbHelper.createDefaultRoles();
-		    	Logger.debug("Creating default users...");
+		    	debug("Creating default users...");
 		    	DbHelper.dropOrientDefault();
-		    	CustomSqlFunctions.registerFunctions();
 		    	try {
 					DbHelper.populateDB(db);
 			    	DbHelper.createDefaultUsers();
 			    	DbHelper.populateConfiguration(db);
 				} catch (IOException e) {
-					Logger.error("!! Error initializing BaasBox!", e);
-					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					error("!! Error initializing BaasBox!", e);
+					error(ExceptionUtils.getFullStackTrace(e));
 					System.exit(-1);
 				}
 		    	 if (!db.isClosed()){
 		    		 db.close();
 		    	 }
-		    	Logger.info("DB has been create successfully");
+		    	info("DB has been create successfully");
 		    }
-	    	Logger.info("Initilizing session manager");
+	    	info("Initilizing session manager");
 	    	SessionTokenProvider.initialize();
 	    }catch (Throwable e){
-	    	Logger.error("!! Error initializing BaasBox!", e);
-	    	Logger.error("Abnormal BaasBox termination.");
+	    	error("!! Error initializing BaasBox!", e);
+	    	error("Abnormal BaasBox termination.");
 	    	System.exit(1);
 	    }
-	    Logger.info("BaasBox is Ready.");
+	    info("BaasBox is Ready.");
 	  }  
 	  
 	  
 	  @Override
 	  public void onStop(Application app) {
-	    Logger.info("BaasBox is shutting down...");
+	    info("BaasBox is shutting down...");
 	    try{
 		    OGraphDatabase db = DbHelper.getConnection() ;
 		    if (!db.isClosed()){
-		    	Logger.info("Closing the DB...");
+		    	info("Closing the DB...");
 		    	db.close();
-		    	Logger.info("...ok");
+		    	info("...ok");
 		    }
 	    }catch (ODatabaseException e){
 	    	//the db is closed, nothing to do
 	    }catch (Throwable e){
-	    	Logger.error("!! Error shutting down BaasBox!", e);
+	    	error("!! Error shutting down BaasBox!", e);
 	    }
-	    Logger.info("Destroying session manager");
+	    info("Destroying session manager");
 	    SessionTokenProvider.destroySessionTokenProvider();
-	    Logger.info("BaasBox has stopped");
+	    info("BaasBox has stopped");
 	  }  
 	  
 	  
@@ -133,7 +136,7 @@ public class Global extends GlobalSettings {
 	// 404
 	  @Override
 	    public Result onHandlerNotFound(RequestHeader request) {
-		  Logger.debug("API not found: " + request.method() + " " + request);
+		  debug("API not found: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
 		  return notFound(result);
@@ -142,11 +145,11 @@ public class Global extends GlobalSettings {
 	  // 500 - internal server error
 	  @Override
 	  public Result onError(RequestHeader request, Throwable throwable) {
-		  Logger.error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
+		  error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, throwable.getMessage());
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
-		  Logger.error(ExceptionUtils.getFullStackTrace(throwable));
+		  error(ExceptionUtils.getFullStackTrace(throwable));
 		  return internalServerError(result);
 	  }
 	  

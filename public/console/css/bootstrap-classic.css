@@ -2352,6 +2352,10 @@ table .span24 {
   background-position: -456px -144px;
 }
 
+.icon-gear {
+  background-position: -432px 0px;
+}
+
 .dropup,
 .dropdown {
   position: relative;
