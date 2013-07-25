@@ -14,7 +14,9 @@ object ApplicationBuild extends Build {
     			"commons-io" % "commons-io" % "2.4",
     			"commons-lang" % "commons-lang" % "2.6",
     			"xalan"  % "xalan"  % "2.7.1",
-    			"org.imgscalr" % "imgscalr-lib" % "4.2"
+    			"org.imgscalr" % "imgscalr-lib" % "4.2",
+    			"org.apache.commons" % "commons-email" % "1.3.1",
+    			"org.antlr" % "stringtemplate" % "4.0.2"
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT"
     )

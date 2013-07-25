@@ -1,7 +1,12 @@
+--compatibility with 1.3.0
+--alter database custom useLightweightEdges=false;
+--alter database custom useClassForEdgeLabel=false;
+--alter -database custom useClassForVertexLabel=false;
+--alter database custom useVertexFieldsForEdgeLabels=false;
 
 --classes
 --Node
-create class NodeVertex extends ographvertex;
+create class NodeVertex extends V;
 
 --Node class should be abstract but we cannot declare it as abstrat due the index on the id field
 create class Node  extends ORestricted;
@@ -22,9 +27,12 @@ create property User.user link ouser;
 
 
 --admin user
-insert into user set user = (select from ouser where name='admin'), _links = (insert into nodevertex set _node=null);
+insert into user set user = (select from ouser where name='admin'), _links = (insert into nodevertex set _node=null), _creation_date = sysdate(), signUpDate = sysdate();
 update nodevertex set _node=(select from user where user.name='admin');
  
+--reset pwd
+create class ResetPwd;
+
 --users' constraints
 alter property NodeVertex._node mandatory=true;
 alter property NodeVertex._node notnull=true;
@@ -82,10 +90,10 @@ alter property FileAsset.file mandatory=true;
 alter property FileAsset.file notnull=true;
 
 --Edges
-create class Created extends ographedge;
+create class Created extends E;
 
 --social interaction
-create class Friendship extends ographedge;
+create class Friendship extends E;
 create property Friendship.fromDate datetime;
 alter property Friendship.fromDate mandatory=true;
 alter property Friendship.fromDate notnull=true;
@@ -93,8 +101,8 @@ create property Friendship.requestDate datetime;
 alter property Friendship.requestDate mandatory=true;
 alter property Friendship.requestDate notnull=true;
 
-create class Comment extends ographedge;
-create class Like extends ographedge;
+create class Comment extends E;
+create class Like extends E;
 
 
 --analytics

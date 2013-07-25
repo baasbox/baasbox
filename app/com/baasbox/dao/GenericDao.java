@@ -74,10 +74,12 @@ public class GenericDao {
 		return result;
 	}
 	
-	public void idempotentCommand(String commandString,String[]params) {
+
+
+	public void idempotentCommand(String commandString, Object[] params) {
 		OGraphDatabase db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
-		command.execute(command, params);
+		command.execute(params);
 	}
 	
 }
