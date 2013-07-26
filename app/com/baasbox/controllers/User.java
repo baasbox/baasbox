@@ -251,7 +251,7 @@ public class User extends Controller {
 				DbHelper.open(appCode, adminUser, adminPassword);
 		      } catch (InvalidAppCodeException e1) {
 		    	  throw new Exception("The code to reset the password seems to be invalid. Please repeat the reset password procedure");
-	  }
+		      }
 	
 			  boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
 			  if (!isTokenValid) throw new Exception("Reset password procedure is expired! Please repeat the reset password procedure");
