@@ -409,10 +409,16 @@ public class User extends Controller {
 	  }	  
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-
-	  public static Result logout(String deviceId) throws SqlInjectionException { 
+	  public static Result logoutWithDevice(String deviceId) throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
 		  UserService.logout(deviceId);
+		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  return noContent();
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result logoutWithoutDevice() throws SqlInjectionException { 
+		  String token=(String) Http.Context.current().args.get("token");
 		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  return noContent();
 	  }

@@ -36,7 +36,8 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
  
 # User actions
 POST	/login						com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    com.baasbox.controllers.User.logout(deviceid: String)
+POST	/logout/:deviceid		    com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+POST 	/logout						com.baasbox.controllers.User.logoutWithoutDevice()
 POST	/user						com.baasbox.controllers.User.signUp()
 GET		/user						com.baasbox.controllers.User.getCurrentUser()
 PUT		/user						com.baasbox.controllers.User.updateProfile()
