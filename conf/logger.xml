@@ -35,7 +35,10 @@
 		      <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
 		    </encoder>
 		  </appender>
-
+		  
+		  <logger name="alog.logger" level="trace" additivity="false">
+    		<appender-ref ref="STDOUT_ONLY_INFO" />
+  		  </logger>
   <!-- log all but info level, it's slow so it's active only for debug purpose-->
 		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.FileAppender">
 			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
