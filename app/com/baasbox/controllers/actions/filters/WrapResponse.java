@@ -23,6 +23,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.controllers.actions.filters.accesslog.AccessLog;
 
 import play.Logger;
 import play.core.j.JavaResultExtractor;
@@ -36,6 +37,8 @@ import play.mvc.Results;
 
 public class WrapResponse {
 
+	AccessLog accessLog = new AccessLog();
+	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		org.codehaus.jackson.map.ObjectMapper mapper = new org.codehaus.jackson.map.ObjectMapper();
 		ObjectNode result = Json.newObject();
@@ -52,31 +55,51 @@ public class WrapResponse {
 	private Result onUnauthorized(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 401);
-		  return Results.unauthorized(result);
+		  Result r = Results.unauthorized(result);
+		  if(accessLog!=null){
+			  r = accessLog.onBadRequest(request, error);
+		  }
+		  return r;
 	}  
 	  
 	private Result onForbidden(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 403);
-		  return Results.forbidden(result);
+		  Result r =  Results.forbidden(result);
+		  if(accessLog!=null){
+			  r = accessLog.onBadRequest(request,result, error);
+		  }
+		  return r;
 	}
 	  
 	private Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
-		  return Results.badRequest(result);
+		  Result r =  Results.badRequest(result);
+		  if(accessLog!=null){
+			  r = accessLog.onBadRequest(request,result, error);
+		  }
+		  return r;
 	} 
 	
   
     private Result onResourceNotFound(RequestHeader request,String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 404);
-		  return Results.notFound(result);
+		  Result r =  Results.notFound(result);
+		  if(accessLog!=null){
+			  r = accessLog.onHandlerNotFound(request);
+		  }
+		  return r;
     }
     
     private Result onDefaultError(int statusCode,RequestHeader request,String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", statusCode);
-		  return Results.status(statusCode,result);
+		  Result r =  Results.status(statusCode,result);
+		  if(accessLog!=null){
+			  r = accessLog.onError(statusCode,request, new Throwable(error));
+		  }
+		  return r;
 	}
 
 	private Result onOk(int statusCode,Request request, String stringBody) throws IOException {
@@ -92,7 +115,8 @@ public class WrapResponse {
 			if (stringBody.isEmpty()) result.put("data", "");
 			else throw new IOException("Error parsing stringBody: " + stringBody,e);
 		}
-		return Results.status(statusCode,result);
+		Result r=Results.status(statusCode,result); 
+		return r;
 	}
 
 	public Result wrap(Context ctx, Result result) throws Throwable {
