@@ -32,7 +32,6 @@ import org.codehaus.jackson.node.ObjectNode;
 
 import play.Application;
 import play.GlobalSettings;
-import play.Logger;
 import play.libs.Json;
 import play.mvc.Action;
 import play.mvc.Http.Request;
@@ -131,7 +130,6 @@ public class Global extends GlobalSettings {
 		
 	  @Override
 	  public Result onBadRequest(RequestHeader request, String error) {
-		  info("ONBADREQUEST:"+request.uri());
 		  ObjectNode result = prepareError(request, error);
 		  Result r = badRequest(result);
 		  if(accessLog!=null){
