@@ -35,7 +35,19 @@
 		      <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
 		    </encoder>
 		  </appender>
-
+		  
+		  <appender name="ACCESS_LOG_FILE" class="ch.qos.logback.core.FileAppender">
+     			<file>${application.home}/logs/access.log</file>
+     			<encoder>
+       				<pattern>%m%n</pattern>
+     			</encoder>
+   			</appender>
+		  
+		  <logger name="com.baasbox.filters" level="info" additivity="false">
+    		<appender-ref ref="ACCESS_LOG_FILE" />
+  		  </logger>
+  		  
+  		  
   <!-- log all but info level, it's slow so it's active only for debug purpose-->
 		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.FileAppender">
 			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
@@ -68,7 +80,7 @@
     
   <!-- these are overriden by application.conf -->  
   <logger name="play" level="INFO" />
-  <logger name="application" level="INFO" />
+  <logger name="application" level="DEBUG" />
 
   <root level="ERROR">
     <appender-ref ref="STDOUT_ONLY_INFO" />

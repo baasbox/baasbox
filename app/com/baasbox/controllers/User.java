@@ -251,7 +251,7 @@ public class User extends Controller {
 				DbHelper.open(appCode, adminUser, adminPassword);
 		      } catch (InvalidAppCodeException e1) {
 		    	  throw new Exception("The code to reset the password seems to be invalid. Please repeat the reset password procedure");
-	  }
+		      }
 	
 			  boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
 			  if (!isTokenValid) throw new Exception("Reset password procedure is expired! Please repeat the reset password procedure");
@@ -261,7 +261,8 @@ public class User extends Controller {
 		  	  pageTemplate.add("user_name",username);
 		  	  pageTemplate.add("error",e.getMessage());
 		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
-			  return badRequest(Html.apply(pageTemplate.render()));
+			  DbHelper.getConnection().close();
+		      return badRequest(Html.apply(pageTemplate.render()));
 		  }
 		  String tokenStep2 = ResetPwdDao.getInstance().setTokenStep2(username, appCode);
 		  
@@ -278,7 +279,8 @@ public class User extends Controller {
 	      pageTemplate.add("password","password");
 	      pageTemplate.add("repeat_password","repeat-password");
 	      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
-		  return ok(Html.apply(pageTemplate.render()));
+	      DbHelper.getConnection().close();
+	      return ok(Html.apply(pageTemplate.render()));
 		  
 	  }
 
@@ -328,7 +330,8 @@ public class User extends Controller {
 		  	  pageTemplate.add("user_name",username);
 		  	  pageTemplate.add("error",e.getMessage());
 		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
-			  return badRequest(Html.apply(pageTemplate.render()));
+		      DbHelper.getConnection().close();
+		      return badRequest(Html.apply(pageTemplate.render()));
 		  }
 		  //check and validate input
 	  	  String errorString="";
@@ -358,13 +361,14 @@ public class User extends Controller {
 		      pageTemplate.add("repeat_password","repeat-password");
 		      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 		      pageTemplate.add("error",errorString);
-		      
+		      DbHelper.getConnection().close();
 			  return badRequest(Html.apply(pageTemplate.render()));
 		  }
 		  try {
 			  UserService.resetUserPasswordFinalStep(username, password);
 		  } catch (Throwable e){
 			  Logger.warn("changeUserPassword", e);
+			  DbHelper.getConnection().close();
 			  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			  else return internalServerError(e.getMessage());
 		  } 
@@ -375,6 +379,7 @@ public class User extends Controller {
 	  	  pageTemplate.add("user_name",username);
 	  	  pageTemplate.add("message",ok_message);
 	      pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+	      DbHelper.getConnection().close();
 		  return ok(Html.apply(pageTemplate.render()));
 	  }
 	

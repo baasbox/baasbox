@@ -1,0 +1,2 @@
+Notnoop Java-APNs: New 3-Clause BSD License 
+https://github.com/notnoop/java-apns

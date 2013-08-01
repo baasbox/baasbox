@@ -25,7 +25,7 @@ public class PropertiesConfigurationHelper {
 	 * This are the [sections] inside the configuration.conf file.
 	 * Each of them maps an Enum
 	 */
-	public static final ImmutableMap<String,Class> configurationSections = ImmutableMap.of(
+	public static final ImmutableMap<String,Class> CONFIGURATION_SECTIONS = ImmutableMap.of(
 														 "PasswordRecovery",(Class)PasswordRecovery.class
 														,"Application",(Class)Application.class
 														,"Push",(Class)Push.class
@@ -44,7 +44,7 @@ public class PropertiesConfigurationHelper {
 	 */
 	@SuppressWarnings("unchecked")
 	public static String dumpConfigurationAsJson(String section) {
-		Class en = configurationSections.get(section);
+		Class en = CONFIGURATION_SECTIONS.get(section);
 		try {
 			JsonFactory jfactory = new JsonFactory();
 			StringWriter sw = new StringWriter();
@@ -91,7 +91,7 @@ public class PropertiesConfigurationHelper {
 	}//dumpConfigurationAsJson(en)
 	
 	public static String dumpConfigurationAsJson(){
-		ImmutableCollection<String> keys = configurationSections.keySet();  
+		ImmutableCollection<String> keys = CONFIGURATION_SECTIONS.keySet();  
 		ObjectMapper mapper = new ObjectMapper();
 		JsonFactory jfactory = mapper.getJsonFactory();
 		StringWriter sw = new StringWriter();	
@@ -113,7 +113,7 @@ public class PropertiesConfigurationHelper {
 	}//dumpConfigurationAsJson()	
 	
 	public static String dumpConfiguration(){
-		ImmutableCollection<String> keys = configurationSections.keySet(); 
+		ImmutableCollection<String> keys = CONFIGURATION_SECTIONS.keySet(); 
 		StringBuilder sb = new StringBuilder();
 		for (String v: keys){
 			sb.append(dumpConfiguration(v));
@@ -125,7 +125,7 @@ public class PropertiesConfigurationHelper {
 
 	
 	public static String dumpConfiguration(String section) {
-		Class en = configurationSections.get(section);
+		Class en = CONFIGURATION_SECTIONS.get(section);
 		try {
 			StringBuilder sb = new StringBuilder();
 			String enumDescription = "";			
@@ -206,7 +206,7 @@ public class PropertiesConfigurationHelper {
 	}	//setByKey
 	
 	public static String dumpConfigurationSectionAsFlatJson(String section){
-		Class en = configurationSections.get(section);
+		Class en = CONFIGURATION_SECTIONS.get(section);
 		try {
 			JsonFactory jfactory = new JsonFactory();
 			StringWriter sw = new StringWriter();

@@ -1,29 +1,21 @@
 
-				<a class="well span3 top-block ajax-link" href="#users">
+				<a class="well span4 top-block ajax-link" href="#users">
 					<span class="icon32 icon-red icon-user"></span>
 					<div>Users</div>
 					<div id="totalUsers">{{data.data.users}}</div>
 					<!-- <span class="notification" id="notificationUsers"></span>  --> 
 				</a>
 
-				<a class="well span3 top-block ajax-link" href="#collections">
-					<span class="icon32 icon-orange icon-book"></span>
-					<div>Collections</div>
-					<div id="totalCollections">{{data.data.collections}}</div>
-					<!--<span class="notification green" id="notificationCollections"></span>-->
-				</a>
-
-				<a class="well span3 top-block ajax-link" href="#documents">
+				<a class="well span4 top-block ajax-link" href="#documents">
 					<span class="icon32 icon-green icon-copy"></span>
 					<div>Documents</div>
 					<div id="totalDocuments">{{countDocuments(data)}}</div>
 					<!--<span class="notification yellow" id="notificationDocuments"></span>-->
 				</a>
-				
-				<a class="well span3 top-block ajax-link" href="#assets">
-					<span class="icon32 icon-blue icon-folder-open"></span>
-					<div>Assets</div>
-					<div id="totalAssets">{{data.data.assets}}</div>
-					<!--<span class="notification red" id="notificationFile"></span>-->
-				</a>
 
+				<a class="well span4 top-block" href="" target="_blank" id="getLatestVersion">
+					<span class="icon32 icon-blue icon-archive"></span>
+					<div>Latest version</div>
+					<div id="latestVersion">&nbsp</div>
+					<span class="" id="notificationLatestVersion"></span>
+				</a>
