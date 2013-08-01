@@ -997,9 +997,67 @@ function callMenu(action){
 		});
 	  break;//#users
 	case "#dashboard":
+		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
+			success: function(data)	{
+				var data = data["data"];
+				$('#latestVersion').text(data["latest_version"]);
+				var url=data["announcement_url"];
+				if (url=="") url = data["download_url"];
+				$('#getLatestVersion').prop("href", url);
+				if ($('#currentVersion').text()<data["latest_version"]+"") {
+					$('#notificationLatestVersion').text("!");
+					$('#notificationLatestVersion').addClass("notification red");
+				}
+			}, //success
+			error: function(data){
+				$('#latestVersion').addClass("red").text("Unable to contact the BaasBox site");
+				$('#notificationLatestVersion').text("?");
+				$('#notificationLatestVersion').addClass("notification yellow");
+			}
+		});//BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
-			success: function(data) {applySuccessMenu(action,data["data"]);}
-		});
+			success: function(data) {
+							var data = data["data"];
+							applySuccessMenu(action,data);
+									var platformSpecificFeed={
+											"bbid": data["installation"]["bb_id"],
+											"bbv":  data["installation"]["bb_version"],
+											"odbv": data["db"]["properties"]["version"],
+											"osn": data["os"]["os_name"],
+											"osa": data["os"]["os_arch"],
+											"osv": data["os"]["os_version"],
+											"c": data["os"]["processors"],
+											"jvmmm": data["memory"]["max_allocable_memory"],
+											"jvv": data["java"]["java_vendor"],
+											"jve": data["java"]["java_version"]
+									};
+									$('#latestNewsTab').rssfeed('http://www.baasbox.com/feed/', {
+												header: false,
+												dateformat: "date",
+												content:true,
+												snippet:true,
+												linktarget: "_blank",
+												linkcontent: true,
+												limit: 5,
+												errormsg: "Unable to retrieve latest news"
+									});
+									var serverPlatform=getPlatform(data["os"]["os_name"]);
+									$('#platformNameNews').text(data["os"]["os_name"]);
+									$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true), 
+										{
+													header: false,
+													dateformat: "date",
+													content:true,
+													snippet:true,
+													linktarget: "_blank",
+													linkcontent: true,
+													limit: 5,
+													errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
+										});
+									
+					}//success function
+		});//ajax call
+
 	  break;	//#dashboard
 	case "#settings":		
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
@@ -1117,7 +1175,7 @@ function DocumentsController($scope){
 						         scope.$apply(function(){
 						        	 scope.loggedIn=true;
 						         });
-						         applySuccessMenu("#dashboard",data);
+						         callMenu("#dashboard");
 						         $("#errorLogin").addClass("hide");
 				        	 }
 				         })
@@ -1159,3 +1217,35 @@ function DashboardController($scope) {
 	
 }
 
+
+	
+	function getPlatform(os){
+		function isWindows(OS) {
+			return (OS.indexOf("win") >= 0);
+		}
+	 
+		function isMac(OS) {
+			return (OS.indexOf("mac") >= 0);
+		}
+	 
+		function isUnix(OS) {
+			return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 );
+		}
+	 
+		function  isSolaris(OS) {
+			return (OS.indexOf("sunos") >= 0);
+		}
+		
+     	os = os.toLowerCase();
+		if (isWindows(os)) {
+			return "windows";
+		} else if (isMac(os)) {
+			return "mac";
+		} else if (isUnix(os)) {
+			return "unix,linux";
+		} else if (isSolaris(os)) {
+			return "solaris,unix";
+		} else {
+			return "other";
+		}
+	}
