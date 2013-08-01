@@ -630,7 +630,7 @@ function setup(){
 	setupSelects();
 
 	$('.logout').click(function(e){
-		BBRoutes.com.baasbox.controllers.User.logout().ajax({}).always(
+		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 				function() { 
 					sessionStorage.up="";
 					sessionStorage.appcode="";
@@ -1029,7 +1029,8 @@ function callMenu(action){
 											"c": data["os"]["processors"],
 											"jvmmm": data["memory"]["max_allocable_memory"],
 											"jvv": data["java"]["java_vendor"],
-											"jve": data["java"]["java_version"]
+											"jve": data["java"]["java_version"],
+											"rand": Math.random().toString(36).substr(2,7)
 									};
 									$('#latestNewsTab').rssfeed('http://www.baasbox.com/feed/', {
 												header: false,
