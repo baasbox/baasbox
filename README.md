@@ -34,3 +34,7 @@ Default credentials are:
 + username: admin
 + passwrod: admin
 + application code: 1234567890
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/baasbox/baasbox/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
