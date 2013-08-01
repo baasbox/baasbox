@@ -82,12 +82,11 @@
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
-  <root level="TRACE">
+  <root level="ERROR">
     <appender-ref ref="STDOUT_ONLY_INFO" />
     <appender-ref ref="STDOUT_BUT_INFO" />
     <appender-ref ref="FILE_ONLY_INFO" />
     <appender-ref ref="FILE_BUT_INFO" />
-    <appender-ref ref="ACCESS_LOG_FILE" />
   </root>
  
 </configuration>
