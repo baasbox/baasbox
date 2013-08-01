@@ -160,11 +160,12 @@ public class StatisticsService {
 			Runtime rt = Runtime.getRuntime(); 
 			long maxMemory=rt.maxMemory();
 			long freeMemory=rt.freeMemory();
+			long totalMemory=rt.totalMemory();
 			ImmutableMap response = ImmutableMap.of(
-					"memory_current_heap_size", rt.totalMemory(),
-					"memory_free", freeMemory,
-					"memory_max_heap_size",maxMemory,
-					"memory_used",maxMemory - freeMemory
+					"max_allocable_memory",maxMemory,
+					"current_allocate_memory", totalMemory,
+					"used_memory_in_the_allocate_memory",totalMemory - freeMemory,
+					"free_memory_in_the_allocated_memory", freeMemory
 					);
 			Logger.trace("Method End");
 			return response;

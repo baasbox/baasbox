@@ -16,8 +16,8 @@
  */
 package com.baasbox.controllers;
 
-import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
+import static play.libs.Json.toJson;
+
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.List;
@@ -27,12 +27,16 @@ import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
 import play.Play;
+import play.libs.F.Promise;
+import play.libs.WS;
+import play.libs.WS.Response;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
+import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
@@ -56,21 +60,6 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
-import play.Logger;
-import play.Play;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Result;
-import play.mvc.With;
-
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.util.List;
-
-import static play.libs.Json.toJson;
 
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
@@ -142,13 +131,17 @@ public class Admin extends Controller {
 		  OGraphDatabase db = DbHelper.getConnection();
 		  ImmutableMap response;
 		try {
-			response = ImmutableMap.of(
-					"db", StatisticsService.db(),
-					"data",StatisticsService.data(),
-					"os",StatisticsService.os(),
-					"java",StatisticsService.java(),
-					"memory",StatisticsService.memory()
-					);
+			response = ImmutableMap.<String,Object>builder().
+					put("installation", (Object)ImmutableMap.of(
+							"bb_id",Internal.INSTALLATION_ID.getValueAsString()
+							,"bb_version", Internal.DB_VERSION.getValueAsString()
+							))
+					.put("db", StatisticsService.db())
+					.put("data",StatisticsService.data())
+					.put("os",StatisticsService.os())
+					.put("java",StatisticsService.java())
+					.put("memory",StatisticsService.memory()).build();
+					
 		} catch (SqlInjectionException e) {
 			Logger.error (ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
@@ -301,7 +294,7 @@ public class Admin extends Controller {
 	  
 	  
 	   public static Result setConfiguration(String section, String subSection, String key, String value){
-		  Class conf = PropertiesConfigurationHelper.configurationSections.get(section);
+		  Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		  if (conf==null) return notFound(section + " is not a valid configuration section");
 		  try {
 			PropertiesConfigurationHelper.setByKey(conf, key, value);
@@ -315,4 +308,30 @@ public class Admin extends Controller {
 		  response().setContentType("application/json");
 		  return ok(PropertiesConfigurationHelper.dumpConfigurationSectionAsFlatJson(section));
 		}
+		
+		public static Result getLatestVersion() throws  Throwable{
+			String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
+			Logger.debug("Calling " + urlToCall);
+			final Promise<Response> promise = WS.url(urlToCall).get();
+			return status(promise.get().getStatus(),promise.get().getBody());
+			/*
+			//Delayed due a bug in Play! 
+			//http://play.lighthouseapp.com/projects/82401/tickets/963-ws-promise-map-without-async-produces-timeoutexception
+			 
+			return async(
+				      WS.url(urlToCall).get().map(
+				        new Function<WS.Response, Result>() {
+				          public Result apply(WS.Response response) {
+				        	int sta=response.getStatus();
+				        	String responseBody=response.getBody();
+				        	Logger.debug ("Received response from baasbox site: " + responseBody);
+				        	return ok();
+				          }
+				        }
+				      )
+				    ); //return async
+			*/
+		}//getLatestVersion
+			  
+
 }

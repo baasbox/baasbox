@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
@@ -33,6 +34,8 @@ import play.Play;
 import play.mvc.Http;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.IBBConfigurationKeys;
+import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
@@ -40,6 +43,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
+import com.eaio.uuid.UUID;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -254,6 +258,17 @@ public class DbHelper {
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
+		Internal.DB_VERSION.setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+		String uniqueId="";
+		try{
+			UUID u = new UUID();
+			uniqueId=new String(Base64.encodeBase64(u.toString().getBytes()));
+		}catch (Exception e){
+			java.util.UUID u = java.util.UUID.randomUUID();
+			uniqueId=new String(Base64.encodeBase64(u.toString().getBytes()));
+		}
+		Internal.INSTALLATION_ID.setValue(uniqueId);
+		Logger.info("Unique installation id is: " + uniqueId);
 		Logger.info("...done");
 	}
 
@@ -270,7 +285,7 @@ public class DbHelper {
         
         Set<String> sections= c.getSections();
         for (String section: sections){
-        	Class en = PropertiesConfigurationHelper.configurationSections.get(section);
+        	Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
         	if (en==null){
         		Logger.warn(section  + " is not a valid configuration section, it will be skipped!");
         		continue;
