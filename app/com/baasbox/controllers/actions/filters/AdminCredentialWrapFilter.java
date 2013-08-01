@@ -16,17 +16,14 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import com.baasbox.BBConfiguration;
-import com.baasbox.IBBConfigurationKeys;
-import com.baasbox.security.SessionKeys;
-
-import play.Configuration;
 import play.Logger;
-import play.Play;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+
+import com.baasbox.BBConfiguration;
+import com.baasbox.IBBConfigurationKeys;
 
 /**
  * Inject the admin credentials into the args argument
@@ -61,14 +58,17 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
 	    	Logger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= badRequest("Invalid App Code. AppCode is empty or not set");
-	    }
+		}
 		
 		//executes the request
-		if (tempResult==null) tempResult = delegate.call(ctx);
+		if (tempResult==null){
+			tempResult = delegate.call(ctx);
+		}
 
 		WrapResponse wr = new WrapResponse();
 		Result result=wr.wrap(ctx, tempResult);
-				
+		
+		
 		Logger.trace("Method End");
 	    return result;
 	}
