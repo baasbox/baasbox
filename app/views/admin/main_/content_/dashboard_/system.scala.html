@@ -1,6 +1,6 @@
 				<div class="box span6">
 					<div class="box-header well" data-original-title>
-						<h2><i class="icon-list"></i> System</h2>
+						<h2><i class="icon-hdd"></i> System</h2>
 						<div class="box-icon">
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
 						</div>
@@ -10,25 +10,35 @@
 							<li class="active"><a href="#memory">Memory</a></li>
 							<li><a href="#os">OS</a></li>
 							<li><a href="#java">Java</a></li>
+							<li><a href="#db">Database</a></li>
 						</ul>
 						<div id="systemStatTabContent" class="tab-content">
 							<div class="tab-pane active" id="memory">
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
-												<i class="icon32 icon-black icon-note"></i>
-												<span class="blue">Used </span>                              
-												<span class="green" style="width:50% !important"> 
-													{{formatSize(data.memory.memory_used)}}
+												<i class="icon32 icon-black icon-clipboard"></i>
+												<span class="blue" style="display:inline !important">Max Allocable Memory</span>                             
+												<span class="green" style="display:inline !important;width:50% !important" >
+													{{formatSize(data.memory.max_allocable_memory)}}
 												</span>                                    
-											</a>
+											</a>									
 										</li>
 										<li>
 											<a href="#">
-												<i class="icon32 icon-black icon-save"></i>
-												<span class="blue">Max </span>                             
-												<span class="green" style="width:50% !important" >
-													{{formatSize(data.memory.memory_max_heap_size)}}
+												<i class="icon32 icon-black icon-book-empty"></i>
+												<span class="blue" style="display:inline !important">Current Allocated Memory </span>                              
+												<span class="green" style="display:inline !important;width:50% !important"> 
+													{{formatSize(data.memory.current_allocate_memory)}}
+												</span>                                    
+											</a>
+										</li>										
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-book"></i>
+												<span class="blue" style="display:inline !important">Current Used Memory </span>                              
+												<span class="green" style="display:inline !important;width:50% !important"> 
+													{{formatSize(data.memory.used_memory_in_the_allocate_memory)}}
 												</span>                                    
 											</a>
 										</li>																				
@@ -65,7 +75,7 @@
 										</li>	
 										<li>
 											<a href="#">
-												<i class="icon32 icon-black icon-save"></i>
+												<i class="icon32 icon-black icon-gear"></i>
 												<span class="blue">Processor(s) </span>                             
 												<span class="green" style="width:50% !important" >
 													{{data.os.processors}}
@@ -87,7 +97,7 @@
 										</li>
 										<li>
 											<a href="#">
-												<i class="icon32 icon-black icon-save"></i>
+												<i class="icon32 icon-black icon-contacts"></i>
 												<span class="blue">Vendor </span>                             
 												<span class="green" style="width:50% !important" >
 													{{data.java.java_vendor}}
@@ -96,7 +106,7 @@
 										</li>											
 										<li>
 											<a href="#">
-												<i class="icon32 icon-black icon-lightbulb"></i>
+												<i class="icon32 icon-black icon-compose"></i>
 												<span class="blue">ClassVersion </span>                             
 												<span class="green" style="width:50% !important" >
 													{{data.java.java_class_version}}
@@ -106,6 +116,43 @@
 									
 									</ul>
 							</div><!-- java Pane-->	
+							
+							
+							<div class="tab-pane" id="db">
+									<ul class="dashboard-list">
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-note"></i>
+												<span class="blue">Version</span>                              
+												<span class="green"  style="width:50% !important"> {{data.db.properties.version}}</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-treeview-corner"></i>
+												<span class="blue">Path</span>                             
+												<span class="green" style="width:50% !important" >{{data.db.properties.path}}</span>                                    
+											</a>
+										</li>											
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-copy"></i>
+												<span class="blue">Data Size</span>                             
+												<span class="green" style="width:50% !important" >{{formatSize(data.db.size)}}</span>                                    
+											</a>
+										</li>
+										<li>
+											<a href="#">
+												<i class="icon32 icon-black icon-save"></i>
+												<span class="blue">DB Size</span>                             
+												<span class="green" style="width:50% !important" >{{formatSize(data.db.physical_size)}}</span>                                    
+											</a>
+										</li>	
+									</ul>
+							</div><!-- Stats Pane-->
+							
+							
+							
 						</div><!-- tab-content -->
 					</div><!--/box-content-->
 				</div><!--/span-->
