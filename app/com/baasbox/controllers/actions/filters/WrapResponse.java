@@ -22,8 +22,6 @@ import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
-import com.baasbox.BBConfiguration;
-
 import play.Logger;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
@@ -33,9 +31,12 @@ import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
 
+import com.baasbox.BBConfiguration;
+
 
 public class WrapResponse {
 
+	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		org.codehaus.jackson.map.ObjectMapper mapper = new org.codehaus.jackson.map.ObjectMapper();
 		ObjectNode result = Json.newObject();
@@ -52,7 +53,8 @@ public class WrapResponse {
 	private Result onUnauthorized(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 401);
-		  return Results.unauthorized(result);
+		   return Results.unauthorized(result);
+		  
 	}  
 	  
 	private Result onForbidden(RequestHeader request, String error) {
@@ -63,7 +65,8 @@ public class WrapResponse {
 	  
 	private Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
-		  return Results.badRequest(result);
+		  return  Results.badRequest(result);
+		  
 	} 
 	
   
@@ -71,12 +74,13 @@ public class WrapResponse {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 404);
 		  return Results.notFound(result);
+		  
     }
     
     private Result onDefaultError(int statusCode,RequestHeader request,String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", statusCode);
-		  return Results.status(statusCode,result);
+		  return  Results.status(statusCode,result);
 	}
 
 	private Result onOk(int statusCode,Request request, String stringBody) throws IOException {
@@ -92,7 +96,7 @@ public class WrapResponse {
 			if (stringBody.isEmpty()) result.put("data", "");
 			else throw new IOException("Error parsing stringBody: " + stringBody,e);
 		}
-		return Results.status(statusCode,result);
+		return Results.status(statusCode,result); 
 	}
 
 	public Result wrap(Context ctx, Result result) throws Throwable {

@@ -16,37 +16,36 @@
  */
 package com.baasbox;
 
+import static play.Logger.debug;
+import static play.Logger.error;
+import static play.Logger.info;
+import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import com.baasbox.db.DbHelper;
-import com.baasbox.security.SessionTokenProvider;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
+import java.io.IOException;
+import java.lang.reflect.Method;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+
 import play.Application;
 import play.GlobalSettings;
+import play.api.mvc.EssentialFilter;
 import play.libs.Json;
-
+import play.mvc.Action;
+import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import java.io.IOException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionTokenProvider;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-import static play.mvc.Results.*;
-import static play.Logger.*;
-
 public class Global extends GlobalSettings {
-	
 	
 	  @Override
 	  public void beforeStart(Application app) {
@@ -131,6 +130,7 @@ public class Global extends GlobalSettings {
 	  public Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  return badRequest(result);
+		  
 	  }  
 
 	// 404
@@ -140,6 +140,7 @@ public class Global extends GlobalSettings {
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
 		  return notFound(result);
+		  
 	    }
 
 	  // 500 - internal server error
@@ -151,9 +152,20 @@ public class Global extends GlobalSettings {
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
 		  return internalServerError(result);
+		  
 	  }
-	  
 
+
+	@Override
+	public <T extends EssentialFilter> Class<T>[] filters() {
+		
+		return new Class[]{com.baasbox.filters.LoggingFilter.class};
+	}
+
+	  
+	  
+	  
+	
 	    
 	  //these are needed to override the standard action calls and to centralized the errors response
 	   //TODO: we must implement the Play! 2.1 Filters
@@ -206,5 +218,5 @@ public class Global extends GlobalSettings {
 			}//call
 		  }//class ActionWrapper
 	  */
-
+	
 }
