@@ -67,7 +67,7 @@ public class CollectionDao extends NodeDao {
 	public ODocument create(String collectionName) throws Throwable {
 		Logger.trace("Method Start");
 		try {
-			if (existsCollection(collectionName)) throw new InvalidCollectionException("Collection " + collectionName + " already exists");
+			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}

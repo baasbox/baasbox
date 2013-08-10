@@ -40,7 +40,7 @@ public class BasicAuthAccess  implements IAccessMethod {
 		Logger.debug(SessionKeys.APP_CODE + ": " + appcode);
 		ctx.args.put("appcode", appcode);
 		
-		String username = "";
+		String username = ""; 
         String password = "";
 
 		
