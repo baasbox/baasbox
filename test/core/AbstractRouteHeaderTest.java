@@ -35,7 +35,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 					// No AppCode, No Authorization
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					Result result = routeAndCall(request);
-					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
 	
 					// No Authorization
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -77,7 +77,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 					// No AppCode, No Authorization
 					removeAllHeaders();
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
 					
 					// No Authorization
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);

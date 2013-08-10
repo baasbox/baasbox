@@ -7,10 +7,20 @@ var settingPwdDataArray;
 var settingImgDataArray;
 var settingSectionChanged;
 var settingPushDataArray;
+var refreshSessionToken;
 
 $(document).ready(function(){
 	setup();
 });
+
+function resetChosen(chosenElement){
+	//Get the dynamic id given to your select by Chosen
+	var selId = $(chosenElement).attr('id');
+	//Use that id to remove the dynamically created div (the foe select box Chosen creates)
+	$('#'+ selId +'_chzn').remove();
+	//Change the value of your select, trigger the change event, remove the chzn-done class, and restart chosen for that select
+	$('#'+selId).val('').change().removeClass('chzn-done').chosen();
+}
 
 // see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
 function bytesToSize(bytes, precision) {
@@ -121,8 +131,7 @@ function deleteAsset(assetName)
 		data: {"name": assetName},
 		error: function(data)
 		{
-			//console.log(data)
-			alert(data.responseText);
+			alert(JSON.parse(data.responseText)["message"]);
 		},
 		success: function(data)
 		{
@@ -288,8 +297,7 @@ function addUser()
 		processData: false,
 		error: function(data)
 		{
-			//console.log(data)
-			alert(data.responseText);
+			alert(JSON.parse(data.responseText)["message"]);
 		},
 		success: function(data)
 		{
@@ -321,8 +329,7 @@ function updateUser()
 		processData: false,
 		error: function(data)
 		{
-			//console.log(data)
-			alert(data.responseText);
+			alert(JSON.parse(data.responseText)["message"]);
 		},
 		success: function(data)
 		{
@@ -501,8 +508,7 @@ $('.btn-NewCollectionCommit').click(function(e){
 		processData: false,
 		error: function(data)
 		{
-			//console.log(data)
-			alert(data.responseText);
+			alert(JSON.parse(data.responseText)["message"]);
 		},
 		success: function(data)
 		{
@@ -548,7 +554,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 		processData: false,
 		error: function(data)
 		{
-			alert(data.responseText);
+			alert(JSON.parse(data.responseText)["message"]);
 		},
 		success: function(data)
 		{
@@ -862,6 +868,9 @@ function setupTables(){
         "bRetrieve": true,
   		"bDestroy":true
         } ).makeEditable(); 
+	$('#btnReloadDocumkents').click(function(){
+			$("#selectCollection").trigger("change");
+		});
     $('#assetTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -900,7 +909,7 @@ function setupTables(){
 						{"mData": "@class", "mRender": function (data, type, full) {
 														var obj=JSON.parse(JSON.stringify(full));
 														if(data =="FileAsset")
-															return "<a href='/asset/" + obj["name"] + "/download' target='_new'>"+ obj["fileName"] +"</a>";
+															return "<a href='/asset/" + obj["name"] + "/download?X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
     	            	   								return "";
     	               								}},
 						{"mData": "name", "mRender": function (data) {
@@ -933,11 +942,17 @@ function setupSelects(){
 
 function setupAjax(){
 	$.ajaxSetup({
-	    beforeSend: function (xhr){ 
-	        xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
-	        console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-	    }
-	});
+			beforeSend: function (xhr){ 
+				xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
+			},
+			statusCode: {
+				401: function(){
+						alert("Sorry, session expired. You must login again");
+						location.reload();
+					}
+				}
+			}
+	);
 	//hack for charisma menu
 	$('#for-is-ajax').hide();
 	$('#is-ajax').prop('checked',true);
@@ -1124,7 +1139,10 @@ function callMenu(action){
 										data=data["data"];
 										applySuccessMenu(action,data);
 										var sel=$('#selectCollection');
-										sel.empty();
+									    sel.empty();
+
+										resetChosen("#selectCollection");
+
 										sel.append($("<option/>"));
 										$.each(data, function(index, item) {
 										    sel.append($("<option/>", {
@@ -1132,7 +1150,7 @@ function callMenu(action){
 										        text: item["name"]
 										    }));
 										});
-										$("#selectCollection").trigger("liszt:updated");
+										sel.trigger("liszt:updated");
 									}
 		});
 	  break; //#documents
@@ -1148,7 +1166,7 @@ function callMenu(action){
 										$('#assetTable').dataTable().fnAddData(data);
 									}
 		});
-	  break;//#users	  
+	  break;//#assets	  
 	}
 }//callMenu
 function AssetsController($scope){
@@ -1169,17 +1187,13 @@ function DocumentsController($scope){
 				         console.log("data received: ");
 				         console.log(data);
 				         console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-				         BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
-				        	 success: function(data) {
-				        		 data=data["data"];
-						         var scope=$("#loggedIn").scope();
-						         scope.$apply(function(){
-						        	 scope.loggedIn=true;
-						         });
-						         callMenu("#dashboard");
-						         $("#errorLogin").addClass("hide");
-				        	 }
-				         })
+						 callMenu("#dashboard");
+						 //refresh the sessiontoken every 14 minutes
+						 refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),840000);
+						 var scope=$("#loggedIn").scope();
+						 scope.$apply(function(){
+						   	 scope.loggedIn=true;
+						 });
 				     },
 			error: function() {
 				$("#errorLogin").removeClass("hide");

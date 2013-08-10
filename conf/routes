@@ -99,6 +99,7 @@ GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersio
 
 
 # Home page & general API
+GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
 GET     /                           com.baasbox.controllers.Application.index()
 GET 	/*file						controllers.Assets.at(path="/public/", file)
-OPTIONS /*dummy							com.baasbox.controllers.Generic.getOptions(dummy: String)
+OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)
