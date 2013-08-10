@@ -13,6 +13,15 @@ $(document).ready(function(){
 	setup();
 });
 
+function resetChosen(chosenElement){
+	//Get the dynamic id given to your select by Chosen
+	var selId = $(chosenElement).attr('id');
+	//Use that id to remove the dynamically created div (the foe select box Chosen creates)
+	$('#'+ selId +'_chzn').remove();
+	//Change the value of your select, trigger the change event, remove the chzn-done class, and restart chosen for that select
+	$('#'+selId).val('').change().removeClass('chzn-done').chosen();
+}
+
 // see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
 function bytesToSize(bytes, precision) {
 	if (bytes){
@@ -859,6 +868,9 @@ function setupTables(){
         "bRetrieve": true,
   		"bDestroy":true
         } ).makeEditable(); 
+	$('#btnReloadDocumkents').click(function(){
+			$("#selectCollection").trigger("change");
+		});
     $('#assetTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -1127,7 +1139,10 @@ function callMenu(action){
 										data=data["data"];
 										applySuccessMenu(action,data);
 										var sel=$('#selectCollection');
-										sel.empty();
+									    sel.empty();
+
+										resetChosen("#selectCollection");
+
 										sel.append($("<option/>"));
 										$.each(data, function(index, item) {
 										    sel.append($("<option/>", {
@@ -1135,7 +1150,7 @@ function callMenu(action){
 										        text: item["name"]
 										    }));
 										});
-										$("#selectCollection").trigger("liszt:updated");
+										sel.trigger("liszt:updated");
 									}
 		});
 	  break; //#documents
