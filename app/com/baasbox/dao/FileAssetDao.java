@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class FileAssetDao extends NodeDao {
-	public final static String MODEL_NAME="FileAsset";
+	public final static String MODEL_NAME="_BB_FileAsset";
 	public final static String BINARY_FIELD_NAME = "file";
 	public final static String CONTENT_TYPE_FIELD_NAME="contentType";
 	

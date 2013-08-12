@@ -58,7 +58,7 @@ public class GenericDao {
 	
 	public ORID getRidByUUID(UUID id){
 		OGraphDatabase db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("Node.id");
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
 		ORID rid = (ORID) index.get(id.toString());
 		return rid;
 	}
