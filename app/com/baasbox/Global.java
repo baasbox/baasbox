@@ -24,7 +24,6 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -34,12 +33,11 @@ import play.Application;
 import play.GlobalSettings;
 import play.api.mvc.EssentialFilter;
 import play.libs.Json;
-import play.mvc.Action;
-import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
 import com.baasbox.db.DbHelper;
+import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -71,22 +69,24 @@ public class Global extends GlobalSettings {
 					DbHelper.populateDB(db);
 			    	DbHelper.createDefaultUsers();
 			    	DbHelper.populateConfiguration(db);
-				} catch (IOException e) {
+			    	info("Initilizing session manager");
+			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
+		    	} catch (IOException e) {
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
-					System.exit(-1);
-				}
-		    	 if (!db.isClosed()){
-		    		 db.close();
-		    	 }
+					throw e;
+				} finally{
+			    	 if (!db.isClosed()){
+			    		 db.close();
+			    	 }
+		    	}
 		    	info("DB has been create successfully");
 		    }
-	    	info("Initilizing session manager");
-	    	SessionTokenProvider.initialize();
 	    }catch (Throwable e){
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
-	    	System.exit(1);
+	    	System.exit(-1);
 	    }
 	    info("BaasBox is Ready.");
 	  }  

@@ -33,9 +33,12 @@ public abstract class IndexDao {
 	}
 	
 	public Object get (String key){
-		ORID rid = (ORID) index.get(key);
-		if (rid==null) return null;
-		ODocument value = db.load(rid);
+		ODocument value=null;
+		Object valueOnDb=index.get(key);
+		if (valueOnDb==null) return null;
+		if (valueOnDb instanceof ORID)
+			value = db.load((ORID)valueOnDb);
+		else value=(ODocument)valueOnDb;
 		return value.field("value");
 	}
 }
