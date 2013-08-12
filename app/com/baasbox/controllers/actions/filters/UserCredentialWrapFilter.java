@@ -69,6 +69,7 @@ public class UserCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		Result result=wr.wrap(ctx, tempResult);
 				
+		Logger.debug(result.toString());
 		Logger.trace("Method End");
 	    return result;
 	}

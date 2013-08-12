@@ -201,7 +201,7 @@ public class PropertiesConfigurationHelper {
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
 		} catch (Exception e) {
-			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value  ,e );
+			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey
 	
