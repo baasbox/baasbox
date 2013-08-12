@@ -272,10 +272,10 @@ public class Asset extends Controller{
 		    byte [] fileContentAsByteArray=Files.toByteArray(fileContent);
 			String fileName = file.getFilename();
 		    String contentType = file.getContentType(); 
-		    if (contentType==null || contentType.isEmpty()){	//try to guess the content type
+		    if (contentType==null || contentType.isEmpty() || contentType.equalsIgnoreCase("application/octet-stream")){	//try to guess the content type
 		    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
 		    	contentType = URLConnection.guessContentTypeFromStream(is);
-		    	if (contentType==null) contentType="application/octet-stream";
+		    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
 		    }
 		    try{
 		    	ODocument doc=AssetService.createFile(name[0],fileName,metaJson,contentType, fileContentAsByteArray);
