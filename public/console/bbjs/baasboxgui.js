@@ -1188,8 +1188,8 @@ function DocumentsController($scope){
 				         console.log(data);
 				         console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 						 callMenu("#dashboard");
-						 //refresh the sessiontoken every 14 minutes
-						 refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),840000);
+						 //refresh the sessiontoken every 5 minutes
+						 refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
 						 var scope=$("#loggedIn").scope();
 						 scope.$apply(function(){
 						   	 scope.loggedIn=true;

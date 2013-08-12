@@ -33,20 +33,21 @@ public class SessionTokenProvider implements ISessionTokenProvider {
     }
 
 	protected final static ConcurrentHashMap<String,ImmutableMap<SessionKeys,? extends Object>> sessions=new ConcurrentHashMap<String, ImmutableMap<SessionKeys,? extends Object>>();
-	protected long expiresInMilliseconds=900000; //default 15 mins
+	protected long expiresInMilliseconds=0; //default expiration of session tokens
+	protected long  sessionClenanerLaunchInMinutes=60; //the session cleaner will be launch each x minutes.
+	
 	private Cancellable sessionCleaner=null;
 	private static SessionTokenProvider me; 
 	
-	public static SessionTokenProvider initialize(){
-		me=new SessionTokenProvider();
+	private static ISessionTokenProvider initialize(){
+		if (me==null) me=new SessionTokenProvider();
 		return me;
 	}
-	public static SessionTokenProvider getSessionTokenProvider(){
-		return me;
+	public static ISessionTokenProvider getSessionTokenProvider(){
+		return initialize();
 	}
 	
 	public static void destroySessionTokenProvider(){
-		SessionTokenProvider me= getSessionTokenProvider();
 		if (me!=null && me.sessionCleaner!=null) {
 			me.sessionCleaner.cancel();
 			Logger.info("Session Cleaner: cancelled");
@@ -56,15 +57,12 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	
 	public SessionTokenProvider(){
 		setTimeout(expiresInMilliseconds);
+		startSessionCleaner(sessionClenanerLaunchInMinutes*60000); //converts minutes in milliseconds
 	};	
 	
 	public void setTimeout(long timeoutInMilliseconds){
 		this.expiresInMilliseconds=timeoutInMilliseconds;
-		if (sessionCleaner!=null) {
-			sessionCleaner.cancel();
-			Logger.info("Session Cleaner: cancelled");
-		}
-		startSessionCleaner(timeoutInMilliseconds);
+		Logger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
 	}	//setTimeout
 	
 	@Override
@@ -110,7 +108,8 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	
 	private boolean isExpired(String token){
 		ImmutableMap<SessionKeys, ? extends Object> info = sessions.get(token);
-		if (info==null || (new Date()).getTime()>(Long)info.get(SessionKeys.EXPIRE_TIME)){
+		if (info==null) return true;
+		if (expiresInMilliseconds!=0 && (new Date()).getTime()>(Long)info.get(SessionKeys.EXPIRE_TIME)){
 			removeSession(token);
 			return true;
 		}
