@@ -44,4 +44,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static Boolean getWrapResponse(){
 		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
 	}
+	
+	public static String getAPPCODE() {
+		return configuration.getString(APP_CODE);
+	}
+	
 }
