@@ -19,6 +19,7 @@
 
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
@@ -29,6 +30,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.junit.Test;
 
+import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -83,6 +85,8 @@ public class UserChangePasswordTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					request = request.withJsonBody(getPayload("/userChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
+					Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
+					Logger.debug("testRouteChangePassword result: " + contentAsString(result));
 					assertRoute(result, "testRouteChangePassword", Status.OK, null, false);
 
 					String sPwdChanged = getPayloadFieldValue("/userChangePasswordPayload.json", "new");

@@ -878,7 +878,7 @@ function setupTables(){
     	"aoColumns": [ 
 						{"mData": "@class", "mRender": function (data, type, full ) {
 														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="FileAsset")
+														if(data =="_BB_FileAsset")
 															return getAssetIcon(obj["contentType"]);
     	            	   								return "";
     	               								}},
@@ -896,19 +896,19 @@ function setupTables(){
     	               								}},
 						{"mData": "@class", "mRender": function (data, type, full ) {
 														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="FileAsset")
+														if(data =="_BB_FileAsset")
 															return  bytesToSize(obj["contentLength"],'KB');
     	            	   								return "";
     	               								}},
 						{"mData": "@class", "mRender": function (data, type, full ) {
 														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="FileAsset")
+														if(data =="_BB_FileAsset")
 															return obj["contentType"];
     	            	   								return "";
     	               								}},
 						{"mData": "@class", "mRender": function (data, type, full) {
 														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="FileAsset")
+														if(data =="_BB_FileAsset")
 															return "<a href='/asset/" + obj["name"] + "/download?X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
     	            	   								return "";
     	               								}},

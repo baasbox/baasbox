@@ -5,7 +5,7 @@
 
 public class IndexInternalConfiguration extends IndexDao{
 
-		private final static String indexName="bb_internal";
+		private final static String indexName="_bb_internal";
 		
 		public IndexInternalConfiguration() throws IndexNotFoundException{
 			super (indexName);

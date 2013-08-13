@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ResetPwdDao extends NodeDao  {
 
-	private final static String MODEL_NAME="resetpwd";
+	private final static String MODEL_NAME="_BB_ResetPwd";
 	private final static String USER_LINK = "user";
 	public final static String ATTRIBUTES_BASE64CODE_STEP1="base64_code_step1";
 	public final static String ATTRIBUTES_BASE64CODE_STEP2="base64_code_step2";
