@@ -75,7 +75,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (!isInTransaction()){
 			Logger.trace("Begin transaction");
-			db.begin();
+			//db.begin();
 		}
 	}
 	
@@ -83,7 +83,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (isInTransaction()){
 			Logger.trace("Commit transaction");
-			db.commit();
+			//db.commit();
 		}
 	}
 	
@@ -91,7 +91,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (isInTransaction()){
 			Logger.trace("Rollback transaction");
-			db.rollback();
+			//db.rollback();
 		}		
 	}
 	
@@ -137,7 +137,7 @@ public class DbHelper {
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		String databaseName=BBConfiguration.getDBDir();
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
-		OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
+		OGraphDatabase db=OGraphDatabasePool.global().acquire("plocal:" + BBConfiguration.getDBDir(),username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}

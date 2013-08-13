@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDictionary;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class IndexDao {
@@ -19,7 +20,7 @@ public abstract class IndexDao {
 		this.db=DbHelper.getConnection();
 		this.index = db.getMetadata().getIndexManager().getIndex(indexName);
 		if (index==null) throw new IndexNotFoundException("The index " + indexName + " does not exists");
-		if (!index.getType().equals(OIndexDictionary.TYPE_ID)) throw new IndexNotFoundException("The index " + indexName + " is not a dictionary");
+		if (!index.getType().equals(OClass.INDEX_TYPE.DICTIONARY.toString())) throw new IndexNotFoundException("The index " + indexName + " is not a dictionary");
 	}
 	
 	public IndexDao put (String key,Object value){
