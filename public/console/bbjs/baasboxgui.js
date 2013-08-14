@@ -523,7 +523,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	var oldPassword = $("#oldpassword").val();
 	var newPassword = $("#newpassword").val();
 
-	if(sessionStorage.password != oldPassword)
+	if($("#password").val() != oldPassword)
 	{
 		$("#errorCPwd").removeClass("hide");
 		return;
@@ -549,7 +549,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	
 	BBRoutes.com.baasbox.controllers.User.changePassword().ajax(
 	{
-		data: JSON.stringify({"old": sessionStorage.password,"new": newPassword}),
+		data: JSON.stringify({"old": oldPassword,"new": newPassword}),
 		contentType: "application/json",
 		processData: false,
 		error: function(data)

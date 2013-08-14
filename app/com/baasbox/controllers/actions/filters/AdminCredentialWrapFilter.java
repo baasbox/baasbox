@@ -44,8 +44,8 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
 
-		String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-		String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
+		String adminUser=BBConfiguration.getBaasBoxAdminUsername();
+		String adminPassword = BBConfiguration.getBaasBoxAdminPassword();
 		ctx.args.put("username", adminUser);
 		ctx.args.put("password", adminPassword);
 		ctx.args.put("appcode", appCode);

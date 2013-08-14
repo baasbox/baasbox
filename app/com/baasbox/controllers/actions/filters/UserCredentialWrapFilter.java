@@ -24,6 +24,7 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.google.common.collect.ImmutableMap;
@@ -58,7 +59,14 @@ public class UserCredentialWrapFilter extends Action.Simple {
 			
 			if (!isCredentialOk){
 				tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
-			} else			
+			} else	
+				//internal administrator is not allowed to access vi REST
+				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+						||
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+					tempResult=forbidden("The user " +ctx.args.get("username")+ " cannot access via REST");
+			
+				//if everything is ok.....
 				//executes the request
 				if (tempResult==null) tempResult = delegate.call(ctx);
 		}

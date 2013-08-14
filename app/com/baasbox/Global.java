@@ -34,6 +34,7 @@ import play.api.mvc.EssentialFilter;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
+import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
@@ -66,7 +67,7 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase ( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -92,12 +93,12 @@ public class Global extends GlobalSettings {
 	  public void onStart(Application app) {
 	    //Orient.instance().shutdown();
 	    //Orient.instance().startup();
-	    info("BaasBox is Ready.");
+	    OGraphDatabase db =null;
 	    try{
 	    	if (justCreated){
-		    	OGraphDatabase db =null;
 		    	try {
-		    		db = DbHelper.open( BBConfiguration.getAPPCODE(), "admin", "admin");
+		    		//we MUST use admin/admin because the db was just created
+		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
 		    		debug("Creating default roles...");
 		    		DbHelper.createDefaultRoles();
 		    		debug("Creating default users...");
@@ -117,13 +118,25 @@ public class Global extends GlobalSettings {
 		    		if (db!=null && !db.isClosed()) db.close();
 		    	}
 		    	justCreated=false;
-		    	info("DB has been populated successfully");
 	    	}
 	    }catch (Throwable e){
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
 	    	System.exit(-1);
 	    }
+    	info("Updating default users passwords...");
+    	try {
+    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+			DbHelper.updateDefaultUsers();
+		} catch (Exception e) {
+	    	error("!! Error initializing BaasBox!", e);
+	    	error("Abnormal BaasBox termination.");
+	    	System.exit(-1);
+		} finally {
+    		if (db!=null && !db.isClosed()) db.close();
+    	}
+    	info ("...done");
+	    info("BaasBox is Ready.");
 	   }
 	  
 	  

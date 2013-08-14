@@ -137,7 +137,8 @@ public class DbHelper {
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		String databaseName=BBConfiguration.getDBDir();
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
-		OGraphDatabase db=OGraphDatabasePool.global().acquire("plocal:" + BBConfiguration.getDBDir(),username,password);
+		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
+		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
@@ -227,10 +228,26 @@ public class DbHelper {
 		String username=BBConfiguration.getBaasBoxUsername();
 		String password=BBConfiguration.getBaasBoxPassword();
 		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
+		
+		//the baasbox default user used to act internally as the administrator
+		username=BBConfiguration.getBaasBoxAdminUsername();
+		password=BBConfiguration.getBaasBoxAdminPassword();
+		UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
+		
+		Logger.trace("Method End");
+	}
+	
+	public static void updateDefaultUsers() throws Exception{
+		Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getConnection();
-		OUser admin=db.getMetadata().getSecurity().getUser("admin");
-		admin.setPassword(BBConfiguration.configuration.getString(BBConfiguration.ADMIN_PASSWORD));
-		admin.save();
+		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
+		user.setPassword(BBConfiguration.getBaasBoxPassword());
+		user.save();
+		
+		user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxAdminUsername());
+		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
+		user.save();
+		
 		Logger.trace("Method End");
 	}
 	
@@ -305,6 +322,14 @@ public class DbHelper {
         }
         is.close();
 		Logger.info("...done");
+	}
+
+	public static void removeConnectionFromPool() {
+		OGraphDatabase db = getConnection();
+		String dbName=db.getName();
+		String dbUser=db.getUser().getName();
+		db.close();
+		OGraphDatabasePool.global().remove(dbName, dbUser);
 	}
 
 
