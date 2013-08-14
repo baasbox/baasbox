@@ -74,7 +74,7 @@ public class UserGetCurrentTest extends AbstractUserTest
 					
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "RouteOK BaasBox user", Status.OK, null, true);
+					assertRoute(result, "RouteOK BaasBox user", Status.FORBIDDEN, null, false);
 				}
 			}
 		);		
@@ -101,7 +101,7 @@ public class UserGetCurrentTest extends AbstractUserTest
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					httpRequest(getURLAddress(), getMethod());
-					assertServer("ServerOK BaasBox user", OK, null, true);
+					assertServer("ServerOK BaasBox user", Status.FORBIDDEN, null, false);
 	            }
 	        }
 		);
