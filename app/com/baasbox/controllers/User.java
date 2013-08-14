@@ -459,6 +459,11 @@ public class User extends Controller {
 			 Logger.debug("Username " + username);
 			 Logger.debug("Password " + password);
 			 Logger.debug("Appcode" + appcode);		
+			 if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					 ||
+				 username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+			 ) return forbidden(username + " cannot login");
+			 
 			 if (body.get("login_data")!=null)
 				 loginData=body.get("login_data")[0];
 			 Logger.debug("LoginData" + loginData);
