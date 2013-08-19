@@ -16,8 +16,8 @@ package com.baasbox.filters {
     		def logTime(result: PlainResult): Result = {
       			val time = System.currentTimeMillis - start
       			val dateFormatted = new Date(start)
-      			val userAgent = rh.headers.apply("User-Agent")
-      			filterLogger.info(s"${rh.remoteAddress} [${dateFormatted}] ${rh.method} ${rh.uri} ${rh.version} ${result.header.status} ${userAgent} - ${time} msec - ${rh.contentType}")
+      			val userAgent = rh.headers.get("User-Agent").getOrElse("none")
+      			filterLogger.info(s"${rh.remoteAddress} [${dateFormatted}]\t${rh.method}\t${rh.uri}\t${rh.version}\t${result.header.status}\t${userAgent}\t${rh.contentType}\t-\t${time}")
       			result
     		}
     
