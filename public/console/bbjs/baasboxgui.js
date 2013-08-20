@@ -755,7 +755,7 @@ function setupTables(){
     	               								}
     					},
 					   {"mData": "user.name", "mRender": function ( data, type, full ) {
-														if(data!="admin" && data!="baasbox")
+														if(data!="admin" && data!="baasbox" && data!="internal_admin")
 															return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
 														return "";
     	               								}
