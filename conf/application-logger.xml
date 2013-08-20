@@ -43,7 +43,7 @@
      			</encoder>
    			</appender>
 		  
-		  <logger name="com.baasbox.filters" level="info" additivity="false">
+		  <logger name="com.baasbox.accesslog" level="info" additivity="false">
     		<appender-ref ref="ACCESS_LOG_FILE" />
   		  </logger>
   		  
