@@ -17,7 +17,14 @@ package com.baasbox.filters {
       			val time = System.currentTimeMillis - start
       			val dateFormatted = new Date(start)
       			val userAgent = rh.headers.get("User-Agent").getOrElse("")
-      			filterLogger.info(s"${rh.remoteAddress}\t[${dateFormatted}]\t${rh.method}\t${rh.uri}\t${rh.version}\t${result.header.status}\t${userAgent}\t${rh.contentType}\t-\t${time}")
+      			val contentLength = result.header.headers.get("Content-Length").getOrElse("-")
+      			/*
+      			* Log format is the combined one: http://httpd.apache.org/docs/2.2/logs.html
+      			* Unfortunely we have to do a litlle hack to log the authenticated username due a limitation of the framework: scala cannot access to the current Http Context where the username is stored
+      			*/
+      			val username = result.header.headers.get("BB-USERNAME").getOrElse("-")
+      			result.withHeaders("BB-USERNAME"->"")
+      			filterLogger.info(s"""${rh.remoteAddress}\t-\t${username}\t[${dateFormatted}]\t${"\""}${rh.method} ${rh.uri} ${rh.version}${"\""}\t${result.header.status}\t${contentLength}\t${"\""}${"\""}\t${"\""}${userAgent}${"\""}\t${time}""")
       			result
     		}
     
