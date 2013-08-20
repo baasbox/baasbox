@@ -117,7 +117,7 @@ public class WrapResponse {
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
 		    String stringBody = new String(body, "UTF-8");
-		    Logger.debug ("stringBody: " +stringBody);
+		    Logger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
 			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
