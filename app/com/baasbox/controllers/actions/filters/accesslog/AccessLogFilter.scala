@@ -9,15 +9,15 @@ package com.baasbox.filters {
 	
 
 	class LoggingFilter extends Filter {
-  		val filterLogger = LoggerFactory.getLogger("com.baasbox.filters")
+  		val filterLogger = LoggerFactory.getLogger("com.baasbox.accesslog")
   		def apply(next: (RequestHeader) => Result)(rh: RequestHeader) = {
     		val start = System.currentTimeMillis
 
     		def logTime(result: PlainResult): Result = {
       			val time = System.currentTimeMillis - start
       			val dateFormatted = new Date(start)
-      			val userAgent = rh.headers.get("User-Agent").getOrElse("none")
-      			filterLogger.info(s"${rh.remoteAddress} [${dateFormatted}]\t${rh.method}\t${rh.uri}\t${rh.version}\t${result.header.status}\t${userAgent}\t${rh.contentType}\t-\t${time}")
+      			val userAgent = rh.headers.get("User-Agent").getOrElse("")
+      			filterLogger.info(s"${rh.remoteAddress}\t[${dateFormatted}]\t${rh.method}\t${rh.uri}\t${rh.version}\t${result.header.status}\t${userAgent}\t${rh.contentType}\t-\t${time}")
       			result
     		}
     
