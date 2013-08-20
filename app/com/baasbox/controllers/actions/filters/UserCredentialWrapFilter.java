@@ -26,8 +26,6 @@ import play.mvc.Result;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.google.common.collect.ImmutableMap;
 
 
 public class UserCredentialWrapFilter extends Action.Simple {
@@ -70,8 +68,6 @@ public class UserCredentialWrapFilter extends Action.Simple {
 				//executes the request
 				if (tempResult==null) tempResult = delegate.call(ctx);
 		}
-		
-
 		
 
 		WrapResponse wr = new WrapResponse();
