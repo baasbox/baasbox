@@ -34,7 +34,6 @@ import play.api.mvc.EssentialFilter;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
-import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
@@ -99,14 +98,7 @@ public class Global extends GlobalSettings {
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
-		    		debug("Creating default roles...");
-		    		DbHelper.createDefaultRoles();
-		    		debug("Creating default users...");
-		    		DbHelper.dropOrientDefault();
-	
-					DbHelper.populateDB(db);
-			    	DbHelper.createDefaultUsers();
-			    	DbHelper.populateConfiguration(db);
+		    		DbHelper.setupDb(db);
 			    	info("Initilizing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);

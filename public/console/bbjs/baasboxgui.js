@@ -47,6 +47,45 @@ $('.btn-newcollection').click(function(e){
 	$("#newCollectionName").val("");
 }); // Show Modal for new collection
 
+$('#dropDb').click(function(e){
+	$('#dropDbModal').modal('show');
+	
+});
+
+$('#dropDbCancel').click(function(e){
+	$('#dropDbModal').modal('hide');
+});
+
+$('#dropDbConfirm').click(function(e){
+	$('#dropDbModal .modal-body .ask').addClass('hide');
+	$('#dropDbModal .modal-body .loading').removeClass('hide');
+	dropDb();
+	
+	
+});
+
+function dropDb()
+{
+	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
+	{
+		error: function(data)
+		{
+			alert(JSON.parse(data.responseText)["message"]);
+			$('#dropDbModal').modal('hide');
+		},
+		success: function(data)
+		{
+			$('#dropDbModal .modal-body .ask').removeClass('hide');
+			$('#dropDbModal .modal-body .loading').addClass('hide');
+			callMenu('#dashboard');
+			$('#dropDbModal').modal('hide');
+			
+		}
+		
+	})	
+}
+
+
 $('.btn-changepwd').click(function(e){
 	$('#changePwdModal').modal('show');
 }); // Show Modal for Change Password
