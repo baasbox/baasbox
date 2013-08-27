@@ -77,7 +77,9 @@ function dropDb()
 		{
 			$('#dropDbModal .modal-body .ask').removeClass('hide');
 			$('#dropDbModal .modal-body .loading').addClass('hide');
+			callMenu('#dashboard');
 			$('#dropDbModal').modal('hide');
+			
 		}
 		
 	})	
