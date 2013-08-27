@@ -16,6 +16,8 @@
  */
 package com.baasbox.db;
 
+import static play.Logger.debug;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +42,7 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -63,7 +66,12 @@ public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME="db.sql";
 	private static final String CONFIGURATION_FILE_NAME="configuration.conf";
-	
+
+	private static ThreadLocal<Boolean> shuttingDown = new ThreadLocal<Boolean>() {
+		protected Boolean initialValue() {return Boolean.FALSE;};
+	};
+
+
 	private static final String fetchPlan = "*:?";
 
 	public static boolean isInTransaction(){
@@ -132,9 +140,44 @@ public class DbHelper {
 		return queryResult;
 	}
 
+	public static void shutdownDB(){
+		OGraphDatabase db = null;
+		
+		try{
+			//WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
+			db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+			
+			synchronized(DbHelper.class)  {
+				if(!shuttingDown.get()){
+					shuttingDown.set(true);
+				}
+			
+				db.drop();
+				db.create();
+				HooksManager.registerAll(db);
+				setupDb(db);
+				
+				
+			}
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			synchronized(DbHelper.class)  {
+				
+					shuttingDown.set(false);
+				
+			}
+		}
+
+	}
+
 	public static OGraphDatabase open(String appcode, String username,String password) throws InvalidAppCodeException {
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
+		if(shuttingDown.get()){
+			throw new ShuttingDownDBException();
+		}
 		String databaseName=BBConfiguration.getDBDir();
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
@@ -332,5 +375,14 @@ public class DbHelper {
 		OGraphDatabasePool.global().remove(dbName, dbUser);
 	}
 
+	public static void setupDb(OGraphDatabase db) throws Exception{
+		debug("Creating default roles...");
+		DbHelper.createDefaultRoles();
+		debug("Creating default users...");
+		DbHelper.dropOrientDefault();
+		populateDB(db);
+    	createDefaultUsers();
+    	populateConfiguration(db);
+	}
 
 }
