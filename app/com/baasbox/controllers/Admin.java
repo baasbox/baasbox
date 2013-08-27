@@ -37,6 +37,7 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
+
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
@@ -320,5 +321,19 @@ public class Admin extends Controller {
 			return status(promise.get().getStatus(),promise.get().getBody());
 		}//getLatestVersion
 			  
-
+		
+		public static Result dropDb(Long timeout){
+			try{
+				DbHelper.shutdownDB();
+				if(timeout>0){
+					Logger.info(String.format("Sleeping for %d seconds",timeout/1000));
+					Thread.sleep(timeout);
+				}
+			}catch(Exception e){
+				Logger.debug(e.getMessage());
+				e.printStackTrace();
+			}
+			return ok();
+		}
+		
 }
