@@ -37,7 +37,6 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
-import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
