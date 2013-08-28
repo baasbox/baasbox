@@ -27,7 +27,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
-
+import org.stringtemplate.v4.ST;
 
 import play.Logger;
 import play.Play;
@@ -64,13 +64,16 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import org.stringtemplate.v4.ST;
-
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
 	private static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
+	}
+	
+	private static String prepareResponseToJsonUserInfo(ODocument doc){
+		response().setContentType("application/json");
+		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.JSON);
 	}
 	
 	private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
@@ -114,7 +117,7 @@ public class User extends Controller {
 		  JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 		  String username=(String) bodyJson.findValuesAsText("username").get(0);
 		  String password=(String)  bodyJson.findValuesAsText("password").get(0);
-		  
+		  String appcode = (String)ctx().args.get("appcode");
 		  if (privateAttributes!=null && privateAttributes.has("email")) {
 			  //check if email address is valid
 			  if (!Util.validateEmail((String) privateAttributes.findValuesAsText("email").get(0)))
@@ -122,8 +125,9 @@ public class User extends Controller {
 		  }
 		  
 		  //try to signup new user
+		  ODocument profile = null;
 		  try {
-			  UserService.signUp(username, password, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			  profile = UserService.signUp(username, password, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		  } catch (UserAlreadyExistsException e){
 			  Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");
@@ -133,7 +137,13 @@ public class User extends Controller {
 			  else return internalServerError(e.getMessage());
 		  }
 		  Logger.trace("Method End");
-		  return created();
+		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  
+		  ObjectNode on = Json.newObject();
+		  on.put("user", Json.parse( prepareResponseToJsonUserInfo(profile)).get("user"));
+		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  return created(on);
 	  }
 	  
 
@@ -471,8 +481,10 @@ public class User extends Controller {
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  OGraphDatabase db=null;
+		  ODocument user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
+			 user = UserService.getCurrentUser();
 			 if (loginData!=null){
 				 JsonNode loginInfo=null;
 				 try{
@@ -503,9 +515,13 @@ public class User extends Controller {
 		  }
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-		  ObjectNode result = Json.newObject();
-		  result.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-		  return ok(result);
+		  
+		  ObjectNode on = Json.newObject();
+		  on.put("user", Json.parse( prepareResponseToJsonUserInfo(user)).get("user"));
+		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  
+		  
+		  return ok(on);
 	  }
 	  
 	 
