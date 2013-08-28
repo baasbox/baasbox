@@ -49,6 +49,11 @@ public class JSONFormats {
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
 			if (!r.isVisibleByTheClient())doc.removeField(r.toString());
 		}
+		 for(String s:doc.fieldNames()){
+             if(doc.field(s) instanceof ODocument){
+                     doc.field(s, cutBaasBoxFields((ODocument)doc.field(s)));
+             }
+		 }
 		return doc;
 	}
 	

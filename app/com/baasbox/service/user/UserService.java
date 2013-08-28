@@ -454,5 +454,14 @@ public class UserService {
 		ouser.field("password",newPassword).save();
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
 	}
+	
+	public static ODocument getUserByUserName(String username){
+		try {
+			return UserDao.getInstance().getByUserName(username);
+		} catch (SqlInjectionException e) {
+			return null;
+		}
+		
+	} 
 
 }

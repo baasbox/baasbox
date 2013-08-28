@@ -481,10 +481,12 @@ public class User extends Controller {
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  OGraphDatabase db=null;
-		  ODocument user = null;
+		  JsonNode user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
-			 user = UserService.getCurrentUser();
+			 user = Json.parse( prepareResponseToJsonUserInfo(UserService.getCurrentUser())).get("user");
+			  
+			 
 			 if (loginData!=null){
 				 JsonNode loginInfo=null;
 				 try{
@@ -517,7 +519,9 @@ public class User extends Controller {
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
 		  ObjectNode on = Json.newObject();
-		  on.put("user", Json.parse( prepareResponseToJsonUserInfo(user)).get("user"));
+		  if(user!=null){
+			  on.put("user", user);
+		  }
 		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
 		  
