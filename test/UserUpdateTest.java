@@ -39,7 +39,7 @@ import core.TestConfig;
 
 public class UserUpdateTest extends AbstractUserTest 
 {
-	private static String JSON_MODIFIED_ATTRIBUTE = "visibleByAnonymousUsers\":{\"@fieldTypes\":\"_allowRead=e\",\"_allowRead\":";
+	private static String JSON_MODIFIED_ATTRIBUTE = "visibleByAnonymousUsers\":{}";
 													
 	private Object json;
 	
