@@ -323,17 +323,19 @@ public class Admin extends Controller {
 			  
 		
 		public static Result dropDb(Long timeout){
+			Result r = null;
 			try{
 				DbHelper.shutdownDB();
 				if(timeout>0){
 					Logger.info(String.format("Sleeping for %d seconds",timeout/1000));
 					Thread.sleep(timeout);
 				}
+				r = ok();
 			}catch(Exception e){
 				Logger.debug(e.getMessage());
-				e.printStackTrace();
+				r = internalServerError(e.getMessage());
 			}
-			return ok();
+			return r;
 		}
 		
 }

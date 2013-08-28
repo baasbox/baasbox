@@ -32,9 +32,15 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
+import org.junit.Assert;
 import org.junit.Test;
 
+import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionTokenProvider;
+
+import play.api.test.Helpers;
 import play.libs.F.Callback;
+import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
@@ -113,7 +119,15 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withJsonBody(node, getMethod());
 					Result result = routeAndCall(request);
+					
 					assertRoute(result, "routeCreateUser", Status.CREATED, null, false);
+					String body = play.test.Helpers.contentAsString(result);
+					System.out.println(body);
+					JsonNode jsonRes = Json.parse(body);
+					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).getTextValue();
+					Assert.assertNotNull(token);
+					Assert.assertFalse(SessionTokenProvider.getSessionTokenProvider().getSession(token).isEmpty());
+					
 				}
 			}
 		);		
