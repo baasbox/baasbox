@@ -122,7 +122,6 @@ public class UserCreateTest extends AbstractUserTest
 					
 					assertRoute(result, "routeCreateUser", Status.CREATED, null, false);
 					String body = play.test.Helpers.contentAsString(result);
-					System.out.println(body);
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).getTextValue();
 					Assert.assertNotNull(token);
