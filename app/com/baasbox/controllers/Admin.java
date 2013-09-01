@@ -19,6 +19,7 @@ package com.baasbox.controllers;
 import static play.libs.Json.toJson;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.security.InvalidParameterException;
 import java.util.List;
 
@@ -36,12 +37,14 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
+
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.dao.CollectionAlreadyExistsException;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -115,8 +118,10 @@ public class Admin extends Controller {
 		  Logger.trace("Method Start");
 		  try{
 			  CollectionService.create(name);
+		  }catch (CollectionAlreadyExistsException e) {
+			 return badRequest(e.getMessage()); 
 		  }catch (InvalidCollectionException e) {
-			 return badRequest("The collecyion name " + name + " is invalid");
+			 return badRequest("The collection name " + name + " is invalid");
 		  }catch (InvalidModelException e){
 			  return badRequest(e.getMessage());
 		  }catch (Throwable e){
@@ -309,29 +314,28 @@ public class Admin extends Controller {
 		  return ok(PropertiesConfigurationHelper.dumpConfigurationSectionAsFlatJson(section));
 		}
 		
-		public static Result getLatestVersion() throws  Throwable{
+		public static Result getLatestVersion() {
 			String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
 			Logger.debug("Calling " + urlToCall);
 			final Promise<Response> promise = WS.url(urlToCall).get();
 			return status(promise.get().getStatus(),promise.get().getBody());
-			/*
-			//Delayed due a bug in Play! 
-			//http://play.lighthouseapp.com/projects/82401/tickets/963-ws-promise-map-without-async-produces-timeoutexception
-			 
-			return async(
-				      WS.url(urlToCall).get().map(
-				        new Function<WS.Response, Result>() {
-				          public Result apply(WS.Response response) {
-				        	int sta=response.getStatus();
-				        	String responseBody=response.getBody();
-				        	Logger.debug ("Received response from baasbox site: " + responseBody);
-				        	return ok();
-				          }
-				        }
-				      )
-				    ); //return async
-			*/
 		}//getLatestVersion
 			  
-
+		
+		public static Result dropDb(Long timeout){
+			Result r = null;
+			try{
+				DbHelper.shutdownDB();
+				if(timeout>0){
+					Logger.info(String.format("Sleeping for %d seconds",timeout/1000));
+					Thread.sleep(timeout);
+				}
+				r = ok();
+			}catch(Exception e){
+				Logger.debug(e.getMessage());
+				r = internalServerError(e.getMessage());
+			}
+			return r;
+		}
+		
 }

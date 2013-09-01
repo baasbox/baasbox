@@ -16,6 +16,8 @@
  */
 package com.baasbox.db;
 
+import static play.Logger.debug;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +42,7 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -63,7 +66,12 @@ public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME="db.sql";
 	private static final String CONFIGURATION_FILE_NAME="configuration.conf";
-	
+
+	private static ThreadLocal<Boolean> shuttingDown = new ThreadLocal<Boolean>() {
+		protected Boolean initialValue() {return Boolean.FALSE;};
+	};
+
+
 	private static final String fetchPlan = "*:?";
 
 	public static boolean isInTransaction(){
@@ -75,7 +83,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (!isInTransaction()){
 			Logger.trace("Begin transaction");
-			db.begin();
+			//db.begin();
 		}
 	}
 	
@@ -83,7 +91,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (isInTransaction()){
 			Logger.trace("Commit transaction");
-			db.commit();
+			//db.commit();
 		}
 	}
 	
@@ -91,7 +99,7 @@ public class DbHelper {
 		OGraphDatabase db = getConnection();
 		if (isInTransaction()){
 			Logger.trace("Rollback transaction");
-			db.rollback();
+			//db.rollback();
 		}		
 	}
 	
@@ -132,12 +140,48 @@ public class DbHelper {
 		return queryResult;
 	}
 
+	public static void shutdownDB(){
+		OGraphDatabase db = null;
+		
+		try{
+			//WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
+			db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+			
+			synchronized(DbHelper.class)  {
+				if(!shuttingDown.get()){
+					shuttingDown.set(true);
+				}
+			
+				db.drop();
+				db.create();
+				HooksManager.registerAll(db);
+				setupDb(db);
+				
+				
+			}
+
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			synchronized(DbHelper.class)  {
+				
+					shuttingDown.set(false);
+				
+			}
+		}
+
+	}
+
 	public static OGraphDatabase open(String appcode, String username,String password) throws InvalidAppCodeException {
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
+		if(shuttingDown.get()){
+			throw new ShuttingDownDBException();
+		}
 		String databaseName=BBConfiguration.getDBDir();
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
-		OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
+		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
+		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
@@ -227,10 +271,26 @@ public class DbHelper {
 		String username=BBConfiguration.getBaasBoxUsername();
 		String password=BBConfiguration.getBaasBoxPassword();
 		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
+		
+		//the baasbox default user used to act internally as the administrator
+		username=BBConfiguration.getBaasBoxAdminUsername();
+		password=BBConfiguration.getBaasBoxAdminPassword();
+		UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
+		
+		Logger.trace("Method End");
+	}
+	
+	public static void updateDefaultUsers() throws Exception{
+		Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getConnection();
-		OUser admin=db.getMetadata().getSecurity().getUser("admin");
-		admin.setPassword(BBConfiguration.configuration.getString(BBConfiguration.ADMIN_PASSWORD));
-		admin.save();
+		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
+		user.setPassword(BBConfiguration.getBaasBoxPassword());
+		user.save();
+		
+		user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxAdminUsername());
+		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
+		user.save();
+		
 		Logger.trace("Method End");
 	}
 	
@@ -307,5 +367,22 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
+	public static void removeConnectionFromPool() {
+		OGraphDatabase db = getConnection();
+		String dbName=db.getName();
+		String dbUser=db.getUser().getName();
+		db.close();
+		OGraphDatabasePool.global().remove(dbName, dbUser);
+	}
+
+	public static void setupDb(OGraphDatabase db) throws Exception{
+		debug("Creating default roles...");
+		DbHelper.createDefaultRoles();
+		debug("Creating default users...");
+		DbHelper.dropOrientDefault();
+		populateDB(db);
+    	createDefaultUsers();
+    	populateConfiguration(db);
+	}
 
 }

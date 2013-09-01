@@ -17,6 +17,7 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -103,7 +104,10 @@ public class WrapResponse {
 		Logger.trace("Method Start");
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
-		
+		//this is an hack because scala can't access to the http context, and we need this information for the access log
+		String username=(String) ctx.args.get("username");
+		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
+
 		if (BBConfiguration.getWrapResponse()){
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
@@ -117,7 +121,7 @@ public class WrapResponse {
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
 		    String stringBody = new String(body, "UTF-8");
-		    Logger.debug ("stringBody: " +stringBody);
+		    Logger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
 			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
@@ -134,9 +138,12 @@ public class WrapResponse {
 		    }else{ //status is not an error
 		    	result=onOk(statusCode,ctx.request(),stringBody);
 		    } //if (statusCode>399)
+			//We was expecting that this would be done by the framework, apparently this is false 
+			ctx.response().setHeader("Content-Length",String.valueOf(JavaResultExtractor.getBody(result).length));
 		}else{ //if (BBConfiguration.getWrapResponse())
 			Logger.debug("The response will not be wrapped due configuration parameter");
 		}
+
 	    Logger.debug("  + result: \n" + result.toString());
 		Logger.trace("Method End");
 	    return result;

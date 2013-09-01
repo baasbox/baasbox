@@ -40,9 +40,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
 public class CollectionDao extends NodeDao {
-	private final static String MODEL_NAME="collection";
+	private final static String MODEL_NAME="_BB_Collection";
 	public final static String NAME="name";
-	private static final String COLLECTION_NAME_INDEX = "collection.name";
+	private static final String COLLECTION_NAME_INDEX = "_BB_Collection.name";
 	
 	public static CollectionDao getInstance(){
 		return new CollectionDao();
@@ -67,7 +67,7 @@ public class CollectionDao extends NodeDao {
 	public ODocument create(String collectionName) throws Throwable {
 		Logger.trace("Method Start");
 		try {
-			if (existsCollection(collectionName)) throw new InvalidCollectionException("Collection " + collectionName + " already exists");
+			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}

@@ -95,10 +95,12 @@ PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controlle
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
 
 GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersion()
+DELETE	        /admin/db/:timeout										com.baasbox.controllers.Admin.dropDb(timeout:Long)
 
 
 
 # Home page & general API
+GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
 GET     /                           com.baasbox.controllers.Application.index()
 GET 	/*file						controllers.Assets.at(path="/public/", file)
-OPTIONS /*dummy							com.baasbox.controllers.Generic.getOptions(dummy: String)
+OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)

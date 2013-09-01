@@ -45,8 +45,8 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 public abstract class NodeDao  {
 
 	public final String MODEL_NAME;
-	public static final String CLASS_NODE_NAME = "Node";
-	public static final String CLASS_VERTEX_NAME = "NodeVertex";
+	public static final String CLASS_NODE_NAME = "_BB_Node";
+	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	
 	public static final String FIELD_LINK_TO_VERTEX = "_links";
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";

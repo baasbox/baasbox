@@ -34,6 +34,15 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getBaasBoxPassword(){
 		return configuration.getString(ANONYMOUS_PASSWORD);
 	}
+	
+	public static String getBaasBoxAdminUsername(){
+		return configuration.getString(ADMIN_USERNAME);
+	}
+	
+	public static String getBaasBoxAdminPassword(){
+		return configuration.getString(ADMIN_PASSWORD);
+	}
+	
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
@@ -44,4 +53,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static Boolean getWrapResponse(){
 		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
 	}
+	
+	public static String getAPPCODE() {
+		return configuration.getString(APP_CODE);
+	}
+	
 }

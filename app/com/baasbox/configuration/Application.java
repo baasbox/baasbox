@@ -2,9 +2,21 @@ package com.baasbox.configuration;
 
 import play.Logger;
 
+import com.baasbox.security.ISessionTokenProvider;
+import com.baasbox.security.SessionTokenProvider;
+
 
 public enum Application implements IProperties{
-	APPLICATION_NAME("application.name", "The BaasBox served App name", String.class),
+	APPLICATION_NAME("application.name", "The served App name", String.class),
+	SESSION_TOKENS_TIMEOUT("session_tokens.timeout", "The expiration time of the session tokens (in minutes). WARNING: the admin console refreshs the session token every 5 minutes, if you set a value less then 5, you may experience disconnection from the console. To disable expiration set it to 0", Integer.class,
+			//this callback function is invoked when the value changes. It sets the timeout for the session tokens
+			new IPropertyChangeCallback(){
+				public void change(final Object iCurrentValue, final Object iNewValue){
+					ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+					stp.setTimeout(Integer.parseInt(iNewValue.toString())*60000);
+				}
+			}),
+
 	NETWORK_HTTP_SSL("network.http.ssl", "Set to TRUE if the BaasBox server is reached via SSL through a reverse proxy.", Boolean.class),	
 	NETWORK_HTTP_URL("network.http.url", "The public url of the BaasBox server. I.e. the url used by the App to contact BaasBox, without the protocol prefix (i.e. http://) and PORT", String.class),
 	NETWORK_HTTP_PORT("network.http.port", "The public TCP port used by the App to contact BaasBox. Note: this could be different by the port used by BaasBox, if it is behind a reverse proxy", Integer.class);	
@@ -31,6 +43,7 @@ public enum Application implements IProperties{
 	public void setValue(Object newValue) {
 	    Object parsedValue=null;
 
+	    Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());

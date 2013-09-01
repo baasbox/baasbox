@@ -23,93 +23,133 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import play.Application;
+import play.Configuration;
 import play.GlobalSettings;
 import play.api.mvc.EssentialFilter;
 import play.libs.Json;
-import play.mvc.Action;
-import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
 import com.baasbox.db.DbHelper;
+import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class Global extends GlobalSettings {
 	
-	  @Override
+	  private static Boolean  justCreated = false;
+
+
+	@Override
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
-		  info("Loading plugin...");
+		  info("...Loading plugin...");
+	  }
+	  
+	  @Override
+	  public Configuration onLoadConfig(Configuration config,
+          java.io.File path,
+          java.lang.ClassLoader classloader){  
+		  info("...preparing OrientDB Embedded Server...");
+		  try{
+			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
+			  Orient.instance().startup();
+			  OGraphDatabase db = null;
+			  try{
+				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				if (!db.exists()) {
+					info("DB does not exist, BaasBox will create a new one");
+					db.create();
+					justCreated  = true;
+				}
+			  } catch (Throwable e) {
+					error("!! Error initializing BaasBox!", e);
+					error(ExceptionUtils.getFullStackTrace(e));
+					throw e;
+			  } finally {
+		    	 if (db!=null && !db.isClosed()) db.close();
+			  }
+			  info("DB has been create successfully");
+		    }catch (Throwable e){
+		    	error("!! Error initializing BaasBox!", e);
+		    	error("Abnormal BaasBox termination.");
+		    	System.exit(-1);
+		    }
+		  return config;
 	  }
 	  
 	  @Override
 	  public void onStart(Application app) {
-	    
+	    //Orient.instance().shutdown();
+	    //Orient.instance().startup();
+	    OGraphDatabase db =null;
 	    try{
-		    OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
-		    OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
-		    final OGraphDatabase db = new OGraphDatabase ( "local:" + BBConfiguration.getDBDir() ) ; 
-		    if (!db.exists()) {
-		    	info("DB does not exist, BaasBox will create a new one");
-		    	db.create();
-		    	debug("Creating default roles...");
-		    	DbHelper.createDefaultRoles();
-		    	debug("Creating default users...");
-		    	DbHelper.dropOrientDefault();
+	    	if (justCreated){
 		    	try {
-					DbHelper.populateDB(db);
-			    	DbHelper.createDefaultUsers();
-			    	DbHelper.populateConfiguration(db);
-				} catch (IOException e) {
+		    		//we MUST use admin/admin because the db was just created
+		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+		    		DbHelper.setupDb(db);
+			    	info("Initilizing session manager");
+			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
+		    	}catch (Throwable e){
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
-					System.exit(-1);
-				}
-		    	 if (!db.isClosed()){
-		    		 db.close();
-		    	 }
-		    	info("DB has been create successfully");
-		    }
-	    	info("Initilizing session manager");
-	    	SessionTokenProvider.initialize();
+					throw e;
+		    	} finally {
+		    		if (db!=null && !db.isClosed()) db.close();
+		    	}
+		    	justCreated=false;
+	    	}
 	    }catch (Throwable e){
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
-	    	System.exit(1);
+	    	System.exit(-1);
 	    }
+    	info("Updating default users passwords...");
+    	try {
+    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+			DbHelper.updateDefaultUsers();
+		} catch (Exception e) {
+	    	error("!! Error initializing BaasBox!", e);
+	    	error("Abnormal BaasBox termination.");
+	    	System.exit(-1);
+		} finally {
+    		if (db!=null && !db.isClosed()) db.close();
+    	}
+    	info ("...done");
 	    info("BaasBox is Ready.");
-	  }  
+	   }
+	  
 	  
 	  
 	  @Override
 	  public void onStop(Application app) {
 	    info("BaasBox is shutting down...");
 	    try{
-		    OGraphDatabase db = DbHelper.getConnection() ;
-		    if (!db.isClosed()){
-		    	info("Closing the DB...");
-		    	db.close();
-		    	info("...ok");
-		    }
+	    	info("Closing the DB connections...");
+	    	OGraphDatabasePool.global().close();
+	    	info("Shutting down embedded OrientDB Server");
+	    	Orient.instance().shutdown();
+	    	info("...ok");
 	    }catch (ODatabaseException e){
-	    	//the db is closed, nothing to do
+	    	error("Error closing the DB!",e);
 	    }catch (Throwable e){
 	    	error("!! Error shutting down BaasBox!", e);
 	    }
-	    info("Destroying session manager");
+	    info("Destroying session manager...");
 	    SessionTokenProvider.destroySessionTokenProvider();
-	    info("BaasBox has stopped");
+	    info("...BaasBox has stopped");
 	  }  
 	  
 	  

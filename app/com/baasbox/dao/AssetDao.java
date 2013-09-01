@@ -26,7 +26,7 @@ import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class AssetDao extends NodeDao {
-	protected final static String MODEL_NAME="asset";
+	protected final static String MODEL_NAME="_BB_asset";
 
 	protected AssetDao(String modelName) {
 		super(modelName);

@@ -44,8 +44,8 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
 
-		String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-		String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
+		String adminUser=BBConfiguration.getBaasBoxAdminUsername();
+		String adminPassword = BBConfiguration.getBaasBoxAdminPassword();
 		ctx.args.put("username", adminUser);
 		ctx.args.put("password", adminPassword);
 		ctx.args.put("appcode", appCode);
@@ -53,7 +53,7 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		Logger.debug("admin username (defined in conf file): " + adminUser);
 		Logger.debug("admin password (defined in conf file): " + adminPassword);
 		Logger.debug("appcode (from header): " + appCode);
-		Logger.debug("token: N/A");
+		Logger.debug("token: N/A"); 
 		
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
 	    	Logger.debug("Invalid App Code, AppCode is empty!");

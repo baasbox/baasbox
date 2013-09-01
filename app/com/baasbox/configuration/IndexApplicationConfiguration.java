@@ -5,7 +5,7 @@
 
 public class IndexApplicationConfiguration extends IndexDao{
 
-		private final static String indexName="bb_application";
+		private final static String indexName="_bb_application";
 		
 		public IndexApplicationConfiguration() throws IndexNotFoundException{
 			super (indexName);

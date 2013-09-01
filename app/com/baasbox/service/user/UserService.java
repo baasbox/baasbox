@@ -155,7 +155,7 @@ public class UserService {
 		try{
 			//because we have to create an OUser record and a User Object, we need a transaction
 
-			  db.begin(TXTYPE.OPTIMISTIC);
+			  DbHelper.requestTransaction();
 			  
 			  if (role==null) profile=dao.create(username, password);
 			  else profile=dao.create(username, password,role);
@@ -247,9 +247,9 @@ public class UserService {
 				profile.field(dao.USER_SIGNUP_DATE, new Date());
 				profile.save();
 			  
-			  db.commit();
+			  DbHelper.commitTransaction();
 			}catch( Exception e ){
-			 db.rollback();
+			 DbHelper.rollbackTransaction();
 			  throw e;
 			} 
 		return profile;
@@ -348,6 +348,7 @@ public class UserService {
 	public static void changePasswordCurrentUser(String newPassword) {
 		OGraphDatabase db =  DbHelper.getConnection();
 		db.getUser().setPassword(newPassword).save();
+		DbHelper.removeConnectionFromPool();
 	}
 	
 	public static boolean exists(String username) {
@@ -453,5 +454,7 @@ public class UserService {
 		ouser.field("password",newPassword).save();
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
 	}
+	
+
 
 }

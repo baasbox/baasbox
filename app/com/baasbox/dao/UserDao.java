@@ -37,7 +37,7 @@ import java.util.List;
 
 public class UserDao extends NodeDao  {
 
-	public final static String MODEL_NAME="user";
+	public final static String MODEL_NAME="_BB_User";
 	private final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
 	
@@ -45,7 +45,7 @@ public class UserDao extends NodeDao  {
 	public final static String USER_DEVICE_OS="os";
 	public final static String USER_LOGIN_INFO="login_info";
 	
-	public final static String USER_ATTRIBUTES_CLASS = "UserAttributes";
+	public final static String USER_ATTRIBUTES_CLASS = "_BB_UserAttributes";
 	public final static String ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER="visibleByAnonymousUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_REGISTERED_USER="visibleByRegisteredUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_FRIENDS_USER="visibleByFriend";
