@@ -50,7 +50,6 @@ public class AdminExportTest extends AbstractTest {
 	 * @throws Exception
 	 */
 	@Test
-	
 	public void testPostGetExport() throws Exception
 	{
 		running
@@ -169,6 +168,7 @@ public class AdminExportTest extends AbstractTest {
 		);		
 	}
 	
+
 	
 	private void delete(String fileName){
 		String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;

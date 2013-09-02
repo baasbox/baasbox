@@ -371,8 +371,6 @@ public class Admin extends Controller {
 				unauthorized("appcode can not be null");
 			}
 			
-			
-			
 			java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
 			if(!dir.exists()){
 				boolean createdDir = dir.mkdir();
