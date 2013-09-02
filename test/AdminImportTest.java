@@ -60,7 +60,7 @@ public class AdminImportTest extends AbstractTest {
 					Result result = routeAndCall(request);
 					assertRoute(result, "testImport", Status.ACCEPTED, null, true);
 					try {
-						Thread.sleep(25000);
+						Thread.sleep(15000);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
