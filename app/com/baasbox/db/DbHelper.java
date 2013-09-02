@@ -18,11 +18,11 @@ package com.baasbox.db;
 
 import static play.Logger.debug;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -37,8 +37,6 @@ import org.apache.commons.io.IOUtils;
 import play.Logger;
 import play.Play;
 import play.mvc.Http;
-
-import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
@@ -62,6 +60,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -416,7 +415,9 @@ public class DbHelper {
 					dbFreeze.set(true);
 				}
 			}
+			oe.setUseLineFeedForRecords(true);
 			oe.exportDatabase();
+			oe.close();
 		}catch(Exception ioe){
 			throw new UnableToExportDbException(ioe);
 		}finally{
@@ -433,6 +434,7 @@ public class DbHelper {
 		try{
 			DbHelper.shutdownDB(false);
 			db = open(appcode, "admin", "admin");
+			
 			f = java.io.File.createTempFile("import", ".json");
 			FileUtils.writeStringToFile(f, importData);
 			synchronized(DbHelper.class)  {
@@ -448,7 +450,12 @@ public class DbHelper {
 				}
 			});
 			
-			oi.importDatabase();
+			//This is very important!!!
+			for (ORecordHook hook : new ArrayList<ORecordHook>(db.getHooks())) {
+				db.unregisterHook(hook);
+			 }
+			 oi.importDatabase();
+			 oi.close();
 		}catch(Exception ioe){
 			Logger.error(ioe.getMessage());
 			throw new UnableToImportDbException(ioe);

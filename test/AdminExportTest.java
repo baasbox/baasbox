@@ -100,7 +100,7 @@ public class AdminExportTest extends AbstractTest {
 						}
 						
 					}
-					delete(fileName);
+					//delete(fileName);
 					
 				}
 			}
@@ -159,7 +159,7 @@ public class AdminExportTest extends AbstractTest {
 						
 					}
 					
-					delete(fileName);
+					//delete(fileName);
 					
 					
 				}

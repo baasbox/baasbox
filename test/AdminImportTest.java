@@ -1,26 +1,16 @@
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.DELETE;
 import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
-import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
-
-import com.baasbox.db.DbHelper;
-
-import ch.qos.logback.classic.db.DBHelper;
 
 import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
-import play.test.Helpers;
 import core.AbstractTest;
 import core.TestConfig;
 
