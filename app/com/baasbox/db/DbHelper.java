@@ -416,6 +416,7 @@ public class DbHelper {
 				}
 			}
 			oe.setUseLineFeedForRecords(true);
+			oe.setIncludeManualIndexes(true);
 			oe.exportDatabase();
 			oe.close();
 		}catch(Exception ioe){
@@ -454,8 +455,11 @@ public class DbHelper {
 			for (ORecordHook hook : new ArrayList<ORecordHook>(db.getHooks())) {
 				db.unregisterHook(hook);
 			 }
+			 oi.setIncludeManualIndexes(true);
+			 oi.setUseLineFeedForRecords(true);
 			 oi.importDatabase();
 			 oi.close();
+			 HooksManager.registerAll(db);
 		}catch(Exception ioe){
 			Logger.error(ioe.getMessage());
 			throw new UnableToImportDbException(ioe);

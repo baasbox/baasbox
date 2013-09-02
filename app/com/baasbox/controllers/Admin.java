@@ -384,7 +384,7 @@ public class Admin extends Controller {
 			String fileName = String.format("%s-%s.zip", sdf.format(new Date()),appcode);
 			//Async task
 			Akka.system().scheduler().scheduleOnce(
-					  Duration.create(5, TimeUnit.SECONDS),
+					  Duration.create(2, TimeUnit.SECONDS),
 					  new ExportJob(dir.getAbsolutePath()+sep+fileName,appcode),
 					  Akka.system().dispatcher()
 					); 
@@ -455,6 +455,14 @@ public class Admin extends Controller {
 			
 		}
 		
+		/**
+		 * /admin/db/import (POST)
+		 * 
+		 * the method allows to upload a json export file and apply it to the db.
+		 * WARNING: all data on the db will be wiped out befor importing
+		 * 
+		 * @return a 202 ACCEPTED code 
+		 */
 		public static Result importDb(){
 			String appcode = (String)ctx().args.get("appcode");
 			JsonNode fileContent = request().body().asJson();
@@ -465,7 +473,7 @@ public class Admin extends Controller {
 			
 			
 				Akka.system().scheduler().scheduleOnce(
-						  Duration.create(5, TimeUnit.SECONDS),
+						  Duration.create(2, TimeUnit.SECONDS),
 						  new ImportJob(appcode,Json.stringify(fileContent)),
 						  Akka.system().dispatcher()
 						); 

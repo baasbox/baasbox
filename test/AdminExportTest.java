@@ -10,6 +10,7 @@ import static play.test.Helpers.running;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import play.libs.Json;
@@ -49,6 +50,7 @@ public class AdminExportTest extends AbstractTest {
 	 * @throws Exception
 	 */
 	@Test
+	
 	public void testPostGetExport() throws Exception
 	{
 		running
@@ -100,7 +102,7 @@ public class AdminExportTest extends AbstractTest {
 						}
 						
 					}
-					//delete(fileName);
+					delete(fileName);
 					
 				}
 			}
@@ -159,7 +161,7 @@ public class AdminExportTest extends AbstractTest {
 						
 					}
 					
-					//delete(fileName);
+					delete(fileName);
 					
 					
 				}
