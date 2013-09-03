@@ -52,6 +52,21 @@ $('#dropDb').click(function(e){
 	
 });
 
+$('#exportDb').click(function(e){
+	BBRoutes.com.baasbox.controllers.Admin.exportDb().ajax(
+			{
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+					
+				},
+				success: function(data)
+				{
+					alert("your db export has been scheduled");
+				}
+				
+			});	
+})
 $('#dropDbCancel').click(function(e){
 	$('#dropDbModal').modal('hide');
 });

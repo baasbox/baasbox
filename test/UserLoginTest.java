@@ -72,8 +72,6 @@ public class UserLoginTest extends AbstractTest
 					assertRoute(result, "testRouteLoginUser", Status.OK, null, true);
 					String body = play.test.Helpers.contentAsString(result);
 					
-					System.out.println(body);
-					
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).getTextValue();
 					Assert.assertNotNull(token);

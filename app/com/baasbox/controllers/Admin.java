@@ -19,16 +19,24 @@ package com.baasbox.controllers;
 import static play.libs.Json.toJson;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.security.InvalidParameterException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
 import play.Play;
+import play.libs.Akka;
 import play.libs.F.Promise;
+import play.libs.Json;
 import play.libs.WS;
 import play.libs.WS.Response;
 import play.mvc.Controller;
@@ -36,8 +44,10 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
+import scala.concurrent.duration.Duration;
+import scala.util.parsing.json.JSON;
 
-
+import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
@@ -49,6 +59,8 @@ import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.db.async.ExportJob;
+import com.baasbox.db.async.ImportJob;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.CollectionService;
@@ -66,8 +78,10 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
-
-
+		
+	  static String backupDir = BBConfiguration.getDBBackupDir();
+	  static String sep = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
+	  
 	  public static Result getUsers(){
 		  Logger.trace("Method Start");
 		  Context ctx=Http.Context.current.get();
@@ -325,7 +339,7 @@ public class Admin extends Controller {
 		public static Result dropDb(Long timeout){
 			Result r = null;
 			try{
-				DbHelper.shutdownDB();
+				DbHelper.shutdownDB(true);
 				if(timeout>0){
 					Logger.info(String.format("Sleeping for %d seconds",timeout/1000));
 					Thread.sleep(timeout);
@@ -338,4 +352,130 @@ public class Admin extends Controller {
 			return r;
 		}
 		
+		
+		/**
+		 * /admin/db/export (POST)
+		 * 
+		 * the method generate a full dump of the db in an asyncronus task.
+		 * the response returns a 202 code (ACCEPTED) and the filename of the
+		 * file that will be generated.
+		 * 
+		 * The async nature of the method DOES NOT ensure the creation of the file
+		 * so, querying for the file name with the /admin/db/:filename could return a 404
+		 * @return a 202 accepted code and a json representation containing the filename of the generated file
+		 */
+		public static Result exportDb(){
+			String appcode = (String)ctx().args.get("appcode");
+			
+			if(appcode == null || StringUtils.isEmpty(appcode.trim())){
+				unauthorized("appcode can not be null");
+			}
+			
+			java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+			if(!dir.exists()){
+				boolean createdDir = dir.mkdir();
+				if(!createdDir){
+					return internalServerError("unable to create backup dir");
+				}
+			}
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+			String fileName = String.format("%s-%s.zip", sdf.format(new Date()),appcode);
+			//Async task
+			Akka.system().scheduler().scheduleOnce(
+					  Duration.create(2, TimeUnit.SECONDS),
+					  new ExportJob(dir.getAbsolutePath()+sep+fileName,appcode),
+					  Akka.system().dispatcher()
+					); 
+			return status(202,Json.toJson(fileName));
+			
+		}
+		
+		/**
+		 * /admin/db/export/:filename (GET)
+		 * 
+		 * the method returns the stream of the export file named after :filename parameter. 
+		 * 
+		 * if the file is not present a 404 code is returned to the client
+		 * 
+		 * @return a 200 ok code and the stream of the file
+		 */
+		public static Result getExport(String fileName){
+			java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+			if(!file.exists()){
+				return notFound();
+			}else{
+				return ok(file);
+			}
+			
+		}
+		
+		/**
+		 * /admin/db/export/:filename (DELETE)
+		 * 
+		 * Deletes an export file from the db backup folder, if it exists 
+		 * 
+		 * 
+		 * @param fileName the name of the file to be deleted
+		 * @return a 200 code if the file is deleted correctly or a 404.If the file could not
+		 * be deleted a 500 error code is returned
+		 */
+		public static Result deleteExport(String fileName){
+			java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+			if(!file.exists()){
+				return notFound();
+			}else{
+				boolean deleted = file.delete();
+				if(deleted){
+					return ok();
+				}else{
+					return internalServerError("Unable to delete export:"+fileName);
+				}
+			}
+			
+		}
+		
+		/**
+		 * /admin/db/export (GET)
+		 * 
+		 * the method returns the list as a json array of all the export files
+		 * stored into the db export folder ({@link BBConfiguration#getDBBackupDir()})
+		 * 
+		 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
+		 */
+		public static Result getExports(){
+			java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+			Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
+			List<String> fileNames = new ArrayList<String>();
+			for (java.io.File file : files) {
+				fileNames.add(file.getName());
+			}
+			return ok(Json.toJson(fileNames));
+			
+		}
+		
+		/**
+		 * /admin/db/import (POST)
+		 * 
+		 * the method allows to upload a json export file and apply it to the db.
+		 * WARNING: all data on the db will be wiped out befor importing
+		 * 
+		 * @return a 202 ACCEPTED code 
+		 */
+		public static Result importDb(){
+			String appcode = (String)ctx().args.get("appcode");
+			JsonNode fileContent = request().body().asJson();
+			
+			if(appcode == null || StringUtils.isEmpty(appcode.trim())){
+				unauthorized("appcode can not be null");
+			}
+			
+			
+				Akka.system().scheduler().scheduleOnce(
+						  Duration.create(2, TimeUnit.SECONDS),
+						  new ImportJob(appcode,Json.stringify(fileContent)),
+						  Akka.system().dispatcher()
+						); 
+				return status(202);
+			}
+			
 }
