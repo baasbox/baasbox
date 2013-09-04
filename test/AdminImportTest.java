@@ -1,19 +1,19 @@
-import static org.junit.Assert.assertTrue;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
+import static play.test.Helpers.testServer;
 
-import org.codehaus.jackson.JsonNode;
-import org.junit.*;
-import play.libs.Json;
-import play.mvc.Http.Status;
-import play.mvc.Result;
-import play.test.FakeRequest;
-import core.AbstractTest;
+import java.util.HashMap;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+import play.libs.F.Callback;
+import play.test.TestBrowser;
+import core.AbstractRouteHeaderTest;
 import core.TestConfig;
 
-public class AdminImportTest extends AbstractTest {
+public class AdminImportTest extends AbstractRouteHeaderTest {
 
 	@Override
 	public String getRouteAddress() {
@@ -42,33 +42,28 @@ public class AdminImportTest extends AbstractTest {
 	{
 		running
 		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
 				{
-					
-					String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
-					
-					FakeRequest request = new FakeRequest("POST", getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-					JsonNode importJson = getPayload("adminImportJson.json");
-					String body = Json.stringify(importJson); 
-					assertTrue(body!=null && body.length()>0);
-					request.withJsonBody(importJson);
-					Result result = routeAndCall(request);
-					assertRoute(result, "testImport", Status.ACCEPTED, null, true);
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setMultipartFormData();
+					setAssetFile("/adminImportJson.zip", "application/zip");
+					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
+					assertTrue(status==202);
 					try {
-						Thread.sleep(15000);
+						Thread.sleep(6000);
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					
 				}
-			}
-			
-		);		
+	        }
+		);
 	}
 	
 	
