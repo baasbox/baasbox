@@ -24,6 +24,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import play.Logger;
+import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.Context;
@@ -33,6 +34,7 @@ import play.mvc.Result;
 import play.mvc.Results;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.controllers.CustomHttpCode;
 
 
 public class WrapResponse {
@@ -42,7 +44,6 @@ public class WrapResponse {
 		org.codehaus.jackson.map.ObjectMapper mapper = new org.codehaus.jackson.map.ObjectMapper();
 		ObjectNode result = Json.newObject();
 		result.put("result", "error");
-		result.put("bb_code", "");
 		result.put("message", error);
 		result.put("resource", request.path());
 		result.put("method", request.method());
@@ -50,6 +51,21 @@ public class WrapResponse {
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 		return result;
 	} 
+
+	
+	private Result onCustomCode(int statusCode, RequestHeader request, String data) throws IOException {
+		CustomHttpCode customCode = CustomHttpCode.getFromBbCode(statusCode);
+		ObjectNode result=null;
+		if (customCode.getType().equals("error")){
+			result = prepareError(request, data);
+		}else{
+			result= prepareOK(statusCode, request, data);
+		}
+		result.put("http_code", customCode.gethttpCode());
+		result.put("bb_code", String.valueOf(customCode.getBbCode()));
+		return Results.status(customCode.gethttpCode(), result);	
+	}
+	
 	
 	private Result onUnauthorized(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
@@ -84,11 +100,10 @@ public class WrapResponse {
 		  return  Results.status(statusCode,result);
 	}
 
-	private Result onOk(int statusCode,Request request, String stringBody) throws IOException {
+    private ObjectNode prepareOK(int statusCode,RequestHeader request, String stringBody) throws IOException{
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode result = Json.newObject();
 		result.put("result", "ok");
-		result.put("http_code", statusCode);
 		try {
 			result.put("data", mapper.readTree(stringBody));
 		} catch (JsonProcessingException e) {
@@ -96,7 +111,13 @@ public class WrapResponse {
 		} catch (IOException e) {
 			if (stringBody.isEmpty()) result.put("data", "");
 			else throw new IOException("Error parsing stringBody: " + stringBody,e);
-		}
+		}    
+		return result;
+    }
+    
+	private Result onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
+		ObjectNode result = prepareOK(statusCode, request, stringBody);
+		result.put("http_code", statusCode);
 		return Results.status(statusCode,result); 
 	}
 
@@ -107,15 +128,20 @@ public class WrapResponse {
 		//this is an hack because scala can't access to the http context, and we need this information for the access log
 		String username=(String) ctx.args.get("username");
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
-
+		
 		if (BBConfiguration.getWrapResponse()){
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
 			Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
-		    if (ctx.response().getHeaders().get("Content-Type")!=null 
+			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+			if (ctx.response().getHeaders().get("Content-Type")!=null 
 		    		&& 
 		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
 		    	Logger.debug("The response is a file, no wrap will be applied");
+		    	return result;
+		    }
+		    
+		    if(result.getWrappedResult() instanceof ChunkedResult<?>){
 		    	return result;
 		    }
 		    	
@@ -132,8 +158,11 @@ public class WrapResponse {
 			      				break;
 			      	case 404: 	result =onResourceNotFound(ctx.request(),stringBody);
 			      				break;
-			      	default:  	result =onDefaultError(statusCode,ctx.request(),stringBody);
-			      				break;
+			      	default:  	
+			      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
+			      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
+			      		}else result =onDefaultError(statusCode,ctx.request(),stringBody);
+			      	break;
 			      }
 		    }else{ //status is not an error
 		    	result=onOk(statusCode,ctx.request(),stringBody);
@@ -148,6 +177,8 @@ public class WrapResponse {
 		Logger.trace("Method End");
 	    return result;
 	}//wrap
+
+
 
 
 

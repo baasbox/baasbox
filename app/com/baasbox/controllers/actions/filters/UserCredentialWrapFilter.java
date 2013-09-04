@@ -25,6 +25,7 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.security.SessionKeys;
 
 
@@ -56,9 +57,10 @@ public class UserCredentialWrapFilter extends Action.Simple {
 			else isCredentialOk=(new BasicAuthAccess()).setCredential(ctx);
 			
 			if (!isCredentialOk){
-				tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
+				//tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
+				tempResult= CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
 			} else	
-				//internal administrator is not allowed to access vi REST
+				//internal administrator is not allowed to access via REST
 				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 						||
 						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))

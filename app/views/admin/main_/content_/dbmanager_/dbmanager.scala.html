@@ -1,0 +1,53 @@
+<div ng-controller="DBManagerController" id="dbmanager">
+	<div ng-show="exports==null || exports.isEmpty()">
+		<p>There are no exports yet</p>
+	</div>
+	<div ng-show="export!=null || !exports.isEmpty()">
+		<div class="box span12">
+					<div class="box-header well" >
+						<h2><i class="icon-book"></i> Exports</h2>
+						<div class="box-icon">
+							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+					</div>
+					</div>
+					<div class="box-content">
+						<table id="exportTable" class="table table-striped table-bordered bootstrap-datatable datatable">
+						  <thead>
+							  <tr>
+								  <th>Name</th>
+								  <th>Export Date</th>
+								  <th>&nbsp;</th>
+							  </tr>
+						  </thead>   
+						</table>
+					</div><!-- box-content -->
+				</div> <!--  box span12 -->
+	</div>
+	<div class="action pull-right">
+		<button id="dropDb" class="btn btn-danger">Drop db</button>
+		<a href="#" id="exportDb" class="btn btn-warning">Export db</a>      
+			<div id="dropDbModal" class="modal hide fade">
+				<div class="modal-header">
+					<h2>Confirm drop db</h2>
+				</div>
+				<div class="modal-body">
+					<div class="ask">
+						<p>Are you sure you want to drop the entire app db?</p>
+						<button id="dropDbConfirm" class="btn btn-danger">Yes, Drop the db</button>
+						<button id="dropDbCancel" class="btn">No,take me out of here</button>
+					</div>
+					<div class="loading hide">
+						<p>Waiting while deleting db...</p>
+					</div>
+				</div>
+			</div>
+			<div id="downloadExportModal" class="modal hide fade">
+				<div class="modal-header">
+					<h2>Your download is ready</h2>
+				</div>
+				<div class="modal-body">
+					
+				</div>
+			</div>                                
+	</div>	
+</div>
