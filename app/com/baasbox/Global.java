@@ -30,6 +30,7 @@ import org.codehaus.jackson.node.ObjectNode;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
+import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
@@ -43,6 +44,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.typesafe.config.Config;
 
 public class Global extends GlobalSettings {
 	
@@ -129,6 +131,14 @@ public class Global extends GlobalSettings {
     	}
     	info ("...done");
 	    info("BaasBox is Ready.");
+	    String port=Play.application().configuration().getString("http.port");
+	    if (port==null) port="9000";
+	    String address=Play.application().configuration().getString("http.address");
+	    if (address==null) address="localhost";
+	    info("");
+	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
+	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
+	    info("Documentation is available at http://www.baasbox.com/documentation/v." + BBConfiguration.getApiVersion() + "/introduction");
 	   }
 	  
 	  
