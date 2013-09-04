@@ -25,6 +25,7 @@ import play.mvc.Result;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.ShuttingDownDBException;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
@@ -55,6 +56,10 @@ public class ConnectToDBFilter extends Action.Simple {
 	        }catch (OSecurityAccessException e){
 	        	Logger.debug(e.getMessage());
 	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
+	        }catch(ShuttingDownDBException sde){
+	        	String message = sde.getMessage();
+	        	Logger.info(message);
+	        	return status(503,message);
 	        }
 			
 			result = delegate.call(ctx);

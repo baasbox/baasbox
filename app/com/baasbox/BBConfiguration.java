@@ -58,4 +58,8 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(APP_CODE);
 	}
 	
+	public static String getDBBackupDir() {
+		return configuration.getString(DB_BACKUP_PATH);
+	}
+	
 }

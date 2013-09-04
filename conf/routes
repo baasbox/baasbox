@@ -95,6 +95,13 @@ PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controlle
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
 
 GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersion()
+DELETE	/admin/db/:timeout										com.baasbox.controllers.Admin.dropDb(timeout:Long)
+POST	/admin/db/export										com.baasbox.controllers.Admin.exportDb()
+GET	    /admin/db/export/:filename							    com.baasbox.controllers.Admin.getExport(filename:String)
+DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.deleteExport(filename:String)
+GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
+
+POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
 
 
 

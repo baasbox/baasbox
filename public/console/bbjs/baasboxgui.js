@@ -47,6 +47,134 @@ $('.btn-newcollection').click(function(e){
 	$("#newCollectionName").val("");
 }); // Show Modal for new collection
 
+$('#dropDb').click(function(e){
+	$('#dropDbModal').modal('show');
+	
+});
+
+$('#exportDb').click(function(e){
+	BBRoutes.com.baasbox.controllers.Admin.exportDb().ajax(
+			{
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+					
+				},
+				success: function(data)
+				{
+					alert("your db export has been scheduled");
+				}
+				
+			});	
+})
+$('#dropDbCancel').click(function(e){
+	$('#dropDbModal').modal('hide');
+});
+
+$('#dropDbConfirm').click(function(e){
+	$('#dropDbModal .modal-body .ask').addClass('hide');
+	$('#dropDbModal .modal-body .loading').removeClass('hide');
+	dropDb();
+	
+	
+});
+
+function dropDb()
+{
+	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
+	{
+		error: function(data)
+		{
+			alert(JSON.parse(data.responseText)["message"]);
+			$('#dropDbModal').modal('hide');
+		},
+		success: function(data)
+		{
+			$('#dropDbModal .modal-body .ask').removeClass('hide');
+			$('#dropDbModal .modal-body .loading').addClass('hide');
+			callMenu('#dashboard');
+			$('#dropDbModal').modal('hide');
+			
+		}
+		
+	})	
+}
+
+
+$('a.deleteExport').live('click',function(e){
+	
+	var name = $(e.target).parents('tr').children()[0].innerHTML
+	if(confirm("Are you sure you want to delete this export?")){
+		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
+			error:function(data){
+				alert(JSON.parse(data.responseText)["message"]);
+			},
+		    success: function(data){
+		    	callMenu('#dbmanager');
+		    }
+		});
+	}
+});
+
+$('a.downloadExport').live('click',function(e){
+	var name = $(e.target).parents('tr').children()[0].innerHTML
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(), true);
+	xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
+	// Hack to pass bytes through unprocessed.
+	xhr.overrideMimeType('text/plain; charset=x-user-defined');
+	xhr.responseType = 'blob'
+	xhr.onload = function(e) {
+	  if (this.status == 200) {
+	    var binStr = this.response;
+	      var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+		  var builder;
+		  var blob;
+		  if(!BlobBuilder){
+			  console.log("BlobBuilder is not available...Using plain BLOB")
+			  blob = new Blob([binStr],{ "type" : "application\/zip" });
+		  }else{
+			  builder = new BlobBuilder();
+			  builder.append(binStr);
+			  blob = builder.getBlob();
+		  }
+		  var urlGen = window.webkitURL || window.mozURL || window.URL
+		  var url = urlGen.createObjectURL(blob);
+		  $($("#downloadExportModal .modal-body")[0])
+		  						.append($("<a id=\""+name+"\"/>")
+		  						.attr({href: url})
+		  						.attr("download",name)
+		  						.append("Download:" + name))
+		  						.on('click',function(e){
+		  							$(e.target).remove();
+		  							$('#downloadExportModal').modal('hide');
+		  							});
+		  
+		  $('#downloadExportModal').modal('show');
+	    }
+	  
+	};
+
+	xhr.send();
+	
+	
+});
+
+function downloadExportHref(name){
+	var reg = /(http:\/\/)(.*)/;
+	var uri = BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(false);
+	var match = uri.match(reg);
+	if(match){
+		return match[1] + $("#login").scope().username+":"+$("#login").scope().password+"@"+match[2] + "?X-BB-SESSION="+ sessionStorage.sessionToken +"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode);
+	}else{
+		return '#';
+	}
+	
+	
+}
+
+
+
 $('.btn-changepwd').click(function(e){
 	$('#changePwdModal').modal('show');
 }); // Show Modal for Change Password
@@ -841,7 +969,17 @@ function setupTables(){
   		"bDestroy":false
         } ).makeEditable();
 
-    
+    $('#exportTable').dataTable( {
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>t<'row-fluid'<'span12'><'span12 center'p>>",
+    	"aaSorting": [[ 2, "desc" ]],
+    	"aoColumns": [ {"mData": "name"},
+    	               {"mData": "date"},
+    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"actions btn-group\"><a class=\"btn btn-danger deleteExport\">delete export</a><a class=\"btn downloadExport\" href=\"#\">Download Export</a>"}}
+    	             ],
+    	"bRetrieve": true,
+  		"bDestroy":true
+        
+    });
     $('#collectionTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -850,6 +988,7 @@ function setupTables(){
         "bRetrieve": true,
   		"bDestroy":true
         } ).makeEditable();
+    
     $('#documentTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -1120,7 +1259,16 @@ function callMenu(action){
 			}
 		});
 	  break;	//#settings
-	  
+	
+	case "#dbmanager":
+		BBRoutes.com.baasbox.controllers.Admin.getExports().ajax({
+			success: function(data){
+				applySuccessMenu(action,data["data"]);
+				
+			}
+		});
+		break;
+	
 	case "#collections":
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 		data: {orderBy: "name asc"},
@@ -1211,6 +1359,31 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
+}
+
+function DBManagerController($scope){
+	$scope.exports = $scope.data
+	
+	
+	$scope.$watch('data',function(){
+			var res = [];
+			var regexp = /([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2})/;
+			
+			angular.forEach($scope.data,function(exp){
+				var newExp = {};
+				newExp.name = exp;
+				var dtMatcher = exp.match(regexp)
+				if(dtMatcher){
+					newExp.date=dtMatcher[3]+"-"+dtMatcher[2]+"-"+dtMatcher[1]+" "+dtMatcher[4]+":"+dtMatcher[5]+":"+dtMatcher[6]
+					res.push(newExp)
+				}
+			});
+			 $('#exportTable').dataTable().fnClearTable();
+			 $('#exportTable').dataTable().fnAddData(res);
+			 $scope.exports = res;
+			 return $scope.exports;
+		
+		});
 }
 
 function DashboardController($scope) {

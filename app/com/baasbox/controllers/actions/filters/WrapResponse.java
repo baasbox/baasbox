@@ -24,6 +24,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
 import play.Logger;
+import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.Context;
@@ -127,15 +128,20 @@ public class WrapResponse {
 		//this is an hack because scala can't access to the http context, and we need this information for the access log
 		String username=(String) ctx.args.get("username");
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
-
+		
 		if (BBConfiguration.getWrapResponse()){
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
 			Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
-		    if (ctx.response().getHeaders().get("Content-Type")!=null 
+			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+			if (ctx.response().getHeaders().get("Content-Type")!=null 
 		    		&& 
 		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
 		    	Logger.debug("The response is a file, no wrap will be applied");
+		    	return result;
+		    }
+		    
+		    if(result.getWrappedResult() instanceof ChunkedResult<?>){
 		    	return result;
 		    }
 		    	
