@@ -95,7 +95,7 @@ public class User extends Controller {
 	  }
 
 
-	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class,})
+	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp(){
 		  Logger.trace("Method Start");
