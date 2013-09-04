@@ -17,6 +17,32 @@
 			h2{
 				color:#255b99;
 			}
+			.links{
+				padding-top:12px;
+				position:relative;
+			}
+			.links a,.links a:visited,.links a:link{
+				margin:14px 43px 0 0;
+				border:2px solid #eaeaea;
+				padding:18px;
+				font-family:'helvetica';
+				color:#333;
+			}
+			
+			.links a:hover{
+				color:#eaeaea;
+				background-color:#245b98;
+				-webkit-transition: color 0.2s linear;
+   				-moz-transition: color 0.2s linear;
+    			-o-transition: color 0.2s linear;
+    			-ms-transition: color 0.2s linear;    
+    			transition: color 0.2s linear;
+    			-webkit-transition: background-color:0.2s linear;
+    			-moz-transition: background-color:0.2s linear;
+    			-o-transition: background-color:0.2s linear;
+    			-ms-transition: background-color:0.2s linear;
+    			transition: background-color:0.2s linear;
+			}
 		</style>
 		<link rel="shortcut icon" href="/console/favicon.ico" />
 	</head>
@@ -27,9 +53,14 @@
 					<img src="/console/img/logo_baasbox_lp.png" />
 				</p>
 				<p>
-					<h2>V. @version</h2>
+					<h2>V. @version.toLowerCase().replaceAll("-snapshot","")</h2>
 				</p>			
 			
+				
+		</div>
+		<div class="links">
+			<a href="http://www.baasbox.com/documentation/v.@(version.toLowerCase().replaceAll("-snapshot",""))/introduction">Documentation for Version @version.toLowerCase().replaceAll("-snapshot","")</a>
+			<a href="/console">Administration console</a>
 		</div>
 	</body>
 </html>
