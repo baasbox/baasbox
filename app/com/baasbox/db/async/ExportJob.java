@@ -27,7 +27,7 @@ public class ExportJob implements Runnable{
 		FileOutputStream dest = null;
 		ZipOutputStream zip = null;
 		try{
-			File f = new File(this.fileName+".tmp");
+			File f = new File(this.fileName);
 			dest = new FileOutputStream(f);
 			zip = new ZipOutputStream(dest);
 			
@@ -43,7 +43,7 @@ public class ExportJob implements Runnable{
     		zip.write(FileUtils.readFileToByteArray(tmpJson));
     		zip.closeEntry();
     		tmpJson.delete();
-    		f.renameTo(new File(this.fileName));
+    		content.close();
     		
     		
     		
