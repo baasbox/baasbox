@@ -428,11 +428,21 @@ public class Admin extends Controller {
 		if(!file.exists()){
 			return notFound();
 		}else{
-			boolean deleted = file.delete();
+			boolean deleted = false;
+			try{
+				FileUtils.forceDelete(file);
+				deleted =true;
+			}catch(IOException e){
+				deleted = file.delete();
+				if(deleted==false){
+					file.deleteOnExit();
+					
+				}
+			}
 			if(deleted){
 				return ok();
 			}else{
-				return internalServerError("Unable to delete export:"+fileName);
+				return internalServerError("Unable to delete export.It will be deleted on the next reboot."+fileName);
 			}
 		}
 
