@@ -71,6 +71,7 @@ public enum Application implements IProperties{
 		IndexApplicationConfiguration idx;
 		try {
 			idx = new IndexApplicationConfiguration();
+			Logger.debug("getting "+key+" from index");
 			return idx.get(key);
 		} catch (Exception e) {
 			Logger.error("Could not retrieve key " + key, e);

@@ -145,8 +145,10 @@ $('a.downloadExport').live('click',function(e){
 		  						.attr({href: url})
 		  						.attr("download",name)
 		  						.append("Download:" + name))
-		  						.on('click',function(){$('#downloadExportModal')
-		  							.modal('hide');});
+		  						.on('click',function(e){
+		  							$(e.target).remove();
+		  							$('#downloadExportModal').modal('hide');
+		  							});
 		  
 		  $('#downloadExportModal').modal('show');
 	    }
@@ -969,6 +971,7 @@ function setupTables(){
 
     $('#exportTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>t<'row-fluid'<'span12'><'span12 center'p>>",
+    	"aaSorting": [[ 2, "desc" ]],
     	"aoColumns": [ {"mData": "name"},
     	               {"mData": "date"},
     	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"actions btn-group\"><a class=\"btn btn-danger deleteExport\">delete export</a><a class=\"btn downloadExport\" href=\"#\">Download Export</a>"}}
