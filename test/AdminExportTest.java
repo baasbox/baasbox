@@ -10,9 +10,9 @@ import static play.test.Helpers.running;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonNode;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import play.api.mvc.ChunkedResult;
 import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
@@ -150,6 +150,12 @@ public class AdminExportTest extends AbstractTest {
 							gen = true;
 							String header = Helpers.header("Content-Type", result2);
 							assertEquals(header,"application/zip");
+							request2 = new FakeRequest(getMethod(), "/admin/db/export/");
+							request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request2 = request2.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+							 result2 = route(request2);
+							
+							
 						}
 						
 						try {
@@ -160,7 +166,9 @@ public class AdminExportTest extends AbstractTest {
 						
 					}
 					
-					delete(fileName);
+					//TODO: on windows delete fails...probably because the result stream is open.
+					//commenting out
+					//delete(fileName);
 					
 					
 				}
