@@ -10,6 +10,8 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import play.Logger;
 
+import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
 import com.baasbox.db.DbHelper;
 
 public class ExportJob implements Runnable{
@@ -37,15 +39,26 @@ public class ExportJob implements Runnable{
 			byte[] contentArr = content.toByteArray();
 			Logger.info(String.format("Writing %d bytes ",contentArr.length));
 			File tmpJson = File.createTempFile("export", ".json");
+			File manifest = File.createTempFile("manifest", ".txt");
+			
+			
+			
 			FileUtils.writeByteArrayToFile(tmpJson, contentArr, false);
+			FileUtils.writeStringToFile(manifest, BBInternalConstants.IMPORT_MANIFEST_VERSION_PREFIX+BBConfiguration.getApiVersion());
+			
 			ZipEntry entry = new ZipEntry("export.json");
 			zip.putNextEntry(entry);
     		zip.write(FileUtils.readFileToByteArray(tmpJson));
     		zip.closeEntry();
+    		
+    		ZipEntry entryManifest = new ZipEntry("manifest.txt");
+			zip.putNextEntry(entryManifest);
+    		zip.write(FileUtils.readFileToByteArray(manifest));
+    		zip.closeEntry();
+    		
     		tmpJson.delete();
+    		manifest.delete();
     		content.close();
-    		
-    		
     		
 
 		}catch(Exception e){

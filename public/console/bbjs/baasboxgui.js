@@ -692,6 +692,8 @@ $('.btn-ChangePwdCommit').click(function(e){
 	})	
 }); // Validate and Ajax submit for Change Password
 $('#importDbForm').on('submit',function(){
+	$('#importErrors').addClass("hide");
+	$('#importErrors').html("");
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		alert('you have to pick a file for upload')
@@ -708,7 +710,6 @@ $('#importDbForm').on('submit',function(){
 			clearForm: true,
 			resetForm: true,
 				success: function(){
-					alert("your import has been scheduled.You will be disconneted from the console");
 					BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 							function() { 
 								sessionStorage.up="";
@@ -716,7 +717,12 @@ $('#importDbForm').on('submit',function(){
 								sessionStorage.sessionToken="";
 								location.reload(); 
 							});
-				} //success
+				}, //success
+				error:function(data){
+					$('#importErrors').removeClass("hide");
+					console.log(data)
+					$('#importErrors').html(JSON.parse(data.responseText)["message"]);
+				} //error
 			};
 
 	 	$(this).ajaxSubmit(options);

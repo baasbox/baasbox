@@ -16,17 +16,18 @@
  */
 package com.baasbox.util;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.StringWriter;
-import java.util.Collection;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.commons.io.FileUtils;
 
 import play.Logger;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 public class Util {
 	/**
@@ -63,16 +64,46 @@ public class Util {
 		    Logger.trace("Method End");
 		    return buffer.toString();
 		  }//listToJSON
-		  */
-		private static final String EMAIL_PATTERN = 
+	 */
+	private static final String EMAIL_PATTERN = 
 			"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
-			+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
-			
-		public static boolean validateEmail(final String hex) {
+					+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
 
-			Pattern pattern = Pattern.compile(EMAIL_PATTERN);
-			Matcher matcher = pattern.matcher(hex);
-			return matcher.matches();
+	public static boolean validateEmail(final String hex) {
 
+		Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+		Matcher matcher = pattern.matcher(hex);
+		return matcher.matches();
+
+	}
+
+	
+	public static void createZipFile(String path,File...files) {
+		Logger.debug("Zipping into:"+path);
+		ZipOutputStream zip = null;
+		FileOutputStream dest = null;
+		try{
+			File f = new File(path);
+			dest = new FileOutputStream(f);
+			zip = new ZipOutputStream(new BufferedOutputStream(dest));
+			for (File file : files) {
+				zip.putNextEntry(new ZipEntry(file.getName()));
+				zip.write(FileUtils.readFileToByteArray(file));
+				zip.closeEntry();
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new RuntimeException("Unable to create zip file");
+		}finally{
+			try{
+				if(zip!=null)
+					zip.close();
+				if(dest!=null)
+					dest.close();
+
+			}catch(Exception ioe){
+				//Nothing to do
+			}
 		}
+	}
 }

@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -56,6 +58,7 @@ import play.mvc.With;
 import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
@@ -68,7 +71,6 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
-import com.baasbox.db.async.ImportJob;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.CollectionService;
@@ -499,6 +501,7 @@ public class Admin extends Controller {
 
 		if (fp!=null){
 			ZipInputStream zis = null;
+			String fileContent = null;
 			try{
 				java.io.File multipartFile=fp.getFile();
 				java.util.UUID uuid = java.util.UUID.randomUUID();
@@ -508,6 +511,9 @@ public class Admin extends Controller {
 						new ZipInputStream(new FileInputStream(zipFile));
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
+				if(ze.isDirectory()){
+					ze = zis.getNextEntry();
+				}
 				if(ze!=null){
 					File newFile = File.createTempFile("export",".json");
 					FileOutputStream fout = new FileOutputStream(newFile);
@@ -515,20 +521,45 @@ public class Admin extends Controller {
 			          fout.write(c);
 			        }
 			        fout.close();
-					String fileContent = FileUtils.readFileToString(newFile);
-					/**Akka.system().scheduler().scheduleOnce(
-							Duration.create(2, TimeUnit.SECONDS),
-							new ImportJob(appcode,fileContent),
-							Akka.system().dispatcher()
-							);**/
+					fileContent = FileUtils.readFileToString(newFile);
+					newFile.delete();
+				}else{
+					//TODO:return an error
+				}
+				ZipEntry manifest = zis.getNextEntry();
+				if(manifest!=null){
+					File manifestFile = File.createTempFile("manifest",".txt");
+					FileOutputStream fout = new FileOutputStream(manifestFile);
+			        for (int c = zis.read(); c != -1; c = zis.read()) {
+			          fout.write(c);
+			        }
+			        fout.close();
+			        String manifestContent  = FileUtils.readFileToString(manifestFile);
+			        manifestFile.delete();
+			        Pattern p = Pattern.compile(BBInternalConstants.IMPORT_MANIFEST_VERSION_PATTERN);
+			        Matcher m = p.matcher(manifestContent);
+			        if(m.matches()){
+			        	String version = m.group(1);
+			        	if(!(version.equalsIgnoreCase(BBConfiguration.getApiVersion()))){
+			        		return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
+			        	}else{
+			        		Logger.debug("Version : "+version+" is valid");
+			        	}
+			        }else{
+			        	return badRequest("The manifest file does not contain a version number");
+			        }
+				}else{
+					return badRequest("Looks like zip file does not contain a manifest file");
+				}
+				Logger.debug("Importing: "+fileContent);
+				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
 					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();
 					zis.close();
-					newFile.delete();
 					zipFile.delete();
 					return ok();
 				}else{
-					return badRequest("Looks like zip file does not contain a export json file");
+					return badRequest("The import file is empty");
 				}
 			}catch(Exception e){
 				Logger.error(e.getMessage());
