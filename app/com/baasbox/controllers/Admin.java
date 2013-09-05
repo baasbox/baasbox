@@ -526,7 +526,7 @@ public class Admin extends Controller {
 					fileContent = FileUtils.readFileToString(newFile);
 					newFile.delete();
 				}else{
-					//TODO:return an error
+					return badRequest("Looks like the uploaded file is not a valid export.");
 				}
 				ZipEntry manifest = zis.getNextEntry();
 				if(manifest!=null){
