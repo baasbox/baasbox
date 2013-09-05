@@ -36,6 +36,7 @@ import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
+import com.baasbox.configuration.Internal;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
@@ -61,7 +62,7 @@ public class Global extends GlobalSettings {
 	  public Configuration onLoadConfig(Configuration config,
           java.io.File path,
           java.lang.ClassLoader classloader){  
-		  info("...preparing OrientDB Embedded Server...");
+		  info("BaasBox is preparing OrientDB Embedded Server...");
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
@@ -122,6 +123,9 @@ public class Global extends GlobalSettings {
     	try {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
 			DbHelper.updateDefaultUsers();
+			String bbid=Internal.INSTALLATION_ID.getValueAsString();
+			if (bbid==null) throw new Exception ("Unique id not found! Hint: could the DB be corrupted?");
+			info ("BaasBox unique id is " + bbid);
 		} catch (Exception e) {
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
