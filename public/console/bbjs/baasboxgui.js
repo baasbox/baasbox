@@ -691,6 +691,37 @@ $('.btn-ChangePwdCommit').click(function(e){
 		}
 	})	
 }); // Validate and Ajax submit for Change Password
+$('#importDbForm').on('submit',function(){
+	var filename = $('#zipfile').val();
+	if(filename==null ||filename==''){
+		alert('you have to pick a file for upload')
+		return false;
+	}
+	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
+	var serverUrl=BBRoutes.com.baasbox.controllers.Admin.importDb().absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
+	var options = {
+			url: serverUrl,
+			type: "post",
+			clearForm: true,
+			resetForm: true,
+				success: function(){
+					alert("your import has been scheduled.You will be disconneted from the console");
+					BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
+							function() { 
+								sessionStorage.up="";
+								sessionStorage.appcode="";
+								sessionStorage.sessionToken="";
+								location.reload(); 
+							});
+				} //success
+			};
+
+	 	$(this).ajaxSubmit(options);
+	 	return false;
+})
 
 $('#assetForm').submit(function() {
 
@@ -814,6 +845,9 @@ function setBradCrumb(type)
 		  break;
 		case "#settings":
 			sBradCrumb = "Settings";
+		  break;
+		case "#dbmanager":
+			sBradCrumb = "DB Manager";
 		  break;
 		case "#collections":
 			sBradCrumb = "Collections";
@@ -970,8 +1004,9 @@ function setupTables(){
         } ).makeEditable();
 
     $('#exportTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>t<'row-fluid'<'span12'><'span12 center'p>>",
+    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
     	"aaSorting": [[ 2, "desc" ]],
+    	"sPaginationType": "bootstrap",
     	"aoColumns": [ {"mData": "name"},
     	               {"mData": "date"},
     	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"actions btn-group\"><a class=\"btn btn-danger deleteExport\">delete export</a><a class=\"btn downloadExport\" href=\"#\">Download Export</a>"}}
@@ -1010,6 +1045,9 @@ function setupTables(){
 	$('#btnReloadDocumkents').click(function(){
 			$("#selectCollection").trigger("change");
 		});
+	$('#btnReloadExports').click(function(){
+		callMenu('#dbmanager')
+	});
     $('#assetTable').dataTable( {
     	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",

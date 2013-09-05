@@ -19,17 +19,19 @@ package com.baasbox.controllers;
 import static play.libs.Json.toJson;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
@@ -47,6 +49,8 @@ import play.libs.WS.Response;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
 import play.mvc.With;
 import scala.concurrent.duration.Duration;
@@ -436,7 +440,7 @@ public class Admin extends Controller {
 				deleted = file.delete();
 				if(deleted==false){
 					file.deleteOnExit();
-					
+
 				}
 			}
 			if(deleted){
@@ -458,6 +462,9 @@ public class Admin extends Controller {
 	 */
 	public static Result getExports(){
 		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		if(!dir.exists()){
+			dir.mkdir();
+		}
 		Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
 		File[] fileArr = files.toArray(new File[files.size()]);
 
@@ -475,25 +482,72 @@ public class Admin extends Controller {
 	 * /admin/db/import (POST)
 	 * 
 	 * the method allows to upload a json export file and apply it to the db.
-	 * WARNING: all data on the db will be wiped out befor importing
+	 * WARNING: all data on the db will be wiped out before importing
 	 * 
-	 * @return a 202 ACCEPTED code 
+	 * @return a 200 Status code when the import is successfull,a 500 status code otherwise
 	 */
 	public static Result importDb(){
 		String appcode = (String)ctx().args.get("appcode");
-		JsonNode fileContent = request().body().asJson();
-
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
 			unauthorized("appcode can not be null");
 		}
 
 
-		Akka.system().scheduler().scheduleOnce(
-				Duration.create(2, TimeUnit.SECONDS),
-				new ImportJob(appcode,Json.stringify(fileContent)),
-				Akka.system().dispatcher()
-				); 
-		return status(202);
+		MultipartFormData  body = request().body().asMultipartFormData();
+		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+		FilePart fp = body.getFile("file");
+
+		if (fp!=null){
+			ZipInputStream zis = null;
+			try{
+				java.io.File multipartFile=fp.getFile();
+				java.util.UUID uuid = java.util.UUID.randomUUID();
+				File zipFile = File.createTempFile(uuid.toString(), ".zip");
+				FileUtils.copyFile(multipartFile,zipFile);
+				zis = 
+						new ZipInputStream(new FileInputStream(zipFile));
+				//get the zipped file list entry
+				ZipEntry ze = zis.getNextEntry();
+				if(ze!=null){
+					File newFile = File.createTempFile("export",".json");
+					FileOutputStream fout = new FileOutputStream(newFile);
+			        for (int c = zis.read(); c != -1; c = zis.read()) {
+			          fout.write(c);
+			        }
+			        fout.close();
+					String fileContent = FileUtils.readFileToString(newFile);
+					/**Akka.system().scheduler().scheduleOnce(
+							Duration.create(2, TimeUnit.SECONDS),
+							new ImportJob(appcode,fileContent),
+							Akka.system().dispatcher()
+							);**/
+					DbHelper.importData(appcode, fileContent);
+					zis.closeEntry();
+					zis.close();
+					newFile.delete();
+					zipFile.delete();
+					return ok();
+				}else{
+					return badRequest("Looks like zip file does not contain a export json file");
+				}
+			}catch(Exception e){
+				Logger.error(e.getMessage());
+				return internalServerError("There was an error handling your zip import file.");
+			}finally{
+				try {
+					if(zis!=null){
+						zis.close();
+					}
+				} catch (IOException e) {
+					// Nothing to do here
+				}
+			}
+		}else{
+			return badRequest("The form was submitted without a multipart file field.");
+		}
+
+
+
 	}
 
 }
