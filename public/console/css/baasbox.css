@@ -1,3 +1,8 @@
-#db .action {
-	margin:5px 2px 0 0;
+#dbmanager .actions{
+	margin:18px 0 0 0;
+}
+
+p.errors{
+ color:red;
+ font-size:14px;
 }

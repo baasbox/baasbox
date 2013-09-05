@@ -19,17 +19,21 @@ package com.baasbox.controllers;
 import static play.libs.Json.toJson;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
@@ -47,11 +51,14 @@ import play.libs.WS.Response;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
 import play.mvc.With;
 import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
@@ -64,7 +71,6 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
-import com.baasbox.db.async.ImportJob;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.CollectionService;
@@ -438,7 +444,7 @@ public class Admin extends Controller {
 				deleted = file.delete();
 				if(deleted==false){
 					file.deleteOnExit();
-					
+
 				}
 			}
 			if(deleted){
@@ -460,6 +466,9 @@ public class Admin extends Controller {
 	 */
 	public static Result getExports(){
 		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		if(!dir.exists()){
+			dir.mkdir();
+		}
 		Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
 		File[] fileArr = files.toArray(new File[files.size()]);
 
@@ -477,25 +486,101 @@ public class Admin extends Controller {
 	 * /admin/db/import (POST)
 	 * 
 	 * the method allows to upload a json export file and apply it to the db.
-	 * WARNING: all data on the db will be wiped out befor importing
+	 * WARNING: all data on the db will be wiped out before importing
 	 * 
-	 * @return a 202 ACCEPTED code 
+	 * @return a 200 Status code when the import is successfull,a 500 status code otherwise
 	 */
 	public static Result importDb(){
 		String appcode = (String)ctx().args.get("appcode");
-		JsonNode fileContent = request().body().asJson();
-
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
 			unauthorized("appcode can not be null");
 		}
 
 
-		Akka.system().scheduler().scheduleOnce(
-				Duration.create(2, TimeUnit.SECONDS),
-				new ImportJob(appcode,Json.stringify(fileContent)),
-				Akka.system().dispatcher()
-				); 
-		return status(202);
+		MultipartFormData  body = request().body().asMultipartFormData();
+		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+		FilePart fp = body.getFile("file");
+
+		if (fp!=null){
+			ZipInputStream zis = null;
+			String fileContent = null;
+			try{
+				java.io.File multipartFile=fp.getFile();
+				java.util.UUID uuid = java.util.UUID.randomUUID();
+				File zipFile = File.createTempFile(uuid.toString(), ".zip");
+				FileUtils.copyFile(multipartFile,zipFile);
+				zis = 
+						new ZipInputStream(new FileInputStream(zipFile));
+				//get the zipped file list entry
+				ZipEntry ze = zis.getNextEntry();
+				if(ze.isDirectory()){
+					ze = zis.getNextEntry();
+				}
+				if(ze!=null){
+					File newFile = File.createTempFile("export",".json");
+					FileOutputStream fout = new FileOutputStream(newFile);
+			        for (int c = zis.read(); c != -1; c = zis.read()) {
+			          fout.write(c);
+			        }
+			        fout.close();
+					fileContent = FileUtils.readFileToString(newFile);
+					newFile.delete();
+				}else{
+					return badRequest("Looks like the uploaded file is not a valid export.");
+				}
+				ZipEntry manifest = zis.getNextEntry();
+				if(manifest!=null){
+					File manifestFile = File.createTempFile("manifest",".txt");
+					FileOutputStream fout = new FileOutputStream(manifestFile);
+			        for (int c = zis.read(); c != -1; c = zis.read()) {
+			          fout.write(c);
+			        }
+			        fout.close();
+			        String manifestContent  = FileUtils.readFileToString(manifestFile);
+			        manifestFile.delete();
+			        Pattern p = Pattern.compile(BBInternalConstants.IMPORT_MANIFEST_VERSION_PATTERN);
+			        Matcher m = p.matcher(manifestContent);
+			        if(m.matches()){
+			        	String version = m.group(1);
+			        	if(!(version.equalsIgnoreCase(BBConfiguration.getApiVersion()))){
+			        		return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
+			        	}else{
+			        		Logger.debug("Version : "+version+" is valid");
+			        	}
+			        }else{
+			        	return badRequest("The manifest file does not contain a version number");
+			        }
+				}else{
+					return badRequest("Looks like zip file does not contain a manifest file");
+				}
+				Logger.debug("Importing: "+fileContent);
+				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
+					DbHelper.importData(appcode, fileContent);
+					zis.closeEntry();
+					zis.close();
+					zipFile.delete();
+					return ok();
+				}else{
+					return badRequest("The import file is empty");
+				}
+			}catch(Exception e){
+				Logger.error(e.getMessage());
+				return internalServerError("There was an error handling your zip import file.");
+			}finally{
+				try {
+					if(zis!=null){
+						zis.close();
+					}
+				} catch (IOException e) {
+					// Nothing to do here
+				}
+			}
+		}else{
+			return badRequest("The form was submitted without a multipart file field.");
+		}
+
+
+
 	}
 
 }
