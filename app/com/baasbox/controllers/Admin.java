@@ -482,9 +482,9 @@ public class Admin extends Controller {
 	 * /admin/db/import (POST)
 	 * 
 	 * the method allows to upload a json export file and apply it to the db.
-	 * WARNING: all data on the db will be wiped out befor importing
+	 * WARNING: all data on the db will be wiped out before importing
 	 * 
-	 * @return a 202 ACCEPTED code 
+	 * @return a 200 Status code when the import is successfull,a 500 status code otherwise
 	 */
 	public static Result importDb(){
 		String appcode = (String)ctx().args.get("appcode");
@@ -516,21 +516,21 @@ public class Admin extends Controller {
 			        }
 			        fout.close();
 					String fileContent = FileUtils.readFileToString(newFile);
-					Akka.system().scheduler().scheduleOnce(
+					/**Akka.system().scheduler().scheduleOnce(
 							Duration.create(2, TimeUnit.SECONDS),
 							new ImportJob(appcode,fileContent),
 							Akka.system().dispatcher()
-							); 
+							);**/
+					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();
 					zis.close();
 					newFile.delete();
 					zipFile.delete();
-					return status(202);
+					return ok();
 				}else{
 					return badRequest("Looks like zip file does not contain a export json file");
 				}
 			}catch(Exception e){
-				e.printStackTrace();
 				Logger.error(e.getMessage());
 				return internalServerError("There was an error handling your zip import file.");
 			}finally{

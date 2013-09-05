@@ -53,13 +53,8 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					setMultipartFormData();
 					setAssetFile("/adminImportJson.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
-					assertTrue(status==202);
-					try {
-						Thread.sleep(6000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					assertTrue(status==200);
+					
 					
 				}
 	        }
