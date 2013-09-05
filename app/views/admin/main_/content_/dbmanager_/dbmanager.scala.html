@@ -1,9 +1,11 @@
 <div ng-controller="DBManagerController" id="dbmanager">
 	<div class="row-fluid">
+		
 		<div class="span6 offset2">
 		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
 			<fieldset>
 			<legend>Upload a zip export file</legend>
+			<p class="errors hide" id="importErrors"></p>
 					<label class="control-label">Zip file
 						<input type="file" name="file" id="zipfile"/>
 					</label>
