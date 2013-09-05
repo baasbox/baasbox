@@ -23,9 +23,9 @@
 							<div id="errorLogin" class="control-group error hide" >
 								 <span class="help-inline">Invalid Username/Password or App Code</span>
 							</div>
-							<div class="input-prepend" title="Username" data-rel="tooltip" >
+							<div class="input-prepend" >
 								<span class="add-on"><i class="icon-user"></i></span>
-								<input 	autofocus  
+								<input 	title="Username" data-rel="tooltip"  autofocus  
 										ng-model="username" 	
 										required 
 										class="input-large span10" 
@@ -38,6 +38,9 @@
 										 autocapitalize="off"
 										/>
 							</div>
+							<span class="help-inline">
+								<i onclick="javascript:$('#username').val('admin').trigger('input')" data-rel="popover" data-content="In order to login into the Administration Console, you must provide a valid administrator username. By default it is <b>admin</b>. Within the console you can create how many as you want." title="Username" class="icon icon-color icon-info"></i>
+							</span>
 							<div class="clearfix"></div>
 
 							<div class="input-prepend" title="Password" data-rel="tooltip">
@@ -51,6 +54,9 @@
 										required
 										 />
 							</div>
+							<span class="help-inline">
+								<i onclick="javascript:$('#password').val('admin').trigger('input');" data-rel="popover" data-content="You must enter the password of your administrative account. By defaul it is <b>admin</b>, you can modify it once entered the console" title="Password" class="icon icon-color icon-info"></i>
+							</span>
 							<div class="clearfix"></div>
 
 							<div class="input-prepend" title="Application Code" data-rel="tooltip">
@@ -64,6 +70,9 @@
 										placeholder="App Code" 
 										required/>
 							</div>
+							<span class="help-inline">
+								<i onclick="javascript:$('#appcode').val('1234567890').trigger('input');" data-rel="popover" data-content="Here you have to indicate the unique identifier of you BAASBOX powered App. Each App must have an unique 'Application Code'. By default it is <b>1234567890</b> but you are strongely advised to change it. You can modify it by adding <br /><u>-Dapplication.code=YOUR NEW VERY FANCIFUL APPCODE</u><br />to the start script" title="App Code" class="icon icon-color icon-info"></i>
+							</span>
 							<div class="clearfix"></div>
 
 							<p class="center span5">
@@ -71,7 +80,7 @@
 								type="submit" 
 								id="btnLogin" 
 								class="btn btn-primary" 
-								ng-disabled="loginForm.$invalid">Login</button>
+								>Login</button>
 							</p>
 						</fieldset>
 					</form>
