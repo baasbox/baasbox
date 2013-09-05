@@ -160,9 +160,11 @@ public class Admin extends Controller {
 		OGraphDatabase db = DbHelper.getConnection();
 		ImmutableMap response;
 		try {
+			String bbId = Internal.INSTALLATION_ID.getValueAsString();
+			if (bbId==null) bbId="00-00-00"; //--<<--- this prevents an OrientDB bug retrieving keys
 			response = ImmutableMap.<String,Object>builder().
 					put("installation", (Object)ImmutableMap.of(
-							"bb_id",Internal.INSTALLATION_ID.getValueAsString()
+							"bb_id",bbId
 							,"bb_version", Internal.DB_VERSION.getValueAsString()
 							))
 							.put("db", StatisticsService.db())
