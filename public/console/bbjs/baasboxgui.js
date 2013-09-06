@@ -139,7 +139,7 @@ $('a.downloadExport').live('click',function(e){
 		  }
 		  var urlGen = window.webkitURL || window.mozURL || window.URL
 		  var url = urlGen.createObjectURL(blob);
-		  $($("#downloadExportModal .modal-body")[0])
+		  $($("#downloadExportModal .modal-body")[0]).html("")
 		  						.append($("<a id=\""+name+"\"/>")
 		  						.attr({href: url})
 		  						.attr("download",name)
