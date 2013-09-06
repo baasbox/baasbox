@@ -1055,7 +1055,7 @@ function setupTables(){
     	"sPaginationType": "bootstrap",
     	"aoColumns": [ {"mData": "name"},
     	               {"mData": "date"},
-    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">delete export</a><a class=\"btn downloadExport\" href=\"#\">Download Export</a>"}}
+    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
     	             ],
     	"bRetrieve": true,
   		"bDestroy":true

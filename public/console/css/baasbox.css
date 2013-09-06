@@ -18,3 +18,11 @@ p.title {
 	border: 0;
 	border-bottom: 1px solid #e5e5e5;
 }
+
+p.hint{
+	display: block;
+	top: -10px;
+	position: relative;
+	font-style: italic;
+	color: #777;
+}
