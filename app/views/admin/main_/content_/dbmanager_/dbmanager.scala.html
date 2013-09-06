@@ -4,12 +4,14 @@
 		
 		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
 			<fieldset>
-			<legend>Upload a zip export file</legend>
+			<legend>Restore from a backup file</legend>
+			<p class="hint">Here you can upload a backup file to restore the database.<br/>
+			Select a file on your local filesystem and then click on the Restore button</p>
 			<p class="errors hide" id="importErrors"></p>
 					<label class="control-label">Zip file
 						<input type="file" name="file" id="zipfile"/>
 					</label>
-					<button id="importBtn" class="btn btn-primary">Upload zip file</button>
+					<button id="importBtn" class="btn btn-primary">Restore...</button>
 						
 			</fieldset>
 		</form>
@@ -38,7 +40,9 @@
 	<div class="row-fluid">
 		<div class="actions">
 			<p class="title">Backup</p>
-			<a href="#" id="exportDb" class="btn btn-success">Export db</a>      
+			<p class="hint">Click the Backup button in order to create a new backup.<br/>
+Your backups are listed in the list. From there you can download  or delete them.</p>
+			<a href="#" id="exportDb" class="btn btn-success">Create a new backup...</a>      
 			
 			
 			
@@ -76,8 +80,9 @@
 	
 	<div class="row-fluid">
 		<div class="actions">
-		<p class="title">Reset your db</p>
-		<button id="dropDb" class="btn btn-danger btn-large">Drop db</button>
+		<p class="title">Reset db</p>
+		<p class="hint">WARNING: this function will completely reset your database at its initial state. You will lose all your data and settings. </p>
+		<button id="dropDb" class="btn btn-danger btn-large">Reset DB...</button>
 		<div id="dropDbModal" class="modal hide fade">
 			<div class="modal-header">
 				<h2>Confirm drop db</h2>
