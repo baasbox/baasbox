@@ -167,7 +167,6 @@ public class AdminExportTest extends AbstractTest {
 					}
 					
 					//TODO: on windows delete fails...probably because the result stream is open.
-					//commenting out
 					//delete(fileName);
 					
 					

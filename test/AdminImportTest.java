@@ -1,20 +1,34 @@
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
+import static play.test.Helpers.testServer;
 
-import org.codehaus.jackson.JsonNode;
-import org.junit.*;
-import play.libs.Json;
-import play.mvc.Http.Status;
-import play.mvc.Result;
-import play.test.FakeRequest;
-import core.AbstractTest;
+import java.io.File;
+import java.util.HashMap;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import play.Play;
+import play.libs.F.Callback;
+import play.test.TestBrowser;
+
+import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
+import com.baasbox.util.Util;
+
+import core.AbstractRouteHeaderTest;
 import core.TestConfig;
 
-public class AdminImportTest extends AbstractTest {
-
+public class AdminImportTest extends AbstractRouteHeaderTest {
+	
+	private static File correctZipFile;
+	
 	@Override
 	public String getRouteAddress() {
 		return "/admin/db/import";
@@ -30,6 +44,31 @@ public class AdminImportTest extends AbstractTest {
 		// TODO Auto-generated method stub
 	}
 	
+	@BeforeClass
+	public static void createCorrectFile() throws Exception{
+		running(fakeApplication(), new Runnable() {
+			
+			@Override
+			public void run() {
+				try{
+					String version = BBConfiguration.getApiVersion();
+					String fileContent = BBInternalConstants.IMPORT_MANIFEST_VERSION_PREFIX+version;
+					String classloaderPath = new File(Play.application().classloader().getResource(".").getFile()).getAbsolutePath();
+					File json = Play.application().getFile("test"+File.separator+"resources"+File.separator+"adminImportJson.json");
+					File manifest = new File(classloaderPath+File.separator+"target"+File.separator+"manifest.txt");
+					FileUtils.writeStringToFile(manifest, fileContent, false);
+					
+					Util.createZipFile(classloaderPath+File.separator+"adminImportJson.zip",json,manifest);
+					//json.delete();
+					manifest.delete();
+					correctZipFile = new File(Play.application().path().getAbsoluteFile()+File.separator+"target"+File.separator+"adminImportJson.zip");
+					
+				}catch(Exception e){
+					fail();
+				}
+			}
+		});
+	}
 	
 	
 	/**
@@ -38,40 +77,57 @@ public class AdminImportTest extends AbstractTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testPostGetImport() throws Exception
+	public void testPostImport() throws Exception
 	{
 		running
 		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
 				{
-					
-					String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
-					
-					FakeRequest request = new FakeRequest("POST", getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-					JsonNode importJson = getPayload("adminImportJson.json");
-					String body = Json.stringify(importJson); 
-					assertTrue(body!=null && body.length()>0);
-					request.withJsonBody(importJson);
-					Result result = routeAndCall(request);
-					assertRoute(result, "testImport", Status.ACCEPTED, null, true);
-					try {
-						Thread.sleep(15000);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setMultipartFormData();
+					setAssetFile("/adminImportJson.zip", "application/zip");
+					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
+					assertTrue(status==200);
 				}
-			}
-			
-		);		
+	        }
+		);
+	}
+	
+	@Test
+	public void testPostFailVersionImport() throws Exception
+	{
+		running
+		(
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setMultipartFormData();
+					setAssetFile("/adminImportWrongVersionJson.zip", "application/zip");
+					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
+					assertTrue(status!=200);
+					
+					
+				}
+	        }
+		);
 	}
 	
 	
-	
+	@AfterClass
+	public static void removeGeneratedFile() throws Exception {
+		if(correctZipFile!=null && correctZipFile.exists()){
+			correctZipFile.delete();
+		}
+	}
 	
 }

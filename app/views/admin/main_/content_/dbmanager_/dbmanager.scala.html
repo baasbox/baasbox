@@ -1,13 +1,63 @@
 <div ng-controller="DBManagerController" id="dbmanager">
-	<div ng-show="exports==null || exports.isEmpty()">
-		<p>There are no exports yet</p>
+	<div class="row-fluid">
+		
+		
+		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
+			<fieldset>
+			<legend>Upload a zip export file</legend>
+			<p class="errors hide" id="importErrors"></p>
+					<label class="control-label">Zip file
+						<input type="file" name="file" id="zipfile"/>
+					</label>
+					<button id="importBtn" class="btn btn-primary">Upload zip file</button>
+						
+			</fieldset>
+		</form>
+		<div id="importModal" class="modal hide fade">
+				<div class="modal-header">
+					<h2>Ready to import</h2>
+				</div>
+				<div class="modal-body">
+					<p class="errors">
+						Warning: you are about to delete ALL the existing data in your current database.
+					</p>
+					<p>
+						During the import procedure the DataBase and the Console will be freezed.
+						At the end of the import you will be redirect to the login page.
+					</p>
+					<p>
+						REMEMBER: also the admin credential will be restored, so you will have to use your username and password that were valid at the backup time. 
+					</p>
+					<div class="actions">
+						<button class="btn btn-warning" id="startImport">delete existing and import new data</button>
+						<button class="btn"  id="stopImport">cancel</button>
+					</div> 
+				</div>
+			</div>
 	</div>
-	<div ng-show="export!=null || !exports.isEmpty()">
-		<div class="box span12">
+	<div class="row-fluid">
+		<div class="actions">
+			<p class="title">Backup</p>
+			<a href="#" id="exportDb" class="btn btn-success">Export db</a>      
+			
+			
+			
+			<div id="downloadExportModal" class="modal hide fade">
+				<div class="modal-header">
+					<h2>Your download is ready</h2>
+				</div>
+				<div class="modal-body">
+					
+				</div>
+			</div>                                
+		</div>
+	
+		<div ng-show="export!=null || !exports.isEmpty()" class="box">
 					<div class="box-header well" >
-						<h2><i class="icon-book"></i> Exports</h2>
+						<h2><i class="icon-book"></i>Backup files</h2>
 						<div class="box-icon">
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+							<a href="#" id="btnReloadExports" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
 					</div>
 					</div>
 					<div class="box-content">
@@ -23,31 +73,30 @@
 					</div><!-- box-content -->
 				</div> <!--  box span12 -->
 	</div>
-	<div class="action pull-right">
-		<button id="dropDb" class="btn btn-danger">Drop db</button>
-		<a href="#" id="exportDb" class="btn btn-warning">Export db</a>      
-			<div id="dropDbModal" class="modal hide fade">
-				<div class="modal-header">
-					<h2>Confirm drop db</h2>
-				</div>
-				<div class="modal-body">
-					<div class="ask">
-						<p>Are you sure you want to drop the entire app db?</p>
+	
+	<div class="row-fluid">
+		<div class="actions">
+		<p class="title">Reset your db</p>
+		<button id="dropDb" class="btn btn-danger btn-large">Drop db</button>
+		<div id="dropDbModal" class="modal hide fade">
+			<div class="modal-header">
+				<h2>Confirm drop db</h2>
+			</div>
+			<div class="modal-body">
+				<div class="ask">
+					<p class="errors">
+						Warning: you are about to delete ALL the existing data in your current database.
+					</p>
+					<p>
+						During the drop procedure the DataBase and the Console will be freezed.
+					</p>
+					<div class="actions">
 						<button id="dropDbConfirm" class="btn btn-danger">Yes, Drop the db</button>
 						<button id="dropDbCancel" class="btn">No,take me out of here</button>
 					</div>
-					<div class="loading hide">
-						<p>Waiting while deleting db...</p>
-					</div>
 				</div>
 			</div>
-			<div id="downloadExportModal" class="modal hide fade">
-				<div class="modal-header">
-					<h2>Your download is ready</h2>
-				</div>
-				<div class="modal-body">
-					
-				</div>
-			</div>                                
-	</div>	
+	</div>			
+	</div>
+	
 </div>
