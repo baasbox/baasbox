@@ -1,8 +1,28 @@
 #dbmanager .actions{
-	margin:18px 0 0 0;
+	margin:7px 0 31px 0;
 }
 
 p.errors{
  color:red;
  font-size:14px;
+}
+
+p.title {
+	display: block;
+	width: 100%;
+	padding: 0;
+	margin-bottom: 27px;
+	font-size: 19.5px;
+	line-height: 36px;
+	color: #333333;
+	border: 0;
+	border-bottom: 1px solid #e5e5e5;
+}
+
+p.hint{
+	display: block;
+	top: -10px;
+	position: relative;
+	font-style: italic;
+	color: #777;
 }

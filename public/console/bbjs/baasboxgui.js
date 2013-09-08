@@ -72,8 +72,7 @@ $('#dropDbCancel').click(function(e){
 });
 
 $('#dropDbConfirm').click(function(e){
-	$('#dropDbModal .modal-body .ask').addClass('hide');
-	$('#dropDbModal .modal-body .loading').removeClass('hide');
+	$('#dropDbModal').modal('hide');
 	dropDb();
 	
 	
@@ -81,19 +80,19 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
+	freezeConsole("dropping your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 	{
 		error: function(data)
 		{
+			unfreezeConsole();
 			alert(JSON.parse(data.responseText)["message"]);
-			$('#dropDbModal').modal('hide');
 		},
 		success: function(data)
 		{
-			$('#dropDbModal .modal-body .ask').removeClass('hide');
-			$('#dropDbModal .modal-body .loading').addClass('hide');
+			unfreezeConsole();
 			callMenu('#dashboard');
-			$('#dropDbModal').modal('hide');
+			
 			
 		}
 		
@@ -339,6 +338,20 @@ function openSettingEditForm(editSettingName)
 	$('#EditSettingModal').modal('show');
 }
 
+function freezeConsole(title,reason){
+	
+	$('#freezeConsole__ .modal-header h2').html(title || "Please wait");
+	$('#freezeConsole__ .modal-body').html("<p>"+reason+"</p>");
+	$('#freezeConsole__').modal({keyboard:false,backdrop:'static'});
+	
+}
+
+function unfreezeConsole(title,reason){
+	$('#freezeConsole__').modal('hide');
+	$('#freezeConsole__ .modal-header h2').html("");
+	$('#freezeConsole__ .modal-body').html("");
+	
+}
 function reverseJSON(objJSON)
 {
 	var strJSON = JSON.stringify(objJSON);
@@ -691,12 +704,37 @@ $('.btn-ChangePwdCommit').click(function(e){
 		}
 	})	
 }); // Validate and Ajax submit for Change Password
+
+$('#importBtn').on('click',function(e){
+	e.preventDefault();
+	$('#importErrors').addClass("hide");
+	$('#importErrors').html("");
+	var filename = $('#zipfile').val();
+	if(filename==null ||filename==''){
+		$('#importErrors').removeClass("hide");
+		$('#importErrors').html("You have to pick a file to download")
+		return false;
+	}
+	$('#importModal').modal('show');
+	return false;
+});
+
+$('#startImport').on('click',function(){
+	$('#importModal').modal('hide');
+	$('#importDbForm').submit();
+});
+
+$('#stopImport').on('click',function(){
+	$('#importModal').modal('hide');
+});
+
 $('#importDbForm').on('submit',function(){
 	$('#importErrors').addClass("hide");
 	$('#importErrors').html("");
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
-		alert('you have to pick a file for upload')
+		$('#importErrors').removeClass("hide");
+		$('#importErrors').html("You have to pick a file to download")
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
@@ -710,6 +748,7 @@ $('#importDbForm').on('submit',function(){
 			clearForm: true,
 			resetForm: true,
 				success: function(){
+					unfreezeConsole();
 					BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 							function() { 
 								sessionStorage.up="";
@@ -719,12 +758,13 @@ $('#importDbForm').on('submit',function(){
 							});
 				}, //success
 				error:function(data){
+					unfreezeConsole();
 					$('#importErrors').removeClass("hide");
-					console.log(data)
 					$('#importErrors').html(JSON.parse(data.responseText)["message"]);
 				} //error
 			};
 
+		freezeConsole("","Importing your data...please wait");
 	 	$(this).ajaxSubmit(options);
 	 	return false;
 })
@@ -1015,7 +1055,7 @@ function setupTables(){
     	"sPaginationType": "bootstrap",
     	"aoColumns": [ {"mData": "name"},
     	               {"mData": "date"},
-    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"actions btn-group\"><a class=\"btn btn-danger deleteExport\">delete export</a><a class=\"btn downloadExport\" href=\"#\">Download Export</a>"}}
+    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
     	             ],
     	"bRetrieve": true,
   		"bDestroy":true

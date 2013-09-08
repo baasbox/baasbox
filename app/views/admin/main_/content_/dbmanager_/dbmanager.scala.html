@@ -1,39 +1,51 @@
 <div ng-controller="DBManagerController" id="dbmanager">
 	<div class="row-fluid">
 		
-		<div class="span6 offset2">
+		
 		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
 			<fieldset>
-			<legend>Upload a zip export file</legend>
+			<legend>Restore from a backup file</legend>
+			<p class="hint">Here you can upload a backup file to restore the database.<br/>
+			Select a file on your local filesystem and then click on the Restore button</p>
 			<p class="errors hide" id="importErrors"></p>
 					<label class="control-label">Zip file
 						<input type="file" name="file" id="zipfile"/>
 					</label>
-						<input type="submit" value="Upload zip file" class="btn btn-primary"/>
-						<input type="reset" value="Reset" class="btn"/>
+					<button id="importBtn" class="btn btn-primary">Restore...</button>
+						
 			</fieldset>
 		</form>
-	</div>
-	</div>
-	<div class="row-fluid">
-	<div class="actions">
-		<button id="dropDb" class="btn btn-danger">Drop db</button>
-		<a href="#" id="exportDb" class="btn btn-success">Export db</a>      
-			<div id="dropDbModal" class="modal hide fade">
+		<div id="importModal" class="modal hide fade">
 				<div class="modal-header">
-					<h2>Confirm drop db</h2>
+					<h2>Ready to import</h2>
 				</div>
 				<div class="modal-body">
-					<div class="ask">
-						<p>Are you sure you want to drop the entire app db?</p>
-						<button id="dropDbConfirm" class="btn btn-danger">Yes, Drop the db</button>
-						<button id="dropDbCancel" class="btn">No,take me out of here</button>
-					</div>
-					<div class="loading hide">
-						<p>Waiting while deleting db...</p>
-					</div>
+					<p class="errors">
+						Warning: you are about to delete ALL the existing data in your current database.
+					</p>
+					<p>
+						During the import procedure the DataBase and the Console will be freezed.
+						At the end of the import you will be redirect to the login page.
+					</p>
+					<p>
+						REMEMBER: also the admin credential will be restored, so you will have to use your username and password that were valid at the backup time. 
+					</p>
+					<div class="actions">
+						<button class="btn btn-warning" id="startImport">delete existing and import new data</button>
+						<button class="btn"  id="stopImport">cancel</button>
+					</div> 
 				</div>
 			</div>
+	</div>
+	<div class="row-fluid">
+		<div class="actions">
+			<p class="title">Backup</p>
+			<p class="hint">Click the Backup button in order to create a new backup.<br/>
+Your backups are listed in the list. From there you can download  or delete them.</p>
+			<a href="#" id="exportDb" class="btn btn-success">Create a new backup...</a>      
+			
+			
+			
 			<div id="downloadExportModal" class="modal hide fade">
 				<div class="modal-header">
 					<h2>Your download is ready</h2>
@@ -42,11 +54,11 @@
 					
 				</div>
 			</div>                                
-	</div>	
+		</div>
 	
 		<div ng-show="export!=null || !exports.isEmpty()" class="box">
 					<div class="box-header well" >
-						<h2><i class="icon-book"></i> Exports</h2>
+						<h2><i class="icon-book"></i>Backup files</h2>
 						<div class="box-icon">
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
 							<a href="#" id="btnReloadExports" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
@@ -66,4 +78,30 @@
 				</div> <!--  box span12 -->
 	</div>
 	
+	<div class="row-fluid">
+		<div class="actions">
+		<p class="title">Reset db</p>
+		<p class="hint">WARNING: this function will completely reset your database at its initial state. You will lose all your data and settings. </p>
+		<button id="dropDb" class="btn btn-danger btn-large">Reset DB...</button>
+		<div id="dropDbModal" class="modal hide fade">
+			<div class="modal-header">
+				<h2>Confirm drop db</h2>
+			</div>
+			<div class="modal-body">
+				<div class="ask">
+					<p class="errors">
+						Warning: you are about to delete ALL the existing data in your current database.
+					</p>
+					<p>
+						During the drop procedure the DataBase and the Console will be freezed.
+					</p>
+					<div class="actions">
+						<button id="dropDbConfirm" class="btn btn-danger">Yes, Drop the db</button>
+						<button id="dropDbCancel" class="btn">No,take me out of here</button>
+					</div>
+				</div>
+			</div>
+	</div>			
+	</div>
+	</div>
 </div>
