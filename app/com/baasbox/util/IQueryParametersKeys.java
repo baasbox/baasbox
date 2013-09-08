@@ -20,7 +20,9 @@ public interface IQueryParametersKeys {
 	public static final String WHERE="where";
 	public static final String PAGE="page";
 	public static final String DEPTH="depth";
+	@Deprecated
 	public static final String RECORD_PER_PAGE="recordPerPage";
+	public static final String RECORDS_PER_PAGE="recordsPerPage";
 	public static final String ORDER_BY="orderBy";
 	public static final String PARAMS="params";
 	
