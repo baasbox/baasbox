@@ -70,7 +70,7 @@ public class UserService {
 	public static List<ODocument> getRoles() throws SqlInjectionException {
 		GenericDao dao = GenericDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance().where("name not like \""+RoleDao.FRIENDS_OF_ROLE+"%\"").orderBy("name asc");
-		return dao.query("orole", criteria);
+		return dao.executeQuery("orole", criteria);
 	}
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
