@@ -9,6 +9,8 @@ var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
 
+var dbCollectionsCache = [];
+
 $(document).ready(function(){
 	setup();
 });
@@ -22,14 +24,37 @@ function resetChosen(chosenElement){
 	$('#'+selId).val('').change().removeClass('chzn-done').chosen();
 }
 
-// see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
+function refreshCollectionCache(arr,fun){
+	
+	if(arr){
+		dbCollectionsCache = arr;
+		if(fun){
+			var args = [].slice.call(dbCollectionsCache, 0)
+			fun(dbCollectionsCache)
+		}
+	}else{
+		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
+			success: function(data) {
+				var data = data["data"];
+				dbCollectionsCache = data["data"]["collections_details"];
+				console.log(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				if(fun){
+					fun(dbCollectionsCache)
+				}
+
+			}
+		});
+	}
+}
+
+//see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
 function bytesToSize(bytes, precision) {
 	if (bytes){
 		var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-		
+
 		if (bytes == 0) return 'n/a';
 		if (bytes < 1024) {
-				return Number(bytes) + " " + sizes[0];
+			return Number(bytes) + " " + sizes[0];
 		}
 		var posttxt = 0;
 		do {
@@ -49,7 +74,7 @@ $('.btn-newcollection').click(function(e){
 
 $('#dropDb').click(function(e){
 	$('#dropDbModal').modal('show');
-	
+
 });
 
 $('#exportDb').click(function(e){
@@ -58,13 +83,13 @@ $('#exportDb').click(function(e){
 				error: function(data)
 				{
 					alert(JSON.parse(data.responseText)["message"]);
-					
+
 				},
 				success: function(data)
 				{
 					alert("your db export has been scheduled");
 				}
-				
+
 			});	
 })
 $('#dropDbCancel').click(function(e){
@@ -74,43 +99,58 @@ $('#dropDbCancel').click(function(e){
 $('#dropDbConfirm').click(function(e){
 	$('#dropDbModal').modal('hide');
 	dropDb();
-	
-	
+
+
 });
 
 function dropDb()
 {
 	freezeConsole("dropping your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
-	{
-		error: function(data)
-		{
-			unfreezeConsole();
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			unfreezeConsole();
-			callMenu('#dashboard');
-			
-			
-		}
-		
-	})	
+			{
+				error: function(data)
+				{
+					unfreezeConsole();
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					unfreezeConsole();
+					callMenu('#dashboard');
+
+
+				}
+
+			})	
 }
 
+$('a.deleteCollection').live('click',function(e){
+	var name = $(e.target).parents('tr').children()[0].innerHTML
+	if(confirm("Are you sure you want to delete this collection?")){
+		BBRoutes.com.baasbox.controllers.Admin.dropCollection(name).ajax({
+			error:function(data){
+				alert(JSON.parse(data.responseText)["message"]);
+			},
+			success: function(data){
+				dbCollectionsCache = null;
+				callMenu('#collections');
+			}
+		});
+	}
+})
 
 $('a.deleteExport').live('click',function(e){
-	
+
 	var name = $(e.target).parents('tr').children()[0].innerHTML
 	if(confirm("Are you sure you want to delete this export?")){
 		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
 			error:function(data){
 				alert(JSON.parse(data.responseText)["message"]);
 			},
-		    success: function(data){
-		    	callMenu('#dbmanager');
-		    }
+			success: function(data){
+
+				callMenu('#dbmanager');
+			}
 		});
 	}
 });
@@ -123,40 +163,40 @@ $('a.downloadExport').live('click',function(e){
 	// Hack to pass bytes through unprocessed.
 	xhr.overrideMimeType('text/plain; charset=x-user-defined');
 	xhr.responseType = 'blob'
-	xhr.onload = function(e) {
-	  if (this.status == 200) {
-	    var binStr = this.response;
-	      var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-		  var builder;
-		  var blob;
-		  if(!BlobBuilder){
-			  console.log("BlobBuilder is not available...Using plain BLOB")
-			  blob = new Blob([binStr],{ "type" : "application\/zip" });
-		  }else{
-			  builder = new BlobBuilder();
-			  builder.append(binStr);
-			  blob = builder.getBlob();
-		  }
-		  var urlGen = window.webkitURL || window.mozURL || window.URL
-		  var url = urlGen.createObjectURL(blob);
-		  $($("#downloadExportModal .modal-body")[0]).html("")
-		  						.append($("<a id=\""+name+"\"/>")
-		  						.attr({href: url})
-		  						.attr("download",name)
-		  						.append("Download:" + name))
-		  						.on('click',function(e){
-		  							$(e.target).remove();
-		  							$('#downloadExportModal').modal('hide');
-		  							});
-		  
-		  $('#downloadExportModal').modal('show');
-	    }
-	  
+		xhr.onload = function(e) {
+		if (this.status == 200) {
+			var binStr = this.response;
+			var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+			var builder;
+			var blob;
+			if(!BlobBuilder){
+				console.log("BlobBuilder is not available...Using plain BLOB")
+				blob = new Blob([binStr],{ "type" : "application\/zip" });
+			}else{
+				builder = new BlobBuilder();
+				builder.append(binStr);
+				blob = builder.getBlob();
+			}
+			var urlGen = window.webkitURL || window.mozURL || window.URL
+			var url = urlGen.createObjectURL(blob);
+			$($("#downloadExportModal .modal-body")[0]).html("")
+			.append($("<a id=\""+name+"\"/>")
+					.attr({href: url})
+					.attr("download",name)
+					.append("Download:" + name))
+					.on('click',function(e){
+						$(e.target).remove();
+						$('#downloadExportModal').modal('hide');
+					});
+
+			$('#downloadExportModal').modal('show');
+		}
+
 	};
 
 	xhr.send();
-	
-	
+
+
 });
 
 function downloadExportHref(name){
@@ -168,8 +208,8 @@ function downloadExportHref(name){
 	}else{
 		return '#';
 	}
-	
-	
+
+
 }
 
 
@@ -189,7 +229,7 @@ $('.btn-adduser').click(function(e){
 }); // Show Modal for Add User
 
 $('.btn-newAsset').click(function(e){
-	
+
 	$(".error").removeClass("error");
 	$('#txtAssetName').val('');
 	$('#txtAssetMeta').val('');
@@ -204,67 +244,67 @@ $(".btn-action").live("click", function() {
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
 
-	
+
 	switch (action)	{
-		case "insert":
-			switch (actionType)	{
-				case "user":
-					break;
-				case "collection":
-					break;
-				case "document":
-					break;
-				case "asset":
-					break;
-			}
+	case "insert":
+		switch (actionType)	{
+		case "user":
 			break;
-		case "edit":
-			switch (actionType)	{
-				case "user":
-					openUserEditForm(parameters);
-					break;
-				case "collection":
-					break;
-				case "setting":
-					openSettingEditForm(parameters);
-				case "document":
-					break;
-				case "asset":
-					break;
-			}
+		case "collection":
 			break;
-		case "delete":
-			switch (actionType)	{
-				case "user":
-					break;
-				case "collection":
-					break;
-				case "document":
-					break;
-				case "asset":
-					if(!confirm("Do you want delete '"+ parameters +"' asset?"))
-						return;
-					deleteAsset(parameters);
-					break;
-			}
+		case "document":
 			break;
+		case "asset":
+			break;
+		}
+		break;
+	case "edit":
+		switch (actionType)	{
+		case "user":
+			openUserEditForm(parameters);
+			break;
+		case "collection":
+			break;
+		case "setting":
+			openSettingEditForm(parameters);
+		case "document":
+			break;
+		case "asset":
+			break;
+		}
+		break;
+	case "delete":
+		switch (actionType)	{
+		case "user":
+			break;
+		case "collection":
+			break;
+		case "document":
+			break;
+		case "asset":
+			if(!confirm("Do you want delete '"+ parameters +"' asset?"))
+				return;
+			deleteAsset(parameters);
+			break;
+		}
+		break;
 	}
 });
 
 function deleteAsset(assetName)
 {
 	BBRoutes.com.baasbox.controllers.Asset.delete(assetName).ajax(
-	{
-		data: {"name": assetName},
-		error: function(data)
-		{
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			loadAssetTable();
-		}
-	})	
+			{
+				data: {"name": assetName},
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					loadAssetTable();
+				}
+			})	
 }
 
 function openUserEditForm(editUserName)
@@ -277,7 +317,7 @@ function openUserEditForm(editUserName)
 	$("#txtUsername").prop('disabled', true);
 	$("#userTitle").text("Edit User information");
 	$(".groupUserPwd").addClass("hide");
-	
+
 	for(i=0;i<userDataArray.length;i++)
 	{
 		if(userDataArray[i].user.name == editUserName)
@@ -287,7 +327,7 @@ function openUserEditForm(editUserName)
 	$("#txtUsername").val(userObject.user.name);
 	$("#cmbSelectRole option:contains("+ userObject.user.roles[0].name +")").prop('selected',true)
 	$("#cmbSelectRole").trigger("liszt:updated");
-	
+
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser));
 	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend));
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers));
@@ -299,7 +339,7 @@ function openUserEditForm(editUserName)
 function openSettingEditForm(editSettingName)
 {
 	var settingObject;
-	
+
 	for(i=0;i<settingDataArray.length;i++)
 	{
 		if(settingDataArray[i].key == editSettingName){
@@ -320,7 +360,7 @@ function openSettingEditForm(editSettingName)
 			settingSectionChanged = 'Images';
 			settingObject = settingImgDataArray[i];
 		}
-			
+
 	}
 	for(i=0;i<settingPushDataArray.length;i++)
 	{
@@ -328,29 +368,29 @@ function openSettingEditForm(editSettingName)
 			settingSectionChanged = 'Push';
 			settingObject = settingPushDataArray[i];
 		}
-			
+
 	}	
 	$("#lblDescription").text(settingObject.description);
 	$("#txtKey").val(settingObject.key);
 	$("#txtKey").addClass("disabled");
 	$("#txtValue").val(settingObject.value);
-	
+
 	$('#EditSettingModal').modal('show');
 }
 
 function freezeConsole(title,reason){
-	
+
 	$('#freezeConsole__ .modal-header h2').html(title || "Please wait");
 	$('#freezeConsole__ .modal-body').html("<p>"+reason+"</p>");
 	$('#freezeConsole__').modal({keyboard:false,backdrop:'static'});
-	
+
 }
 
 function unfreezeConsole(title,reason){
 	$('#freezeConsole__').modal('hide');
 	$('#freezeConsole__ .modal-header h2').html("");
 	$('#freezeConsole__ .modal-body').html("");
-	
+
 }
 function reverseJSON(objJSON)
 {
@@ -383,6 +423,7 @@ function loadSettingTable()
 
 function loadCollectionsTable()
 {
+
 	callMenu("#collections");
 }
 
@@ -397,21 +438,21 @@ function resetAddUserForm()
 
 function loadUserRole()
 {
-		BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
-			data: {orderBy: "name asc"},
-			success: function(data) {
-										var sel=$('#cmbSelectRole');
-										sel.empty();
-										sel.append($("<option/>"));
-										data=data["data"];
-										$.each(data, function(index, item) {
-										    sel.append($("<option/>", {
-										        value: item["name"],
-										        text: item["name"]
-										    }));
-										});
-										$("#cmbSelectRole").trigger("liszt:updated");
-									}});
+	BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
+		data: {orderBy: "name asc"},
+		success: function(data) {
+			var sel=$('#cmbSelectRole');
+			sel.empty();
+			sel.append($("<option/>"));
+			data=data["data"];
+			$.each(data, function(index, item) {
+				sel.append($("<option/>", {
+					value: item["name"],
+					text: item["name"]
+				}));
+			});
+			$("#cmbSelectRole").trigger("liszt:updated");
+		}});
 }
 
 function addUser()
@@ -423,28 +464,28 @@ function addUser()
 	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
-	
+
 	BBRoutes.com.baasbox.controllers.Admin.createUser().ajax(
-	{
-		data: JSON.stringify({"username": userName,
-								"password": password,
-								"role": role,
-								"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-								"visibleByFriend": jQuery.parseJSON(visibleByFriend),
-								"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
-								"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
-							}),
-		contentType: "application/json",
-		processData: false,
-		error: function(data)
-		{
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			closeUserForm();
-		}
-	})	
+			{
+				data: JSON.stringify({"username": userName,
+					"password": password,
+					"role": role,
+					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
+					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
+					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
+				}),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					closeUserForm();
+				}
+			})	
 }
 
 function updateUser()
@@ -456,27 +497,27 @@ function updateUser()
 	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
-	
+
 	BBRoutes.com.baasbox.controllers.Admin.updateUser(userName).ajax(
-	{
-		data: JSON.stringify({
-								"role": role,
-								"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-								"visibleByFriend": jQuery.parseJSON(visibleByFriend),
-								"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
-								"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
-							}),	
-		contentType: "application/json",
-		processData: false,
-		error: function(data)
-		{
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			closeUserForm();
-		}
-	})	
+			{
+				data: JSON.stringify({
+					"role": role,
+					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
+					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
+					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
+				}),	
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					closeUserForm();
+				}
+			})	
 }
 
 function closeUserForm()
@@ -489,20 +530,20 @@ function updateSetting()
 {
 	var key = $("#txtKey").val();
 	var value = $("#txtValue").val();
-		
+
 	BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key, value).ajax(
-	{
-		
-		error: function(data)
-		{
-			//console.log(data)
-			alert("Error updating settings:" + data["message"]);
-		},
-		success: function(data)
-		{
-			closeSettingForm();
-		}
-	})	
+			{
+
+				error: function(data)
+				{
+					//console.log(data)
+					alert("Error updating settings:" + data["message"]);
+				},
+				success: function(data)
+				{
+					closeSettingForm();
+				}
+			})	
 }
 
 function closeSettingForm()
@@ -522,9 +563,9 @@ $('.btn-UserCommit').click(function(e){
 	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
-	
+
 	var errorMessage = '';
-	
+
 	if($('.groupUserPwd').hasClass('hide'))
 		action = "Update";
 	else
@@ -533,32 +574,32 @@ $('.btn-UserCommit').click(function(e){
 	if($.trim(userName) == "")
 		errorMessage = "The field 'Username' is required<br/>"
 
-	if(action == "Insert"){
-		if($.trim(password) == "")
-			errorMessage += "The field 'Password' is required<br/>"
+			if(action == "Insert"){
+				if($.trim(password) == "")
+					errorMessage += "The field 'Password' is required<br/>"
 
-		if($.trim(retypePassword) == "")
-			errorMessage += "The field 'Retype Password' is required<br/>"
-		
-		if(password != retypePassword)
-		{
-			$(".groupUserPwd").addClass("error");
-			errorMessage += "'Password' and 'Retype Password' don't match<br/>"
-		}
-		else
-			$(".groupUserPwd").removeClass("error");		
-	}
+						if($.trim(retypePassword) == "")
+							errorMessage += "The field 'Retype Password' is required<br/>"
 
-	
+								if(password != retypePassword)
+								{
+									$(".groupUserPwd").addClass("error");
+									errorMessage += "'Password' and 'Retype Password' don't match<br/>"
+								}
+								else
+									$(".groupUserPwd").removeClass("error");		
+			}
+
+
 	if($.trim(role) == "")
 		errorMessage += "The field 'Role' is required<br/>"
-	
-	if(!isValidJson(visibleByTheUser)){
-		$("#auVisibleByTheUser").addClass("error");
-		errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
-	}
-	else
-		$("#auVisibleByTheUser").removeClass("error");
+
+			if(!isValidJson(visibleByTheUser)){
+				$("#auVisibleByTheUser").addClass("error");
+				errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
+			}
+			else
+				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
@@ -580,19 +621,19 @@ $('.btn-UserCommit').click(function(e){
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
-	
+
 	if(errorMessage != "")
 	{
 		$("#errorAddUser").html(errorMessage);
 		$("#errorAddUser").removeClass("hide");
 		return;
 	}
-	
+
 	if(action == "Insert")
 		addUser();
 	else
 		updateUser();
-	
+
 	return;
 }); // Validate and Ajax submit for Insert/Update User
 
@@ -601,62 +642,63 @@ $('.btn-SettingCommit').click(function(e){
 
 	var key = $("#txtKey").val();
 	var value = $("#txtValue").val();
-	
+
 	var errorMessage = '';
-	
+
 	if($.trim(key) == "")
 		errorMessage = "The field 'Key' is required<br/>"
 
-	if($.trim(value) == "")
-		errorMessage += "The field 'Value' is required<br/>"
-	
-	if(errorMessage != "")
-	{
-		$("#errorEditSetting").html(errorMessage);
-		$("#errorEditSetting").removeClass("hide");
-		return;
-	}
+			if($.trim(value) == "")
+				errorMessage += "The field 'Value' is required<br/>"
+
+					if(errorMessage != "")
+					{
+						$("#errorEditSetting").html(errorMessage);
+						$("#errorEditSetting").removeClass("hide");
+						return;
+					}
 	$("#txtKey").removeClass("disabled");
 	updateSetting();
-	
+
 	return;
 }); // Validate and Ajax submit for Update Setting
 
 
 function isValidJson(code)
 {
-    try {
-        JSON.parse(code);
+	try {
+		JSON.parse(code);
 		return true;
-    } catch (e) {
-        return false;
-    }
+	} catch (e) {
+		return false;
+	}
 }
 
 $('.btn-NewCollectionCommit').click(function(e){
 
 	var collectionName = $("#newCollectionName").val();
-	
+
 	if($.trim(collectionName) == '')
 	{
 		return;
 	}		
-	
+
 	BBRoutes.com.baasbox.controllers.Admin.createCollection(collectionName).ajax(
-	{
-		data: JSON.stringify({"name": collectionName}),
-		contentType: "application/json",
-		processData: false,
-		error: function(data)
-		{
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			$('#newCollectionModal').modal('hide');
-			loadCollectionsTable();
-		}
-	})	
+			{
+				data: JSON.stringify({"name": collectionName}),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					$('#newCollectionModal').modal('hide');
+					dbCollectionsCache = null;
+					loadCollectionsTable();
+				}
+			})	
 }); // Validate and Ajax submit for new collection
 
 $('.btn-ChangePwdCommit').click(function(e){
@@ -671,7 +713,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	}
 	else
 		$("#errorCPwd").addClass("hide");
-	
+
 	if(newPassword != $("#retypenewpassword").val())
 	{
 		$("#errorPwdNotMatch").removeClass("hide");
@@ -679,7 +721,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	}		
 	else
 		$("#errorPwdNotMatch").addClass("hide");
-		
+
 	if($.trim(newPassword) == '')
 	{
 		$("#errorNewPassword").removeClass("hide");
@@ -687,22 +729,22 @@ $('.btn-ChangePwdCommit').click(function(e){
 	}		
 	else
 		$("#errorNewPassword").addClass("hide");
-	
+
 	BBRoutes.com.baasbox.controllers.User.changePassword().ajax(
-	{
-		data: JSON.stringify({"old": oldPassword,"new": newPassword}),
-		contentType: "application/json",
-		processData: false,
-		error: function(data)
-		{
-			alert(JSON.parse(data.responseText)["message"]);
-		},
-		success: function(data)
-		{
-			sessionStorage.password = newPassword;
-			$('#changePwdModal').modal('hide');
-		}
-	})	
+			{
+				data: JSON.stringify({"old": oldPassword,"new": newPassword}),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					sessionStorage.password = newPassword;
+					$('#changePwdModal').modal('hide');
+				}
+			})	
 }); // Validate and Ajax submit for Change Password
 
 $('#importBtn').on('click',function(e){
@@ -747,26 +789,26 @@ $('#importDbForm').on('submit',function(){
 			type: "post",
 			clearForm: true,
 			resetForm: true,
-				success: function(){
-					unfreezeConsole();
-					BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
-							function() { 
-								sessionStorage.up="";
-								sessionStorage.appcode="";
-								sessionStorage.sessionToken="";
-								location.reload(); 
-							});
-				}, //success
-				error:function(data){
-					unfreezeConsole();
-					$('#importErrors').removeClass("hide");
-					$('#importErrors').html(JSON.parse(data.responseText)["message"]);
-				} //error
-			};
+			success: function(){
+				unfreezeConsole();
+				BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
+						function() { 
+							sessionStorage.up="";
+							sessionStorage.appcode="";
+							sessionStorage.sessionToken="";
+							location.reload(); 
+						});
+			}, //success
+			error:function(data){
+				unfreezeConsole();
+				$('#importErrors').removeClass("hide");
+				$('#importErrors').html(JSON.parse(data.responseText)["message"]);
+			} //error
+	};
 
-		freezeConsole("","Importing your data...please wait");
-	 	$(this).ajaxSubmit(options);
-	 	return false;
+	freezeConsole("","Importing your data...please wait");
+	$(this).ajaxSubmit(options);
+	return false;
 })
 
 $('#assetForm').submit(function() {
@@ -779,21 +821,21 @@ $('#assetForm').submit(function() {
 	if($.trim(assetName) == "")
 		errorMessage = "The field 'Name' is required<br/>"
 
-//	if($.trim(assetMeta) == "")
-//		errorMessage += "The field 'Meta' is required<br/>"
-		
-	if(!isValidJson(assetMeta)){
-		$("#divAssetMeta").addClass("error");
-		errorMessage += "The field 'Meta' must be a valid Json text<br/>"
-	}
-	else
-		$("#divAssetMeta").removeClass("error");
+//			if($.trim(assetMeta) == "")
+//			errorMessage += "The field 'Meta' is required<br/>"
+
+			if(!isValidJson(assetMeta)){
+				$("#divAssetMeta").addClass("error");
+				errorMessage += "The field 'Meta' must be a valid Json text<br/>"
+			}
+			else
+				$("#divAssetMeta").removeClass("error");
 
 	var ext = $('#fuAsset').val().split('.').pop().toLowerCase();
 	/*if($.inArray(ext, ['gif','png','jpg','jpeg','tif','eps','pdf','doc','docx','xls','xlsx','ppt','pptx','txt','']) == -1) {
 		errorMessage += "Invalid File Extension<br/>"
 	}*/		
-		
+
 	if(errorMessage != "")
 	{
 		$("#errorAsset").html(errorMessage);
@@ -803,38 +845,38 @@ $('#assetForm').submit(function() {
 
 	if ($.trim(assetMeta) == "") 
 		assetMeta = "{}";
-	
+
 	var serverUrl=BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL();
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
 
 	var options = {
-		url: serverUrl,
-		type: "post",
-		dataType: "json",
-		clearForm: true,
-		resetForm: true,
+			url: serverUrl,
+			type: "post",
+			dataType: "json",
+			clearForm: true,
+			resetForm: true,
 			success: function(){
 				$('#addAssetModal').modal('hide');
 				loadAssetTable();
 			} //success
-		};
+	};
 
- 	$(this).ajaxSubmit(options);
+	$(this).ajaxSubmit(options);
 
 	return false;
 })// Validate and Ajax submit for new Asset
 
 
 function make_base_auth(user, password) {
-	  var tok = user + ':' + password;
-	  var hash = btoa(tok);
-	  return "Basic " + hash;
-	}
+	var tok = user + ':' + password;
+	var hash = btoa(tok);
+	return "Basic " + hash;
+}
 
 function setup(){
-    
+
 	setupAjax();
 	setupMenu();
 	setupTables();
@@ -849,7 +891,7 @@ function setup(){
 					location.reload(); 
 				});
 	});
-	
+
 	if (sessionStorage.up && sessionStorage.up!="") {
 		tryToLogin();
 	}	
@@ -860,18 +902,18 @@ function getActionButton(action, actionType,parameters){
 	var iconType;
 	var classType;
 	var labelName;
-	
+
 	switch (action)	{
-		case "edit":
-			iconType = "icon-edit";
-			classType = "btn-info";
-			labelName = "Edit";
-			break;
-		case "delete":
-			iconType = "icon-trash";
-			classType = "btn-danger";
-			labelName = "Delete";
-			break;
+	case "edit":
+		iconType = "icon-edit";
+		classType = "btn-info";
+		labelName = "Edit";
+		break;
+	case "delete":
+		iconType = "icon-trash";
+		classType = "btn-danger";
+		labelName = "Delete";
+		break;
 	}
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
 	return actionButton;
@@ -881,29 +923,29 @@ function getActionButton(action, actionType,parameters){
 function setBradCrumb(type)
 {
 	var sBradCrumb;
-	
+
 	switch (type){
-		case "#users":
-			sBradCrumb = "Users";
-		  break;
-		case "#dashboard":
-			sBradCrumb = "Dashboard";
-		  break;
-		case "#settings":
-			sBradCrumb = "Settings";
-		  break;
-		case "#dbmanager":
-			sBradCrumb = "DB Manager";
-		  break;
-		case "#collections":
-			sBradCrumb = "Collections";
-		  break;
-		case "#documents":
-			sBradCrumb = "Documents";
-		  break;
-		case "#assets":
-			sBradCrumb = "Assests";
-		  break;
+	case "#users":
+		sBradCrumb = "Users";
+		break;
+	case "#dashboard":
+		sBradCrumb = "Dashboard";
+		break;
+	case "#settings":
+		sBradCrumb = "Settings";
+		break;
+	case "#dbmanager":
+		sBradCrumb = "DB Manager";
+		break;
+	case "#collections":
+		sBradCrumb = "Collections";
+		break;
+	case "#documents":
+		sBradCrumb = "Documents";
+		break;
+	case "#assets":
+		sBradCrumb = "Assests";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
@@ -912,35 +954,35 @@ function setBradCrumb(type)
 function getAssetIcon(type)
 {
 	var sIcon="";
-	
+
 	switch (type){
-		case "image/png":
-			sIcon = "png.png";
-		  break;
-		case "image/jpeg":
-			sIcon = "jpg.png";
-		  break;
-		case "image/gif":
-			sIcon = "gif.png";
-		  break;
-		case "image/tiff":
-			sIcon = "tiff.png";
-		  break;
-		case "image/eps":
-			sIcon = "eps.png";
-		  break;
-		case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-			sIcon = "word.png";
-		  break;
-		case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-			sIcon = "excel.png";
-		  break;
-		case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-			sIcon = "ppt.png";
-		  break;
-		case "application/pdf":
-			sIcon = "pdf.png";
-		  break;
+	case "image/png":
+		sIcon = "png.png";
+		break;
+	case "image/jpeg":
+		sIcon = "jpg.png";
+		break;
+	case "image/gif":
+		sIcon = "gif.png";
+		break;
+	case "image/tiff":
+		sIcon = "tiff.png";
+		break;
+	case "image/eps":
+		sIcon = "eps.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+		sIcon = "word.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+		sIcon = "excel.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+		sIcon = "ppt.png";
+		break;
+	case "application/pdf":
+		sIcon = "pdf.png";
+		break;
 	}
 	if (sIcon=="") return "";
 	return "<img src='img/AssetIcons/"+ sIcon +"'/>";
@@ -948,233 +990,235 @@ function getAssetIcon(type)
 
 
 function setupTables(){
-    $('#userTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+	$('#userTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "user.name"},
-    	               {"mData": "user.roles.0.name"},
-    	               {"mData": "_creation_date","sDefaultContent":""},
-    	               {"mData": "user.status","mRender": function ( data, type, full ) {
-    	            	   										var classStyle="label-success"
-    	            	   										if (data!="ACTIVE") classStyle="label-important";
-    	            	   										var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
-    	            	   										return htmlReturn;
-    	               								}
-    					},
-					   {"mData": "user.name", "mRender": function ( data, type, full ) {
-														if(data!="admin" && data!="baasbox" && data!="internal_admin")
-															return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
-														return "";
-    	               								}
-    	               }],
-        "bRetrieve": true,
-  		"bDestroy":true
-        } ).makeEditable();
+		"aoColumns": [ {"mData": "user.name"},
+		               {"mData": "user.roles.0.name"},
+		               {"mData": "_creation_date","sDefaultContent":""},
+		               {"mData": "user.status","mRender": function ( data, type, full ) {
+		            	   var classStyle="label-success"
+		            		   if (data!="ACTIVE") classStyle="label-important";
+		            	   var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
+		            	   return htmlReturn;
+		               }
+		               },
+		               {"mData": "user.name", "mRender": function ( data, type, full ) {
+		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
+		            		   return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
+		            	   return "";
+		               }
+		               }],
+		               "bRetrieve": true,
+		               "bDestroy":true
+	} ).makeEditable();
 
-    $('#settingsTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+	$('#settingsTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "key"},
-    	               {"mData": "description"},
-    	               {"mData": "value", "mRender":function ( data, type, full ) {
-															return $('<div/>').text(data).html();
-					   								}
-					   },
-					   
-					   {"mData": "key", "mRender": function ( data, type, full ) {
-															return getActionButton("edit","setting",data);
-					   										}
-    	               }],
-    	               
-        "bRetrieve": true,
-  		"bDestroy":false
-        } ).makeEditable();
+		"aoColumns": [ {"mData": "key"},
+		               {"mData": "description"},
+		               {"mData": "value", "mRender":function ( data, type, full ) {
+		            	   return $('<div/>').text(data).html();
+		               }
+		               },
 
-    $('#settingsPwdTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "key"},
-    	               {"mData": "description"},
-    	               {"mData": "value", "mRender":function ( data, type, full ) {
-															return $('<div/>').text(data).html();
-					   								}
-					   },
-					   {"mData": "key", "mRender": function ( data, type, full ) {
-															return getActionButton("edit","setting",data);
-					   										}
-    	               }],
-    	               
-        "bRetrieve": true,
-  		"bDestroy":false
-        } ).makeEditable();
-    
-    $('#settingsImgTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "key"},
-    	               {"mData": "description"},
-    	               {"mData": "value", "mRender":function ( data, type, full ) {
-															return $('<div/>').text(data).html();
-					   								}
-					   },
-					   {"mData": "key", "mRender": function ( data, type, full ) {
-															return getActionButton("edit","setting",data);
-					   										}
-    	               }],
-    	               
-        "bRetrieve": true,
-  		"bDestroy":false
-        } ).makeEditable();
+		               {"mData": "key", "mRender": function ( data, type, full ) {
+		            	   return getActionButton("edit","setting",data);
+		               }
+		               }],
 
-    $('#settingsPushTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "key"},
-    	               {"mData": "description"},
-    	               {"mData": "value", "mRender":function ( data, type, full ) {
-															return $('<div/>').text(data).html();
-					   								}
-					   },
-					   {"mData": "key", "mRender": function ( data, type, full ) {
-															return getActionButton("edit","setting",data);
-					   										}
-    	               }],
-    	               
-        "bRetrieve": true,
-  		"bDestroy":false
-        } ).makeEditable();
+		               "bRetrieve": true,
+		               "bDestroy":false
+	} ).makeEditable();
 
-    $('#exportTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-    	"aaSorting": [[ 2, "desc" ]],
-    	"sPaginationType": "bootstrap",
-    	"aoColumns": [ {"mData": "name"},
-    	               {"mData": "date"},
-    	               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
-    	             ],
-    	"bRetrieve": true,
-  		"bDestroy":true
-        
-    });
-    $('#collectionTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+	$('#settingsPwdTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "name"}],
-        "bRetrieve": true,
-  		"bDestroy":true
-        } ).makeEditable();
-    
-    $('#documentTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"aoColumns": [ {"mData": "key"},
+		               {"mData": "description"},
+		               {"mData": "value", "mRender":function ( data, type, full ) {
+		            	   return $('<div/>').text(data).html();
+		               }
+		               },
+		               {"mData": "key", "mRender": function ( data, type, full ) {
+		            	   return getActionButton("edit","setting",data);
+		               }
+		               }],
+
+		               "bRetrieve": true,
+		               "bDestroy":false
+	} ).makeEditable();
+
+	$('#settingsImgTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ {"mData": "@rid"},
-    	               {"mData": "@rid", "mRender": function ( data, type, full ) {
-    	            	   								var obj=JSON.parse(JSON.stringify(full)); 
-    	            	   								delete obj["@rid"];
-    	            	   								delete obj["@class"];
-    	            	   								delete obj["@version"];
-    	            	   								return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
-    	               								}
-    	               },
-    	               {"mData": "@version"}
-    	               ],
-        "bRetrieve": true,
-  		"bDestroy":true
-        } ).makeEditable(); 
+		"aoColumns": [ {"mData": "key"},
+		               {"mData": "description"},
+		               {"mData": "value", "mRender":function ( data, type, full ) {
+		            	   return $('<div/>').text(data).html();
+		               }
+		               },
+		               {"mData": "key", "mRender": function ( data, type, full ) {
+		            	   return getActionButton("edit","setting",data);
+		               }
+		               }],
+
+		               "bRetrieve": true,
+		               "bDestroy":false
+	} ).makeEditable();
+
+	$('#settingsPushTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ {"mData": "key"},
+		               {"mData": "description"},
+		               {"mData": "value", "mRender":function ( data, type, full ) {
+		            	   return $('<div/>').text(data).html();
+		               }
+		               },
+		               {"mData": "key", "mRender": function ( data, type, full ) {
+		            	   return getActionButton("edit","setting",data);
+		               }
+		               }],
+
+		               "bRetrieve": true,
+		               "bDestroy":false
+	} ).makeEditable();
+
+	$('#exportTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"aaSorting": [[ 2, "desc" ]],
+		"sPaginationType": "bootstrap",
+		"aoColumns": [ {"mData": "name"},
+		               {"mData": "date"},
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
+		               ],
+		               "bRetrieve": true,
+		               "bDestroy":true
+
+	});
+	$('#collectionTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ {"mData": "name"},
+		               {"mData":"records"},
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteCollection\">Delete...</a>"}}],
+		               "bRetrieve": true,
+		               "bDestroy":true
+	} ).makeEditable();
+
+	$('#documentTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ {"mData": "@rid"},
+		               {"mData": "@rid", "mRender": function ( data, type, full ) {
+		            	   var obj=JSON.parse(JSON.stringify(full)); 
+		            	   delete obj["@rid"];
+		            	   delete obj["@class"];
+		            	   delete obj["@version"];
+		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
+		               }
+		               },
+		               {"mData": "@version"}
+		               ],
+		               "bRetrieve": true,
+		               "bDestroy":true
+	} ).makeEditable(); 
 	$('#btnReloadDocumkents').click(function(){
-			$("#selectCollection").trigger("change");
-		});
+		$("#selectCollection").trigger("change");
+	});
 	$('#btnReloadExports').click(function(){
 		callMenu('#dbmanager')
 	});
-    $('#assetTable').dataTable( {
-    	"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+	$('#assetTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-    	"aoColumns": [ 
-						{"mData": "@class", "mRender": function (data, type, full ) {
-														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="_BB_FileAsset")
-															return getAssetIcon(obj["contentType"]);
-    	            	   								return "";
-    	               								}},
-						{"mData": "name"},
-						{"mData": "@class", "mRender": function ( data, type, full ) {
-														var obj=JSON.parse(JSON.stringify(full));
-														if(obj["meta"] != undefined)
-														{
-															return JSON.stringify(obj["meta"]);
-														}
-														else
-														{
-															return "";
-														}
-    	               								}},
-						{"mData": "@class", "mRender": function (data, type, full ) {
-														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="_BB_FileAsset")
-															return  bytesToSize(obj["contentLength"],'KB');
-    	            	   								return "";
-    	               								}},
-						{"mData": "@class", "mRender": function (data, type, full ) {
-														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="_BB_FileAsset")
-															return obj["contentType"];
-    	            	   								return "";
-    	               								}},
-						{"mData": "@class", "mRender": function (data, type, full) {
-														var obj=JSON.parse(JSON.stringify(full));
-														if(data =="_BB_FileAsset")
-															return "<a href='/asset/" + obj["name"] + "/download?X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
-    	            	   								return "";
-    	               								}},
-						{"mData": "name", "mRender": function (data) {
-    	            	   								return getActionButton("delete","asset",data);
-    	               								}}
-		],
-        "bRetrieve": true,
-  		"bDestroy":true
-        } ).makeEditable();
+		"aoColumns": [ 
+		              {"mData": "@class", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(data =="_BB_FileAsset")
+		            		  return getAssetIcon(obj["contentType"]);
+		            	  return "";
+		              }},
+		              {"mData": "name"},
+		              {"mData": "@class", "mRender": function ( data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(obj["meta"] != undefined)
+		            	  {
+		            		  return JSON.stringify(obj["meta"]);
+		            	  }
+		            	  else
+		            	  {
+		            		  return "";
+		            	  }
+		              }},
+		              {"mData": "@class", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(data =="_BB_FileAsset")
+		            		  return  bytesToSize(obj["contentLength"],'KB');
+		            	  return "";
+		              }},
+		              {"mData": "@class", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(data =="_BB_FileAsset")
+		            		  return obj["contentType"];
+		            	  return "";
+		              }},
+		              {"mData": "@class", "mRender": function (data, type, full) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(data =="_BB_FileAsset")
+		            		  return "<a href='/asset/" + obj["name"] + "/download?X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
+		            	  return "";
+		              }},
+		              {"mData": "name", "mRender": function (data) {
+		            	  return getActionButton("delete","asset",data);
+		              }}
+		              ],
+		              "bRetrieve": true,
+		              "bDestroy":true
+	} ).makeEditable();
 }
 
 function setupSelects(){
 
 	$("#selectCollection").chosen().change(function(){
-			val=$("#selectCollection").val();
-			BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-				data: {orderBy: "name asc"},
-				success: function(data) {
-											data=data["data"];
-											var scope=$("#documents").scope();
-											scope.$apply(function(){
-										    	 scope.collectioName=val;
-										     });	
-											$('#documentTable').dataTable().fnClearTable();
-											$('#documentTable').dataTable().fnAddData(data);
-										}
-			})//BBRoutes.com.baasbox.controllers.Document.getDocuments
+		val=$("#selectCollection").val();
+		BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
+			data: {orderBy: "name asc"},
+			success: function(data) {
+				data=data["data"];
+				var scope=$("#documents").scope();
+				scope.$apply(function(){
+					scope.collectioName=val;
+				});	
+				$('#documentTable').dataTable().fnClearTable();
+				$('#documentTable').dataTable().fnAddData(data);
+			}
+		})//BBRoutes.com.baasbox.controllers.Document.getDocuments
 	});//selectCollection
 }
 
 function setupAjax(){
 	$.ajaxSetup({
-			beforeSend: function (xhr){ 
-				xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
-			},
-			statusCode: {
-				401: function(){
-						alert("Sorry, session expired. You must login again");
-						location.reload();
-					}
-				}
+		beforeSend: function (xhr){ 
+			xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
+		},
+		statusCode: {
+			401: function(){
+				alert("Sorry, session expired. You must login again");
+				location.reload();
 			}
+		}
+	}
 	);
 	//hack for charisma menu
 	$('#for-is-ajax').hide();
@@ -1199,22 +1243,22 @@ function setupMenu(){
 function applySuccessMenu(action,data){
 	$('#loading').remove();
 	var scope=$("#loggedIn").scope();
-     scope.$apply(function(){
-    	 scope.menu=action.substr(1);
-     });
-     var scope=$(action).scope();
-     scope.$apply(function(){
-    	 scope.data=data;
-     });	
+	scope.$apply(function(){
+		scope.menu=action.substr(1);
+	});
+	var scope=$(action).scope();
+	scope.$apply(function(){
+		scope.data=data;
+	});	
 
 }//applySuccessMenu 
 
 
 function callMenu(action){
 	var scope=$("#loggedIn").scope();
-    scope.$apply(function(){
-   	 scope.menu="";
-    });
+	scope.$apply(function(){
+		scope.menu="";
+	});
 	$('#loading').remove();
 	$('#content').parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
 
@@ -1225,15 +1269,15 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
-										userDataArray = data["data"];
-										console.log("Admin.getUsers success:");
-										console.log(data);
-										applySuccessMenu(action,userDataArray);
-										$('#userTable').dataTable().fnClearTable();
-										$('#userTable').dataTable().fnAddData(userDataArray);
-									}
+				userDataArray = data["data"];
+				console.log("Admin.getUsers success:");
+				console.log(data);
+				applySuccessMenu(action,userDataArray);
+				$('#userTable').dataTable().fnClearTable();
+				$('#userTable').dataTable().fnAddData(userDataArray);
+			}
 		});
-	  break;//#users
+		break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
 			success: function(data)	{
@@ -1255,56 +1299,60 @@ function callMenu(action){
 		});//BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
-							var data = data["data"];
-							applySuccessMenu(action,data);
-									var platformSpecificFeed={
-											"bbid": data["installation"]["bb_id"],
-											"bbv":  data["installation"]["bb_version"],
-											"odbv": data["db"]["properties"]["version"],
-											"osn": data["os"]["os_name"],
-											"osa": data["os"]["os_arch"],
-											"osv": data["os"]["os_version"],
-											"c": data["os"]["processors"],
-											"jvmmm": data["memory"]["max_allocable_memory"],
-											"jvv": data["java"]["java_vendor"],
-											"jve": data["java"]["java_version"],
-											"rand": Math.random().toString(36).substr(2,7)
-									};
-									$('#latestNewsTab').rssfeed('http://www.baasbox.com/feed/', {
-												header: false,
-												dateformat: "date",
-												content:true,
-												snippet:true,
-												linktarget: "_blank",
-												linkcontent: true,
-												limit: 5,
-												errormsg: "Unable to retrieve latest news"
-									});
-									var serverPlatform=getPlatform(data["os"]["os_name"]);
-									$('#platformNameNews').text(data["os"]["os_name"]);
-									$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true), 
-										{
-													header: false,
-													dateformat: "date",
-													content:true,
-													snippet:true,
-													linktarget: "_blank",
-													linkcontent: true,
-													limit: 5,
-													errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
-										});
-									
-					}//success function
+				var data = data["data"];
+				applySuccessMenu(action,data);
+				var platformSpecificFeed={
+						"bbid": data["installation"]["bb_id"],
+						"bbv":  data["installation"]["bb_version"],
+						"odbv": data["db"]["properties"]["version"],
+						"osn": data["os"]["os_name"],
+						"osa": data["os"]["os_arch"],
+						"osv": data["os"]["os_version"],
+						"c": data["os"]["processors"],
+						"jvmmm": data["memory"]["max_allocable_memory"],
+						"jvv": data["java"]["java_vendor"],
+						"jve": data["java"]["java_version"],
+						"rand": Math.random().toString(36).substr(2,7)
+				};
+				console.log(data["data"]["collections_details"])
+				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
+
+
+				$('#latestNewsTab').rssfeed('http://www.baasbox.com/feed/', {
+					header: false,
+					dateformat: "date",
+					content:true,
+					snippet:true,
+					linktarget: "_blank",
+					linkcontent: true,
+					limit: 5,
+					errormsg: "Unable to retrieve latest news"
+				});
+				var serverPlatform=getPlatform(data["os"]["os_name"]);
+				$('#platformNameNews').text(data["os"]["os_name"]);
+				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true), 
+						{
+					header: false,
+					dateformat: "date",
+					content:true,
+					snippet:true,
+					linktarget: "_blank",
+					linkcontent: true,
+					limit: 5,
+					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
+						});
+
+			}//success function
 		});//ajax call
 
-	  break;	//#dashboard
+		break;	//#dashboard
 	case "#settings":		
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
 			success: function(data) {
 				console.log("dumpConfiguration Application success:");
 				console.log(data);
 				settingDataArray = data["data"];
-				
+
 				//applySuccessMenu(action,data);
 				$('#settingsTable').dataTable().fnClearTable();
 				$('#settingsTable').dataTable().fnAddData(settingDataArray);
@@ -1342,63 +1390,73 @@ function callMenu(action){
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
 			}
 		});
-	  break;	//#settings
-	
+		break;	//#settings
+
 	case "#dbmanager":
 		BBRoutes.com.baasbox.controllers.Admin.getExports().ajax({
 			success: function(data){
 				applySuccessMenu(action,data["data"]);
-				
+
 			}
 		});
 		break;
-	
+
 	case "#collections":
-		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
-		data: {orderBy: "name asc"},
-		success: function(data) {
-									applySuccessMenu(action,data["data"]);
-									$('#collectionTable').dataTable().fnClearTable();
-									$('#collectionTable').dataTable().fnAddData(data["data"]);
-								}
-		});
-	  break;//#collections
+		var collections = [];
+		var ref = function(coll){
+			console.log("refreshing",coll);
+			collections = coll;
+			applySuccessMenu(action,collections);
+			$('#collectionTable').dataTable().fnClearTable();
+			$('#collectionTable').dataTable().fnAddData(collections);
+		}
+		if(dbCollectionsCache){
+				collections = dbCollectionsCache;
+				ref(collections)
+		}else{
+			refreshCollectionCache(null,function(dd){
+				
+				collections = dd;
+				ref(collections)
+			});
+		}
+		break;//#collections
 	case "#documents":
 		$('#documentTable').dataTable().fnClearTable();
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
-										data=data["data"];
-										applySuccessMenu(action,data);
-										var sel=$('#selectCollection');
-									    sel.empty();
+				data=data["data"];
+				applySuccessMenu(action,data);
+				var sel=$('#selectCollection');
+				sel.empty();
 
-										resetChosen("#selectCollection");
+				resetChosen("#selectCollection");
 
-										sel.append($("<option/>"));
-										$.each(data, function(index, item) {
-										    sel.append($("<option/>", {
-										        value: item["name"],
-										        text: item["name"]
-										    }));
-										});
-										sel.trigger("liszt:updated");
-									}
+				sel.append($("<option/>"));
+				$.each(data, function(index, item) {
+					sel.append($("<option/>", {
+						value: item["name"],
+						text: item["name"]
+					}));
+				});
+				sel.trigger("liszt:updated");
+			}
 		});
-	  break; //#documents
+		break; //#documents
 	case "#assets":
 		BBRoutes.com.baasbox.controllers.Asset.getAll().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
-										data=data["data"];
-										applySuccessMenu(action,data);
-										//console.log("getAll");
-										//console.log(data);
-										$('#assetTable').dataTable().fnClearTable();
-										$('#assetTable').dataTable().fnAddData(data);
-									}
+				data=data["data"];
+				applySuccessMenu(action,data);
+				//console.log("getAll");
+				//console.log(data);
+				$('#assetTable').dataTable().fnClearTable();
+				$('#assetTable').dataTable().fnAddData(data);
+			}
 		});
-	  break;//#assets	  
+		break;//#assets	  
 	}
 }//callMenu
 function AssetsController($scope){
@@ -1410,36 +1468,36 @@ function CollectionsController($scope){
 function DocumentsController($scope){
 }
 
-  function tryToLogin(user, pass,appCode){
-		BBRoutes.com.baasbox.controllers.User.login().ajax({
-			data:{username:user,password:pass,appcode:appCode},
-			success: function(data) {
-				         sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-				         console.log("login success");
-				         console.log("data received: ");
-				         console.log(data);
-				         console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-						 callMenu("#dashboard");
-						 //refresh the sessiontoken every 5 minutes
-						 refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
-						 var scope=$("#loggedIn").scope();
-						 scope.$apply(function(){
-						   	 scope.loggedIn=true;
-						 });
-				     },
-			error: function() {
-				$("#errorLogin").removeClass("hide");
-			}
-		});	 //ajax
-  }//tryToLogin	
+function tryToLogin(user, pass,appCode){
+	BBRoutes.com.baasbox.controllers.User.login().ajax({
+		data:{username:user,password:pass,appcode:appCode},
+		success: function(data) {
+			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+			console.log("login success");
+			console.log("data received: ");
+			console.log(data);
+			console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+			callMenu("#dashboard");
+			//refresh the sessiontoken every 5 minutes
+			refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
+			var scope=$("#loggedIn").scope();
+			scope.$apply(function(){
+				scope.loggedIn=true;
+			});
+		},
+		error: function() {
+			$("#errorLogin").removeClass("hide");
+		}
+	});	 //ajax
+}//tryToLogin	
 
 function LoginController($scope) {
-	  $scope.login = function() {
-			var username=$scope.username;
-			var password=$scope.password;
-			var appCode=$scope.appcode;
-			tryToLogin(username, password,appCode);
-	  }; //login
+	$scope.login = function() {
+		var username=$scope.username;
+		var password=$scope.password;
+		var appCode=$scope.appcode;
+		tryToLogin(username, password,appCode);
+	}; //login
 }	//LoginController
 
 function SettingsController($scope){
@@ -1447,77 +1505,77 @@ function SettingsController($scope){
 
 function DBManagerController($scope){
 	$scope.exports = $scope.data
-	
-	
+
+
 	$scope.$watch('data',function(){
-			var res = [];
-			var regexp = /([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2})/;
-			
-			angular.forEach($scope.data,function(exp){
-				var newExp = {};
-				newExp.name = exp;
-				var dtMatcher = exp.match(regexp)
-				if(dtMatcher){
-					newExp.date=dtMatcher[3]+"-"+dtMatcher[2]+"-"+dtMatcher[1]+" "+dtMatcher[4]+":"+dtMatcher[5]+":"+dtMatcher[6]
-					res.push(newExp)
-				}
-			});
-			 $('#exportTable').dataTable().fnClearTable();
-			 $('#exportTable').dataTable().fnAddData(res);
-			 $scope.exports = res;
-			 return $scope.exports;
-		
+		var res = [];
+		var regexp = /([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2})/;
+
+		angular.forEach($scope.data,function(exp){
+			var newExp = {};
+			newExp.name = exp;
+			var dtMatcher = exp.match(regexp)
+			if(dtMatcher){
+				newExp.date=dtMatcher[3]+"-"+dtMatcher[2]+"-"+dtMatcher[1]+" "+dtMatcher[4]+":"+dtMatcher[5]+":"+dtMatcher[6]
+				res.push(newExp)
+			}
 		});
+		$('#exportTable').dataTable().fnClearTable();
+		$('#exportTable').dataTable().fnAddData(res);
+		$scope.exports = res;
+		return $scope.exports;
+
+	});
 }
 
 function DashboardController($scope) {
-	
+
 	$scope.countDocuments = function(statistics){
 		var tot=0;
-			//console.log(statistics);
-			if (statistics){
+		//console.log(statistics);
+		if (statistics){
 			angular.forEach(statistics.data.collections_details, function(value){
-			  tot += value.records;
+				tot += value.records;
 			});
 		}
 		return tot;
 	}
-	
+
 	$scope.formatSize = function(size){
 		return bytesToSize(size,2);
 	}
-	
+
 }
 
 
-	
-	function getPlatform(os){
-		function isWindows(OS) {
-			return (OS.indexOf("win") >= 0);
-		}
-	 
-		function isMac(OS) {
-			return (OS.indexOf("mac") >= 0);
-		}
-	 
-		function isUnix(OS) {
-			return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 );
-		}
-	 
-		function  isSolaris(OS) {
-			return (OS.indexOf("sunos") >= 0);
-		}
-		
-     	os = os.toLowerCase();
-		if (isWindows(os)) {
-			return "windows";
-		} else if (isMac(os)) {
-			return "mac";
-		} else if (isUnix(os)) {
-			return "unix,linux";
-		} else if (isSolaris(os)) {
-			return "solaris,unix";
-		} else {
-			return "other";
-		}
+
+function getPlatform(os){
+	function isWindows(OS) {
+		return (OS.indexOf("win") >= 0);
 	}
+
+	function isMac(OS) {
+		return (OS.indexOf("mac") >= 0);
+	}
+
+	function isUnix(OS) {
+		return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 );
+	}
+
+	function  isSolaris(OS) {
+		return (OS.indexOf("sunos") >= 0);
+	}
+
+	os = os.toLowerCase();
+	if (isWindows(os)) {
+		return "windows";
+	} else if (isMac(os)) {
+		return "mac";
+	} else if (isUnix(os)) {
+		return "unix,linux";
+	} else if (isSolaris(os)) {
+		return "solaris,unix";
+	} else {
+		return "other";
+	}
+}
