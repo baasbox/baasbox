@@ -52,6 +52,7 @@ import com.baasbox.exception.UnableToImportDbException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -194,6 +195,7 @@ public class DbHelper {
 		}
 		String databaseName=BBConfiguration.getDBDir();
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
+		
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
