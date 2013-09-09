@@ -299,8 +299,27 @@ public class Admin extends Controller {
 		return status(NOT_IMPLEMENTED);
 	}
 
-	public static Result dropCollection(){
-		return status(NOT_IMPLEMENTED);
+	/***
+	 * Drop an entire collection
+	 * Data are lost... forevere
+	 * @param name the Collection to drop
+	 * @return
+	 */
+	public static Result dropCollection(String name){
+		Logger.trace("Method Start");
+		try {
+			CollectionService.drop(name);
+		}catch (SqlInjectionException e){
+			return badRequest("The Collection name "+ name +" is malformed or invalid.");
+		}catch (InvalidCollectionException e){
+			return notFound("The Collection " + name + " does not exist");
+		}catch (Exception e){
+			Logger.error(ExceptionUtils.getFullStackTrace(e));
+			return internalServerError(e.getMessage());
+		}
+		Logger.trace("Method End");
+		response().setContentType("application/json");
+		return ok();
 	}
 
 	public static Result dropRole(){

@@ -29,6 +29,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class CollectionService {
 
+	public static void drop(String collectionName) throws InvalidCollectionException, SqlInjectionException, Exception{
+		CollectionDao dao = CollectionDao.getInstance();
+		dao.delete(collectionName);
+	}
+	
 	public static ODocument create(String collectionName) throws Throwable, InvalidCollectionException, InvalidModelException{
 		CollectionDao dao = CollectionDao.getInstance();
 		ODocument doc=dao.create(collectionName);

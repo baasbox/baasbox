@@ -68,7 +68,7 @@ public class GenericDao {
 		  return getRidByUUID(uuid);
 	}
 	
-	public List<ODocument>query(String oclass, QueryParams criteria) throws SqlInjectionException{
+	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
 		OCommandRequest command = DbHelper.selectCommandBuilder(oclass, false, criteria);
 		List<ODocument> result = DbHelper.commandExecute(command, criteria.getParams());
 		return result;
@@ -76,7 +76,7 @@ public class GenericDao {
 	
 
 
-	public void idempotentCommand(String commandString, Object[] params) {
+	public void executeCommand(String commandString, Object[] params) {
 		OGraphDatabase db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
 		command.execute(params);
