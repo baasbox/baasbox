@@ -62,6 +62,7 @@ public class Global extends GlobalSettings {
 	  public Configuration onLoadConfig(Configuration config,
           java.io.File path,
           java.lang.ClassLoader classloader){  
+		  debug("Global.onLoadConfig() called");
 		  info("BaasBox is preparing OrientDB Embedded Server...");
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
@@ -88,13 +89,15 @@ public class Global extends GlobalSettings {
 		    	error("Abnormal BaasBox termination.");
 		    	System.exit(-1);
 		    }
+		  debug("Global.onLoadConfig() ended");
 		  return config;
 	  }
 	  
 	  @Override
 	  public void onStart(Application app) {
+		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
-	    //Orient.instance().startup();
+
 	    OGraphDatabase db =null;
 	    try{
 	    	if (justCreated){
@@ -143,12 +146,14 @@ public class Global extends GlobalSettings {
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
 	    info("Documentation is available at http://www.baasbox.com/documentation/v." + BBConfiguration.getApiVersion() + "/introduction");
-	   }
+		debug("Global.onStart() ended"); 
+	  }
 	  
 	  
 	  
 	  @Override
 	  public void onStop(Application app) {
+		debug("Global.onStop() called");
 	    info("BaasBox is shutting down...");
 	    try{
 	    	info("Closing the DB connections...");
@@ -164,6 +169,7 @@ public class Global extends GlobalSettings {
 	    info("Destroying session manager...");
 	    SessionTokenProvider.destroySessionTokenProvider();
 	    info("...BaasBox has stopped");
+		debug("Global.onStop() ended");
 	  }  
 	  
 	  
