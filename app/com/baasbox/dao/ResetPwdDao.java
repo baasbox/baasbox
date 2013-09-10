@@ -34,7 +34,7 @@ public class ResetPwdDao extends NodeDao  {
 		
 		//invalidates previous token associated with the user
 		String sql = "update " + MODEL_NAME + " set "+ATTRIBUTES_INVALID+"=true where user.user.name=? and "+ATTRIBUTES_COMPLETED_DATE+" is null";
-		GenericDao.getInstance().idempotentCommand(sql, new Object[] {((ODocument)user.field("user")).field("name")});
+		GenericDao.getInstance().executeCommand(sql, new Object[] {((ODocument)user.field("user")).field("name")});
 		 
 		ODocument doc = new ODocument(MODEL_NAME);
 		doc.field(FIELD_CREATION_DATE, new Date());

@@ -167,6 +167,8 @@ public class QueryParams implements IQueryParametersKeys{
 			pageFromQS=queryString.get(IQueryParametersKeys.PAGE)[0];
 		if (queryString.get(IQueryParametersKeys.RECORD_PER_PAGE)!=null)
 			recordPerPageFromQS=queryString.get(IQueryParametersKeys.RECORD_PER_PAGE)[0];
+		if (queryString.get(IQueryParametersKeys.RECORDS_PER_PAGE)!=null)
+			recordPerPageFromQS=queryString.get(IQueryParametersKeys.RECORDS_PER_PAGE)[0];
 		if (queryString.get(IQueryParametersKeys.ORDER_BY)!=null)
 			orderByFromQS=queryString.get(IQueryParametersKeys.ORDER_BY)[0];
 		if (queryString.get(IQueryParametersKeys.DEPTH)!=null)
@@ -183,7 +185,7 @@ public class QueryParams implements IQueryParametersKeys{
 		try{
 			recordPerPage=recordPerPageFromQS==null?null:new Integer(recordPerPageFromQS);
 		}catch (NumberFormatException e){
-			throw new NumberFormatException(IQueryParametersKeys.RECORD_PER_PAGE + " parameter must be a valid Integer");
+			throw new NumberFormatException(IQueryParametersKeys.RECORDS_PER_PAGE + " parameter must be a valid Integer");
 		}
 		try{
 			depth=depthFromQS==null?null:new Integer(depthFromQS);
