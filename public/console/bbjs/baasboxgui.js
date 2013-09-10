@@ -24,6 +24,13 @@ function resetChosen(chosenElement){
 	$('#'+selId).val('').change().removeClass('chzn-done').chosen();
 }
 
+function changeTopBarLink(bbId){
+	var link = $($(".top-nav a.help")[0]);
+	var href = link.attr("href")+"/"+bbId;
+	link.attr("href",href);
+	
+}
+
 function refreshCollectionCache(arr,fun){
 	
 	if(arr){
@@ -1314,9 +1321,11 @@ function callMenu(action){
 						"jve": data["java"]["java_version"],
 						"rand": Math.random().toString(36).substr(2,7)
 				};
-				console.log(data["data"]["collections_details"])
 				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
-
+				var bbId = data["installation"]["bb_id"];
+				if(bbId){
+					changeTopBarLink(bbId);
+				}
 
 				$('#latestNewsTab').rssfeed('http://www.baasbox.com/feed/', {
 					header: false,
