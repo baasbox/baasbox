@@ -17,7 +17,6 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -28,7 +27,6 @@ import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.Context;
-import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
@@ -167,14 +165,16 @@ public class WrapResponse {
 		    }else{ //status is not an error
 		    	result=onOk(statusCode,ctx.request(),stringBody);
 		    } //if (statusCode>399)
+			if (statusCode==204) result = Results.noContent();
 			//We was expecting that this would be done by the framework, apparently this is false 
 			ctx.response().setHeader("Content-Length",String.valueOf(JavaResultExtractor.getBody(result).length));
 		}else{ //if (BBConfiguration.getWrapResponse())
 			Logger.debug("The response will not be wrapped due configuration parameter");
 		}
 
-	    Logger.debug("  + result: \n" + result.toString());
+	    Logger.debug("  + result: \n" + result.toString() + "\n" + result.getWrappedResult());
 		Logger.trace("Method End");
+		
 	    return result;
 	}//wrap
 
