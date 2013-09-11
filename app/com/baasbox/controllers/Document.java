@@ -264,7 +264,7 @@ public class Document extends Controller {
 			internalServerError(e.getMessage());
 		}
 		  Logger.trace("Method End");
-		  return status(204);
+		  return status(200);
 	  }
 	  
 	  public static Result grantToUser(String collectionName, String rid, String username, String action, boolean isUUID){
