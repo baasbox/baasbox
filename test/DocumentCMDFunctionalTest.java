@@ -236,7 +236,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					
 					// Delete document
 					result = routeDeleteDocument(sFakeCollection, sRid);
-					assertRoute(result, "testRouteCMDDocument DELETE RID <" + sRid + ">", Status.NO_CONTENT, null, false);
+					assertRoute(result, "testRouteCMDDocument DELETE RID <" + sRid + ">", Status.OK, null, false);
 				}
 			}
 		);		
@@ -421,7 +421,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 
 					// Delete created document
 					serverDeleteDocument(sFakeCollection, sRid);
-					assertServer("testServerCMDDocument DELETE RID <" + sRid + ">", Status.NO_CONTENT, null, false);
+					assertServer("testServerCMDDocument DELETE RID <" + sRid + ">", Status.OK, null, false);
 				}
 	        }
 		);
