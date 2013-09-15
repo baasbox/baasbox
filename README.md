@@ -25,9 +25,9 @@ The .zip file contains all that you need to run BaasBox.
 Unzip it, set the execution permission to the start.sh file and run it.
 If all worked properly, BaasBox will create a new database in the ./DB directory, and will start.
 
-To test it go to <http://www.localhost:9000>. The BaasBox should appear.
+To test it go to <http://localhost:9000>. The BaasBox should appear.
 
-To access to the **Admin Console Panel**, goto <http://www.localhost:9000/console>
+To access to the **Admin Console Panel**, goto <http://localhost:9000/console>
 
 Default credentials are:
 
