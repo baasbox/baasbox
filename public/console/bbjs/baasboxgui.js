@@ -867,7 +867,10 @@ $('#assetForm').submit(function() {
 			success: function(){
 				$('#addAssetModal').modal('hide');
 				loadAssetTable();
-			} //success
+			}, //success
+			error: function(data) {
+				$("#errorAsset").removeClass("hide").html(JSON.parse(data.responseText)["message"])
+			}
 	};
 
 	$(this).ajaxSubmit(options);
