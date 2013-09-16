@@ -1125,16 +1125,17 @@ function setupTables(){
 		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "@rid"},
-		               {"mData": "@rid", "mRender": function ( data, type, full ) {
+		"aoColumns": [ {"mData": "id", sWidth:"280px"},
+		               {"mData": "@rid","mRender": function ( data, type, full ) 
+						{
 		            	   var obj=JSON.parse(JSON.stringify(full)); 
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
+						   delete obj["id"];
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
+						}
 		               }
-		               },
-		               {"mData": "@version"}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
