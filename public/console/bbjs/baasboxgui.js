@@ -94,7 +94,7 @@ $('#exportDb').click(function(e){
 				},
 				success: function(data)
 				{
-					alert("your db export has been scheduled");
+					alert("Your database backup has been scheduled");
 				}
 
 			});	
@@ -149,7 +149,7 @@ $('a.deleteCollection').live('click',function(e){
 $('a.deleteExport').live('click',function(e){
 
 	var name = $(e.target).parents('tr').children()[0].innerHTML
-	if(confirm("Are you sure you want to delete this export?")){
+	if(confirm("Are you sure you want to delete this backup file?")){
 		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
 			error:function(data){
 				alert(JSON.parse(data.responseText)["message"]);
@@ -761,7 +761,7 @@ $('#importBtn').on('click',function(e){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	$('#importModal').modal('show');
@@ -783,7 +783,7 @@ $('#importDbForm').on('submit',function(){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
@@ -1104,7 +1104,7 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"aoColumns": [ {"mData": "name"},
 		               {"mData": "date"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"> <a class=\"btn downloadExport\" href=\"#\">Download</a> <a class=\"btn btn-danger deleteExport\">Delete</a> </div>"}}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
