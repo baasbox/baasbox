@@ -603,28 +603,28 @@ $('.btn-UserCommit').click(function(e){
 
 			if(!isValidJson(visibleByTheUser)){
 				$("#auVisibleByTheUser").addClass("error");
-				errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
+				errorMessage += "The field 'Visible By The User' must be a valid JSON string<br/>"
 			}
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
-		errorMessage += "The field 'Visible By Friend' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Friend' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByFriend").removeClass("error");
 
 	if(!isValidJson(visibleByRegisteredUsers)){
 		$("#auVisibleByRegisteredUsers").addClass("error");
-		errorMessage += "The field 'Visible By Registered Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Registered Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByRegisteredUsers").removeClass("error");
 
 	if(!isValidJson(visibleByAnonymousUsers)){
 		$("#auVisibleByAnonymousUsers").addClass("error");
-		errorMessage += "The field 'Visible By Anonymous Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Anonymous Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
@@ -833,7 +833,7 @@ $('#assetForm').submit(function() {
 
 			if(!isValidJson(assetMeta)){
 				$("#divAssetMeta").addClass("error");
-				errorMessage += "The field 'Meta' must be a valid Json text<br/>"
+				errorMessage += "The field 'Meta' must be a valid JSON string<br/>"
 			}
 			else
 				$("#divAssetMeta").removeClass("error");
@@ -1239,15 +1239,21 @@ function setupAjax(){
 function setupMenu(){
 	//ajaxify menus
 	$('a.ajax-link').click(function(e){
-		//console.log("a.ajax-link click");
-		//console.log(e);
 		if($.browser.msie) e.which=1;
-		//console.log("go on...");
 		e.preventDefault();
 		var $clink=$(this);
 		callMenu($clink.attr('href'));
 		$('ul.main-menu li.active').removeClass('active');
 		$clink.parent('li').addClass('active');
+	});
+	$(".directLink").unbind("click");
+	//initializeTours
+	$(".tour").click(function(){
+		for (var key in tours) {
+			var tour = tours[key];
+			if (!tour.ended()) tour.end();
+		}
+		tours[$(this).data("tour")].restart();
 	});
 }//setupMenu
 
@@ -1327,6 +1333,7 @@ function callMenu(action){
 				};
 				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
 				var bbId = data["installation"]["bb_id"];
+				var bbv = data["installation"]["bb_version"];
 				if(bbId){
 					changeTopBarLink(bbId);
 				}
@@ -1354,7 +1361,9 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
 						});
-
+				if (localStorage.generalTour!=bbv) 
+					tours["general"].restart();
+				localStorage.generalTour=bbv;
 			}//success function
 		});//ajax call
 
@@ -1592,3 +1601,6 @@ function getPlatform(os){
 		return "other";
 	}
 }
+
+
+
