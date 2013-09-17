@@ -40,6 +40,14 @@
 			content: "From here you can access to many useful resources.<br>"
 					+"You can repeat this tour, access to the support site and read the online documentation.<br>"
 		});
+		
+		tours["general"].addStep({
+			element: "#zenbox_tab",
+			placement: "left",
+			title: "Feedbacks",
+			content: "You can also send feedbacks and comments to the BaasBox team through this 'Feedback' tab. You will even record and attach 2 minutes video.<br>"
+		});
+		
 		tours["general"].addStep({
 			element: ".main-menu .logout",
 			placement: "right",
@@ -50,6 +58,6 @@
 			element: ".navbar-inner a:contains('Version')", 
 			placement: "bottom",
 			title: "That's all", 
-			content: "This rapid tour is finished. Now you are encouraged to explore each item of the menu, see the related tours, read the online documentation and build your first BAASBOX powered App.<br>"
+			content: "This quick tour is over. Now you are encouraged to explore each item of the menu, see the related tours, read the online documentation and build your first BAASBOX powered App.<br>"
 		});
 	
