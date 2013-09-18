@@ -19,6 +19,8 @@
 # limitations under the License.
 */
 
+//added by BaasBox to manage multiple tours on one pages
+var __tour_id=0;
 
 (function() {
 
@@ -29,24 +31,25 @@
 
       function Tour(options) {
         var _this = this;
+		this._id=__tour_id++;
         this._options = $.extend({
           afterSetState: function(key, value) {},
           afterGetState: function(key, value) {}
         }, options);
         this._steps = [];
         this.setCurrentStep();
-        $(document).on("click", ".popover .next", function(e) {
+        $(document).on("click", ".popover .next._tour"+this._id, function(e) {
           e.preventDefault();
           return _this.next();
         });
-        $(document).on("click", ".popover .end", function(e) {
+        $(document).on("click", ".popover .end._tour"+this._id, function(e) {
           e.preventDefault();
           return _this.end();
         });
       }
 
       Tour.prototype.setState = function(key, value) {
-        $.cookie("tour_" + key, value, {
+        $.cookie("tour_" + key + "_" + this._id, value, {
           expires: 36500,
           path: '/'
         });
@@ -55,7 +58,7 @@
 
       Tour.prototype.getState = function(key) {
         var value;
-        value = $.cookie("tour_" + key);
+        value = $.cookie("tour_" + key + "_" + this._id);
         this._options.afterGetState(key, value);
         return value;
       };
@@ -173,9 +176,9 @@
         var content, tip;
         content = "" + step.content + "<br /><p>";
         if (step.end) {
-          content += "<a href='#' class='end'>End</a>";
+          content += "<a href='#' class='end _tour"+this._id+"'>End</a>";
         } else {
-          content += "<a href='#" + step.next + "' class='next'>Next &raquo;</a>          <a href='#' class='pull-right end'>End tour</a></p>";
+          content += "<a href='#" + step.next + "' class='next _tour"+this._id+"'>Next &raquo;</a>          <a href='#' class='pull-right end _tour"+this._id+"'>End tour</a></p>";
         }
         $(step.element).popover({
           placement: step.placement,

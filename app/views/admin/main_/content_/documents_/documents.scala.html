@@ -1,5 +1,5 @@
 				<div class="box span11">
-					<div class="box-header well" >
+					<div data-rel="tooltip" title="These are the objects belonging to the selected collection." class="box-header well" >
 						<h2><i class="icon-book"></i> {{collectioName}}</h2>
 						<div class="box-icon">
 							<a href="#" id="btnReloadDocumkents" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
@@ -10,9 +10,8 @@
 						<table id="documentTable" class="table table-striped table-bordered bootstrap-datatable datatable">
 						  <thead>
 							  <tr>
-							  	  <th>#RID</th>
-								  <th>Data</th>
-								  <th>Version</th>
+							  	  <th data-rel="tooltip" title="Each object/document has a unique IDentifier.">ID</th>
+								  <th data-rel="tooltip" title="The JSON representation of the object data">Data</th>
 							  </tr>
 						  </thead>   
 						</table>

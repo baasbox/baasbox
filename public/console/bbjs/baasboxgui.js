@@ -94,7 +94,7 @@ $('#exportDb').click(function(e){
 				},
 				success: function(data)
 				{
-					alert("your db export has been scheduled");
+					alert("Your database backup has been scheduled");
 				}
 
 			});	
@@ -149,7 +149,7 @@ $('a.deleteCollection').live('click',function(e){
 $('a.deleteExport').live('click',function(e){
 
 	var name = $(e.target).parents('tr').children()[0].innerHTML
-	if(confirm("Are you sure you want to delete this export?")){
+	if(confirm("Are you sure you want to delete this backup file?")){
 		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
 			error:function(data){
 				alert(JSON.parse(data.responseText)["message"]);
@@ -603,28 +603,28 @@ $('.btn-UserCommit').click(function(e){
 
 			if(!isValidJson(visibleByTheUser)){
 				$("#auVisibleByTheUser").addClass("error");
-				errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
+				errorMessage += "The field 'Visible By The User' must be a valid JSON string<br/>"
 			}
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
-		errorMessage += "The field 'Visible By Friend' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Friend' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByFriend").removeClass("error");
 
 	if(!isValidJson(visibleByRegisteredUsers)){
 		$("#auVisibleByRegisteredUsers").addClass("error");
-		errorMessage += "The field 'Visible By Registered Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Registered Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByRegisteredUsers").removeClass("error");
 
 	if(!isValidJson(visibleByAnonymousUsers)){
 		$("#auVisibleByAnonymousUsers").addClass("error");
-		errorMessage += "The field 'Visible By Anonymous Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Anonymous Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
@@ -761,7 +761,7 @@ $('#importBtn').on('click',function(e){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	$('#importModal').modal('show');
@@ -783,7 +783,7 @@ $('#importDbForm').on('submit',function(){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
@@ -833,7 +833,7 @@ $('#assetForm').submit(function() {
 
 			if(!isValidJson(assetMeta)){
 				$("#divAssetMeta").addClass("error");
-				errorMessage += "The field 'Meta' must be a valid Json text<br/>"
+				errorMessage += "The field 'Meta' must be a valid JSON string<br/>"
 			}
 			else
 				$("#divAssetMeta").removeClass("error");
@@ -867,7 +867,10 @@ $('#assetForm').submit(function() {
 			success: function(){
 				$('#addAssetModal').modal('hide');
 				loadAssetTable();
-			} //success
+			}, //success
+			error: function(data) {
+				$("#errorAsset").removeClass("hide").html(JSON.parse(data.responseText)["message"])
+			}
 	};
 
 	$(this).ajaxSubmit(options);
@@ -1104,7 +1107,7 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"aoColumns": [ {"mData": "name"},
 		               {"mData": "date"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"> <a class=\"btn downloadExport\" href=\"#\">Download</a> <a class=\"btn btn-danger deleteExport\">Delete</a> </div>"}}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
@@ -1125,16 +1128,17 @@ function setupTables(){
 		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "@rid"},
-		               {"mData": "@rid", "mRender": function ( data, type, full ) {
+		"aoColumns": [ {"mData": "id", sWidth:"280px"},
+		               {"mData": "@rid","mRender": function ( data, type, full ) 
+						{
 		            	   var obj=JSON.parse(JSON.stringify(full)); 
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
+						   delete obj["id"];
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
+						}
 		               }
-		               },
-		               {"mData": "@version"}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
@@ -1235,15 +1239,21 @@ function setupAjax(){
 function setupMenu(){
 	//ajaxify menus
 	$('a.ajax-link').click(function(e){
-		//console.log("a.ajax-link click");
-		//console.log(e);
 		if($.browser.msie) e.which=1;
-		//console.log("go on...");
 		e.preventDefault();
 		var $clink=$(this);
 		callMenu($clink.attr('href'));
 		$('ul.main-menu li.active').removeClass('active');
 		$clink.parent('li').addClass('active');
+	});
+	$(".directLink").unbind("click");
+	//initializeTours
+	$(".tour").click(function(){
+		for (var key in tours) {
+			var tour = tours[key];
+			if (!tour.ended()) tour.end();
+		}
+		tours[$(this).data("tour")].restart();
 	});
 }//setupMenu
 
@@ -1323,6 +1333,7 @@ function callMenu(action){
 				};
 				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
 				var bbId = data["installation"]["bb_id"];
+				var bbv = data["installation"]["bb_version"];
 				if(bbId){
 					changeTopBarLink(bbId);
 				}
@@ -1350,7 +1361,9 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
 						});
-
+				if (localStorage.generalTour!=bbv) 
+					tours["general"].restart();
+				localStorage.generalTour=bbv;
 			}//success function
 		});//ajax call
 
@@ -1588,3 +1601,6 @@ function getPlatform(os){
 		return "other";
 	}
 }
+
+
+
