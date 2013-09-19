@@ -44,6 +44,7 @@ public class UserDao extends NodeDao  {
 	public final static String USER_DEVICE_ID="deviceId";
 	public final static String USER_DEVICE_OS="os";
 	public final static String USER_LOGIN_INFO="login_info";
+	public final static String SOCIAL_LOGIN_INFO="sso_tokens";
 	
 	public final static String USER_ATTRIBUTES_CLASS = "_BB_UserAttributes";
 	public final static String ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER="visibleByAnonymousUsers";
@@ -103,6 +104,14 @@ public class UserDao extends NodeDao  {
 		QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
 		List<ODocument> resultList= super.get(criteria);
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
+		return result;
+	}
+	
+	public ODocument getBySocialTokens(String socialNetwork,String token,String secret) throws SqlInjectionException{
+		ODocument result=null;
+		//QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
+		//List<ODocument> resultList= super.get(criteria);
+		//if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 		return result;
 	}
 

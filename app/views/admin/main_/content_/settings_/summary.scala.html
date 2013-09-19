@@ -11,6 +11,7 @@
 							<li><a href="#password-recovery">Password Recovery</a></li>
 							<li><a href="#images">Images</a></li>
 							<li><a href="#push">Push Notifications</a></li>
+							<li><a href="#social">Social Login</a></li>
 						</ul>
 						<div id="settingsTabContent" class="tab-content">
 							<div class="tab-pane active" id="application">
@@ -60,7 +61,36 @@
 						  				</tr>
 					  				</thead>   
 								</table>
-							</div><!-- Push Pane-->							
+							</div><!-- Push Pane-->
+							<div class="tab-pane" id="social">
+								
+								<div >
+									<div ng-repeat="(name,config) in sociallogins" >
+ 										
+										<div ng-show="config.enabled">
+											<form class="form-horizontal" id="{{name}}-tokens" name="{{name}}-tokens" ng-submit="postsocialsettings(name)">
+												<fieldset>
+													<legend>{{name}}</legend>
+													<div  ng-show="config.errors.length > 0">
+ 														<p class="error" ng-repeat="err in config.errors">
+ 															{{err}}
+ 														</p>
+ 													</div>
+													<input type="text" ng-model="config.token" name="token"/>
+													<input type="text" ng-model="config.secret" name="secret" />
+													<input class="btn btn-primary" type="submit" value="Save"/>
+													<button type="button" class="btn btn-warning" ng-click="disable(name)" >Disable {{name}}</button>
+												</fieldset>
+											</form>
+										</div>
+										<div ng-show="!config.enabled" >
+											<button class="btn btn-{{name}}" ng-click="showForm(name)">Connect with {{name}}</button>
+										</div>
+									</div>
+								</div>
+							</div>
+				
+							</div><!-- Social Pane-->							
 						</div><!-- tab-content -->
 					</div><!--/box-content-->
 				</div><!--/span-->
