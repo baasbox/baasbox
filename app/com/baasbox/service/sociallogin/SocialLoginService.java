@@ -43,7 +43,7 @@ public abstract class SocialLoginService {
 				provider(provider())
 				.apiKey(this.token.getToken())
 				.apiSecret(this.token.getSecret())
-				.callback("http://omg.mfiandesio.com:9000/login/"+socialNetwork+"/callback?appcode="+appcode)
+				.callback("http://omg.mfiandesio.com:9000/login/"+socialNetwork+"/callback")
 				.build();
 	}
 	

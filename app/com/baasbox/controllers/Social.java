@@ -42,7 +42,7 @@ public class Social extends Controller{
 			return badRequest("Social login for "+socialNetwork+" is not enabled");
 		}else{
 			SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
-			return ok("{url:"+sc.getAuthorizationURL(session())+"}");
+			return ok("{\"url\":\""+sc.getAuthorizationURL(session())+"\"}");
 
 		}
 
