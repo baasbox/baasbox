@@ -1,5 +1,6 @@
 				<div class="box span6">
-					<div class="box-header well" data-original-title>
+					<div data-rel="tooltip" title="System information" 
+						class="box-header well" data-original-title>
 						<h2><i class="icon-hdd"></i> System</h2>
 						<div class="box-icon">
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
@@ -7,10 +8,10 @@
 					</div>
 					<div class="box-content">
 						<ul class="nav nav-tabs" id="systemStatTab">
-							<li class="active"><a href="#memory">Memory</a></li>
-							<li><a href="#os">OS</a></li>
-							<li><a href="#java">Java</a></li>
-							<li><a href="#db">Database</a></li>
+							<li class="active" data-rel="tooltip" title="System memory statistics"><a href="#memory">Memory</a></li>
+							<li data-rel="tooltip" title="Operating System information" ><a href="#os">OS</a></li>
+							<li data-rel="tooltip" title="JVM information"><a href="#java">Java</a></li>
+							<li data-rel="tooltip" title="Database information"><a href="#db">Database</a></li>
 						</ul>
 						<div id="systemStatTabContent" class="tab-content">
 							<div class="tab-pane active" id="memory">
@@ -93,7 +94,7 @@
 												<span class="green"  style="width:50% !important"> 
 													{{data.java.java_version}}
 												</span>                                    
-											</a>
+											</a> 
 										</li>
 										<li>
 											<a href="#">
@@ -124,7 +125,7 @@
 											<a href="#">
 												<i class="icon32 icon-black icon-note"></i>
 												<span class="blue">Version</span>                              
-												<span class="green"  style="width:50% !important"> {{data.db.properties.version}}</span>                                    
+												<span class="green"  style="width:50% !important"> OrientDB {{data.db.properties.version}}</span>                                    
 											</a>
 										</li>
 										<li>
