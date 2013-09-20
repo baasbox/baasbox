@@ -2,8 +2,10 @@ package com.baasbox.service.sociallogin;
 
 import org.codehaus.jackson.JsonNode;
 import org.scribe.builder.api.Api;
+import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
+import org.scribe.model.Verb;
 
 import play.libs.Json;
 import play.mvc.Http.Request;
@@ -20,6 +22,10 @@ public class GithubLoginService extends SocialLoginService {
 		return GithubApi.class;
 	}
 
+	@Override
+	protected OAuthRequest buildOauthRequestForUserInfo(Token accessToken) {
+		return new OAuthRequest(Verb.GET, userInfoUrl());
+	}
 	@Override
 	public Boolean needToken() {
 		return false;

@@ -10,6 +10,7 @@ import org.scribe.model.Verb;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
+import play.Logger;
 import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -59,6 +60,7 @@ public abstract class SocialLoginService {
 		if(this.needToken()){
 			t = this.service.getRequestToken();
 			if(this.socialNetwork.equals("twitter")){
+				Logger.debug("setting token");
 				s.put("twitter.token",t.getToken());
 				s.put("twitter.secret",t.getSecret());
 			}
@@ -73,12 +75,15 @@ public abstract class SocialLoginService {
 	}
 	
 	public UserInfo getUserInfo(Token accessToken){
-		OAuthRequest request = new OAuthRequest(Verb.GET, userInfoUrl());
+		
+		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
+		
 		this.service.signRequest(accessToken, request);
 		Response response = request.send();
 		return extractUserInfo(response);
 	}
 	
+	protected abstract OAuthRequest buildOauthRequestForUserInfo(Token accessToken);
 	public boolean isClientEnabled(){
 		String keyFormat = socialNetwork.toUpperCase()+"_ENABLED";
 		Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
@@ -135,6 +140,8 @@ public abstract class SocialLoginService {
 			return new TwitterLoginService(appcode);
 		}else if(socialNetwork.equals("github")){
 			return new GithubLoginService(appcode);
+		}else if(socialNetwork.equals("google")){
+			return new GooglePlusLoginService(appcode);
 		}
 		return null;
 	}

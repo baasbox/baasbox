@@ -3,9 +3,12 @@ package com.baasbox.service.sociallogin;
 import org.codehaus.jackson.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.TwitterApi;
+import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
+import org.scribe.model.Verb;
 
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -27,6 +30,11 @@ public class TwitterLoginService extends SocialLoginService {
 	}
 
 	@Override
+	protected OAuthRequest buildOauthRequestForUserInfo(Token accessToken) {
+		return new OAuthRequest(Verb.GET, userInfoUrl());
+	}
+	
+	@Override
 	public String userInfoUrl() {
 		return "https://api.twitter.com/1.1/account/settings.json";
 	}
@@ -38,6 +46,7 @@ public class TwitterLoginService extends SocialLoginService {
 
 	@Override
 	public Token getAccessTokenFromRequest(Request r,Session s) {
+		Logger.debug(Json.stringify(Json.toJson(s.keySet())));
 		if(s.get("twitter.token")!=null && s.get("twitter.secret")!=null){
 			String token = s.get("twitter.token");
 			String secret = s.get("twitter.secret");

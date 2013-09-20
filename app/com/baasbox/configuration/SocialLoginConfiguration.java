@@ -11,8 +11,12 @@ public enum SocialLoginConfiguration implements IProperties{
 	TWITTER_ENABLED("social.twitter.enabled","Twitter link enable flag",Boolean.class),
 	GITHUB_TOKEN("social.github.token","Application Token for facebook app",String.class),
 	GITHUB_SECRET("social.github.secret","Application secret for facebook app",String.class),
-	GITHUB_ENABLED("social.github.enabled","Github link enable flag",Boolean.class),;
+	GITHUB_ENABLED("social.github.enabled","Github link enable flag",Boolean.class),
+	GOOGLE_TOKEN("social.google.token","Application Token for google app",String.class),
+	GOOGLE_SECRET("social.google.secret","Application secret for google app",String.class),
+	GOOGLE_ENABLED("social.google.enabled","Google link enable flag",Boolean.class),;
 
+	
 	private final String                 key;
 	private final Class<?>               type;
 	private String                       description;

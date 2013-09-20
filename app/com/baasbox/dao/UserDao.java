@@ -16,6 +16,12 @@
  */
 package com.baasbox.dao;
 
+import java.security.InvalidParameterException;
+import java.util.Date;
+import java.util.List;
+
+import play.Logger;
+
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
@@ -25,10 +31,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.security.InvalidParameterException;
-import java.util.Date;
-import java.util.List;
 
 
 
@@ -100,6 +102,7 @@ public class UserDao extends NodeDao  {
 	}
 	
 	public ODocument getByUserName(String username) throws SqlInjectionException{
+		Logger.debug("searching user "+username);
 		ODocument result=null;
 		QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
 		List<ODocument> resultList= super.get(criteria);
