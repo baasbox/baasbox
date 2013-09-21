@@ -102,7 +102,6 @@ public class UserDao extends NodeDao  {
 	}
 	
 	public ODocument getByUserName(String username) throws SqlInjectionException{
-		Logger.debug("searching user "+username);
 		ODocument result=null;
 		QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
 		List<ODocument> resultList= super.get(criteria);
