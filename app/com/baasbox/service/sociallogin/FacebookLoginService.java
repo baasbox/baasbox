@@ -68,6 +68,7 @@ public class FacebookLoginService extends SocialLoginService{
 		UserInfo ui = new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
 		ui.setUsername(user.get("username").getTextValue());
+		ui.setId(user.get("id").getTextValue());
 		ui.addData("email",user.get("email").getTextValue());
 		ui.addData("gender",user.get("gender").getTextValue());
 		ui.addData("personalUrl",user.get("link").getTextValue());

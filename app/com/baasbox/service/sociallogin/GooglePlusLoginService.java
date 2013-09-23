@@ -60,9 +60,11 @@ public class GooglePlusLoginService extends SocialLoginService{
 		UserInfo i = new UserInfo();
 		JsonNode ji = Json.parse(r.getBody());
 		String name = ji.get("name").getTextValue();
+		
 		String username = StringUtils.deleteWhitespace(name.toLowerCase());
 		i.addData("email", ji.get("email").asText());
 		i.addData("personalUrl", ji.get("link").asText());
+		i.setId(ji.get("id").getTextValue());
 		i.addData("avatarUrl", ji.get("picture").asText());
 		i.addData("name",ji.get("name").getTextValue());
 		i.setFrom("google");

@@ -25,6 +25,7 @@ import play.Logger;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -109,11 +110,15 @@ public class UserDao extends NodeDao  {
 		return result;
 	}
 	
-	public ODocument getBySocialTokens(String socialNetwork,String token,String secret) throws SqlInjectionException{
+	public ODocument getBySocialUserId(UserInfo ui) throws SqlInjectionException{
 		ODocument result=null;
-		//QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
-		//List<ODocument> resultList= super.get(criteria);
-		//if (resultList!=null && resultList.size()>0) result = resultList.get(0);
+		StringBuffer where = new StringBuffer(UserDao.ATTRIBUTES_SYSTEM).append(".");
+		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(" = ?)");
+		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
+		List<ODocument> resultList= super.get(criteria);
+		Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
+		
 		return result;
 	}
 

@@ -1,5 +1,7 @@
 package com.baasbox.service.sociallogin;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang.StringUtils;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.Api;
@@ -106,7 +108,7 @@ public abstract class SocialLoginService {
 		return new Tokens(token,secret);
 	}
 
-	public static class Tokens{
+	public static class Tokens implements Serializable{
 		private String token;
 		private String secret;
 

@@ -69,6 +69,7 @@ public class GithubLoginService extends SocialLoginService {
 	public UserInfo extractUserInfo(Response r) {
 		JsonNode user = Json.parse(r.getBody());
 		UserInfo ui = new UserInfo();
+		ui.setId(user.get("id").getTextValue());
 		ui.setUsername(user.get("login").getTextValue());
 		ui.addData("avatar", user.get("avatar_url").getTextValue());
 		ui.addData("personal_url", user.get("html_url").getTextValue());

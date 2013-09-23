@@ -35,6 +35,8 @@ import org.apache.commons.mail.HtmlEmail;
 import org.codehaus.jackson.JsonNode;
 import org.stringtemplate.v4.ST;
 
+import play.Logger;
+
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
@@ -473,32 +475,32 @@ public class UserService {
 		}
 	}
 	
-	public static void addSocialLoginTokens(ODocument user ,String socialNetwork, String token,
-			String secret,boolean overwrite) throws ODatabaseException {
+	public static void addSocialLoginTokens(ODocument user ,String socialNetwork, String id,
+			boolean overwrite) throws ODatabaseException {
 		DbHelper.requestTransaction();
 		try{
 			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-			if(systemProps==null){
-				systemProps = new ODocument(UserDao.ATTRIBUTES_SYSTEM);
-			}
-
-			Map<String,SocialLoginService.Tokens>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
+			Map<String,String>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
 			if(ssoTokens == null){
-				ssoTokens = new HashMap<String,SocialLoginService.Tokens>();
+				ssoTokens = new HashMap<String,String>();
 			}
-			Tokens t = ssoTokens.get(socialNetwork);
+			
+			String t = ssoTokens.get(socialNetwork);
 			if(t!=null && !overwrite){
 				throw new InvalidParameterException("Overwrite of tokens for: "+socialNetwork+" is not allowed");
 			}
 
-			t = new Tokens(token, secret);
+			t = new String(id);
 			ssoTokens.put(socialNetwork, t);
 			systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
 			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
+			systemProps.save();
 			user.save();
+			Logger.debug("saved tokens for user ");
 			DbHelper.commitTransaction();
 
 		}catch(Exception e){
+			e.printStackTrace();
 			DbHelper.rollbackTransaction();
 			throw new ODatabaseException("unable to add tokens");
 		}

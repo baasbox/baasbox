@@ -10,6 +10,8 @@ public class UserInfo {
 	private String from;
 	private String token;
 	private String secret;
+	
+	private String id;
 	private Map<String,String> additionalData ;
 	
 	public String getUsername() {
@@ -44,7 +46,12 @@ public class UserInfo {
 		this.additionalData = additionalData;
 	}
 	
-	
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
 	public String getFrom() {
 		return from;
 	}

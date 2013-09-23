@@ -20,6 +20,7 @@ import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
@@ -75,11 +76,11 @@ public class Social extends Controller{
 
 		String authToken = request().getQueryString("oauth_token");
 		String authSecret = request().getQueryString("oauth_secret");
-		
+
 		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
 			return badRequest("Both oauth_token and oauth_secret should be specified in the query string");
 		}
-		
+
 		String appcode = (String)ctx().args.get("appcode");
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
 		Token t = new Token(authToken,authSecret);
@@ -91,19 +92,9 @@ public class Social extends Controller{
 		UserDao userDao = UserDao.getInstance();
 		ODocument existingUser = null;
 		try{
-			existingUser = userDao.getByUserName(result.getUsername());
-			Logger.debug("Found a user named: "+result.getUsername()+": "+existingUser);
+			existingUser = userDao.getBySocialUserId(result);
 			if(existingUser!=null){
-				
-				String token = result.getToken();
-				String secret = result.getSecret();
-				Tokens tokens = UserService.retrieveSocialLoginTokens(existingUser, socialNetwork);
-				if(tokens==null){
-					UserService.addSocialLoginTokens(existingUser, socialNetwork, token, secret, true);
-				}else{
-					token = tokens.getToken();
-					secret = tokens.getSecret();
-				}
+				Logger.debug("Found a user with tokens");
 				String password = generateUserPassword(result.getUsername(), (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, result.getUsername(), password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
@@ -118,34 +109,44 @@ public class Social extends Controller{
 		}catch(SqlInjectionException sie){
 			return internalServerError(sie.getMessage());
 		}
+		if(existingUser==null){
 
-		Logger.debug("User does not exists...creating it");
-		String username = result.getUsername();
-		Date signupDate = new Date();
-		String password = generateUserPassword(username, signupDate);
-		ODocument profile = null;
-		try {
-			profile = UserService.signUp(username, password,signupDate, null, null, null,null);
-			UserService.addSocialLoginTokens(profile,socialNetwork,result.getToken(),result.getSecret(),true);
+			Logger.debug("User does not exists with tokens...trying to create");
+			String username = result.getUsername();
+			Date signupDate = new Date();
+			String password = null;
+			
+			try{
+				ODocument profile = UserDao.getInstance().getByUserName(username);
+				if(profile!=null){
+					Logger.debug("find a user with "+result.getUsername());
+					password = generateUserPassword(result.getUsername(),(Date)profile.field(UserDao.USER_SIGNUP_DATE));
+				}else{
+					password = generateUserPassword(username, signupDate);
+					profile = UserService.signUp(username, password, signupDate, null, null, null, null);
+				}
+				UserService.addSocialLoginTokens(profile,socialNetwork,result.getId(),true);
+				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
-			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-
-			ObjectNode on = Json.newObject();
-			if(profile!=null){
-				on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(profile)).get("user"));
+				ObjectNode on = Json.newObject();
+				if(profile!=null){
+					on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(profile)).get("user"));
+				}
+				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				
+				return ok(on);
+			}catch(Exception uaee){
+				return internalServerError(uaee.getMessage());
 			}
-			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-			return ok(on);
-		}catch(Exception e){
-			if(profile!=null){
-				//TODO:should delete profile
-				//profile.delete();
-			}
-			return internalServerError(e.getMessage());
 		}
+		return TODO;
+
+
+
+
 	}
-	
+
 	private static String generateUserPassword(String username,Date signupDate){
 		String bbid=Internal.INSTALLATION_ID.getValueAsString();
 		String password = Crypto.sign(username+new SimpleDateFormat("ddMMyyyyHHmmss").format(signupDate)+bbid);
