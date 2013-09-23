@@ -61,7 +61,6 @@ public abstract class SocialLoginService {
 				provider(provider())
 				.apiKey(this.token.getToken())
 				.apiSecret(this.token.getSecret())
-				//TODO: goes into a variable
 				.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
 				.build();
 	}
