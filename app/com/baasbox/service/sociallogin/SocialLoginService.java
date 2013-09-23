@@ -17,11 +17,15 @@ import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
+import com.baasbox.configuration.Application;
 import com.baasbox.configuration.SocialLoginConfiguration;
 
 public abstract class SocialLoginService {
 
-	
+	private static final String PROTOCOL = "http://";
+	private static final String SECURE_PROTOCOL = "https://";
+	private static final String DEFAULT_HOST = "localhost";
+	private static final String DEFAULT_PORT = "9000";
 	
 	protected OAuthService service;
 	
@@ -42,11 +46,23 @@ public abstract class SocialLoginService {
 	
 	
 	public void build(){
+		StringBuilder serverUrl = new StringBuilder();
+		Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
+		if(isSSL){
+			serverUrl.append(SECURE_PROTOCOL);
+		}else{
+			serverUrl.append(PROTOCOL);
+		}
+		String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+		serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
+		String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
+		serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
 		this.service = new ServiceBuilder().
 				provider(provider())
 				.apiKey(this.token.getToken())
 				.apiSecret(this.token.getSecret())
-				.callback("http://omg.mfiandesio.com:9000/login/"+socialNetwork+"/callback")
+				//TODO: goes into a variable
+				.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
 				.build();
 	}
 	
@@ -138,8 +154,6 @@ public abstract class SocialLoginService {
 	public static SocialLoginService by(String socialNetwork,String appcode) {
 		if(socialNetwork.equals("facebook")){
 			return new FacebookLoginService(appcode);
-		}else if(socialNetwork.equals("twitter")){
-			return new TwitterLoginService(appcode);
 		}else if(socialNetwork.equals("github")){
 			return new GithubLoginService(appcode);
 		}else if(socialNetwork.equals("google")){
