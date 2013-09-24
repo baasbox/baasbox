@@ -51,6 +51,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.sociallogin.SocialLoginService;
+import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.sociallogin.SocialLoginService.Tokens;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -475,23 +476,23 @@ public class UserService {
 		}
 	}
 	
-	public static void addSocialLoginTokens(ODocument user ,String socialNetwork, String id,
+	public static void addSocialLoginTokens(ODocument user , UserInfo userInfo,
 			boolean overwrite) throws ODatabaseException {
 		DbHelper.requestTransaction();
 		try{
 			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-			Map<String,String>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
+			Map<String,ODocument>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
 			if(ssoTokens == null){
-				ssoTokens = new HashMap<String,String>();
+				ssoTokens = new HashMap<String,ODocument>();
 			}
 			
-			String t = ssoTokens.get(socialNetwork);
-			if(t!=null && !overwrite){
-				throw new InvalidParameterException("Overwrite of tokens for: "+socialNetwork+" is not allowed");
+			
+			if(ssoTokens.get(userInfo.getFrom())!=null && !overwrite){
+				throw new InvalidParameterException("Overwrite of tokens for: "+userInfo.getFrom()+" is not allowed");
 			}
 
-			t = new String(id);
-			ssoTokens.put(socialNetwork, t);
+			String jsonRep = userInfo.toJson();
+			ssoTokens.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON(jsonRep));
 			systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
 			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();

@@ -17,6 +17,15 @@ public class GithubLoginService extends SocialLoginService {
 		super("github",appcode);
 	}
 
+	
+	
+	@Override
+	public String getPrefix() {
+		return "gh_";
+	}
+
+
+
 	@Override
 	public Class<? extends Api> provider() {
 		return GithubApi.class;

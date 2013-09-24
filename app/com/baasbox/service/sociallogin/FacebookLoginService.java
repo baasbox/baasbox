@@ -18,6 +18,15 @@ public class FacebookLoginService extends SocialLoginService{
 		super("facebook",appcode);
 	}
 
+	
+	
+	@Override
+	public String getPrefix() {
+		return "fb_";
+	}
+
+
+
 	@Override
 	public Class<? extends Api> provider() {
 		return FacebookApi.class;

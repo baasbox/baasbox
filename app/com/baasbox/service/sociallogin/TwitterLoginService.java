@@ -28,6 +28,13 @@ public class TwitterLoginService extends SocialLoginService {
 	public Boolean needToken() {
 		return true;
 	}
+	
+	
+
+	@Override
+	public String getPrefix() {
+		return "tw_";
+	}
 
 	@Override
 	protected OAuthRequest buildOauthRequestForUserInfo(Token accessToken) {

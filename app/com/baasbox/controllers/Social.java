@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.scribe.model.Token;
 
@@ -87,45 +88,44 @@ public class Social extends Controller{
 		UserInfo result = sc.getUserInfo(t);
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
-		//Setting token as secret for facebook
+		//Setting token as secret for one-token only social networks
 		result.setSecret(t.getSecret()!=null && StringUtils.isNotEmpty(t.getSecret())?t.getSecret():t.getToken());
 		UserDao userDao = UserDao.getInstance();
-		ODocument existingUser = null;
+
+		ODocument existingUser =  null;
 		try{
 			existingUser = userDao.getBySocialUserId(result);
-			if(existingUser!=null){
-				Logger.debug("Found a user with tokens");
-				String password = generateUserPassword(result.getUsername(), (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, result.getUsername(), password);
-				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-				ObjectNode on = Json.newObject();
-				if(existingUser!=null){
-					on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(existingUser)).get("user"));
-				}
-				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-				return ok(on);
-
-			}
 		}catch(SqlInjectionException sie){
 			return internalServerError(sie.getMessage());
 		}
-		if(existingUser==null){
+
+		if(existingUser!=null){
+			String password = generateUserPassword(sc.getPrefix()+result.getId(), (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
+			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, sc.getPrefix()+result.getId(), password);
+			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			ObjectNode on = Json.newObject();
+			if(existingUser!=null){
+				on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(existingUser)).get("user"));
+			}
+			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			return ok(on);
+
+
+		}else{
 
 			Logger.debug("User does not exists with tokens...trying to create");
-			String username = result.getUsername();
+			String username = sc.getPrefix()+result.getId();
 			Date signupDate = new Date();
-			String password = null;
-			
+
 			try{
-				ODocument profile = UserDao.getInstance().getByUserName(username);
-				if(profile!=null){
-					Logger.debug("find a user with "+result.getUsername());
-					password = generateUserPassword(result.getUsername(),(Date)profile.field(UserDao.USER_SIGNUP_DATE));
-				}else{
-					password = generateUserPassword(username, signupDate);
-					profile = UserService.signUp(username, password, signupDate, null, null, null, null);
+				String password = generateUserPassword(username, signupDate);
+				JsonNode privateData = null;
+				if(result.getAdditionalData()!=null && !result.getAdditionalData().isEmpty()){
+					privateData = Json.toJson(result.getAdditionalData());
 				}
-				UserService.addSocialLoginTokens(profile,socialNetwork,result.getId(),true);
+				ODocument profile = UserService.signUp(username, password, signupDate, null, privateData, null, null);
+
+				UserService.addSocialLoginTokens(profile,result,true);
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
@@ -134,13 +134,12 @@ public class Social extends Controller{
 					on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(profile)).get("user"));
 				}
 				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-				
+
 				return ok(on);
 			}catch(Exception uaee){
 				return internalServerError(uaee.getMessage());
 			}
 		}
-		return TODO;
 
 
 

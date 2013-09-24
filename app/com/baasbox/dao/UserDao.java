@@ -113,7 +113,7 @@ public class UserDao extends NodeDao  {
 	public ODocument getBySocialUserId(UserInfo ui) throws SqlInjectionException{
 		ODocument result=null;
 		StringBuffer where = new StringBuffer(UserDao.ATTRIBUTES_SYSTEM).append(".");
-		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(" = ?)");
+		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
 		Logger.debug("Found "+resultList.size() +" elements for given tokens");

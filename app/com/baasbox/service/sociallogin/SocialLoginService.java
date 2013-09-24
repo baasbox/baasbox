@@ -160,6 +160,7 @@ public abstract class SocialLoginService {
 		}
 		return null;
 	}
+	public abstract String getPrefix();
 
 
 	

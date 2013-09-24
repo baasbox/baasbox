@@ -19,6 +19,13 @@ public class GooglePlusLoginService extends SocialLoginService{
 		super("google",appcode);
 	}
 
+	
+	@Override
+	public String getPrefix() {
+		return "gp_";
+	}
+
+
 	@Override
 	public Class<? extends Api> provider() {
 		return GoogleApi.class;

@@ -3,6 +3,8 @@ package com.baasbox.service.sociallogin;
 import java.util.HashMap;
 import java.util.Map;
 
+import play.libs.Json;
+
 public class UserInfo {
 	
 	private String username;
@@ -63,6 +65,12 @@ public class UserInfo {
 			this.additionalData = new HashMap<String, String>();
 		}
 		this.additionalData.put(key, value);
+	}
+	public static UserInfo fromJson(String json) {
+		return Json.fromJson(Json.parse(json), UserInfo.class);
+	}
+	public String toJson() {
+		return Json.stringify(Json.toJson(this));
 	}
 	
 	
