@@ -15,6 +15,8 @@ import play.mvc.Http.Session;
 
 public class TwitterLoginService extends SocialLoginService {
 
+	public static String PREFIX = "tw_";
+	
 	public TwitterLoginService(String appcode) {
 		super("twitter",appcode);
 	}
@@ -33,7 +35,7 @@ public class TwitterLoginService extends SocialLoginService {
 
 	@Override
 	public String getPrefix() {
-		return "tw_";
+		return PREFIX;
 	}
 
 	@Override

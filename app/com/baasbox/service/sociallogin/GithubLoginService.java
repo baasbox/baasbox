@@ -13,6 +13,7 @@ import play.mvc.Http.Session;
 
 public class GithubLoginService extends SocialLoginService {
 
+	public static String PREFIX = "gh_";
 	public GithubLoginService(String appcode) {
 		super("github",appcode);
 	}
@@ -21,7 +22,7 @@ public class GithubLoginService extends SocialLoginService {
 	
 	@Override
 	public String getPrefix() {
-		return "gh_";
+		return PREFIX;
 	}
 
 

@@ -161,6 +161,17 @@ public abstract class SocialLoginService {
 		return null;
 	}
 	public abstract String getPrefix();
+	
+	public  String getPrefixByName(String from) {
+		if(from.equals("facebook")){
+			return FacebookLoginService.PREFIX;
+		}else if(socialNetwork.equals("github")){
+			return GithubLoginService.PREFIX;
+		}else if(socialNetwork.equals("google")){
+			return GooglePlusLoginService.PREFIX;
+		}
+		throw new InvalidSocialNetworkNameException(from);
+	}
 
 
 	

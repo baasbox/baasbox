@@ -15,6 +15,8 @@ import play.mvc.Http.Session;
 
 public class GooglePlusLoginService extends SocialLoginService{
 	
+	public static String PREFIX = "gp_";
+	
 	public GooglePlusLoginService(String appcode){
 		super("google",appcode);
 	}
@@ -22,7 +24,7 @@ public class GooglePlusLoginService extends SocialLoginService{
 	
 	@Override
 	public String getPrefix() {
-		return "gp_";
+		return PREFIX;
 	}
 
 

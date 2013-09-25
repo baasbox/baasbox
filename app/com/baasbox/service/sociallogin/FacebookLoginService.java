@@ -14,6 +14,8 @@ import play.mvc.Http.Session;
 
 public class FacebookLoginService extends SocialLoginService{
 
+	public static String PREFIX = "fb_";
+	
 	public FacebookLoginService(String appcode) {
 		super("facebook",appcode);
 	}
@@ -22,7 +24,7 @@ public class FacebookLoginService extends SocialLoginService{
 	
 	@Override
 	public String getPrefix() {
-		return "fb_";
+		return PREFIX;
 	}
 
 

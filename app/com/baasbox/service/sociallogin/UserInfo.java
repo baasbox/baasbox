@@ -3,8 +3,11 @@ package com.baasbox.service.sociallogin;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import play.libs.Json;
 
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class UserInfo {
 	
 	private String username;
@@ -12,6 +15,7 @@ public class UserInfo {
 	private String from;
 	private String token;
 	private String secret;
+	private boolean generatedUsername = false;
 	
 	private String id;
 	private Map<String,String> additionalData ;
@@ -60,6 +64,15 @@ public class UserInfo {
 	public void setFrom(String from) {
 		this.from = from;
 	}
+	
+	
+	public boolean isGeneratedUsername() {
+		return generatedUsername;
+	}
+	public void setGeneratedUsername(boolean generatedUsername) {
+		this.generatedUsername = generatedUsername;
+	}
+	
 	public void addData(String key,String value){
 		if(this.additionalData == null){
 			this.additionalData = new HashMap<String, String>();
