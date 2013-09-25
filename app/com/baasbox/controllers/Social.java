@@ -1,7 +1,9 @@
 package com.baasbox.controllers;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -164,6 +166,27 @@ public class Social extends Controller{
 		return result;
 	}
 
+	
+	@With({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
+	public static Result socialLogins(){
+		try {
+			ODocument user = UserService.getCurrentUser();
+			Map<String,ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.SOCIAL_LOGIN_INFO);
+			if(logins==null || logins.isEmpty()){
+				return notFound();
+			}else{
+				List<UserInfo> result = new ArrayList<UserInfo>();
+				for (ODocument d : logins.values()) {
+					UserInfo i = UserInfo.fromJson(d.toJSON());
+					result.add(i);
+				}
+				return ok(Json.toJson(result));
+			}
+		}catch(Exception e){
+			return internalServerError(e.getMessage());
+		}
+	}
+	
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result linkWith(String socialNetwork){
 		String authToken = request().getQueryString("oauth_token");

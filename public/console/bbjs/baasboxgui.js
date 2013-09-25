@@ -1626,13 +1626,18 @@ function SettingsController($scope){
 			var value = toModify.token;
 			
 			updateSettings(key,value,function(){
+				console.log("saving token")
 				var key2 = "social."+name+".secret"
 				var value2 = toModify.secret;
 				updateSettings(key2,value2,function(){
+					console.log("saving secret")
 					var key3 = "social."+name+".enabled"
 					var value3 = true;
-					updateSettings(key3,value3,null);
-					$scope.sociallogins[name].saved = true;
+					updateSettings(key3,value3,function(){
+						console.log("enabling")
+						$scope.sociallogins[name].saved = true;
+					});
+					
 				})
 			})
 			

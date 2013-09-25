@@ -37,6 +37,7 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
 # User actions
 POST	/login								com.baasbox.controllers.User.login()
 POST	/logout/:deviceid		    		com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+GET		/social/accounts		    		com.baasbox.controllers.Social.socialLogins()
 POST	/social/login/:socialNetwork		com.baasbox.controllers.Social.login(socialNetwork: String)
 POST	/social/loginWith/:socialNetwork	com.baasbox.controllers.Social.loginWith(socialNetwork: String)
 POST	/social/linkWith/:socialNetwork		com.baasbox.controllers.Social.linkWith(socialNetwork: String)
