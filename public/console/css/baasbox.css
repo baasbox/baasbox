@@ -59,6 +59,10 @@ p.hint{
   *background-color: #b03123;
 }
 
+span.form-saved{
+	color:red;
+}
+
 .btn-google:active,
 .btn-google.active {
   background-color: #9a2b1f \9;

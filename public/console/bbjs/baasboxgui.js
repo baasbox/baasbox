@@ -1430,6 +1430,9 @@ function callMenu(action){
 					}else if(component.indexOf("enabled")>-1){
 						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
 						settingSocialData[key]["enabled"] = def;
+						console.log("enabled?",def);
+						settingSocialData[key]["saved"] = def;
+						
 					}
 					
 					
@@ -1560,13 +1563,17 @@ function SettingsController($scope){
 	
 	$scope.showForm = function(name){
 		$scope.sociallogins[name].enabled = true;
+		$scope.sociallogins[name].saved = false;
 	}
+	
+	
 	
 	
 	
 	$scope.disable = function(name){
 		var toModify = $scope.sociallogins[name];
 		toModify.enabled = false;
+		toModify.saved = false;
 		toModify.token = null;
 		toModify.secret = null;
 		var key = "social."+name+".token"
@@ -1625,6 +1632,7 @@ function SettingsController($scope){
 					var key3 = "social."+name+".enabled"
 					var value3 = true;
 					updateSettings(key3,value3,null);
+					$scope.sociallogins[name].saved = true;
 				})
 			})
 			
