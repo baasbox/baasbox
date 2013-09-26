@@ -71,8 +71,8 @@ public class Social extends Controller{
 	 * 
 	 * An oauth_token and oauth_secret provided by oauth steps
 	 * are mandatory 
-	 * @param socialNetwork
-	 * @return
+	 * @param socialNetwork the social network name (facebook,google)
+	 * @return 200 status code with the X-BB-SESSION token for further calls
 	 */
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result loginWith(String socialNetwork){
@@ -108,6 +108,7 @@ public class Social extends Controller{
 			String username = sc.getPrefix()+result.getId();
 			String password = generateUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 			UserInfo firstSocialLogin =findFirstGenerated(existingUser);
+			
 			if(firstSocialLogin!=null){
 				//TODO: this should be moved to an enum
 				String prefix = sc.getPrefixByName(firstSocialLogin.getFrom());
