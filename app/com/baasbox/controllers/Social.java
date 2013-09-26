@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
@@ -25,6 +26,7 @@ import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
@@ -39,7 +41,7 @@ public class Social extends Controller{
 
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
-	public static Result login(String socialNetwork){
+	public static Result authorizationUrl(String socialNetwork){
 		String keyFormat = socialNetwork.toUpperCase()+"_ENABLED";
 		Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
 		if(enabled==null || enabled == false){
@@ -90,7 +92,6 @@ public class Social extends Controller{
 		UserInfo result = sc.getUserInfo(t);
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
-		result.setGeneratedUsername(true);
 		//Setting token as secret for one-token only social networks
 		result.setSecret(t.getSecret()!=null && StringUtils.isNotEmpty(t.getSecret())?t.getSecret():t.getToken());
 		UserDao userDao = UserDao.getInstance();
@@ -103,19 +104,17 @@ public class Social extends Controller{
 		}
 
 		if(existingUser!=null){
-			
-			
-			String username = sc.getPrefix()+result.getId();
-			String password = generateUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
-			UserInfo firstSocialLogin =findFirstGenerated(existingUser);
-			
-			if(firstSocialLogin!=null){
-				//TODO: this should be moved to an enum
-				String prefix = sc.getPrefixByName(firstSocialLogin.getFrom());
-				String id = firstSocialLogin.getId();
-				username = prefix+id;
-				password = generateUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
+			String username = null;
+			try {
+				username = UserService.getUsernameByProfile(existingUser);
+				if(username==null){
+					throw new InvalidModelException("username for profile is null");
+				}
+			} catch (InvalidModelException e) {
+				internalServerError("unable to login with "+socialNetwork+" : "+e.getMessage());
 			}
+			
+			String password = generateUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 			
 			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
@@ -127,7 +126,7 @@ public class Social extends Controller{
 			return ok(on);
 		}else{
 			Logger.debug("User does not exists with tokens...trying to create");
-			String username = sc.getPrefix()+result.getId();
+			String username = UUID.randomUUID().toString();
 			Date signupDate = new Date();
 			try{
 				String password = generateUserPassword(username, signupDate);
@@ -135,8 +134,8 @@ public class Social extends Controller{
 				if(result.getAdditionalData()!=null && !result.getAdditionalData().isEmpty()){
 					privateData = Json.toJson(result.getAdditionalData());
 				}
-				ODocument profile = UserService.signUp(username, password, signupDate, null, privateData, null, null);
-				UserService.addSocialLoginTokens(profile,result,true);
+				ODocument profile = UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
+				UserService.addSocialLoginTokens(profile,result);
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 				ObjectNode on = Json.newObject();
@@ -152,21 +151,7 @@ public class Social extends Controller{
 		}
 	}
 	
-	private static UserInfo findFirstGenerated(ODocument existingUser) {
-		Map<String,ODocument> socialLogins = existingUser.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.SOCIAL_LOGIN_INFO);
-		UserInfo result = null;
-		if(socialLogins!=null){
-			for (ODocument socialLogin : socialLogins.values()) {
-				UserInfo temp = UserInfo.fromJson(socialLogin.toJSON());
-				if(temp.isGeneratedUsername()){
-					result = temp;
-					break;
-				}
-			}
-		}
-		return result;
-	}
-
+	
 	
 	@With({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result socialLogins(){
@@ -186,6 +171,33 @@ public class Social extends Controller{
 		}catch(Exception e){
 			return internalServerError(e.getMessage());
 		}
+	}
+	
+	
+	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
+	public static Result unlink(String socialNetwork){
+			ODocument user = null;
+			try{
+				user = UserService.getCurrentUser();
+			}catch(Exception e){
+				internalServerError(e.getMessage());
+			}
+			Map<String,ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.SOCIAL_LOGIN_INFO);
+			if(logins==null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork)==null){
+				return notFound("User's account is not linked with:"+socialNetwork);
+			}else{
+				boolean generated = user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.GENERATED_USERNAME);
+				if(logins.size()==1 && generated){
+					return internalServerError("User's account can't be unlinked.");
+				}else{
+					try{
+						UserService.removeSocialLoginTokens(user,socialNetwork);
+						return ok();
+					}catch(Exception e){
+						return internalServerError(e.getMessage());
+					}
+				}
+			}
 	}
 	
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
@@ -212,7 +224,7 @@ public class Social extends Controller{
 			ODocument other = UserDao.getInstance().getBySocialUserId(result);
 			boolean sameUser = other!=null && other.getIdentity().equals(user.getIdentity());
 			if(other==null || !sameUser){
-				UserService.addSocialLoginTokens(user, result, false);
+				UserService.addSocialLoginTokens(user, result);
 			}else{
 				internalServerError("A user with this token already exists and it's not the current user.");
 			}

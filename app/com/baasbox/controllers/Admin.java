@@ -230,7 +230,7 @@ public class Admin extends Controller {
 
 		//try to signup new user
 		try {
-			UserService.signUp(username, password, role,null,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			UserService.signUp(username, password, role,null,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){

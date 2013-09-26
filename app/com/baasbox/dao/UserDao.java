@@ -57,6 +57,7 @@ public class UserDao extends NodeDao  {
 	public final static String ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER="visibleByTheUser";
 	public final static String USER_SIGNUP_DATE="signUpDate";
 	public final static String ATTRIBUTES_SYSTEM="system";
+	public static final String GENERATED_USERNAME = "generated_username";
 
 	public static UserDao getInstance(){
 		return new UserDao();

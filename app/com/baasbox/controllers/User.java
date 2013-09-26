@@ -127,7 +127,7 @@ public class User extends Controller {
 		  //try to signup new user
 		  ODocument profile = null;
 		  try {
-			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		  } catch (UserAlreadyExistsException e){
 			  Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");

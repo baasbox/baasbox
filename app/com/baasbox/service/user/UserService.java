@@ -102,7 +102,8 @@ public class UserService {
 			JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes,
 			JsonNode friendsAttributes,
-			JsonNode appUsersAttributes) throws Exception{
+			JsonNode appUsersAttributes,
+			boolean generated) throws Exception{
 		return signUp (
 				username,
 				password,
@@ -111,7 +112,8 @@ public class UserService {
 				nonAppUserAttributes,
 				privateAttributes,
 				friendsAttributes,
-				appUsersAttributes) ;
+				appUsersAttributes,
+				generated) ;
 	}
 
 	public static void registerDevice(HashMap<String,Object> data) throws SqlInjectionException{
@@ -154,7 +156,8 @@ public class UserService {
 			JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes,
 			JsonNode friendsAttributes,
-			JsonNode appUsersAttributes) throws Exception{
+			JsonNode appUsersAttributes,
+			boolean generated) throws Exception{
 
 
 		OGraphDatabase db =  DbHelper.getConnection();
@@ -244,6 +247,7 @@ public class UserService {
 
 			ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
 			attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
+			attrObj.field(UserDao.GENERATED_USERNAME,generated);
 			PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
 			PermissionsHelper.changeOwner(attrObj, userRid);
 			profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);
@@ -463,21 +467,38 @@ public class UserService {
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
 	}
 
-	
-	
-	public static void addSocialLoginTokens(ODocument user , UserInfo userInfo,
-			boolean overwrite) throws ODatabaseException {
+
+	public static void removeSocialLoginTokens(ODocument user , String socialNetwork) throws ODatabaseException{
+		DbHelper.requestTransaction();
+		try{
+			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
+			Map<String,ODocument>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
+			if(ssoTokens == null){
+				throw new ODatabaseException(socialNetwork + " is not linked with this account");
+			}else{
+				ssoTokens.remove(socialNetwork);
+				systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
+				user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
+				systemProps.save();
+				user.save();
+				Logger.debug("saved tokens for user ");
+				DbHelper.commitTransaction();
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			DbHelper.rollbackTransaction();
+			throw new ODatabaseException("unable to add tokens");
+		}
+
+	}
+
+	public static void addSocialLoginTokens(ODocument user , UserInfo userInfo) throws ODatabaseException {
 		DbHelper.requestTransaction();
 		try{
 			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 			Map<String,ODocument>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
 			if(ssoTokens == null){
 				ssoTokens = new HashMap<String,ODocument>();
-			}
-			
-			
-			if(ssoTokens.get(userInfo.getFrom())!=null && !overwrite){
-				throw new InvalidParameterException("Overwrite of tokens for: "+userInfo.getFrom()+" is not allowed");
 			}
 
 			String jsonRep = userInfo.toJson();
@@ -490,7 +511,6 @@ public class UserService {
 			DbHelper.commitTransaction();
 
 		}catch(Exception e){
-			e.printStackTrace();
 			DbHelper.rollbackTransaction();
 			throw new ODatabaseException("unable to add tokens");
 		}

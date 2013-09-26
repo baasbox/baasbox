@@ -35,13 +35,14 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
-POST	/login								com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    		com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
-GET		/social/accounts		    		com.baasbox.controllers.Social.socialLogins()
-POST	/social/login/:socialNetwork		com.baasbox.controllers.Social.login(socialNetwork: String)
-POST	/social/loginWith/:socialNetwork	com.baasbox.controllers.Social.loginWith(socialNetwork: String)
-POST	/social/linkWith/:socialNetwork		com.baasbox.controllers.Social.linkWith(socialNetwork: String)
-GET		/login/:socialNetwork/callback		com.baasbox.controllers.Social.callback(socialNetwork: String)
+POST	/login										com.baasbox.controllers.User.login()
+POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
+POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
+PUT		/social/:socialNetwork						com.baasbox.controllers.Social.linkWith(socialNetwork: String)
+DELETE  /social/:socialNetwork						com.baasbox.controllers.Social.unlink(socialNetwork: String)
+GET		/social/login/:socialNetwork/callback		com.baasbox.controllers.Social.callback(socialNetwork: String)
+
 POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 POST	/user								com.baasbox.controllers.User.signUp()
 GET		/user								com.baasbox.controllers.User.getCurrentUser()
