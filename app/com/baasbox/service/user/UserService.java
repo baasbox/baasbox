@@ -463,18 +463,7 @@ public class UserService {
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
 	}
 
-	public static Tokens retrieveSocialLoginTokens(ODocument user ,String socialNetwork){
-		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-		if(systemProps==null){
-			return null;
-		}else{
-			Map<String,SocialLoginService.Tokens>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
-			if(ssoTokens == null){
-				return null;
-			}
-			return ssoTokens.get(socialNetwork);
-		}
-	}
+	
 	
 	public static void addSocialLoginTokens(ODocument user , UserInfo userInfo,
 			boolean overwrite) throws ODatabaseException {
