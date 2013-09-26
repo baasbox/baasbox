@@ -107,7 +107,7 @@ public abstract class SocialLoginService {
 		return enabled == null ? false : enabled;
 	}
 
-	public  Tokens getTokens(){
+	public  Tokens getTokens() throws UnsupportedSocialNetworkException{
 		String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";
 		String token = (String)Cache.get(keyFormat);
 		if(token ==null){
@@ -119,6 +119,9 @@ public abstract class SocialLoginService {
 		if(secret ==null){
 			secret = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
 			Cache.set(keyFormat,secret,0);
+		}
+		if(secret==null || token == null){
+			throw new UnsupportedSocialNetworkException("Social login for "+socialNetwork+" is not enabled.Please add app token and secret to configuration");
 		}
 		return new Tokens(token,secret);
 	}

@@ -1621,7 +1621,6 @@ function SettingsController($scope){
 		if(toModify.errors.length > 0){
 			return;
 		}else{
-			
 			var key = "social."+name+".token"
 			var value = toModify.token;
 			

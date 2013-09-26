@@ -61,18 +61,6 @@ public class FacebookLoginService extends SocialLoginService{
 		return null;
 	}
 
-	/**
-	 * {"id":"100000161140648",
-	 * "name":"Matt Fiand",
-	 * "first_name":"Matt",
-	 * "last_name":"Fiand",
-	 * "link":"https:\/\/www.facebook.com\/matt.fiand",
-	 * "username":"matt.fiand",
-	 * "birthday":"01\/23\/1981",
-	 * "gender":"male",
-	 * "email":"matteo.fiandesio\u004011870.com",
-	 * "timezone":2,"locale":"en_US","updated_time":"2012-06-13T13:01:41+0000"}
-	 */
 	
 	@Override
 	public UserInfo extractUserInfo(Response r) {
