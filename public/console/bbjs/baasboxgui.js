@@ -392,6 +392,7 @@ function openSettingEditForm(editSettingName)
 		}
 
 	}	
+	
 	$("#lblDescription").text(settingObject.description);
 	$("#txtKey").val(settingObject.key);
 	$("#txtKey").addClass("disabled");
@@ -567,6 +568,8 @@ function updateSetting()
 				}
 			})	
 }
+
+
 
 function closeSettingForm()
 {
@@ -1272,6 +1275,13 @@ function setupMenu(){
 	});
 }//setupMenu
 
+function initializeData(action,data){
+	var scope=$('#settings').scope();
+	scope.$apply(function(){
+		scope.$broadcast(action+"-data",data);
+	});
+}
+
 function applySuccessMenu(action,data){
 	$('#loading').remove();
 	var scope=$("#loggedIn").scope();
@@ -1389,7 +1399,8 @@ function callMenu(action){
 				console.log("dumpConfiguration Application success:");
 				console.log(data);
 				settingDataArray = data["data"];
-
+				
+				
 				//applySuccessMenu(action,data);
 				$('#settingsTable').dataTable().fnClearTable();
 				$('#settingsTable').dataTable().fnAddData(settingDataArray);
@@ -1408,9 +1419,10 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
 			success: function(data) {
 				console.log("dumpConfiguration Push success:");
-				console.log(data);
 				settingPushDataArray = data["data"];
+				console.log(settingPushDataArray);
 				settingPushMap = {}
+				
 				settingPushMap.add = function(setting,section){
 					if(settingPushMap[section]==null){
 						settingPushMap[section]=[];
@@ -1432,10 +1444,9 @@ function callMenu(action){
 						settingPushMap.add(setting,'push');
 					}
 				})
-				
+				initializeData("push",settingPushMap);
 				//applySuccessMenu(action,data);
-				$('#settingsPushTable').dataTable().fnClearTable();
-				$('#settingsPushTable').dataTable().fnAddData(settingPushDataArray);
+				
 			}
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
@@ -1443,8 +1454,6 @@ function callMenu(action){
 				console.log("dumpConfiguration Images success:");
 				console.log(data);
 				settingImgDataArray = data["data"];
-				console.log("action: ");
-				console.log(action);
 				applySuccessMenu(action,settingImgDataArray);
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
@@ -1561,6 +1570,16 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
+	/*
+	 * Push model
+	 */
+	$scope.pushData = settingPushMap;
+	
+	$scope.$watch(settingPushMap,function(d){
+		console.log("watching",d);
+	})
+	console.log($scope.pushData)
+	
 }
 
 function DBManagerController($scope){
@@ -1586,6 +1605,112 @@ function DBManagerController($scope){
 		return $scope.exports;
 
 	});
+}
+
+function PushSettingsController($scope){
+	$scope.pushData = {};
+	$scope.$on("push-data",function(e,data){
+		$scope.pushData = data;
+	});
+	
+	$scope.keyName = function(k){
+		return k.replace(/\./g,'');
+	}
+	
+	$scope.isSandboxMode = function(){
+		if(!$scope.pushData['push']){
+			return false;
+		}
+		if($scope.pushData['push'][0].value==undefined || 
+		   $scope.pushData['push'][0].value=='false'  || 
+		   !$scope.pushData['push'][0].value){
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
+	$scope.sandboxMode = function(enable){
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key, enable).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating sandbox mode:" + data["message"]);
+					},
+					success: function(data)
+					{
+						$scope.$apply(function(){
+							
+							$scope.pushData['push'][0].value = ""+enable+"";
+							console.log($scope.pushData['push'][0].value)
+						})
+						
+					}
+				});	
+	}
+	
+	$scope.updateInlineSetting = function(section,s){
+		console.log(s.value)
+		s.error = null;
+		if(!s.value || s.value==''){
+			s.error = "Value can't be empty";
+			return;
+		}
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, s.value).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating settings:" + data["message"]);
+					},
+					success: function(data)
+					{
+						alert("Setting "+s.key+" saved succesfully")
+					}
+				});	
+	}
+	
+	
+	$scope.updateFileSetting = function(section,s){
+		console.log("s",$scope[s.key])
+		s.error = null;
+		if($scope.file==null){
+			s.error ="File can't be empty"
+			return;
+		}
+		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
+		if (window.location.protocol == "https:"){
+			serverUrl=serverUrl.replace("http:","https:");
+		}
+
+		var options = {
+				url: serverUrl,
+				method:"PUT",
+				type: "PUT",
+				dataType: "json",
+				clearForm: true,
+				resetForm: true,
+				success: function(){
+					alert("File has been uploaded successfully");
+				}, //success
+				error: function(data) {
+					alert("There was an error uploading the file.Please check your logs");
+					console.log(data);
+				}
+		};
+		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);	
+		
+	}
+	
+	$scope.setFiles = function(element) {
+	    $scope.$apply(function(scope) {
+	        scope.file =  element.files[0]
+	        console.log(scope.file);
+	      });
+	    };
 }
 
 function DashboardController($scope) {

@@ -53,30 +53,45 @@
 					  				</thead>   
 								</table>
 							</div><!-- Push Pane-->
-							<div class="tab-pane" id="push">
+							<div class="tab-pane" id="push" data-ng-controller="PushSettingsController">
 									
-									<div class="settings-push">
+									<div class="settings push">
 										<h3>sandbox mode</h3>
+											<p>{{pushData['push'][0].description}}</p>
+											<span ng-show="!isSandboxMode()"><button ng-click="sandboxMode(true)" type="button" class="btn btn-success" >Enable Sandbox Mode</button></span>
+											<span ng-show="isSandboxMode()"><button ng-click="sandboxMode(false)" type="button" class="btn btn-danger">Disable Sandbox Mode</button></span>
 									</div>
 									
-									<div class="settings-android">
+									<div class="settings android">
 										<h3>android</h3>
+										<div class="setting" ng-repeat="s in pushData['android'] | filter:{file:false}">
+											<p>{{s.description}}</p>
+											<input type="text" ng-model="s.value"/>
+											<button type="button" ng-click="updateInlineSetting('Push',s)" class="btn btn-primary save">Save</button><span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+										</div>
+										
 									</div>
 										
-									<div class="settings-ios">
+									<div class="settings ios">
 										<h3>ios</h3>
+										<div class="setting" ng-repeat="s in pushData['ios'] | filter:{file:false}">
+											<p>{{s.description}}</p>
+											<input type="text" ng-model="s.value"/>
+											<button type="button" ng-click="updateInlineSetting('Push',s)" class="btn btn-primary save">Save</button>
+											<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+										</div>
+										
+										<div ng-repeat="s in pushData['ios'] | filter:{file:true}">
+											<p>{{s.description}}</p>
+											<form name="{{keyName(s.key)}}" id="{{keyName(s.key)}}" method="PUT">
+												<input data-no-uniform="true" type="file" id="{{keyName(s.key)}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
+												<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting('Push',s)">Upload</button>
+												<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+											</form>
+										</div>
 									</div>
+										
 									
-									<table id="settingsPushTable" class="table table-striped table-bordered bootstrap-datatable datatable">
-					  				<thead>
-						  				<tr>
-							 				<th>Key</th>
-							 				<th>Description</th>
-							  				<th>Value</th>
-							  				<th>Actions</th>
-						  				</tr>
-					  				</thead>   
-								</table>
 							</div><!-- Push Pane-->							
 						</div><!-- tab-content -->
 					</div><!--/box-content-->

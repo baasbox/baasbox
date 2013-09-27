@@ -26,3 +26,23 @@ p.hint{
 	font-style: italic;
 	color: #777;
 }
+
+div.settings{
+	margin-bottom:24px;
+}
+div.setting {
+	margin-bottom:12px;
+}
+div.setting p {
+	margin:0 0 3px 0;
+}
+div.setting button.save {
+	margin-top:-10px;
+}
+div.setting span.error{
+	color:red;
+	padding-left:12px;
+}
+div.setting button.upload {
+	margin-top:0;
+}

@@ -30,4 +30,7 @@ public interface IBBConfigurationKeys {
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
 	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
+	
+	public static final String PUSH_CERTIFICATES_FOLDER = "push.baasbox.certificates.folder";
+	public static final String PUSH_CERTIFICATES_NAME_PATTERN = "push.baasbox.certificates.naming.pattern";
 }
