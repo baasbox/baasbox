@@ -1,5 +1,9 @@
 package com.baasbox.service.push;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.NoRouteToHostException;
+import java.net.UnknownHostException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +23,7 @@ import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.QueryParams;
+import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -46,7 +51,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{
+	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, InvalidRequestException, UnknownHostException{
 		Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
