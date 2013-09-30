@@ -186,7 +186,7 @@ public class Social extends Controller{
 			if(logins==null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork)==null){
 				return notFound("User's account is not linked with:"+socialNetwork);
 			}else{
-				boolean generated = user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.GENERATED_USERNAME);
+				boolean generated = (Boolean)user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.GENERATED_USERNAME);
 				if(logins.size()==1 && generated){
 					return internalServerError("User's account can't be unlinked.");
 				}else{
