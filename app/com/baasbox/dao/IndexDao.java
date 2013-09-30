@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDictionary;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public abstract class IndexDao {
 	public final String INDEX_NAME;
@@ -26,6 +27,19 @@ public abstract class IndexDao {
 	public IndexDao put (String key,Object value){
 		ODocument newValue = new ODocument();
 		newValue.field("value",value);
+		final OIdentifiable oldValue = (OIdentifiable) index.get(key);
+		if (oldValue != null) // DELETES THE PREVIOUS INDEXED RECORD
+			oldValue.getRecord().delete();
+		index.put(key, newValue);
+		return this;
+	}
+	
+	public IndexDao put (String key,Object value,byte[] binary){
+		ODocument newValue = new ODocument();
+		newValue.field("value",value);
+		if(binary!=null){
+			newValue.field("binary",new ORecordBytes(binary));
+		}
 		final OIdentifiable oldValue = (OIdentifiable) index.get(key);
 		if (oldValue != null) // DELETES THE PREVIOUS INDEXED RECORD
 			oldValue.getRecord().delete();

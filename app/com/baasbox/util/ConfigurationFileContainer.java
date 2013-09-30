@@ -7,11 +7,11 @@ public class ConfigurationFileContainer {
 	
 	
 	private String name;
-	private byte[] content;
+	private ORecordBytes content;
 	
 	public ConfigurationFileContainer(String name,byte[] content){
 		this.name = name;
-		this.content = content;
+		this.content = new ORecordBytes(content);
 	}
 
 	public String getName() {
@@ -23,11 +23,11 @@ public class ConfigurationFileContainer {
 	}
 
 	public byte[] getContent() {
-		return content;
+		return content.toStream();
 	}
 	
 	public void setContent(byte[] content) {
-		this.content = content;
+		this.content = new ORecordBytes(content);
 	}
 
 	@Override

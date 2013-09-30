@@ -12,7 +12,7 @@ public enum Push implements IProperties{
 	SANDBOX_IOS_CERTIFICATE("sandbox.ios.certificate", "The path of Apple certificate in sandbox mode", ConfigurationFileContainer.class,new IosCertificateHandler()),
 	SANDBOX_IOS_CERTIFICATE_PASSWORD("sandbox.ios.certificate.password", "The password of Apple certificate in sandbox mode", String.class),
 	PRODUCTION_ANDROID_API_KEY("production.android.api.key", "The key for send push notifications to Android device in production mode", String.class),
-	PRODUCTION_IOS_CERTIFICATE("production.ios.certificate", "The path of Apple certificate in production mode", ConfigurationFileContainer.class),	
+	PRODUCTION_IOS_CERTIFICATE("production.ios.certificate", "The path of Apple certificate in production mode", ConfigurationFileContainer.class,new IosCertificateHandler()),	
 	PRODUCTION_IOS_CERTIFICATE_PASSWORD("production.ios.certificate.password", "The password of Apple certificate in production mode", String.class);
 	
 
@@ -38,7 +38,7 @@ public enum Push implements IProperties{
 	@Override
 	public void setValue(Object newValue) {
 	    Object parsedValue=null;
-	    Logger.debug("Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
+	    Logger.debug("Type:"+type+" Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
 	    try{
 		    if (newValue != null)
 		      if (type == Boolean.class)
@@ -49,9 +49,9 @@ public enum Push implements IProperties{
 		    	  parsedValue = Float.parseFloat(newValue.toString());
 		      else if (type == String.class)
 		    	  parsedValue = newValue.toString();
-		      else if (type == ConfigurationFileContainer.class)
-		    	  
+		      else if (type == ConfigurationFileContainer.class){
 		    	  parsedValue = (ConfigurationFileContainer)newValue;
+		      }
 		      else
 		    	  parsedValue = newValue;
 	    }catch (Exception e){
@@ -60,8 +60,13 @@ public enum Push implements IProperties{
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);		
 		IndexPushConfiguration idx;
 		try {
+			
 			idx = new IndexPushConfiguration();
-			idx.put(key, parsedValue);
+			if(type == ConfigurationFileContainer.class){
+				idx.put(key, parsedValue,((ConfigurationFileContainer)parsedValue).getContent());
+			}else{
+				idx.put(key, parsedValue);
+			}
 		} catch (Exception e) {
 			Logger.error("Could not store key " + key, e);
 		}
@@ -89,6 +94,11 @@ public enum Push implements IProperties{
 	public String getValueAsString() {
     	 Object v = getValue();
 	     return v != null ? v.toString() : null;
+	}
+	
+	public ConfigurationFileContainer getValueAsFileContainer() {
+    	 Object v = getValue();
+	     return v != null ? ((ConfigurationFileContainer)v) : null;
 	}
 
 	@Override

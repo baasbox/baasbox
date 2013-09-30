@@ -1695,6 +1695,9 @@ function PushSettingsController($scope){
 				resetForm: true,
 				success: function(){
 					alert("File has been uploaded successfully");
+					$scope.$apply(function(scope){
+						s.value=$scope.file.name
+					});
 				}, //success
 				error: function(data) {
 					alert("There was an error uploading the file.Please check your logs");

@@ -43,6 +43,17 @@ div.setting span.error{
 	color:red;
 	padding-left:12px;
 }
+
+div.setting div.uploaded{
+	background-color:#aeaeae;
+	padding:3px;
+	margin-bottom:13px;
+}
+div.setting input[type=file]{
+	clear:left;
+	display:block;
+}
+
 div.setting button.upload {
 	margin-top:0;
 }

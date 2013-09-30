@@ -19,7 +19,6 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 	
 	@Override
 	public void change(Object iCurrentValue, Object iNewValue) {
-		Logger.warn("newValue: "+iNewValue+" oldValue:"+iCurrentValue );
 		String folder = BBConfiguration.getPushCertificateFolder();
 		File f = new File(Play.application().path().getAbsolutePath()+sep+folder);
 		if(!f.exists()){
@@ -46,8 +45,6 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			}
 		}
 		if(newValue!=null){
-			
-			
 			File newFile =  new File(Play.application().path().getAbsolutePath()+sep+folder+sep+newValue.getName());
 			try{
 			if(!newFile.exists()){
@@ -56,9 +53,6 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			}catch(IOException ioe){
 				throw new RuntimeException("unable to create file:"+ioe.getMessage());
 			}
-			Logger.debug("Is file "+ newValue.getName()+" null???");
-			byte[] content = newValue.getContent();
-			Logger.debug("Is file "+ newValue.getName()+" null???"+content.length);
 			ByteArrayInputStream bais = new ByteArrayInputStream(newValue.getContent());
 			try{
 				FileUtils.copyInputStreamToFile(bais, newFile);
