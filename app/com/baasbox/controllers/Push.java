@@ -1,5 +1,9 @@
 package com.baasbox.controllers;
 
+import java.io.IOException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,13 +32,14 @@ import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.service.user.UserService;
+import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
-	 public static Result send(String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException {
+	 public static Result send(String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException,InvalidRequestException {
 		 Logger.trace("Method Start");
 		 Http.RequestBody body = request().body();
 		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
@@ -49,10 +54,25 @@ public class Push extends Controller {
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
+			    return notFound("Username not found");
 		 }
 		 catch (SqlInjectionException e) {
 			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		 }
+		 catch (InvalidRequestException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(),e.getMessage());
+		 }
+		 catch (PushNotInitializedException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), e.getMessage());
+		 }
+		 catch (UnknownHostException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_HOST_UNRECHEABLE.getBbCode(),e.getMessage());
+		 }
+		 
+		
 		 Logger.trace("Method End");
 		 return ok();
 	  }

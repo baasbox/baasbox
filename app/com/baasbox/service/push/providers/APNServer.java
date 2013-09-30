@@ -1,8 +1,12 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Date;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import play.Logger;
@@ -85,12 +89,21 @@ public class APNServer  implements IPushServer {
 	@Override
 	public void setConfiguration(ImmutableMap<ConfigurationKeys, String> configuration) {
 		String name = configuration.get(ConfigurationKeys.IOS_CERTIFICATE);
-		File f = new IosCertificateHandler().getCertificate(name);
-		certificate=f.getAbsolutePath();
+		File certificate = new IosCertificateHandler().getCertificate(name);
 		password=configuration.get(ConfigurationKeys.IOS_CERTIFICATE_PASSWORD);
 		sandbox=configuration.get(ConfigurationKeys.IOS_SANDBOX).equalsIgnoreCase("true");
 		timeout=Integer.parseInt(configuration.get(ConfigurationKeys.APPLE_TIMEOUT));
 		isInit=true;	
+		if(certificate.exists() || StringUtils.isNotEmpty(password)) {
+			password=configuration.get(ConfigurationKeys.IOS_CERTIFICATE_PASSWORD);
+			sandbox=configuration.get(ConfigurationKeys.IOS_SANDBOX).equalsIgnoreCase("true");
+			timeout=Integer.parseInt(configuration.get(ConfigurationKeys.APPLE_TIMEOUT));
+			isInit=true;	
+		}
+		else {
+			isInit=false;
+		}
+		
 	}
 
 
