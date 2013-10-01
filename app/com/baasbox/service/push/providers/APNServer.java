@@ -89,21 +89,12 @@ public class APNServer  implements IPushServer {
 	@Override
 	public void setConfiguration(ImmutableMap<ConfigurationKeys, String> configuration) {
 		String name = configuration.get(ConfigurationKeys.IOS_CERTIFICATE);
-		File certificate = new IosCertificateHandler().getCertificate(name);
+		File f = new IosCertificateHandler().getCertificate(name);
+		this.certificate=f.getAbsolutePath();
 		password=configuration.get(ConfigurationKeys.IOS_CERTIFICATE_PASSWORD);
 		sandbox=configuration.get(ConfigurationKeys.IOS_SANDBOX).equalsIgnoreCase("true");
 		timeout=Integer.parseInt(configuration.get(ConfigurationKeys.APPLE_TIMEOUT));
-		isInit=true;	
-		if(certificate.exists() || StringUtils.isNotEmpty(password)) {
-			password=configuration.get(ConfigurationKeys.IOS_CERTIFICATE_PASSWORD);
-			sandbox=configuration.get(ConfigurationKeys.IOS_SANDBOX).equalsIgnoreCase("true");
-			timeout=Integer.parseInt(configuration.get(ConfigurationKeys.APPLE_TIMEOUT));
-			isInit=true;	
-		}
-		else {
-			isInit=false;
-		}
-		
+		isInit=StringUtils.isNotEmpty(this.certificate) && StringUtils.isNotEmpty(password);	
 	}
 
 

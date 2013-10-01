@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
-	 public static Result send(String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException,InvalidRequestException {
+	 public static Result send(String username)  {
 		 Logger.trace("Method Start");
 		 Http.RequestBody body = request().body();
 		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
@@ -61,16 +61,18 @@ public class Push extends Controller {
 		 }
 		 catch (InvalidRequestException e){
 			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(),e.getMessage());
+			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(),CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 		 }
 		 catch (PushNotInitializedException e){
 			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), e.getMessage());
+			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 		 }
 		 catch (UnknownHostException e){
 			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_HOST_UNRECHEABLE.getBbCode(),e.getMessage());
-		 }
+			 	return status(CustomHttpCode.PUSH_HOST_UNRECHEABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNRECHEABLE.getDescription());
+		 }catch (IOException e) {
+			 return badRequest(e.getMessage());
+		}
 		 
 		
 		 Logger.trace("Method End");

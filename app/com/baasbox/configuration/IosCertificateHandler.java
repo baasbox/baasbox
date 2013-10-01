@@ -19,6 +19,9 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 	
 	@Override
 	public void change(Object iCurrentValue, Object iNewValue) {
+		if(iNewValue==null){
+			return;
+		}
 		String folder = BBConfiguration.getPushCertificateFolder();
 		File f = new File(Play.application().path().getAbsolutePath()+sep+folder);
 		if(!f.exists()){

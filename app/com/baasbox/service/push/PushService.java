@@ -51,7 +51,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, InvalidRequestException, UnknownHostException{
+	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
 		Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
