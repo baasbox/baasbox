@@ -1,16 +1,12 @@
 package com.baasbox.service.push;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.NoRouteToHostException;
 import java.net.UnknownHostException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
-import play.mvc.Http;
-import play.mvc.Http.Context;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
@@ -21,8 +17,6 @@ import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
-import com.baasbox.util.IQueryParametersKeys;
-import com.baasbox.util.QueryParams;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
