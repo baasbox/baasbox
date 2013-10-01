@@ -62,10 +62,18 @@ public class GithubLoginService extends SocialLoginService {
 		UserInfo ui = new UserInfo();
 		ui.setId(user.get("id").getTextValue());
 		ui.setUsername(user.get("login").getTextValue());
-		ui.addData("avatar", user.get("avatar_url").getTextValue());
-		ui.addData("personal_url", user.get("html_url").getTextValue());
-		ui.addData("name", user.get("name").getTextValue());
-		ui.addData("location", user.get("location").getTextValue());
+		if(user.get("avatar_url")!=null){
+			ui.addData("avatar", user.get("avatar_url").getTextValue());
+		}
+		if(user.get("html_url")!=null){
+			ui.addData("personal_url", user.get("html_url").getTextValue());
+		}
+		if(user.get("name")!=null){
+			ui.addData("name", user.get("name").getTextValue());
+		}
+		if(user.get("location")!=null){
+			ui.addData("location", user.get("location").getTextValue());
+		}
 		return ui;
 		
 	}

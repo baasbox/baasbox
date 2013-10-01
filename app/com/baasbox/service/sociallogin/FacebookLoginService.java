@@ -68,10 +68,18 @@ public class FacebookLoginService extends SocialLoginService{
 		JsonNode user = Json.parse(r.getBody());
 		ui.setUsername(user.get("username").getTextValue());
 		ui.setId(user.get("id").getTextValue());
-		ui.addData("email",user.get("email").getTextValue());
-		ui.addData("gender",user.get("gender").getTextValue());
-		ui.addData("personalUrl",user.get("link").getTextValue());
-		ui.addData("name",user.get("name").getTextValue());
+		if(user.get("email")!=null){
+			ui.addData("email",user.get("email").getTextValue());
+		}
+		if(user.get("gender")!=null){
+			ui.addData("gender",user.get("gender").getTextValue());
+		}
+		if(user.get("link")!=null){
+			ui.addData("personalUrl",user.get("link").getTextValue());
+		}
+		if(user.get("name")!=null){
+			ui.addData("name",user.get("name").getTextValue());
+		}
 		return ui;
 	}
 
