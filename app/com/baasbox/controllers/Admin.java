@@ -398,7 +398,7 @@ public class Admin extends Controller {
 			}
 			r = ok();
 		}catch(Exception e){
-			Logger.debug(e.getMessage());
+			Logger.error(e.getMessage());
 			r = internalServerError(e.getMessage());
 		}
 		return r;

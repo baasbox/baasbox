@@ -1431,8 +1431,12 @@ function callMenu(action){
 				};
 				$(settingPushDataArray).each(function(i,setting){
 					var k = setting["key"];
+					
 					if(k.endsWith(".certificate")){
 						setting["file"] = true
+						if(setting.value){
+							setting["filename"] = JSON.parse(setting.value).name
+						}
 					}else{
 						setting["file"] = false;
 					}
@@ -1696,7 +1700,7 @@ function PushSettingsController($scope){
 				success: function(){
 					alert("File has been uploaded successfully");
 					$scope.$apply(function(scope){
-						s.value=$scope.file.name
+						s.filename=$scope.file.name
 					});
 				}, //success
 				error: function(data) {

@@ -1,5 +1,7 @@
 package com.baasbox.dao;
 
+import play.Logger;
+
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.IndexNotFoundException;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
@@ -46,6 +48,7 @@ public abstract class IndexDao {
 		index.put(key, newValue);
 		return this;
 	}
+	
 	
 	public Object get (String key){
 		ODocument value=null;
