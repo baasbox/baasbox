@@ -1574,15 +1574,6 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
-	/*
-	 * Push model
-	 */
-	$scope.pushData = settingPushMap;
-	
-	$scope.$watch(settingPushMap,function(d){
-		console.log("watching",d);
-	})
-	console.log($scope.pushData)
 	
 }
 
@@ -1715,7 +1706,6 @@ function PushSettingsController($scope){
 	$scope.setFiles = function(element) {
 	    $scope.$apply(function(scope) {
 	        scope.file =  element.files[0]
-	        console.log(scope.file);
 	      });
 	    };
 }

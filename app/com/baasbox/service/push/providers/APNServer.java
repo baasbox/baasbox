@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import play.Logger;
 import views.html.admin.main_.content_.assets_.newAsset;
@@ -88,9 +89,17 @@ public class APNServer  implements IPushServer {
 
 	@Override
 	public void setConfiguration(ImmutableMap<ConfigurationKeys, String> configuration) {
-		String name = configuration.get(ConfigurationKeys.IOS_CERTIFICATE);
+		String json = configuration.get(ConfigurationKeys.IOS_CERTIFICATE);
+		String name = null;
+		ObjectMapper mp = new ObjectMapper();
+		try{
+			ConfigurationFileContainer cfc = mp.readValue(json, ConfigurationFileContainer.class);
+			name = cfc.getName();
+		}catch(Exception e){
+			Logger.error(e.getMessage());
+		}
 		if(name!=null && !name.equals("null")){
-			File f = new IosCertificateHandler().getCertificate(name);
+			File f = IosCertificateHandler.getCertificate(name);
 			this.certificate=f.getAbsolutePath();
 		}
 		password=configuration.get(ConfigurationKeys.IOS_CERTIFICATE_PASSWORD);
