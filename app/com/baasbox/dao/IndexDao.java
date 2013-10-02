@@ -36,19 +36,6 @@ public abstract class IndexDao {
 		return this;
 	}
 	
-	public IndexDao put (String key,Object value,byte[] binary){
-		ODocument newValue = new ODocument();
-		newValue.field("value",value);
-		if(binary!=null){
-			newValue.field("binary",new ORecordBytes(binary));
-		}
-		final OIdentifiable oldValue = (OIdentifiable) index.get(key);
-		if (oldValue != null) // DELETES THE PREVIOUS INDEXED RECORD
-			oldValue.getRecord().delete();
-		index.put(key, newValue);
-		return this;
-	}
-	
 	
 	public Object get (String key){
 		ODocument value=null;
