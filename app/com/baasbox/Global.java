@@ -68,7 +68,7 @@ public class Global extends GlobalSettings {
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
-			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
