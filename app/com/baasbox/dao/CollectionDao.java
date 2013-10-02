@@ -76,6 +76,9 @@ public class CollectionDao extends NodeDao {
 		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
+		if(collectionName.toUpperCase().startsWith("_BB_")){
+			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
+		}
 		save(doc);
 		
 		//create new class

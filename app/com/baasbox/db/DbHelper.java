@@ -373,6 +373,7 @@ public class DbHelper {
 				Object value =subConf.getString(key);
 				key=key.replace(doubleDot, dot);//bug on the Apache library: if the key contain a dot, it will be doubled!
 				try {
+					Logger.info("Setting "+value+ " to "+key);
 					PropertiesConfigurationHelper.setByKey(en, key, value);
 				} catch (Exception e) {
 					Logger.warn("Error loading initial configuration: Section " + section + ", key: " + key +", value: " + value, e);
