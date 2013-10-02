@@ -85,7 +85,7 @@
 											<p>{{s.description}}</p>
 											<form name="{{keyName(s.key)}}" id="{{keyName(s.key)}}" method="PUT">
 												<div class="uploaded span7" data-ng-show="s.value">A file is already present:<strong>{{s.filename}}</strong></div>
-												<input data-no-uniform="true" type="file" id="{{keyName(s.key)}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
+												<input data-no-uniform="true" accept=".p12" type="file" id="{{keyName(s.key)}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
 												<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting('Push',s)">Upload</button>
 												<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
 											</form>
