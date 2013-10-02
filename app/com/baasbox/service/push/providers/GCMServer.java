@@ -9,7 +9,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import play.Logger;
 import play.mvc.Controller;
 
-import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.android.gcm.server.Message;
@@ -26,22 +25,17 @@ public class GCMServer extends Controller implements IPushServer {
 	}
 
 	public void send(String message, String deviceid)
-			throws PushNotInitializedException, InvalidRequestException, UnknownHostException {
+			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
 		Logger.debug("GCM Push message: " + message + " to the device "
 				+ deviceid);
 		if (!isInit)
 			throw new PushNotInitializedException(
 					"Configuration not initialized");
-		try {
 			Sender sender = new Sender(apikey);
 			Message msg = new Message.Builder().addData("message", message)
 					.build();
 
 			sender.send(msg, deviceid, 1);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
 
 		// icallbackPush.onError(e.getMessage());
