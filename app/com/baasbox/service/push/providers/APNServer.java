@@ -1,17 +1,12 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Date;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import play.Logger;
-import views.html.admin.main_.content_.assets_.newAsset;
 
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
@@ -20,7 +15,6 @@ import com.google.common.collect.ImmutableMap;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsService;
 import com.notnoop.apns.EnhancedApnsNotification;
-import com.notnoop.apns.EnhancedApnsNotification.*;
 import com.notnoop.exceptions.NetworkIOException;
 
 
@@ -47,7 +41,14 @@ public class APNServer  implements IPushServer {
 	public  void send(String message, String deviceid) throws PushNotInitializedException{	
 		Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
-		ApnsService service=getService();
+		ApnsService service = null;
+		try{
+			service=getService();
+		} catch (com.notnoop.exceptions.InvalidSSLConfig e) {
+			Logger.error("Error sending push notification");
+			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
+			//icallbackPush.onError(e.getMessage());
+		}
 		String payload = APNS.newPayload().alertBody(message).build();
 		if(timeout<=0){
 			try {	
@@ -56,9 +57,8 @@ public class APNServer  implements IPushServer {
 					Logger.error("Error sending push notification");
 					Logger.error(ExceptionUtils.getStackTrace(e));
 					//icallbackPush.onError(e.getMessage());
-				}
 			}
-		else {
+		} else {
 			try {
 				EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
 				     Integer.MAX_VALUE, deviceid, payload);
