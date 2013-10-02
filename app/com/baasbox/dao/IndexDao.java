@@ -29,9 +29,6 @@ public abstract class IndexDao {
 	public IndexDao put (String key,Object value){
 		ODocument newValue = new ODocument();
 		newValue.field("value",value);
-		final OIdentifiable oldValue = (OIdentifiable) index.get(key);
-		if (oldValue != null) // DELETES THE PREVIOUS INDEXED RECORD
-			oldValue.getRecord().delete();
 		index.put(key, newValue);
 		return this;
 	}
