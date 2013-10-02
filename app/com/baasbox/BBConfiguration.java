@@ -62,4 +62,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(DB_BACKUP_PATH);
 	}
 	
+	public static String getPushCertificateFolder(){
+		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
+	}
+	
+	
 }
