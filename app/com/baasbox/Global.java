@@ -72,7 +72,7 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase ( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();

@@ -197,7 +197,7 @@ public class DbHelper {
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
-		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username,password);
+		OGraphDatabase db=new OGraphDatabase("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
