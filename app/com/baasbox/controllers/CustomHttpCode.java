@@ -28,11 +28,11 @@ public enum CustomHttpCode {
 				return this.bbCode;
 			}
 			
-			public int gethttpCode(){
+			public int getHttpCode(){
 				return this.httpCode;
 			}
 			
-			public String gedescription(){
+			public String getDescription(){
 				return this.description;
 			}
 			
