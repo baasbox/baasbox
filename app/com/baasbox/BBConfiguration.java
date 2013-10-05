@@ -27,6 +27,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(REALM);
 	}
 	
+	public static int getMVCCMaxRetries(){
+		return configuration.getInt(MVCC_MAX_RETRIES);
+	}
+	
 	public static String getBaasBoxUsername(){
 		return configuration.getString(ANONYMOUS_USERNAME);
 	}

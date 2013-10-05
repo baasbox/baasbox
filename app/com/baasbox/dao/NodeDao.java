@@ -23,7 +23,7 @@ import java.util.UUID;
 
 import play.Logger;
 
-import com.baasbox.BBInternalConstants;
+import com.baasbox.BBConfiguration;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -33,6 +33,7 @@ import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -98,15 +99,11 @@ public abstract class NodeDao  {
 				UUID token = UUID.randomUUID();
 				Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
-				//crates a link (an edge) between the current user and the document  
-				UserDao udao = new UserDao();
-				ODocument user=udao.getByUserName(DbHelper.getCurrentUserName());
-				ODocument userVertex=user.field(FIELD_LINK_TO_VERTEX);
-				db.createEdge(userVertex,vertex,EDGE_CLASS_CREATED);
-			Logger.trace("Method End");
 			return doc;
 		}catch (Throwable e){
 			throw e;
+		}finally{
+			Logger.trace("Method End");
 		}
 	}
 	
