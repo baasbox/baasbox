@@ -197,7 +197,7 @@ public class DbHelper {
 		Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
-		OGraphDatabase db=new OGraphDatabase("local:" + BBConfiguration.getDBDir()).open(username,password);
+		OGraphDatabase db=new OGraphDatabase("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
 		return db;
 	}
@@ -373,6 +373,7 @@ public class DbHelper {
 				Object value =subConf.getString(key);
 				key=key.replace(doubleDot, dot);//bug on the Apache library: if the key contain a dot, it will be doubled!
 				try {
+					Logger.info("Setting "+value+ " to "+key);
 					PropertiesConfigurationHelper.setByKey(en, key, value);
 				} catch (Exception e) {
 					Logger.warn("Error loading initial configuration: Section " + section + ", key: " + key +", value: " + value, e);

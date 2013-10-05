@@ -18,6 +18,7 @@ package com.baasbox.controllers;
 
 import static play.libs.Json.toJson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,6 +61,7 @@ import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
+import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
@@ -76,6 +79,7 @@ import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.ConfigurationFileContainer;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -347,7 +351,24 @@ public class Admin extends Controller {
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		try {
-			PropertiesConfigurationHelper.setByKey(conf, key, value);
+			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
+			if(i.getType().equals(ConfigurationFileContainer.class)){
+				MultipartFormData  body = request().body().asMultipartFormData();
+				if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+				FilePart file = body.getFile("file");
+				if(file==null) return badRequest("missing file");
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				try{
+					FileUtils.copyFile(file.getFile(),baos);
+					Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
+					baos.close();
+					conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+				}catch(Exception e){
+					internalServerError(e.getMessage());
+				}
+			}else{
+				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			}
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}
@@ -377,7 +398,7 @@ public class Admin extends Controller {
 			}
 			r = ok();
 		}catch(Exception e){
-			Logger.debug(e.getMessage());
+			Logger.error(e.getMessage());
 			r = internalServerError(e.getMessage());
 		}
 		return r;

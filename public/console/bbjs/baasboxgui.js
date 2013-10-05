@@ -1,6 +1,21 @@
 /**
  * javascript functions for the Admin GUI 
  */
+
+
+/**
+ * Utility Functions
+ * 
+ */
+
+/**
+ * http://stackoverflow.com/a/2548133/487576
+ * String endsWith
+ */
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
 var userDataArray;
 var settingDataArray;
 var settingPwdDataArray;
@@ -8,7 +23,7 @@ var settingImgDataArray;
 var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
-
+var settingPushMap = {};
 var dbCollectionsCache = [];
 
 $(document).ready(function(){
@@ -94,7 +109,7 @@ $('#exportDb').click(function(e){
 				},
 				success: function(data)
 				{
-					alert("your db export has been scheduled");
+					alert("Your database backup has been scheduled");
 				}
 
 			});	
@@ -149,7 +164,7 @@ $('a.deleteCollection').live('click',function(e){
 $('a.deleteExport').live('click',function(e){
 
 	var name = $(e.target).parents('tr').children()[0].innerHTML
-	if(confirm("Are you sure you want to delete this export?")){
+	if(confirm("Are you sure you want to delete this backup file?")){
 		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
 			error:function(data){
 				alert(JSON.parse(data.responseText)["message"]);
@@ -377,6 +392,7 @@ function openSettingEditForm(editSettingName)
 		}
 
 	}	
+	
 	$("#lblDescription").text(settingObject.description);
 	$("#txtKey").val(settingObject.key);
 	$("#txtKey").addClass("disabled");
@@ -553,6 +569,8 @@ function updateSetting()
 			})	
 }
 
+
+
 function closeSettingForm()
 {
 	$('#EditSettingModal').modal('hide');
@@ -603,28 +621,28 @@ $('.btn-UserCommit').click(function(e){
 
 			if(!isValidJson(visibleByTheUser)){
 				$("#auVisibleByTheUser").addClass("error");
-				errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
+				errorMessage += "The field 'Visible By The User' must be a valid JSON string<br/>"
 			}
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
-		errorMessage += "The field 'Visible By Friend' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Friend' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByFriend").removeClass("error");
 
 	if(!isValidJson(visibleByRegisteredUsers)){
 		$("#auVisibleByRegisteredUsers").addClass("error");
-		errorMessage += "The field 'Visible By Registered Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Registered Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByRegisteredUsers").removeClass("error");
 
 	if(!isValidJson(visibleByAnonymousUsers)){
 		$("#auVisibleByAnonymousUsers").addClass("error");
-		errorMessage += "The field 'Visible By Anonymous Users' must be a valid Json text<br/>"
+		errorMessage += "The field 'Visible By Anonymous Users' must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
@@ -761,7 +779,7 @@ $('#importBtn').on('click',function(e){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	$('#importModal').modal('show');
@@ -783,7 +801,7 @@ $('#importDbForm').on('submit',function(){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to download")
+		$('#importErrors').html("You have to pick a file to restore")
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
@@ -833,7 +851,7 @@ $('#assetForm').submit(function() {
 
 			if(!isValidJson(assetMeta)){
 				$("#divAssetMeta").addClass("error");
-				errorMessage += "The field 'Meta' must be a valid Json text<br/>"
+				errorMessage += "The field 'Meta' must be a valid JSON string<br/>"
 			}
 			else
 				$("#divAssetMeta").removeClass("error");
@@ -867,7 +885,10 @@ $('#assetForm').submit(function() {
 			success: function(){
 				$('#addAssetModal').modal('hide');
 				loadAssetTable();
-			} //success
+			}, //success
+			error: function(data) {
+				$("#errorAsset").removeClass("hide").html(JSON.parse(data.responseText)["message"])
+			}
 	};
 
 	$(this).ajaxSubmit(options);
@@ -1104,7 +1125,7 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"aoColumns": [ {"mData": "name"},
 		               {"mData": "date"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"> <a class=\"btn downloadExport\" href=\"#\">Download</a> <a class=\"btn btn-danger deleteExport\">Delete</a> </div>"}}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
@@ -1125,16 +1146,17 @@ function setupTables(){
 		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "@rid"},
-		               {"mData": "@rid", "mRender": function ( data, type, full ) {
+		"aoColumns": [ {"mData": "id", sWidth:"280px"},
+		               {"mData": "@rid","mRender": function ( data, type, full ) 
+						{
 		            	   var obj=JSON.parse(JSON.stringify(full)); 
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
+						   delete obj["id"];
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
+						}
 		               }
-		               },
-		               {"mData": "@version"}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
@@ -1235,17 +1257,30 @@ function setupAjax(){
 function setupMenu(){
 	//ajaxify menus
 	$('a.ajax-link').click(function(e){
-		//console.log("a.ajax-link click");
-		//console.log(e);
 		if($.browser.msie) e.which=1;
-		//console.log("go on...");
 		e.preventDefault();
 		var $clink=$(this);
 		callMenu($clink.attr('href'));
 		$('ul.main-menu li.active').removeClass('active');
 		$clink.parent('li').addClass('active');
 	});
+	$(".directLink").unbind("click");
+	//initializeTours
+	$(".tour").click(function(){
+		for (var key in tours) {
+			var tour = tours[key];
+			if (!tour.ended()) tour.end();
+		}
+		tours[$(this).data("tour")].restart();
+	});
 }//setupMenu
+
+function initializeData(action,data){
+	var scope=$('#settings').scope();
+	scope.$apply(function(){
+		scope.$broadcast(action+"-data",data);
+	});
+}
 
 function applySuccessMenu(action,data){
 	$('#loading').remove();
@@ -1323,6 +1358,7 @@ function callMenu(action){
 				};
 				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
 				var bbId = data["installation"]["bb_id"];
+				var bbv = data["installation"]["bb_version"];
 				if(bbId){
 					changeTopBarLink(bbId);
 				}
@@ -1350,7 +1386,9 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
 						});
-
+				if (localStorage.generalTour!=bbv) 
+					tours["general"].restart();
+				localStorage.generalTour=bbv;
 			}//success function
 		});//ajax call
 
@@ -1361,7 +1399,8 @@ function callMenu(action){
 				console.log("dumpConfiguration Application success:");
 				console.log(data);
 				settingDataArray = data["data"];
-
+				
+				
 				//applySuccessMenu(action,data);
 				$('#settingsTable').dataTable().fnClearTable();
 				$('#settingsTable').dataTable().fnAddData(settingDataArray);
@@ -1380,11 +1419,38 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
 			success: function(data) {
 				console.log("dumpConfiguration Push success:");
-				console.log(data);
 				settingPushDataArray = data["data"];
+				console.log(settingPushDataArray);
+				settingPushMap = {}
+				
+				settingPushMap.add = function(setting,section){
+					if(settingPushMap[section]==null){
+						settingPushMap[section]=[];
+					}
+					settingPushMap[section].push(setting)
+				};
+				$(settingPushDataArray).each(function(i,setting){
+					var k = setting["key"];
+					
+					if(k.endsWith(".certificate")){
+						setting["file"] = true
+						if(setting.value){
+							setting["filename"] = JSON.parse(setting.value).name
+						}
+					}else{
+						setting["file"] = false;
+					}
+					if(k.indexOf('.apple.')>-1 || k.indexOf('.ios.')>-1){
+						settingPushMap.add(setting,'ios');
+					}else if(k.indexOf('.android')>-1){
+						settingPushMap.add(setting,'android');
+					}else{
+						settingPushMap.add(setting,'push');
+					}
+				})
+				initializeData("push",settingPushMap);
 				//applySuccessMenu(action,data);
-				$('#settingsPushTable').dataTable().fnClearTable();
-				$('#settingsPushTable').dataTable().fnAddData(settingPushDataArray);
+				
 			}
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
@@ -1392,8 +1458,6 @@ function callMenu(action){
 				console.log("dumpConfiguration Images success:");
 				console.log(data);
 				settingImgDataArray = data["data"];
-				console.log("action: ");
-				console.log(action);
 				applySuccessMenu(action,settingImgDataArray);
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
@@ -1510,6 +1574,7 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
+	
 }
 
 function DBManagerController($scope){
@@ -1535,6 +1600,114 @@ function DBManagerController($scope){
 		return $scope.exports;
 
 	});
+}
+
+function PushSettingsController($scope){
+	$scope.pushData = {};
+	$scope.$on("push-data",function(e,data){
+		$scope.pushData = data;
+	});
+	
+	$scope.keyName = function(k){
+		return k.replace(/\./g,'');
+	}
+	
+	$scope.isSandboxMode = function(){
+		if(!$scope.pushData['push']){
+			return false;
+		}
+		if($scope.pushData['push'][0].value==undefined || 
+		   $scope.pushData['push'][0].value=='false'  || 
+		   !$scope.pushData['push'][0].value){
+			return false;
+		}else{
+			return true;
+		}
+	}
+	
+	$scope.sandboxMode = function(enable){
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key, enable).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating sandbox mode:" + data["message"]);
+					},
+					success: function(data)
+					{
+						$scope.$apply(function(){
+							
+							$scope.pushData['push'][0].value = ""+enable+"";
+							console.log($scope.pushData['push'][0].value)
+						})
+						
+					}
+				});	
+	}
+	
+	$scope.updateInlineSetting = function(section,s){
+		console.log(s.value)
+		s.error = null;
+		if(!s.value || s.value==''){
+			s.error = "Value can't be empty";
+			return;
+		}
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, s.value).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating settings:" + data["message"]);
+					},
+					success: function(data)
+					{
+						alert("Setting "+s.key+" saved succesfully")
+					}
+				});	
+	}
+	
+	
+	$scope.updateFileSetting = function(section,s){
+		console.log("s",$scope[s.key])
+		s.error = null;
+		if($scope.file==null){
+			s.error ="File can't be empty"
+			return;
+		}
+		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
+		if (window.location.protocol == "https:"){
+			serverUrl=serverUrl.replace("http:","https:");
+		}
+
+		var options = {
+				url: serverUrl,
+				method:"PUT",
+				type: "PUT",
+				dataType: "json",
+				clearForm: true,
+				resetForm: true,
+				success: function(){
+					alert("File has been uploaded successfully");
+					$scope.$apply(function(scope){
+						s.filename=$scope.file.name
+					});
+				}, //success
+				error: function(data) {
+					alert("There was an error uploading the file.Please check your logs");
+					console.log(data);
+				}
+		};
+		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);	
+		
+	}
+	
+	$scope.setFiles = function(element) {
+	    $scope.$apply(function(scope) {
+	        scope.file =  element.files[0]
+	      });
+	    };
 }
 
 function DashboardController($scope) {
@@ -1588,3 +1761,6 @@ function getPlatform(os){
 		return "other";
 	}
 }
+
+
+

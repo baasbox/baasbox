@@ -11,7 +11,7 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</a>
-				<a class="brand" href="#"> <img alt="BaasBox" src="img/logo20.png" /> <span>BaasBox</span></a>
+				<a class="brand" href="#" style="cursor: default;"> <img alt="BaasBox" src="img/logo20.png" /> <span>BaasBox</span></a>
 				
 				<!-- user dropdown starts -->
 				<div class="btn-group pull-right" >
@@ -19,7 +19,7 @@
 						<i class="icon-user"></i><span class="hidden-phone"><span id="username"></span></span>
 						<span class="caret"></span>
 					</a>
-					<ul class="dropdown-menu">
+					<ul data-rel="tooltip" title="You profile" class="dropdown-menu">
 						<li><a href="#" class="btn-changepwd">Change Password</a></li>
 						<li class="divider"></li>
 						<li><a class="logout" href="#">Logout</a></li>
@@ -29,9 +29,8 @@
 				
 				<div class="top-nav nav-collapse">
 					<ul class="nav">
-						<li><a>Version <span id="currentVersion">@version</span></a></li>
-						<li><a target="_new" href="http://www.baasbox.com">Visit Site</a></li>
-						<li><a class="help" target="_new" href="http://www.baasbox.com/version/help/@(version.toLowerCase().replaceAll("-snapshot",""))">View Documentation</a></li>
+						<li><a style="cursor: default;">Version <span id="currentVersion">@version</span></a></li>
+						<li data-rel="tooltip" title="Visit the BaasBox official site"><a target="_new" href="http://www.baasbox.com">Go to the Official Site</a></li>
 						<li>
 							<form class="navbar-search pull-left">
 								<!-- <input placeholder="Search" class="search-query span2" name="query" type="text">  -->

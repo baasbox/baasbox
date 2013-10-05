@@ -1,14 +1,16 @@
 <div ng-controller="DBManagerController" id="dbmanager">
 	<div class="row-fluid">
-		
+		<p class="hint">This is the database management tools page.
+		You will be able to make a backup, download it, restore it, or delete it from the backup list.<br />
+		Note: all generated backups are stored on the BaasBox server.
+		</p>
 		
 		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
 			<fieldset>
 			<legend>Restore from a backup file</legend>
-			<p class="hint">Here you can upload a backup file to restore the database.<br/>
-			Select a file on your local filesystem and then click on the Restore button</p>
+			<p class="hint">Here you can upload a backup file to restore the database. 	Select a file on your local filesystem and then click on the 'Restore...' button</p>
 			<p class="errors hide" id="importErrors"></p>
-					<label class="control-label">Zip file
+					<label class="control-label">File to restore
 						<input type="file" name="file" id="zipfile"/>
 					</label>
 					<button id="importBtn" class="btn btn-primary">Restore...</button>
@@ -24,15 +26,15 @@
 						Warning: you are about to delete ALL the existing data in your current database.
 					</p>
 					<p>
-						During the import procedure the DataBase and the Console will be freezed.
+						During the import procedure the database and the console will be freezed.
 						At the end of the import you will be redirect to the login page.
 					</p>
 					<p>
 						REMEMBER: also the admin credential will be restored, so you will have to use your username and password that were valid at the backup time. 
 					</p>
 					<div class="actions">
-						<button class="btn btn-warning" id="startImport">delete existing and import new data</button>
-						<button class="btn"  id="stopImport">cancel</button>
+						<button class="btn btn-warning" id="startImport">Yes, delete existing and import new data</button>
+						<button class="btn"  id="stopImport">No, take me out of here</button>
 					</div> 
 				</div>
 			</div>
@@ -40,15 +42,15 @@
 	<div class="row-fluid">
 		<div class="actions">
 			<p class="title">Backup</p>
-			<p class="hint">Click the Backup button in order to create a new backup.<br/>
-Your backups are listed in the list. From there you can download  or delete them.</p>
+			<p class="hint">Click the 'Create a new backup..." button in order to create a new backup.<br/>
+Your backups are listed in the list below. From there you can download  or delete them.</p>
 			<a href="#" id="exportDb" class="btn btn-success">Create a new backup...</a>      
 			
 			
 			
 			<div id="downloadExportModal" class="modal hide fade">
 				<div class="modal-header">
-					<h2>Your download is ready</h2>
+					<h2>Click on the link below to download the backup file</h2>
 				</div>
 				<div class="modal-body">
 					
@@ -58,7 +60,7 @@ Your backups are listed in the list. From there you can download  or delete them
 	
 		<div ng-show="export!=null || !exports.isEmpty()" class="box">
 					<div class="box-header well" >
-						<h2><i class="icon-book"></i>Backup files</h2>
+						<h2><i class="icon-book"></i> Backup file list</h2>
 						<div class="box-icon">
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
 							<a href="#" id="btnReloadExports" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
@@ -80,12 +82,12 @@ Your backups are listed in the list. From there you can download  or delete them
 	
 	<div class="row-fluid">
 		<div class="actions">
-		<p class="title">Reset db</p>
+		<p class="title">Reset database</p>
 		<p class="hint">WARNING: this function will completely reset your database at its initial state. You will lose all your data and settings. </p>
 		<button id="dropDb" class="btn btn-danger btn-large">Reset DB...</button>
 		<div id="dropDbModal" class="modal hide fade">
 			<div class="modal-header">
-				<h2>Confirm drop db</h2>
+				<h2>Confirm reset database</h2>
 			</div>
 			<div class="modal-body">
 				<div class="ask">
@@ -93,11 +95,11 @@ Your backups are listed in the list. From there you can download  or delete them
 						Warning: you are about to delete ALL the existing data in your current database.
 					</p>
 					<p>
-						During the drop procedure the DataBase and the Console will be freezed.
+						During the drop procedure the database and the console will be freezed.
 					</p>
 					<div class="actions">
-						<button id="dropDbConfirm" class="btn btn-danger">Yes, Drop the db</button>
-						<button id="dropDbCancel" class="btn">No,take me out of here</button>
+						<button id="dropDbConfirm" class="btn btn-danger">Yes, reset the database</button>
+						<button id="dropDbCancel" class="btn">No, take me out of here</button>
 					</div>
 				</div>
 			</div>
