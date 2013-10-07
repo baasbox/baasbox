@@ -105,15 +105,11 @@ public abstract class NodeDao  {
 				UUID token = UUID.randomUUID();
 				Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
-				//crates a link (an edge) between the current user and the document  
-				UserDao udao = new UserDao();
-				ODocument user=udao.getByUserName(DbHelper.getCurrentUserName());
-				ODocument userVertex=user.field(FIELD_LINK_TO_VERTEX);
-				db.createEdge(userVertex,vertex,EDGE_CLASS_CREATED);
-			Logger.trace("Method End");
 			return doc;
 		}catch (Throwable e){
 			throw e;
+		}finally{
+			Logger.trace("Method End");
 		}
 	}
 	

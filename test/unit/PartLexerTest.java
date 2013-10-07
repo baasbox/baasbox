@@ -3,10 +3,8 @@ package unit;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.JsonNode;
+import org.junit.Assert;
 import org.junit.Test;
-
-import play.libs.Json;
 
 import com.baasbox.service.query.PartFactory;
 import com.baasbox.service.query.PartsLexer;
@@ -22,7 +20,25 @@ public class PartLexerTest {
 			parts.add(PartFactory.parse(".field"+i, i+1));
 		}
 		PartsParser parser = new PartsParser(parts);
-		String jn = parser.generateUpdateFields();
+		String jn = parser.treeFields();
+		Assert.assertEquals(jn, "field0.field1.field2");
+		Assert.assertEquals(parser.last().getName(), "field2");
+		Assert.assertEquals(parser.lastParent().getName(), "field1");
+		Assert.assertEquals(parser.first().getName(), "field0");
+		
+		
+	}
+	
+	@Test
+	public void testUpdateStringOnlyOneField(){
+		List<PartsLexer.Part> parts = new ArrayList<PartsLexer.Part>();
+		parts.add(PartFactory.parse(".field0",1));
+		PartsParser parser = new PartsParser(parts);
+		String jn = parser.treeFields();
+		Assert.assertEquals("field0", jn);
+		Assert.assertEquals(parser.last().getName(), "field0");
+		Assert.assertEquals(parser.lastParent().getName(), "field0");
+		Assert.assertEquals(parser.first().getName(), "field0");
 		
 		
 	}

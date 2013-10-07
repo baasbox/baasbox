@@ -32,4 +32,6 @@ public interface IBBConfigurationKeys {
 	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
 	
 	public static final String PUSH_CERTIFICATES_FOLDER = "push.baasbox.certificates.folder";
+	public static final String MVCC_MAX_RETRIES = "orient.baasbox.MVCC.maxRetries";
+	
 }
