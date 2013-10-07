@@ -149,6 +149,10 @@ public class DbHelper {
 		List<ODocument> queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
+	public static Integer sqlCommandExecute(OCommandRequest command, String[] params){
+		Integer updateQueryResult = command.execute((Object[])params);
+		return updateQueryResult;
+	}
 	
 	
 	

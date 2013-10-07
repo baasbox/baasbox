@@ -20,6 +20,8 @@ import java.security.InvalidParameterException;
 import java.util.List;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
@@ -33,6 +35,8 @@ import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.query.PartsLexer;
+import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -79,6 +83,12 @@ public class DocumentService {
 
 	
 	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
+		DocumentDao dao = DocumentDao.getInstance(collectionName);
+		ODocument doc=dao.get(rid);
+		return doc;
+	}
+	
+	public static ODocument get(String collectionName,String rid,PartsLexer lexer) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
 		return doc;
@@ -149,5 +159,45 @@ public class DocumentService {
 		ODocument doc = get(collectionName, rid);
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.revoke(doc, permission, role);
+	}
+
+	public static ODocument update(String collectionName, String rid,
+			JsonNode bodyJson, PartsParser pp) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+		ODocument od = get(rid);
+		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
+		
+		try{
+			Object v = od.field(pp.treeFields());
+			if(v==null){
+				throw new DocumentNotFoundException("Unable to find a field "+pp.treeFields()+" into document:"+rid);
+			}
+		}catch(Exception e){
+			throw new DocumentNotFoundException("Unable to find a field "+pp.treeFields()+" into document:"+rid);
+		}
+		
+		ObjectMapper mapper = new ObjectMapper();
+		StringBuffer query = new StringBuffer();
+		query.append("update ")
+			 .append(collectionName);
+			 if(!pp.isMultiField()){
+				query .append(" set ")
+				 .append(pp.treeFields())
+				 .append(" = ")
+				 .append(bodyJson.get("data").toString());
+			 }else{
+				 query .append(" merge ");
+				 try{
+					 String content = od.toJSON();
+					 ObjectNode json = (ObjectNode)mapper.readTree(content.toString());
+					 json.put(pp.treeFields(), bodyJson.get("data"));
+					 query.append(json.toString());
+				 }catch(Exception e){
+					 throw new RuntimeException("Unable to modify inline json");
+				 }
+			 }
+			 query.append(" where @rid = ").append(rid);
+		DocumentDao.getInstance(collectionName).updateByQuery(query.toString());
+		od = get(rid);
+		return od;
 	}
 }

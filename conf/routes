@@ -65,6 +65,10 @@ GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocume
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
 
+GET      /document/:collection/:uuid/$parts<((/)?([.])?([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+PUT      /document/:collection/:uuid/$parts<((/)?([.])?([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+
+
 
 #grant and revoke permissions
 PUT		/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)

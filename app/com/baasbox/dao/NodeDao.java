@@ -23,7 +23,6 @@ import java.util.UUID;
 
 import play.Logger;
 
-import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -39,6 +38,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 
@@ -64,6 +64,13 @@ public abstract class NodeDao  {
 		this.db=DbHelper.getConnection();
 	}
 
+	
+	public void updateByQuery(String query){
+		OCommandRequest command = db.command(new OCommandSQL(
+				query
+				));
+		DbHelper.sqlCommandExecute(command, null);
+	}
 	
 	protected static HashMap<String,Object> backupBaasBoxFields(ODocument document){
 		HashMap<String,Object> map = new HashMap<String,Object>();
