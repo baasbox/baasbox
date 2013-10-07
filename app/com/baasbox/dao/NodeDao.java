@@ -65,13 +65,6 @@ public abstract class NodeDao  {
 	}
 
 	
-	public void updateByQuery(String query){
-		OCommandRequest command = db.command(new OCommandSQL(
-				query
-				));
-		DbHelper.sqlCommandExecute(command, null);
-	}
-	
 	protected static HashMap<String,Object> backupBaasBoxFields(ODocument document){
 		HashMap<String,Object> map = new HashMap<String,Object>();
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
@@ -93,7 +86,13 @@ public abstract class NodeDao  {
 			throw new InvalidModelException();
 	}
 
-
+	public void updateByQuery(String query){
+		OCommandRequest command = db.command(new OCommandSQL(
+				query
+				));
+		DbHelper.sqlCommandExecute(command, null);
+	}
+	
 	public ODocument create() throws Throwable {
 		Logger.trace("Method Start");
 		try{
