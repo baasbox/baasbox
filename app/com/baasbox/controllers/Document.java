@@ -68,6 +68,11 @@ public class Document extends Controller {
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.DOCUMENT);
 	}
+	
+	private static String prepareResponseToObjectJson(ODocument doc){
+		response().setContentType("application/json");
+		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.OBJECT);
+	}
 
 	private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
 		response().setContentType("application/json");
@@ -168,7 +173,7 @@ public class Document extends Controller {
 				}
 				PartsParser pl = new PartsParser(queryParts);
 				String rid = getRidByString(id, isUUID);
-				doc=DocumentService.get(collectionName, rid);
+				doc=DocumentService.get(collectionName, rid,pl);
 				
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
@@ -186,7 +191,7 @@ public class Document extends Controller {
 			}
 			Logger.trace("Method End");
 
-			return ok(prepareResponseToJson(doc));
+			return ok(prepareResponseToObjectJson(doc));
 		}
 	}
 
@@ -309,11 +314,11 @@ public class Document extends Controller {
 			Logger.trace("updateDocument collectionName: " + collectionName);
 			Logger.trace("updateDocument id: " + id);
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
 			ODocument document=null;
 			try{
 				String rid=getRidByString(id, isUUID);
 				String[] tokens = parts.split("/");
-				System.out.println("Tokens:"+Joiner.on(",").join(tokens));
 				PartsLexer lexer = new PartsLexer();
 				List<Part> objParts = new ArrayList<Part>();
 				for (int i = 0; i < tokens.length; i++) {

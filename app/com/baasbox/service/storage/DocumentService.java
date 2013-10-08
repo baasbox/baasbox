@@ -16,11 +16,14 @@
  */
 package com.baasbox.service.storage;
 
+import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.List;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
 import com.baasbox.dao.DocumentDao;
@@ -36,6 +39,7 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.query.PartsLexer;
+import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -49,18 +53,18 @@ public class DocumentService {
 
 
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
-	
+
 	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
-		
+
 		ODocument doc = dao.create();
 		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 
 		PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
-	    dao.save(doc);
+		dao.save(doc);
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}
-	
+
 	/**
 	 * 
 	 * @param collectionName
@@ -81,25 +85,57 @@ public class DocumentService {
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}//update
 
-	
+
 	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
 		return doc;
 	}
-	
-	public static ODocument get(String collectionName,String rid,PartsLexer lexer) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
+
+	public static ODocument get(String collectionName,String rid,PartsParser parser) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
-		return doc;
+		if(parser.isMultiField()){
+			Object v = doc.field(parser.treeFields());
+			
+			if(v==null){
+				throw new DocumentNotFoundException("Unable to find a field "+parser.treeFields()+" into document:"+rid);
+			}
+		}
+		
+		StringBuffer q = new StringBuffer();
+		
+		q.append("select ").append(parser.treeFields()).append(" from ").append(collectionName);
+		q.append(" where @rid=").append(rid);
+		ObjectMapper mp = new ObjectMapper();
+		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
+		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
+		//TODO:
+		/*if(parser.isArray()){
+			try {
+				ArrayNode an = (ArrayNode)mp.readTree(result.toJSON()).get(parser.last().getName());
+				PartsLexer.ArrayField af =  (PartsLexer.ArrayField)parser.last();
+				if(an.size()<af.arrayIndex){
+					throw new InvalidModelException("The index requested does not exists in model");
+				}else{
+					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).getTextValue());
+					result = new ODocument().fromJSON(json);
+					System.out.println("JSON:"+result.toJSON());
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}*/
+		return result;
 	}
-	
-	
+
+
 	public static long getCount(String collectionName, QueryParams criteria) throws InvalidCollectionException, SqlInjectionException{
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		return dao.getCount(criteria);
 	}
-	
+
 	public static List<ODocument> getDocuments(String collectionName, QueryParams criteria) throws SqlInjectionException, InvalidCollectionException{
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		return dao.get(criteria);
@@ -128,7 +164,7 @@ public class DocumentService {
 			throw new InvalidCollectionException("The document " + rid + " does no belong to the collection " + collectionName);
 		}
 	}
-	
+
 	public static ODocument grantPermissionToUser(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
 		OUser user=UserService.getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException(username);
@@ -136,7 +172,7 @@ public class DocumentService {
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.grant(doc, permission, user);
 	}
-	
+
 	public static ODocument revokePermissionToUser(String collectionName, String rid, Permissions permission, String username) throws UserNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
 		OUser user=UserService.getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException(username);
@@ -144,7 +180,7 @@ public class DocumentService {
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.revoke(doc, permission, user);
 	}
-	
+
 	public static ODocument grantPermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws RoleNotFoundException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException {
 		ORole role=RoleDao.getRole(rolename);
 		if (role==null) throw new RoleNotFoundException(rolename);
@@ -152,7 +188,7 @@ public class DocumentService {
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.grant(doc, permission, role);
 	}
-	
+
 	public static ODocument revokePermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws  IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, RoleNotFoundException {
 		ORole role=RoleDao.getRole(rolename);
 		if (role==null) throw new RoleNotFoundException(rolename);
@@ -165,39 +201,66 @@ public class DocumentService {
 			JsonNode bodyJson, PartsParser pp) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
-		
-		try{
+		if(pp.isMultiField()){
 			Object v = od.field(pp.treeFields());
+
 			if(v==null){
 				throw new DocumentNotFoundException("Unable to find a field "+pp.treeFields()+" into document:"+rid);
 			}
-		}catch(Exception e){
-			throw new DocumentNotFoundException("Unable to find a field "+pp.treeFields()+" into document:"+rid);
 		}
-		
 		ObjectMapper mapper = new ObjectMapper();
-		StringBuffer query = new StringBuffer();
-		query.append("update ")
-			 .append(collectionName);
-			 if(!pp.isMultiField()){
-				query .append(" set ")
-				 .append(pp.treeFields())
-				 .append(" = ")
-				 .append(bodyJson.get("data").toString());
-			 }else{
-				 query .append(" merge ");
-				 try{
-					 String content = od.toJSON();
-					 ObjectNode json = (ObjectNode)mapper.readTree(content.toString());
-					 json.put(pp.treeFields(), bodyJson.get("data"));
-					 query.append(json.toString());
-				 }catch(Exception e){
-					 throw new RuntimeException("Unable to modify inline json");
-				 }
-			 }
-			 query.append(" where @rid = ").append(rid);
-		DocumentDao.getInstance(collectionName).updateByQuery(query.toString());
-		od = get(rid);
-		return od;
+		StringBuffer q = new StringBuffer("");
+
+		//case 1 .coll (simple field) update <collectionName> set <field> = {json} where ...
+		//case 2 .coll/.by (multi field) update <collectionName> merge {json} where ...
+		//case 3 .coll/.arr[1] (multi field) modify array inline and fallback to case 2
+		//case 4 .coll[x] like case 3
+		if(!pp.isMultiField() && !pp.isArray()){
+			q.append("update ").append(collectionName)
+			.append(" set ")
+			.append(pp.treeFields())
+			.append(" = ")
+			.append(bodyJson.get("data").toString());
+		}else{
+			q.append("update ").append(collectionName)
+			.append(" merge ");
+			try{
+				String content = od.toJSON();
+				ObjectNode json = (ObjectNode)mapper.readTree(content.toString());
+				if(!(pp.last() instanceof PartsLexer.ArrayField)){
+					json.put(pp.treeFields(), bodyJson.get("data"));
+				}else if(pp.last() instanceof PartsLexer.ArrayField){
+					PartsLexer.ArrayField arr = (PartsLexer.ArrayField)pp.last();
+					JsonNode node = json;
+					for (Part p : pp.parts()) {
+						node = node.path(p.getName());
+					}
+					if(node.isArray()){
+						ArrayNode arrNode = (ArrayNode)node;
+						if(arrNode.size()<=arr.arrayIndex){
+							arrNode.add(bodyJson.get("data"));
+						}else{
+							arrNode._set(arr.arrayIndex, bodyJson.get("data"));
+						}
+						json.put(pp.treeFields(), arrNode);
+					}else{
+						throw new InvalidModelException(pp.treeFields() + "is not an array");
+					}
+
+				}else{
+					throw new InvalidModelException("Operation on arrays should provide an operation field: with add or remove value");
+				}
+
+			q.append(json.toString());
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new RuntimeException("Unable to modify inline json");
+		}
 	}
+	q.append(" where @rid = ").append(rid);
+	System.out.println("QUERY:"+q.toString());
+	DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
+	od = get(rid);
+	return od;
+}
 }

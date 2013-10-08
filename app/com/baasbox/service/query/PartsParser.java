@@ -8,6 +8,7 @@ import org.codehaus.jackson.node.ObjectNode;
 
 import play.libs.Json;
 
+import com.baasbox.service.query.PartsLexer.ArrayField;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.google.common.base.Joiner;
 
@@ -78,6 +79,14 @@ public class PartsParser {
 
 	public Part last() {
 		 return this.parts.get(this.parts.size()-1);
+	}
+
+	public List<Part> parts() {
+		return this.parts;
+	}
+
+	public boolean isArray() {
+		return last() instanceof ArrayField;
 	}
 	
 	

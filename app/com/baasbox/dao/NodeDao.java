@@ -23,6 +23,8 @@ import java.util.UUID;
 
 import play.Logger;
 
+import ch.qos.logback.classic.db.DBHelper;
+
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -40,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 
 public abstract class NodeDao  {
@@ -91,6 +94,12 @@ public abstract class NodeDao  {
 				query
 				));
 		DbHelper.sqlCommandExecute(command, null);
+	}
+	
+	public List<ODocument> selectByQuery(String query){
+		return DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
+				query
+				), null);
 	}
 	
 	public ODocument create() throws Throwable {
