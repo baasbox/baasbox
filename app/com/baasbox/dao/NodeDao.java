@@ -89,11 +89,11 @@ public abstract class NodeDao  {
 			throw new InvalidModelException();
 	}
 
-	public void updateByQuery(String query){
+	public Integer updateByQuery(String query){
 		OCommandRequest command = db.command(new OCommandSQL(
 				query
 				));
-		DbHelper.sqlCommandExecute(command, null);
+		return DbHelper.sqlCommandExecute(command, null);
 	}
 	
 	public List<ODocument> selectByQuery(String query){

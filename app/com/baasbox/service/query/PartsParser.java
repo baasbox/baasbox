@@ -1,5 +1,7 @@
 package com.baasbox.service.query;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,6 +90,7 @@ public class PartsParser {
 	public boolean isArray() {
 		return last() instanceof ArrayField;
 	}
+
 	
 	
 	

@@ -26,6 +26,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
+import play.api.libs.json.JsPath;
+import play.api.libs.json.JsValue;
+import play.api.libs.json.Json;
+import play.api.libs.json.PathNode;
+import play.api.libs.json.Reads;
+import scala.Function1;
+import scala.Tuple2;
+import scala.util.Either;
+
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
@@ -38,7 +47,10 @@ import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.query.JsonTree;
+import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsLexer;
+import com.baasbox.service.query.PartsLexer.ArrayField;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
@@ -97,14 +109,14 @@ public class DocumentService {
 		ODocument doc=dao.get(rid);
 		if(parser.isMultiField()){
 			Object v = doc.field(parser.treeFields());
-			
+
 			if(v==null){
 				throw new DocumentNotFoundException("Unable to find a field "+parser.treeFields()+" into document:"+rid);
 			}
 		}
-		
+
 		StringBuffer q = new StringBuffer();
-		
+
 		q.append("select ").append(parser.treeFields()).append(" from ").append(collectionName);
 		q.append(" where @rid=").append(rid);
 		ObjectMapper mp = new ObjectMapper();
@@ -196,71 +208,45 @@ public class DocumentService {
 		if (doc==null) throw new DocumentNotFoundException(rid);
 		return PermissionsHelper.revoke(doc, permission, role);
 	}
-
 	public static ODocument update(String collectionName, String rid,
 			JsonNode bodyJson, PartsParser pp) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
-		if(pp.isMultiField()){
-			Object v = od.field(pp.treeFields());
-
-			if(v==null){
-				throw new DocumentNotFoundException("Unable to find a field "+pp.treeFields()+" into document:"+rid);
-			}
-		}
 		ObjectMapper mapper = new ObjectMapper();
 		StringBuffer q = new StringBuffer("");
 
-		//case 1 .coll (simple field) update <collectionName> set <field> = {json} where ...
-		//case 2 .coll/.by (multi field) update <collectionName> merge {json} where ...
-		//case 3 .coll/.arr[1] (multi field) modify array inline and fallback to case 2
-		//case 4 .coll[x] like case 3
 		if(!pp.isMultiField() && !pp.isArray()){
 			q.append("update ").append(collectionName)
 			.append(" set ")
 			.append(pp.treeFields())
 			.append(" = ")
 			.append(bodyJson.get("data").toString());
+			
 		}else{
 			q.append("update ").append(collectionName)
 			.append(" merge ");
 			try{
 				String content = od.toJSON();
 				ObjectNode json = (ObjectNode)mapper.readTree(content.toString());
-				if(!(pp.last() instanceof PartsLexer.ArrayField)){
-					json.put(pp.treeFields(), bodyJson.get("data"));
-				}else if(pp.last() instanceof PartsLexer.ArrayField){
-					PartsLexer.ArrayField arr = (PartsLexer.ArrayField)pp.last();
-					JsonNode node = json;
-					for (Part p : pp.parts()) {
-						node = node.path(p.getName());
-					}
-					if(node.isArray()){
-						ArrayNode arrNode = (ArrayNode)node;
-						if(arrNode.size()<=arr.arrayIndex){
-							arrNode.add(bodyJson.get("data"));
-						}else{
-							arrNode._set(arr.arrayIndex, bodyJson.get("data"));
-						}
-						json.put(pp.treeFields(), arrNode);
-					}else{
-						throw new InvalidModelException(pp.treeFields() + "is not an array");
-					}
+				JsonTree.write(json, pp, bodyJson.get("data"));
+				q.append(json.toString());
+				System.out.println(json.toString());
+				
+			}catch(MissingNodeException e){
+				throw new InvalidModelException(e.getMessage());
+			}catch(Exception e){
+				throw new RuntimeException("Unable to modify inline json");
 
-				}else{
-					throw new InvalidModelException("Operation on arrays should provide an operation field: with add or remove value");
-				}
-
-			q.append(json.toString());
+			}
+		}
+		q.append(" where @rid = ").append(rid);
+		System.out.println("QUERY->"+q.toString());
+		try{
+			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
 		}catch(Exception e){
 			e.printStackTrace();
-			throw new RuntimeException("Unable to modify inline json");
 		}
+		od = get(collectionName,rid);
+		return od;
 	}
-	q.append(" where @rid = ").append(rid);
-	System.out.println("QUERY:"+q.toString());
-	DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
-	od = get(rid);
-	return od;
-}
 }
