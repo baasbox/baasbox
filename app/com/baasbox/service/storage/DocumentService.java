@@ -209,7 +209,7 @@ public class DocumentService {
 		return PermissionsHelper.revoke(doc, permission, role);
 	}
 	public static ODocument update(String collectionName, String rid,
-			JsonNode bodyJson, PartsParser pp) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+			JsonNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
 		ObjectMapper mapper = new ObjectMapper();
@@ -221,26 +221,21 @@ public class DocumentService {
 			.append(pp.treeFields())
 			.append(" = ")
 			.append(bodyJson.get("data").toString());
-			
+
 		}else{
 			q.append("update ").append(collectionName)
 			.append(" merge ");
+			String content = od.toJSON();
+			ObjectNode json = null;
 			try{
-				String content = od.toJSON();
-				ObjectNode json = (ObjectNode)mapper.readTree(content.toString());
-				JsonTree.write(json, pp, bodyJson.get("data"));
-				q.append(json.toString());
-				System.out.println(json.toString());
-				
-			}catch(MissingNodeException e){
-				throw new InvalidModelException(e.getMessage());
+				json = (ObjectNode)mapper.readTree(content.toString());
 			}catch(Exception e){
 				throw new RuntimeException("Unable to modify inline json");
-
 			}
+			JsonTree.write(json, pp, bodyJson.get("data"));
+			q.append(json.toString());
 		}
 		q.append(" where @rid = ").append(rid);
-		System.out.println("QUERY->"+q.toString());
 		try{
 			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
 		}catch(Exception e){

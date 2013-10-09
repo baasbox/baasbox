@@ -38,6 +38,7 @@ public class JsonTree {
 			throw new MissingNodeException(pp.treeFields());
 		}
 		Part last = pp.last();
+		
 		if(last instanceof PartsLexer.ArrayField){
 			PartsLexer.ArrayField arr = (PartsLexer.ArrayField)last;
 			int index = arr.arrayIndex;
@@ -51,7 +52,11 @@ public class JsonTree {
 			return root;
 			
 		}else{
-			((ObjectNode)root).put(last.getName(),data);
+			try{
+				((ObjectNode)root).put(last.getName(),data);
+			}catch(Exception e){
+				throw new MissingNodeException(pp.treeFields());
+			}
 			return root.get(last.getName());
 		}
 		

@@ -46,6 +46,7 @@ import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsLexer.PartValidationException;
@@ -330,6 +331,8 @@ public class Document extends Controller {
 				}
 				PartsParser pp = new PartsParser(objParts);
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson,pp);   
+			}catch (MissingNodeException e){
+				return notFound(e.getMessage());
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
