@@ -24,6 +24,7 @@ import play.Logger;
 
 import ch.qos.logback.classic.db.DBHelper;
 
+import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;

@@ -69,8 +69,6 @@ create property _BB_FileAsset.file link;
 alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
---Edges
-create class Created extends E;
 
 
 
@@ -81,10 +79,10 @@ create index _BB_asset.name unique;
 create index _BB_Node.id unique;
 
 --configuration
-create index _bb_password_recovery dictionary;
+create index _bb_internal dictionary;
 create index _bb_application dictionary;
 create index _bb_images dictionary;
 create index _bb_push dictionary;
-create index _bb_internal dictionary;
+create index _bb_password_recovery dictionary;
 
 

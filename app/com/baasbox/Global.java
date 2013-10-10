@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.typesafe.config.Config;
 
 public class Global extends GlobalSettings {
@@ -68,11 +69,22 @@ public class Global extends GlobalSettings {
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
+			  
+			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+			  
 			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+			  
+			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
+			  OGlobalConfiguration.FILE_LOCK.setValue(false);
+			  
+			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
+			  
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase ( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
