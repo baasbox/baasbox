@@ -239,7 +239,7 @@ public class DbHelper {
 		registeredUserRole.save();
 
 		final ORole backOfficeRole = db.getMetadata().getSecurity().createRole(DefaultRoles.BACKOFFICE_USER.toString(),ORole.ALLOW_MODES.DENY_ALL_BUT);
-		backOfficeRole.save();
+		
 
 		registeredUserRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
 		registeredUserRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
@@ -277,6 +277,7 @@ public class DbHelper {
 
 
 		anonymousUserRole.save();
+		backOfficeRole.save();
 		registeredUserRole.save();
 		Logger.trace("Method End");
 	}
