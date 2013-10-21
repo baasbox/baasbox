@@ -188,11 +188,14 @@ public class Admin extends Controller {
 		return ok(toJson(response));
 	}
 
-	public static Result createRole(){
+	public static Result createRole(String name, String inheritedRole){
 		return status(NOT_IMPLEMENTED);
 	}
 
-
+	public static Result dropRole(){
+		return status(NOT_IMPLEMENTED);
+	}
+	
 	public static Result getRoles() throws SqlInjectionException{
 		List<ODocument> listOfRoles=UserService.getRoles();
 		String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
@@ -234,7 +237,7 @@ public class Admin extends Controller {
 
 		//try to signup new user
 		try {
-			UserService.signUp(username, password, role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+				UserService.signUp(username, password, role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){
@@ -244,10 +247,9 @@ public class Admin extends Controller {
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 					" they must be an object, not a value.");
-		}catch (Throwable e){
-			Logger.warn("signUp", e);
-			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+		}catch (Exception e) {
+			Logger.error(ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e) ;
 		}
 		Logger.trace("Method End");
 		return created();
@@ -326,9 +328,7 @@ public class Admin extends Controller {
 		return ok();
 	}
 
-	public static Result dropRole(){
-		return status(NOT_IMPLEMENTED);
-	}
+
 
 	public static Result deleteDocument(){
 		return status(NOT_IMPLEMENTED);

@@ -45,10 +45,13 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.RoleAlreadyExistsException;
+import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
@@ -133,11 +136,19 @@ public class DbHelper {
 		return ret;
 	}
 
+	/***
+	 * Prepares a select statement
+	 * @param from the class to query
+	 * @param count if true, perform a count instead of to retrieve the records
+	 * @param criteria the criteria to apply in the 'where' clause of the select
+	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(OCommandRequest, String[])} method
+	 * @throws SqlInjectionException If the query is not a select statement
+	 */
 	public static OCommandRequest selectCommandBuilder(String from, boolean count, QueryParams criteria) throws SqlInjectionException{
 		OGraphDatabase db =  DbHelper.getConnection();
 		OCommandRequest command = db.command(new OSQLSynchQuery<ODocument>(
 				selectQueryBuilder(from, count, criteria)
-				).setFetchPlan(fetchPlan.replace("?", criteria.getDepth().toString())));
+				));
 		if (!command.isIdempotent()) throw new SqlInjectionException();
 		Logger.debug("commandBuilder: ");
 		Logger.debug("  " + criteria.toString());
@@ -145,13 +156,51 @@ public class DbHelper {
 		return command;
 	}
 
-	public static List<ODocument> commandExecute(OCommandRequest command, String[] params){
+	/***
+	 * Executes a select eventually passing the parameters 
+	 * @param command
+	 * @param params positional parameters
+	 * @return the List of the record retrieved (the command MUST be a select)
+	 */
+	public static List<ODocument> selectCommandExecute(OCommandRequest command, String[] params){
 		List<ODocument> queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
 	
 	
+	/**
+	 * Prepares the command API to execute an arbitrary SQL statement
+	 * @param theQuery
+	 * @return
+	 */
+	public static OCommandRequest genericSQLStatementCommandBuilder (String theQuery){
+		OGraphDatabase db =  DbHelper.getConnection();
+		OCommandRequest command = db.command(new OCommandSQL(theQuery));
+		return command;
+	}
 	
+	/***
+	 * Executes a generic SQL command statements
+	 * @param command the command to execute prepared by {@link #genericSQLStatementCommandBuilder(String)}
+	 * @param params The positional parameters to pass to the statement
+	 * @return
+	 */
+	public static Object genericSQLCommandExecute(OCommandRequest command, String[] params){
+		Object queryResult = command.execute((Object[])params);
+		return queryResult;
+	}
+	
+	/**
+	 * Executes an arbitrary sql statement applying the positional parameters
+	 * @param statement
+	 * @param params
+	 * @return
+	 */
+	public static Object genericSQLStatementExecute(String statement, String[] params){
+		OCommandRequest command = genericSQLStatementCommandBuilder(statement);
+		Object ret = genericSQLCommandExecute(command,params);
+		return ret;
+	}
 	
 	public static void shutdownDB(boolean repopulate){
 		OGraphDatabase db = null;
@@ -230,73 +279,19 @@ public class DbHelper {
 		return getCurrentHTTPUsername().equalsIgnoreCase(BBConfiguration.getBaasBoxUsername());
 	}
 
-	public static void createDefaultRoles(){
+	public static void createDefaultRoles() throws RoleNotFoundException, RoleAlreadyExistsException{
 		Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getConnection();
-		final ORole anonymousUserRole =  db.getMetadata().getSecurity().createRole(DefaultRoles.ANONYMOUS_USER.toString(), ORole.ALLOW_MODES.DENY_ALL_BUT);
-		anonymousUserRole.save();
-		final ORole registeredUserRole =  db.getMetadata().getSecurity().createRole(DefaultRoles.REGISTERED_USER.toString(), ORole.ALLOW_MODES.DENY_ALL_BUT);
-		registeredUserRole.save();
-
-		final ORole backOfficeRole = db.getMetadata().getSecurity().createRole(DefaultRoles.BACKOFFICE_USER.toString(),ORole.ALLOW_MODES.DENY_ALL_BUT);
-		
-
-		registeredUserRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-				+ ORole.PERMISSION_UPDATE);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-
-
-		backOfficeRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-				+ ORole.PERMISSION_UPDATE);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED,ORole.PERMISSION_ALL); //the backoffice users can access and manipulate all records
-
-		anonymousUserRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, 7);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-
-
-		anonymousUserRole.save();
-		backOfficeRole.save();
-		registeredUserRole.save();
+		RoleService.createInternalRoles();
 		Logger.trace("Method End");
 	}
 
 	public static void createDefaultUsers() throws Exception{
 		Logger.trace("Method Start");
-		//the baasbox default user used to connect to the DB like anonymous user
-		String username=BBConfiguration.getBaasBoxUsername();
-		String password=BBConfiguration.getBaasBoxPassword();
-		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
-
-		//the baasbox default user used to act internally as the administrator
-		username=BBConfiguration.getBaasBoxAdminUsername();
-		password=BBConfiguration.getBaasBoxAdminPassword();
-		UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
-
+		UserService.createDefaultUsers();
 		Logger.trace("Method End");
 	}
 
+	
 	public static void updateDefaultUsers() throws Exception{
 		Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getConnection();
@@ -311,13 +306,10 @@ public class DbHelper {
 		Logger.trace("Method End");
 	}
 
+	@Deprecated
 	public static void dropOrientDefault(){
 		Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getConnection();
-		db.getMetadata().getSecurity().dropUser("reader");
-		db.getMetadata().getSecurity().dropUser("writer");
-		db.getMetadata().getSecurity().dropRole("reader");
-		db.getMetadata().getSecurity().dropRole("writer");
+		//nothing to do here
 		Logger.trace("Method End");
 	}
 
@@ -455,6 +447,7 @@ public class DbHelper {
 				}
 			});
 			
+			Logger.info("Registering Hooks");
 			//This is very important!!!
 			for (ORecordHook hook : new ArrayList<ORecordHook>(db.getHooks())) {
 				db.unregisterHook(hook);
@@ -464,6 +457,12 @@ public class DbHelper {
 			 oi.importDatabase();
 			 oi.close();
 			 HooksManager.registerAll(db);
+			 //check for evolutions
+			 String fromVersion=Internal.DB_VERSION.getValueAsString();
+			 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
+				 Logger.info("Imported DB needs evolutions!");
+				 Evolutions.performEvolutions(db, fromVersion);
+			 }//end of evolutions
 		}catch(Exception ioe){
 			Logger.error(ioe.getMessage());
 			throw new UnableToImportDbException(ioe);

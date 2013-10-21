@@ -34,6 +34,7 @@ import org.apache.commons.mail.HtmlEmail;
 import org.codehaus.jackson.JsonNode;
 import org.stringtemplate.v4.ST;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
@@ -61,6 +62,22 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 
 public class UserService {
 
+	public static void createDefaultUsers(){
+		try{
+			//the baasbox default user used to connect to the DB like anonymous user
+			String username=BBConfiguration.getBaasBoxUsername();
+			String password=BBConfiguration.getBaasBoxPassword();
+			UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
+	
+			//the baasbox default user used to act internally as the administrator
+			username=BBConfiguration.getBaasBoxAdminUsername();
+			password=BBConfiguration.getBaasBoxAdminPassword();
+			UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
+			
+		}catch (Exception e){
+			throw new RuntimeException(e);
+		}
+	}
 
 	public static List<ODocument> getUsers(QueryParams criteria) throws SqlInjectionException{
 		UserDao dao = UserDao.getInstance();
