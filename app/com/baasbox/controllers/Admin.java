@@ -94,7 +94,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 public class Admin extends Controller {
 
 	static String backupDir = BBConfiguration.getDBBackupDir();
-	static String sep = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
+	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	public static Result getUsers(){
 		Logger.trace("Method Start");
@@ -423,7 +423,7 @@ public class Admin extends Controller {
 			unauthorized("appcode can not be null");
 		}
 
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			boolean createdDir = dir.mkdir();
 			if(!createdDir){
@@ -435,7 +435,7 @@ public class Admin extends Controller {
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
 				Duration.create(2, TimeUnit.SECONDS),
-				new ExportJob(dir.getAbsolutePath()+sep+fileName,appcode),
+				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
 				Akka.system().dispatcher()
 				); 
 		return status(202,Json.toJson(fileName));
@@ -452,7 +452,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and the stream of the file
 	 */
 	public static Result getExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -472,7 +472,7 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -505,7 +505,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			dir.mkdir();
 		}

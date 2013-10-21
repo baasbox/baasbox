@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
- * Evolves the DB to the 0.61.0 schema
+ * Evolves the DB to the 0.7.0 schema
  * Main differences are on the Role management.
  * The roles now are:
  * 	-administrator
@@ -34,10 +34,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @author Claudio Tesoriero
  *
  */
-public class Evolution_0_61_0 implements IEvolution {
-	private String version="0.61.0";
+public class Evolution_0_7_0 implements IEvolution {
+	private String version="0.7.0";
 	
-	public Evolution_0_61_0() {}
+	public Evolution_0_7_0() {}
 
 	@Override
 	public String getFinalVersion() {
