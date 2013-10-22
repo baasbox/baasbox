@@ -80,6 +80,7 @@ DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controlle
 
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
+GET		/admin/user/:username			com.baasbox.controllers.Admin.getUser(username: String)
 POST	/admin/user						com.baasbox.controllers.Admin.createUser()
 PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
 POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(name: String)

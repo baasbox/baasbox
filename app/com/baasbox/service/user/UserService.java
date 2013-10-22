@@ -89,14 +89,18 @@ public class UserService {
 
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
-		UserDao dao = UserDao.getInstance();
-		ODocument userDetails=null;
-		userDetails=dao.getByUserName(DbHelper.getCurrentUserName());
-		return userDetails;
+		return getUserProfilebyUsername(DbHelper.getCurrentUserName());
 	}
 	
 	public static OUser getOUserByUsername(String username){
 		return DbHelper.getConnection().getMetadata().getSecurity().getUser(username);	
+	}
+	
+	public static ODocument getUserProfilebyUsername(String username) throws SqlInjectionException{
+		UserDao dao = UserDao.getInstance();
+		ODocument userDetails=null;
+		userDetails=dao.getByUserName(username);
+		return userDetails;
 	}
 	
 	public static String getUsernameByProfile(ODocument profile) throws InvalidModelException{

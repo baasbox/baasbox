@@ -93,6 +93,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -123,6 +124,28 @@ public class Admin extends Controller {
 		return ok(ret);
 	}
 
+	public static Result getUser(String username){
+		Logger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+
+		ODocument user=null;
+		try {
+			user = com.baasbox.service.user.UserService.getUserProfilebyUsername(username);
+		} catch (SqlInjectionException e1) {
+			return badRequest("The request is malformed: check your query criteria");
+		}
+		if (user==null) return notFound("User " + username + " not found");
+		String ret="";
+		try{
+			ret=user.toJSON(JSONFormats.Formats.USER.toString());
+		}catch (Throwable e){
+			return internalServerError(ExceptionUtils.getFullStackTrace(e));
+		}
+		Logger.trace("Method End");
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+	
 	public static Result getCollections(){
 		Logger.trace("Method Start");
 
@@ -301,7 +324,7 @@ public class Admin extends Controller {
 		String password=(String)  bodyJson.findValuesAsText("password").get(0);
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
 
-		if (privateAttributes.has("email")) {
+		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
 				return badRequest("The email address must be valid.");

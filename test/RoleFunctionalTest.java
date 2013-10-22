@@ -45,7 +45,7 @@ public class RoleFunctionalTest extends AbstractTest{
 
     
 	public String roleName="";
-    
+	public String userName="";
 	
     
     @Override
@@ -63,95 +63,110 @@ public class RoleFunctionalTest extends AbstractTest{
     public String getRouteAddress()
     {
             roleName="fake"+UUID.randomUUID().toString();
-            return "/admin/collection/"+ roleName;
+            return "/admin/role/"+ roleName;
     }
    
-    public String getRouteForObjects(){
-            return "/document/" + roleName;
-    }
+
+	public String getFakeUserCreationAddress(){
+        userName="fake"+UUID.randomUUID().toString();
+        return "/admin/user";
+	}
    
-    public String getRouteForCount(){
-            return "/document/" + roleName + "/count";
-    }
-   
-   
-   
+	/*
+	public String getFakeUserAddress(){
+	
+	}
+   */
+	
     @Test
-    public void testDropCollectionCreate() throws Exception
+    public void testRoleCreate() throws Exception
     {
 
             running (fakeApplication(),     
             		new Runnable()  {
                             public void run()       {
                                     try {
-                                    	 String sFakeCollection = getRouteAddress();
-                                         FakeRequest requestCreation = new FakeRequest(POST, sFakeCollection);
+                                    	 String sFakeRole = getRouteAddress();
+                                         FakeRequest requestCreation = new FakeRequest(POST, sFakeRole);
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                          Result result = route(requestCreation);
-                                         assertRoute(result, "testDropCollection.create", Status.CREATED, null, true);
+                                         assertRoute(result, "testRoleCreate.create", Status.CREATED, null, true);
                                          
-                                         //Insert some object in there
-                                         String sFakeInsertObjects = getRouteForObjects();
-                                         JsonNode payload = (new ObjectMapper()).readTree("{\"test\":\"testvalue\"}");
-                                         int cont=15;
-                                         for(int i=0;i<cont;i++){
-                                         		 requestCreation	 = new FakeRequest(POST, sFakeInsertObjects);
-                                         		 requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-                                         		 requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                         		 requestCreation = requestCreation.withJsonBody(payload, POST);
-                                                 Result result1 = route(requestCreation);
-                                                 assertRoute(result1, "testDropCollection.populate", Status.OK, null, true);
-                                         }
-                                         
-                                 		//check if the collection is full
-                                 		String sFakeCollectionCount = getRouteForCount();
-                                		requestCreation = new FakeRequest(GET, sFakeCollectionCount);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.count", Status.OK, "\"count\":\""+cont+"\"", true);
-                                         
-                                		//drop the collection
-                                		requestCreation = new FakeRequest(DELETE, sFakeCollection);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.drop", Status.OK, null, false);
-                                		
-                                		//check the collection does not exist
-                                		requestCreation = new FakeRequest(GET, sFakeCollectionCount);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.count_not_found", Status.NOT_FOUND, null, false);
-                                         
-                                		//try to recreate the same
-                                        requestCreation = new FakeRequest(POST, sFakeCollection);
+                                        //creates one user in this Role
+                                        String sFakeCreateUser = getFakeUserCreationAddress();
+                                        requestCreation = new FakeRequest(POST, sFakeCreateUser);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                        ObjectMapper mapper = new ObjectMapper();
+                                        JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
+                                        		+ "\"password\":\"test\","	
+                                        		+ "\"role\":\""+ roleName +"\"}");
+                                        requestCreation = requestCreation.withJsonBody(actualObj);
+                                        requestCreation = requestCreation.withHeader("Content-Type", "application/json");
                                         result = route(requestCreation);
-                                        assertRoute(result, "testDropCollection.create_the_same", Status.CREATED, null, true);
+                                        assertRoute(result, "testRoleCreate.createUser", Status.CREATED, null, true);
+                                       
+/*
+                                 		//checks the user
+                                 		String sFakeCheckUser = getFakeUserAddress();
+                                		requestCreation = new FakeRequest(GET, sFakeCheckUser);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                		result = route(requestCreation);
+                                		assertRoute(result, "testRoleCreate.checkUser", Status.OK, "\"count\":\""+cont+"\"", true);
+                                        
+                                		/*                                       
+                                		//drops the role
+                                		requestCreation = new FakeRequest(DELETE, sFakeRole);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                		result = route(requestCreation);
+                                		assertRoute(result, "testRoleCreate.drop", Status.OK, null, false);
+                                		
+                                		//checks that the role does not exist
+                                		requestCreation = new FakeRequest(GET, sFakeRole);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                		result = route(requestCreation);
+                                		assertRoute(result, "testRoleCreate.role_not_found", Status.NOT_FOUND, null, false);
+                                         
+                                		//checks that the fake user belongs to the registered role
+                                		
+                                		
+                                		//tries to recreate the same role, now with description
+                                        requestCreation = new FakeRequest(POST, sFakeRole);
+                                        requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                        requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                        requestCreation = requestCreation.withTextBody("{\"description\":\"this is a test\"}");
+                                        requestCreation = requestCreation.withHeader("Content-Type", "application/json");
+                                        result = route(requestCreation);
+                                        assertRoute(result, "testRoleCreate.create_the_same", Status.CREATED, null, true);
 
-                                		//check the collection is empty
-                                		requestCreation = new FakeRequest(GET, sFakeCollectionCount);
+                                		//checks the role
+                                		requestCreation = new FakeRequest(GET, sFakeRole);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.count_must_be_empty", Status.OK, "\"count\":\"0\"", true);
+                                		assertRoute(result, "testRoleCreate.check_with_desc", Status.OK, "\"count\":\"0\"", true);
                                 		
-                                		//finally... drop
-                                		requestCreation = new FakeRequest(DELETE, sFakeCollection);
+                                		//updates the role name and description
+                                		//checks the role
+                                		requestCreation = new FakeRequest(GET, sFakeRole);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.drop_final", Status.OK, null, false);
+                                		assertRoute(result, "testRoleCreate.check_new_name", Status.OK, "\"count\":\"0\"", true);
                                 		
+                                		//
+                                		//finally... drop it, again
+                                		requestCreation = new FakeRequest(DELETE, sFakeRole);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                		result = route(requestCreation);
+                                		assertRoute(result, "testRoleCreate.drop_final", Status.OK, null, false);
+  */                              		
                                 		
-                                    } catch (JsonProcessingException e) {
-                                            fail();
-                                    } catch (IOException e) {
-                                            fail();
                                     }catch (Exception e) {
                                     		e.printStackTrace();
                                     		fail();
@@ -161,92 +176,4 @@ public class RoleFunctionalTest extends AbstractTest{
 
 
 
-
-	/*
-	@Test
-	public void testDropCollectionPopulate()
-	{
-		running	(fakeApplication(),	new Runnable()	{
-				public void run() 	{
-					routeDropCollectionPopulate();
-				}
-
-				private void routeDropCollectionPopulate() {
-					//Insert some object in there
-					String sFakeInsertObjects = getRouteForObjects();
-					JsonNode payload = getPayload("/documentModifyPayload.json");
-					for (int i=0; i<1; i++){
-						FakeRequest requestInsertObject = new FakeRequest(POST, sFakeInsertObjects);
-						requestInsertObject = requestInsertObject.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						requestInsertObject = requestInsertObject.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-						requestInsertObject = requestInsertObject.withJsonBody(payload, POST);
-						Result result = route(requestInsertObject);
-					}
-				}
-			}
-		);		
-	}
-	
-
-	@Test
-	public void testDropCollectionDrop()
-	{
-		running	(fakeApplication(),	new Runnable()	{
-				public void run() 	{
-					routeDropCollectionPopulate();
-				}
-			}
-		);		
-	}
-	
-	@Test
-	public void testDropCollectionCheck()
-	{
-		running	(fakeApplication(),	new Runnable()	{
-				public void run() 	{
-					routeDropCollectionPopulate();
-				}
-			}
-		);		
-	}
-	
-	public String routeDropCollection()
-	{
-		continueOnFail(false);
-		
-
-
-		/*
-		//check if the collection is full
-		String sFakeCollectionCount = getRouteForCount();
-		FakeRequest requestCreationCount = new FakeRequest(GET, sFakeCollectionCount);
-		requestCreationCount = requestCreationCount.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-		requestCreationCount = requestCreationCount.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		result = routeAndCall(requestCreationCount);
-		assertRoute(result, "routeDropCollection.count", Status.OK, "100", true);
-
-		//drop the collection
-		FakeRequest requestDrop = new FakeRequest(DELETE, sFakeCollection);
-		requestDrop = requestDrop.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-		requestDrop = requestDrop.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		result = routeAndCall(requestDrop);
-		assertRoute(result, "routeDropCollection.drop", Status.OK, null, false);
-
-		return sFakeCollection.substring(sFakeCollection.lastIndexOf("/") +1);
-	
-	}
-
-	@Override
-	public String getMethod() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	protected void assertContent(String s) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-*/
 }
