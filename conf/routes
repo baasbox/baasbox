@@ -88,6 +88,7 @@ DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(n
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
 GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
+GET		/admin/role/:name				com.baasbox.controllers.Admin.getRole(name: String)
 POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
 PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
 DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)

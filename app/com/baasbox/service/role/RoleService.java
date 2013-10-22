@@ -72,6 +72,13 @@ public class RoleService {
 		return dao.executeQuery("orole", criteria);
 	}
 	
+	public static List<ODocument> getRole(String name) throws SqlInjectionException {
+		GenericDao dao = GenericDao.getInstance();
+		QueryParams criteria = QueryParams.getInstance().where("name = ? and assignable=true").params(new String[]{name}).orderBy("name asc");
+		return dao.executeQuery("orole", criteria);
+	}
+	
+	
 	/**
 	 * Edit a Role
 	 * @param name	the role to edit
