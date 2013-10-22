@@ -149,6 +149,9 @@ public class Evolution_0_7_0 implements IEvolution {
 		oldAdminRole.getDocument().field(RoleDao.FIELD_INHERITED,adminRole.getDocument().getRecord());
 		oldAdminRole.getDocument().field("name",DefaultRoles.ADMIN.toString());
 		oldAdminRole.save();
+		
+		//update the "friend_of" roles
+		
 	}
 
 }

@@ -49,6 +49,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.push.PushService;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -74,6 +75,7 @@ public class UserService {
 			password=BBConfiguration.getBaasBoxAdminPassword();
 			UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
 			
+			moveUserToRole("admin",DefaultRoles.BASE_ADMIN.toString(), DefaultRoles.ADMIN.toString());
 		}catch (Exception e){
 			throw new RuntimeException(e);
 		}
@@ -84,11 +86,7 @@ public class UserService {
 		return dao.get(criteria);
 	}
 
-	public static List<ODocument> getRoles() throws SqlInjectionException {
-		GenericDao dao = GenericDao.getInstance();
-		QueryParams criteria = QueryParams.getInstance().where("name not like \""+RoleDao.FRIENDS_OF_ROLE+"%\"").orderBy("name asc");
-		return dao.executeQuery("orole", criteria);
-	}
+
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
 		UserDao dao = UserDao.getInstance();
@@ -179,6 +177,11 @@ public class UserService {
 			  
 			  ORID userRid = ((ODocument)profile.field("user")).getIdentity();
 			  ORole friendRole=RoleDao.createFriendRole(username);
+			  friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
+			  friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
+			  friendRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
+			  friendRole.getDocument().field(RoleService.FIELD_DESCRIPTION,"These are friends of " + username);
+			  
 			  /*    these attributes are visible by:
 			   *    Anonymous users
 			   *    Registered user
@@ -470,6 +473,39 @@ public class UserService {
 		ODocument ouser = ((ODocument) user.field("user"));
 		ouser.field("password",newPassword).save();
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
+	}
+
+	public static void moveUsersToRole(String from, String to) {
+		String sqlAdd="update ouser add roles = {TO_ROLE} where roles contains {FROM_ROLE}";
+		String sqlRemove="update ouser remove roles = {FROM_ROLE} where roles contains {FROM_ROLE}";
+		ORole fromRole=RoleDao.getRole(from);
+		ORole toRole=RoleDao.getRole(to);
+		
+		ORID fromRID=fromRole.getDocument().getRecord().getIdentity();
+		ORID toRID=toRole.getDocument().getRecord().getIdentity();
+		
+		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString()).replace("{FROM_ROLE}", fromRID.toString());
+		sqlRemove=sqlRemove.replace("{TO_ROLE}", toRID.toString()).replace("{FROM_ROLE}", fromRID.toString());
+		
+		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {});
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {});
+	}
+	
+	public static void moveUserToRole(String username,String from, String to) {
+		String sqlAdd="update ouser add roles = {TO_ROLE} where roles contains {FROM_ROLE} and name = ?";
+		String sqlRemove="update ouser remove roles = {FROM_ROLE} where roles contains {FROM_ROLE} and name = ?";
+		
+		ORole fromRole=RoleDao.getRole(from);
+		ORole toRole=RoleDao.getRole(to);
+		
+		ORID fromRID=fromRole.getDocument().getRecord().getIdentity();
+		ORID toRID=toRole.getDocument().getRecord().getIdentity();
+		
+		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString()).replace("{FROM_ROLE}", fromRID.toString());
+		sqlRemove=sqlRemove.replace("{TO_ROLE}", toRID.toString()).replace("{FROM_ROLE}", fromRID.toString());
+
+		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
 	}
 	
 

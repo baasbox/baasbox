@@ -74,8 +74,13 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.exception.RoleAlreadyExistsException;
+import com.baasbox.exception.RoleNotFoundException;
+import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.UserService;
@@ -84,6 +89,7 @@ import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -188,16 +194,73 @@ public class Admin extends Controller {
 		return ok(toJson(response));
 	}
 
-	public static Result createRole(String name, String inheritedRole){
-		return status(NOT_IMPLEMENTED);
+	public static Result createRole(String name){
+		String inheritedRole=DefaultRoles.REGISTERED_USER.toString();
+		String description="";
+		JsonNode json = request().body().asJson();
+		 if(json != null) {
+			 description = Objects.firstNonNull(json.findPath("description").getTextValue(),"");
+		}
+		try {
+			RoleService.createRole(name, inheritedRole, description);
+		} catch (RoleNotFoundException e) {
+			return badRequest("Role " + inheritedRole + " does not exist. Hint: check the 'inheritedRole' in your payload");
+		} catch (RoleAlreadyExistsException e) {
+			return badRequest("Role " + name + " already exists");
+		}
+		return created();
 	}
 
-	public static Result dropRole(){
-		return status(NOT_IMPLEMENTED);
+	/**
+	 * Edits an existent role.
+	 * Only roles that have the modifiable flag set to true can be modified. I.E. only custom roles
+	 * The method accepts a JSON payload like this (all fields are optional):
+	 * {
+	 * 		"newname":"xxx",	//the new name to assign to this role
+	 * 		"description:"xxx",	//role description
+	 * }
+	 * 
+	 * @param name the role name to edit
+	 * @return
+	 */
+	public static Result editRole(String name){
+		String description="";
+		String newName="";
+		JsonNode json = request().body().asJson();
+		 if(json != null) {
+			 description = json.findPath("description").getTextValue();
+			 newName = json.findPath("newname").getTextValue();
+		}
+		try {
+			RoleService.editRole(name, null, description,newName);
+		} catch (RoleNotModifiableException e) {
+			return badRequest("Role " + name + " is not modifiable");
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exists");
+		} 
+		return created();
+	}
+	
+
+	/**
+	 * Delete a Role. Users belonging to that role will be moved to the "registered" role
+	 * @param name
+	 * @return
+	 */
+	 
+	public static Result deleteRole(String name){
+		try {
+			RoleService.delete(name);
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exist");
+		} catch (RoleNotModifiableException e) {
+			badRequest("Role " + name + " is not deletable. HINT: maybe you tried to delete an internal role?");
+		}
+		return ok();
 	}
 	
 	public static Result getRoles() throws SqlInjectionException{
-		List<ODocument> listOfRoles=UserService.getRoles();
+		List<ODocument> listOfRoles=RoleService.getRoles();
 		String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
 		response().setContentType("application/json");
 		return ok(ret);

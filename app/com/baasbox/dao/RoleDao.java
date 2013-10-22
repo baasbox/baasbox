@@ -20,6 +20,8 @@ package com.baasbox.dao;
 
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -64,6 +66,8 @@ public class RoleDao {
 		}
 		
 
+
+		
 		public static String getFriendRoleName(String username){
 			return FRIENDS_OF_ROLE + username;
 		}
@@ -98,6 +102,12 @@ public class RoleDao {
 
 		public static boolean exists(String roleName) {
 			return (DbHelper.getConnection().getMetadata().getSecurity().getRole(roleName)!=null);
+		}
+
+		public static void delete(String name) {
+			ORole role = getRole(name);
+			role.getDocument().delete();
+			
 		}
 		
 		

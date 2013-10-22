@@ -1,6 +1,6 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
+# ~~~~ 
 
 # Swagger - Root Resources Listing
 # GET     /api-docs.json               controllers.ApiHelpController.getResources
@@ -87,7 +87,14 @@ GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
+POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
+PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
+DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)
+
+#deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
+
 
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
