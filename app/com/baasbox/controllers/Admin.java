@@ -677,7 +677,7 @@ public class Admin extends Controller {
 			        Matcher m = p.matcher(manifestContent);
 			        if(m.matches()){
 			        	String version = m.group(1);
-			        	if(!(version.equalsIgnoreCase(BBConfiguration.getApiVersion()))){
+			        	if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
 			        		return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
 			        	}else{
 			        		Logger.debug("Version : "+version+" is valid");

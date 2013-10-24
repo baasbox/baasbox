@@ -72,11 +72,11 @@ public class RoleFunctionalTest extends AbstractTest{
         return "/admin/user";
 	}
    
-	/*
-	public String getFakeUserAddress(){
 	
+	public String getFakeUserAddress(){
+		return "/admin/user/"+ userName;
 	}
-   */
+   
 	
     @Test
     public void testRoleCreate() throws Exception
@@ -107,16 +107,16 @@ public class RoleFunctionalTest extends AbstractTest{
                                         result = route(requestCreation);
                                         assertRoute(result, "testRoleCreate.createUser", Status.CREATED, null, true);
                                        
-/*
+
                                  		//checks the user
                                  		String sFakeCheckUser = getFakeUserAddress();
                                 		requestCreation = new FakeRequest(GET, sFakeCheckUser);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "testRoleCreate.checkUser", Status.OK, "\"count\":\""+cont+"\"", true);
+                                		assertRoute(result, "testRoleCreate.checkUser", Status.OK, "\"name\":\""+roleName+"\"", true);
                                         
-                                		/*                                       
+                                		                                       
                                 		//drops the role
                                 		requestCreation = new FakeRequest(DELETE, sFakeRole);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -132,6 +132,12 @@ public class RoleFunctionalTest extends AbstractTest{
                                 		assertRoute(result, "testRoleCreate.role_not_found", Status.NOT_FOUND, null, false);
                                          
                                 		//checks that the fake user belongs to the registered role
+                                 		sFakeCheckUser = getFakeUserAddress();
+                                		requestCreation = new FakeRequest(GET, sFakeCheckUser);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                		result = route(requestCreation);
+                                		assertRoute(result, "testRoleCreate.checkUser", Status.OK, "\"name\":\"registered\"", true);
                                 		
                                 		
                                 		//tries to recreate the same role, now with description
@@ -142,14 +148,14 @@ public class RoleFunctionalTest extends AbstractTest{
                                         requestCreation = requestCreation.withHeader("Content-Type", "application/json");
                                         result = route(requestCreation);
                                         assertRoute(result, "testRoleCreate.create_the_same", Status.CREATED, null, true);
-
+                                        /*  
                                 		//checks the role
                                 		requestCreation = new FakeRequest(GET, sFakeRole);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "testRoleCreate.check_with_desc", Status.OK, "\"count\":\"0\"", true);
-                                		
+                                		assertRoute(result, "testRoleCreate.check_with_desc", Status.OK, "\"description\":\"this is a test\"", true);
+                              		
                                 		//updates the role name and description
                                 		//checks the role
                                 		requestCreation = new FakeRequest(GET, sFakeRole);

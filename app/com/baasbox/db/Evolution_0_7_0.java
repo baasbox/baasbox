@@ -7,6 +7,7 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.role.RoleService;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -20,10 +21,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 	-anonymous
  * 
  * Each baasbox role inherits db permission from one of the embedded OrientDB default role:
- * 	-administrator --> admin
+ * 	-administrator --> admin + record blocking pass through
  * 	-anonymous	   --> reader
  * 	-registered	   --> writer
- *  -backoffice    --> writer + record blocking pass through
+ *  -backoffice    --> writer + record blocking pass through 
  *  
  *  Furthermore each role has a set of parameters and flag to help the management of new custom roles:
  *  "internal": indicates if the role is created by baasbox (or is an orientDB default one), or if it is a custom role
@@ -118,6 +119,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		backRole.getDocument().field(RoleService.FIELD_DESCRIPTION,DefaultRoles.BACKOFFICE_USER.getDescription());	
 		backRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,DefaultRoles.BACKOFFICE_USER.isAssignable());
 		backRole.getDocument().field(RoleDao.FIELD_INHERITED,RoleDao.getRole(DefaultRoles.BACKOFFICE_USER.getInheritsFrom()).getDocument().getRecord());
+		backRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
 		backRole.getDocument().field("name",DefaultRoles.BACKOFFICE_USER.toString());
 		backRole.save();
 		backRole=null;
@@ -134,6 +136,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		oldAdminRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
 		oldAdminRole.getDocument().field(RoleService.FIELD_DESCRIPTION,DefaultRoles.ADMIN.getDescription());	
 		oldAdminRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,DefaultRoles.ADMIN.isAssignable());
+		oldAdminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
 		oldAdminRole.getDocument().field("name",DefaultRoles.ADMIN.toString()+"1");
 
 		//the new one must become the old one
@@ -142,6 +145,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		adminRole.getDocument().field(RoleService.FIELD_DESCRIPTION,DefaultRoles.BASE_ADMIN.getDescription());	
 		adminRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,DefaultRoles.BASE_ADMIN.isAssignable());
 		adminRole.getDocument().field(RoleDao.FIELD_INHERITED,(ORecord)null);
+		oldAdminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
 		adminRole.getDocument().field("name",DefaultRoles.BASE_ADMIN.toString());
 
 		oldAdminRole.save();

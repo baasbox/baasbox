@@ -51,6 +51,7 @@ import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -59,6 +60,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 
 public class UserService {
@@ -370,9 +372,11 @@ public class UserService {
 	}//updateProfile with role
 
 	public static void changePasswordCurrentUser(String newPassword) {
-		OGraphDatabase db =  DbHelper.getConnection();
-		db.getUser().setPassword(newPassword).save();
-		DbHelper.removeConnectionFromPool();
+		OGraphDatabase db = DbHelper.getConnection();
+		String username=db.getUser().getName();
+		db = DbHelper.sudo();
+		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
+		//DbHelper.removeConnectionFromPool();
 	}
 	
 	public static boolean exists(String username) {

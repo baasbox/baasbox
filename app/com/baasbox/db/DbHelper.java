@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -84,7 +86,18 @@ public class DbHelper {
 		protected Boolean initialValue() {return Boolean.FALSE;};
 	};
 
+	private static ThreadLocal<String> appcode = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
 
+	private static ThreadLocal<String> username = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
+	
+	private static ThreadLocal<String> password = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
+	
 	private static final String fetchPlan = "*:?";
 
 	public static boolean isInTransaction(){
@@ -237,6 +250,7 @@ public class DbHelper {
 	}
 
 	public static OGraphDatabase open(String appcode, String username,String password) throws InvalidAppCodeException {
+		
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		if(dbFreeze.get()){
@@ -248,9 +262,23 @@ public class DbHelper {
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		OGraphDatabase db=new OGraphDatabase("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
+		
+		DbHelper.appcode.set(appcode);
+		DbHelper.username.set(username);
+		DbHelper.password.set(password);
+		
 		return db;
 	}
 
+	public static OGraphDatabase sudo (){
+		getConnection().close();
+		try {
+			return open (appcode.get(),BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
+		} catch (InvalidAppCodeException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static void close(OGraphDatabase db) {
 		Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
@@ -429,9 +457,9 @@ public class DbHelper {
 		OGraphDatabase db = null;
 		java.io.File f = null;
 		try{
+			Logger.info("Initializing restore operation..:");
+			Logger.info("...dropping the old db..:");
 			DbHelper.shutdownDB(false);
-			db = open(appcode, "admin", "admin");
-			
 			f = java.io.File.createTempFile("import", ".json");
 			FileUtils.writeStringToFile(f, importData);
 			synchronized(DbHelper.class)  {
@@ -439,41 +467,54 @@ public class DbHelper {
 					dbFreeze.set(true);
 				}
 			}
-			
+
+			db=getConnection(); 
+			Logger.info("...unregistering hooks...");
+			HooksManager.unregisteredAll(db);
+			Logger.info("...drop the O-Classes...");
+			db.getMetadata().getSchema().dropClass("OFunction");
+			 db.getMetadata().getSchema().dropClass("OSchedule");
+			 db.getMetadata().getSchema().dropClass("ORIDs");
+			 
 			ODatabaseImport oi = new ODatabaseImport(db, f.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
-					Logger.info(m);
+					Logger.info("Restore db: " + m);
 				}
 			});
 			
-			Logger.info("Registering Hooks");
-			//This is very important!!!
-			for (ORecordHook hook : new ArrayList<ORecordHook>(db.getHooks())) {
-				db.unregisterHook(hook);
-			 }
 			 oi.setIncludeManualIndexes(true);
 			 oi.setUseLineFeedForRecords(true);
+			 oi.setPreserveClusterIDs(true);
+			 oi.setPreserveRids(true);
+			 Logger.info("...starting import procedure...");
 			 oi.importDatabase();
 			 oi.close();
+			
+			 Logger.info("...setting up internal user credential...");
+			 updateDefaultUsers();
+			 Logger.info("...registering hooks...");
 			 HooksManager.registerAll(db);
 			 //check for evolutions
+			 Logger.info("...looking for evolutions...");
 			 String fromVersion=Internal.DB_VERSION.getValueAsString();
 			 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
-				 Logger.info("Imported DB needs evolutions!");
+				 Logger.info("...imported DB needs evolutions!...");
 				 Evolutions.performEvolutions(db, fromVersion);
 			 }//end of evolutions
 		}catch(Exception ioe){
-			Logger.error(ioe.getMessage());
+			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
 		}finally{
 			if(db!=null && ! db.isClosed()){
 				db.close();
 			}
+			Logger.info("...releasing the db...");
 			dbFreeze.set(false);
 			if(f!=null && f.exists()){
 				f.delete();
 			}
+			Logger.info("...restore terminated");
 		}
 	}
 	

@@ -60,7 +60,8 @@ public class RoleService {
 			newRole.getDocument().field(FIELD_MODIFIABLE,false);
 			newRole.getDocument().field(FIELD_DESCRIPTION,r.getDescription());	
 			newRole.getDocument().field(FIELD_ASSIGNABLE,r.isAssignable());
-			if (r==DefaultRoles.BACKOFFICE_USER) newRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ);
+			if (r==DefaultRoles.BACKOFFICE_USER) newRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
+			if (r==DefaultRoles.ADMIN) newRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
 			newRole.save();
 		}
 
