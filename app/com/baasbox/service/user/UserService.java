@@ -47,6 +47,7 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.role.RoleService;
@@ -342,6 +343,7 @@ public class UserService {
 		try{
 			ORole newORole=RoleDao.getRole(role);
 			if (newORole==null) throw new InvalidParameterException(role + " is not a role");
+			if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
 			ORID newRole=newORole.getDocument().getIdentity();
 			UserDao udao=UserDao.getInstance();
 			ODocument profile=udao.getByUserName(username);
@@ -359,10 +361,11 @@ public class UserService {
 		    	}
 		    }
 		    //TODO: update role
-		   // OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
-		   // ouser.removeRole(oldRole);
-		    //ouser.addRole(newORole);
-		    //ouser.save();
+		     OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
+		     ORole oldORole = RoleService.getORole(oldRole);
+		     ouser.getRoles().remove(oldORole);
+		     ouser.addRole(newORole);
+		     ouser.save();
 		    profile.save();
 		    profile.reload();
 			return profile;

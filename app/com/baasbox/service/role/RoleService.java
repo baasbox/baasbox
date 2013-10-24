@@ -73,12 +73,15 @@ public class RoleService {
 		return dao.executeQuery("orole", criteria);
 	}
 	
-	public static List<ODocument> getRole(String name) throws SqlInjectionException {
+	public static List<ODocument> getRoles(String name) throws SqlInjectionException {
 		GenericDao dao = GenericDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance().where("name = ? and assignable=true").params(new String[]{name}).orderBy("name asc");
 		return dao.executeQuery("orole", criteria);
 	}
 	
+	public static ORole getORole(String name)  {
+		return RoleDao.getRole(name);
+	}
 	
 	/**
 	 * Edit a Role
@@ -107,7 +110,7 @@ public class RoleService {
 		
 		if (!StringUtils.isEmpty(newName)) roleDoc.field("name",newName);
 		if (description!=null) roleDoc.field(FIELD_DESCRIPTION,description);
-		role.save();
+		roleDoc.save();
 	}
 
 	public static void delete(String name) throws RoleNotFoundException, RoleNotModifiableException {
@@ -118,6 +121,13 @@ public class RoleService {
 		UserService.moveUsersToRole(name,DefaultRoles.REGISTERED_USER.toString());
 		//delete the role
 		RoleDao.delete(name);
+	}
+
+	public static boolean isAssignable(ORole newORole) {
+		if (newORole==null) return false;
+		if (newORole.getDocument().field(FIELD_ASSIGNABLE)==null || newORole.getDocument().field(FIELD_ASSIGNABLE)==Boolean.FALSE )
+			return false;
+		return true;
 	}
 	
 	

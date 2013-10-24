@@ -261,7 +261,7 @@ public class Admin extends Controller {
 		} catch (RoleNotFoundException e) {
 			return notFound("Role " + name + " does not exists");
 		} 
-		return created();
+		return ok();
 	}
 	
 
@@ -290,7 +290,7 @@ public class Admin extends Controller {
 	}
 	
 	public static Result getRole(String name) throws SqlInjectionException{
-		List<ODocument> listOfRoles=RoleService.getRole(name);
+		List<ODocument> listOfRoles=RoleService.getRoles(name);
 		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
 		ODocument role = listOfRoles.get(0);
 		String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());

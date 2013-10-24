@@ -19,18 +19,18 @@
 
 
 import static org.junit.Assert.fail;
+import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.DELETE;
+import static play.test.Helpers.PUT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.route;
+import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
-import java.io.IOException;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
@@ -144,26 +144,40 @@ public class RoleFunctionalTest extends AbstractTest{
                                         requestCreation = new FakeRequest(POST, sFakeRole);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                        requestCreation = requestCreation.withTextBody("{\"description\":\"this is a test\"}");
+                                        mapper = new ObjectMapper();
+                                        actualObj = mapper.readTree("{\"description\":\"this is a test\"}");	
+                                        requestCreation = requestCreation.withJsonBody(actualObj);
                                         requestCreation = requestCreation.withHeader("Content-Type", "application/json");
                                         result = route(requestCreation);
                                         assertRoute(result, "testRoleCreate.create_the_same", Status.CREATED, null, true);
-                                        /*  
+ 
                                 		//checks the role
                                 		requestCreation = new FakeRequest(GET, sFakeRole);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
                                 		assertRoute(result, "testRoleCreate.check_with_desc", Status.OK, "\"description\":\"this is a test\"", true);
-                              		
+                                                                     		
                                 		//updates the role name and description
+                    					
+                                		 requestCreation = new FakeRequest(PUT, sFakeRole);
+                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                         mapper = new ObjectMapper();
+                                         actualObj = mapper.readTree("{\"description\":\"this is new test\"}");	
+                                         requestCreation = requestCreation.withJsonBody(actualObj,PUT);
+                                         result = route(requestCreation);
+                                         assertRoute(result, "testRoleCreate.update_desc", Status.OK, null, true);
+                                         
+                                                                         		
                                 		//checks the role
-                                		requestCreation = new FakeRequest(GET, sFakeRole);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-                                		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                		result = route(requestCreation);
-                                		assertRoute(result, "testRoleCreate.check_new_name", Status.OK, "\"count\":\"0\"", true);
-                                		
+                                         requestCreation = new FakeRequest(GET, sFakeRole);
+                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                                 		result = route(requestCreation);
+                                 		assertRoute(result, "testRoleCreate.check_with_new_desc", Status.OK, "\"description\":\"this is new test\"", true);
+                                       
+
                                 		//
                                 		//finally... drop it, again
                                 		requestCreation = new FakeRequest(DELETE, sFakeRole);
@@ -171,7 +185,7 @@ public class RoleFunctionalTest extends AbstractTest{
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
                                 		assertRoute(result, "testRoleCreate.drop_final", Status.OK, null, false);
-  */                              		
+                                 		
                                 		
                                     }catch (Exception e) {
                                     		e.printStackTrace();
