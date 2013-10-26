@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -93,7 +92,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -252,7 +251,7 @@ public class Admin extends Controller {
 		JsonNode json = request().body().asJson();
 		 if(json != null) {
 			 description = json.findPath("description").getTextValue();
-			 newName = json.findPath("newname").getTextValue();
+			 newName = json.findPath("new_name").getTextValue();
 		}
 		try {
 			RoleService.editRole(name, null, description,newName);
@@ -260,7 +259,9 @@ public class Admin extends Controller {
 			return badRequest("Role " + name + " is not modifiable");
 		} catch (RoleNotFoundException e) {
 			return notFound("Role " + name + " does not exists");
-		} 
+		} catch (OIndexException e){
+			return badRequest("Role " + name + " already exists");
+		}
 		return ok();
 	}
 	
