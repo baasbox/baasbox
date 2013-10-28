@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -45,10 +47,13 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.RoleAlreadyExistsException;
+import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
@@ -81,7 +86,18 @@ public class DbHelper {
 		protected Boolean initialValue() {return Boolean.FALSE;};
 	};
 
+	private static ThreadLocal<String> appcode = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
 
+	private static ThreadLocal<String> username = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
+	
+	private static ThreadLocal<String> password = new ThreadLocal<String>() {
+		protected String initialValue() {return "";};
+	};
+	
 	private static final String fetchPlan = "*:?";
 
 	public static boolean isInTransaction(){
@@ -133,11 +149,19 @@ public class DbHelper {
 		return ret;
 	}
 
+	/***
+	 * Prepares a select statement
+	 * @param from the class to query
+	 * @param count if true, perform a count instead of to retrieve the records
+	 * @param criteria the criteria to apply in the 'where' clause of the select
+	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(OCommandRequest, String[])} method
+	 * @throws SqlInjectionException If the query is not a select statement
+	 */
 	public static OCommandRequest selectCommandBuilder(String from, boolean count, QueryParams criteria) throws SqlInjectionException{
 		OGraphDatabase db =  DbHelper.getConnection();
 		OCommandRequest command = db.command(new OSQLSynchQuery<ODocument>(
 				selectQueryBuilder(from, count, criteria)
-				).setFetchPlan(fetchPlan.replace("?", criteria.getDepth().toString())));
+				));
 		if (!command.isIdempotent()) throw new SqlInjectionException();
 		Logger.debug("commandBuilder: ");
 		Logger.debug("  " + criteria.toString());
@@ -145,7 +169,13 @@ public class DbHelper {
 		return command;
 	}
 
-	public static List<ODocument> commandExecute(OCommandRequest command, String[] params){
+	/***
+	 * Executes a select eventually passing the parameters 
+	 * @param command
+	 * @param params positional parameters
+	 * @return the List of the record retrieved (the command MUST be a select)
+	 */
+	public static List<ODocument> selectCommandExecute(OCommandRequest command, String[] params){
 		List<ODocument> queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
@@ -153,9 +183,44 @@ public class DbHelper {
 		Integer updateQueryResult = command.execute((Object[])params);
 		return updateQueryResult;
 	}
+	public static List<ODocument> commandExecute(OCommandRequest command, String[] params){
+          List<ODocument> queryResult = command.execute((Object[])params);
+          return queryResult;
+	}
 	
+	/**
+	 * Prepares the command API to execute an arbitrary SQL statement
+	 * @param theQuery
+	 * @return
+	 */
+	public static OCommandRequest genericSQLStatementCommandBuilder (String theQuery){
+		OGraphDatabase db =  DbHelper.getConnection();
+		OCommandRequest command = db.command(new OCommandSQL(theQuery));
+		return command;
+	}
 	
+	/***
+	 * Executes a generic SQL command statements
+	 * @param command the command to execute prepared by {@link #genericSQLStatementCommandBuilder(String)}
+	 * @param params The positional parameters to pass to the statement
+	 * @return
+	 */
+	public static Object genericSQLCommandExecute(OCommandRequest command, String[] params){
+		Object queryResult = command.execute((Object[])params);
+		return queryResult;
+	}
 	
+	/**
+	 * Executes an arbitrary sql statement applying the positional parameters
+	 * @param statement
+	 * @param params
+	 * @return
+	 */
+	public static Object genericSQLStatementExecute(String statement, String[] params){
+		OCommandRequest command = genericSQLStatementCommandBuilder(statement);
+		Object ret = genericSQLCommandExecute(command,params);
+		return ret;
+	}
 	
 	public static void shutdownDB(boolean repopulate){
 		OGraphDatabase db = null;
@@ -192,6 +257,7 @@ public class DbHelper {
 	}
 
 	public static OGraphDatabase open(String appcode, String username,String password) throws InvalidAppCodeException {
+		
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		if(dbFreeze.get()){
@@ -203,9 +269,23 @@ public class DbHelper {
 		//OGraphDatabase db=OGraphDatabasePool.global().acquire("local:" + BBConfiguration.getDBDir(),username,password);
 		OGraphDatabase db=new OGraphDatabase("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(db);
+		
+		DbHelper.appcode.set(appcode);
+		DbHelper.username.set(username);
+		DbHelper.password.set(password);
+		
 		return db;
 	}
 
+	public static OGraphDatabase sudo (){
+		getConnection().close();
+		try {
+			return open (appcode.get(),BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
+		} catch (InvalidAppCodeException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public static void close(OGraphDatabase db) {
 		Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
@@ -234,72 +314,19 @@ public class DbHelper {
 		return getCurrentHTTPUsername().equalsIgnoreCase(BBConfiguration.getBaasBoxUsername());
 	}
 
-	public static void createDefaultRoles(){
+	public static void createDefaultRoles() throws RoleNotFoundException, RoleAlreadyExistsException{
 		Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getConnection();
-		final ORole anonymousUserRole =  db.getMetadata().getSecurity().createRole(DefaultRoles.ANONYMOUS_USER.toString(), ORole.ALLOW_MODES.DENY_ALL_BUT);
-		anonymousUserRole.save();
-		final ORole registeredUserRole =  db.getMetadata().getSecurity().createRole(DefaultRoles.REGISTERED_USER.toString(), ORole.ALLOW_MODES.DENY_ALL_BUT);
-		registeredUserRole.save();
-
-		final ORole backOfficeRole = db.getMetadata().getSecurity().createRole(DefaultRoles.BACKOFFICE_USER.toString(),ORole.ALLOW_MODES.DENY_ALL_BUT);
-		backOfficeRole.save();
-
-		registeredUserRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-				+ ORole.PERMISSION_UPDATE);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		registeredUserRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		registeredUserRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-
-
-		backOfficeRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-				+ ORole.PERMISSION_UPDATE);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		backOfficeRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-		backOfficeRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED,ORole.PERMISSION_ALL); //the backoffice users can access and manipulate all records
-
-		anonymousUserRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadata.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, 7);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-		anonymousUserRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-
-
-		anonymousUserRole.save();
-		registeredUserRole.save();
+		RoleService.createInternalRoles();
 		Logger.trace("Method End");
 	}
 
 	public static void createDefaultUsers() throws Exception{
 		Logger.trace("Method Start");
-		//the baasbox default user used to connect to the DB like anonymous user
-		String username=BBConfiguration.getBaasBoxUsername();
-		String password=BBConfiguration.getBaasBoxPassword();
-		UserService.signUp(username, password,DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null);
-
-		//the baasbox default user used to act internally as the administrator
-		username=BBConfiguration.getBaasBoxAdminUsername();
-		password=BBConfiguration.getBaasBoxAdminPassword();
-		UserService.signUp(username, password,DefaultRoles.ADMIN.toString(), null,null,null,null);
-
+		UserService.createDefaultUsers();
 		Logger.trace("Method End");
 	}
 
+	
 	public static void updateDefaultUsers() throws Exception{
 		Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getConnection();
@@ -314,13 +341,10 @@ public class DbHelper {
 		Logger.trace("Method End");
 	}
 
+	@Deprecated
 	public static void dropOrientDefault(){
 		Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getConnection();
-		db.getMetadata().getSecurity().dropUser("reader");
-		db.getMetadata().getSecurity().dropUser("writer");
-		db.getMetadata().getSecurity().dropRole("reader");
-		db.getMetadata().getSecurity().dropRole("writer");
+		//nothing to do here
 		Logger.trace("Method End");
 	}
 
@@ -440,9 +464,9 @@ public class DbHelper {
 		OGraphDatabase db = null;
 		java.io.File f = null;
 		try{
+			Logger.info("Initializing restore operation..:");
+			Logger.info("...dropping the old db..:");
 			DbHelper.shutdownDB(false);
-			db = open(appcode, "admin", "admin");
-			
 			f = java.io.File.createTempFile("import", ".json");
 			FileUtils.writeStringToFile(f, importData);
 			synchronized(DbHelper.class)  {
@@ -450,34 +474,54 @@ public class DbHelper {
 					dbFreeze.set(true);
 				}
 			}
-			
+
+			db=getConnection(); 
+			Logger.info("...unregistering hooks...");
+			HooksManager.unregisteredAll(db);
+			Logger.info("...drop the O-Classes...");
+			db.getMetadata().getSchema().dropClass("OFunction");
+			 db.getMetadata().getSchema().dropClass("OSchedule");
+			 db.getMetadata().getSchema().dropClass("ORIDs");
+			 
 			ODatabaseImport oi = new ODatabaseImport(db, f.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
-					Logger.info(m);
+					Logger.info("Restore db: " + m);
 				}
 			});
 			
-			//This is very important!!!
-			for (ORecordHook hook : new ArrayList<ORecordHook>(db.getHooks())) {
-				db.unregisterHook(hook);
-			 }
 			 oi.setIncludeManualIndexes(true);
 			 oi.setUseLineFeedForRecords(true);
+			 oi.setPreserveClusterIDs(true);
+			 oi.setPreserveRids(true);
+			 Logger.info("...starting import procedure...");
 			 oi.importDatabase();
 			 oi.close();
+			
+			 Logger.info("...setting up internal user credential...");
+			 updateDefaultUsers();
+			 Logger.info("...registering hooks...");
 			 HooksManager.registerAll(db);
+			 //check for evolutions
+			 Logger.info("...looking for evolutions...");
+			 String fromVersion=Internal.DB_VERSION.getValueAsString();
+			 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
+				 Logger.info("...imported DB needs evolutions!...");
+				 Evolutions.performEvolutions(db, fromVersion);
+			 }//end of evolutions
 		}catch(Exception ioe){
-			Logger.error(ioe.getMessage());
+			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
 		}finally{
 			if(db!=null && ! db.isClosed()){
 				db.close();
 			}
+			Logger.info("...releasing the db...");
 			dbFreeze.set(false);
 			if(f!=null && f.exists()){
 				f.delete();
 			}
+			Logger.info("...restore terminated");
 		}
 	}
 	

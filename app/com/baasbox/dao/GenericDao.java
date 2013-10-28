@@ -70,7 +70,7 @@ public class GenericDao {
 	
 	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
 		OCommandRequest command = DbHelper.selectCommandBuilder(oclass, false, criteria);
-		List<ODocument> result = DbHelper.commandExecute(command, criteria.getParams());
+		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		return result;
 	}
 	

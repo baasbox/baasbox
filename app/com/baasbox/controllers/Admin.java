@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,8 +73,13 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.exception.RoleAlreadyExistsException;
+import com.baasbox.exception.RoleNotFoundException;
+import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.UserService;
@@ -84,9 +88,11 @@ import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -94,7 +100,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 public class Admin extends Controller {
 
 	static String backupDir = BBConfiguration.getDBBackupDir();
-	static String sep = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
+	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	public static Result getUsers(){
 		Logger.trace("Method Start");
@@ -117,6 +123,28 @@ public class Admin extends Controller {
 		return ok(ret);
 	}
 
+	public static Result getUser(String username){
+		Logger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+
+		ODocument user=null;
+		try {
+			user = com.baasbox.service.user.UserService.getUserProfilebyUsername(username);
+		} catch (SqlInjectionException e1) {
+			return badRequest("The request is malformed: check your query criteria");
+		}
+		if (user==null) return notFound("User " + username + " not found");
+		String ret="";
+		try{
+			ret=user.toJSON(JSONFormats.Formats.USER.toString());
+		}catch (Throwable e){
+			return internalServerError(ExceptionUtils.getFullStackTrace(e));
+		}
+		Logger.trace("Method End");
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+	
 	public static Result getCollections(){
 		Logger.trace("Method Start");
 
@@ -188,14 +216,85 @@ public class Admin extends Controller {
 		return ok(toJson(response));
 	}
 
-	public static Result createRole(){
-		return status(NOT_IMPLEMENTED);
+	public static Result createRole(String name){
+		String inheritedRole=DefaultRoles.REGISTERED_USER.toString();
+		String description="";
+		JsonNode json = request().body().asJson();
+		 if(json != null) {
+			 description = Objects.firstNonNull(json.findPath("description").getTextValue(),"");
+		}
+		try {
+			RoleService.createRole(name, inheritedRole, description);
+		} catch (RoleNotFoundException e) {
+			return badRequest("Role " + inheritedRole + " does not exist. Hint: check the 'inheritedRole' in your payload");
+		} catch (RoleAlreadyExistsException e) {
+			return badRequest("Role " + name + " already exists");
+		}
+		return created();
 	}
 
+	/**
+	 * Edits an existent role.
+	 * Only roles that have the modifiable flag set to true can be modified. I.E. only custom roles
+	 * The method accepts a JSON payload like this (all fields are optional):
+	 * {
+	 * 		"newname":"xxx",	//the new name to assign to this role
+	 * 		"description:"xxx",	//role description
+	 * }
+	 * 
+	 * @param name the role name to edit
+	 * @return
+	 */
+	public static Result editRole(String name){
+		String description="";
+		String newName="";
+		JsonNode json = request().body().asJson();
+		 if(json != null) {
+			 description = json.findPath("description").getTextValue();
+			 newName = json.findPath("new_name").getTextValue();
+		}
+		try {
+			RoleService.editRole(name, null, description,newName);
+		} catch (RoleNotModifiableException e) {
+			return badRequest("Role " + name + " is not modifiable");
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exists");
+		} catch (OIndexException e){
+			return badRequest("Role " + name + " already exists");
+		}
+		return ok();
+	}
+	
 
+	/**
+	 * Delete a Role. Users belonging to that role will be moved to the "registered" role
+	 * @param name
+	 * @return
+	 */
+	 
+	public static Result deleteRole(String name){
+		try {
+			RoleService.delete(name);
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exist");
+		} catch (RoleNotModifiableException e) {
+			badRequest("Role " + name + " is not deletable. HINT: maybe you tried to delete an internal role?");
+		}
+		return ok();
+	}
+	
 	public static Result getRoles() throws SqlInjectionException{
-		List<ODocument> listOfRoles=UserService.getRoles();
+		List<ODocument> listOfRoles=RoleService.getRoles();
 		String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+	
+	public static Result getRole(String name) throws SqlInjectionException{
+		List<ODocument> listOfRoles=RoleService.getRoles(name);
+		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
+		ODocument role = listOfRoles.get(0);
+		String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());
 		response().setContentType("application/json");
 		return ok(ret);
 	}
@@ -226,7 +325,7 @@ public class Admin extends Controller {
 		String password=(String)  bodyJson.findValuesAsText("password").get(0);
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
 
-		if (privateAttributes.has("email")) {
+		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
 				return badRequest("The email address must be valid.");
@@ -234,7 +333,7 @@ public class Admin extends Controller {
 
 		//try to signup new user
 		try {
-			UserService.signUp(username, password, role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){
@@ -244,10 +343,9 @@ public class Admin extends Controller {
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 					" they must be an object, not a value.");
-		}catch (Throwable e){
-			Logger.warn("signUp", e);
-			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+		}catch (Exception e) {
+			Logger.error(ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e) ;
 		}
 		Logger.trace("Method End");
 		return created();
@@ -326,9 +424,7 @@ public class Admin extends Controller {
 		return ok();
 	}
 
-	public static Result dropRole(){
-		return status(NOT_IMPLEMENTED);
-	}
+
 
 	public static Result deleteDocument(){
 		return status(NOT_IMPLEMENTED);
@@ -423,7 +519,7 @@ public class Admin extends Controller {
 			unauthorized("appcode can not be null");
 		}
 
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			boolean createdDir = dir.mkdir();
 			if(!createdDir){
@@ -435,7 +531,7 @@ public class Admin extends Controller {
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
 				Duration.create(2, TimeUnit.SECONDS),
-				new ExportJob(dir.getAbsolutePath()+sep+fileName,appcode),
+				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
 				Akka.system().dispatcher()
 				); 
 		return status(202,Json.toJson(fileName));
@@ -452,7 +548,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and the stream of the file
 	 */
 	public static Result getExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -472,7 +568,7 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -505,7 +601,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			dir.mkdir();
 		}
@@ -582,7 +678,7 @@ public class Admin extends Controller {
 			        Matcher m = p.matcher(manifestContent);
 			        if(m.matches()){
 			        	String version = m.group(1);
-			        	if(!(version.equalsIgnoreCase(BBConfiguration.getApiVersion()))){
+			        	if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
 			        		return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
 			        	}else{
 			        		Logger.debug("Version : "+version+" is valid");

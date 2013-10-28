@@ -17,7 +17,8 @@ object ApplicationBuild extends Build {
     			"org.imgscalr" % "imgscalr-lib" % "4.2",
     			"org.apache.commons" % "commons-email" % "1.3.1",
     			"org.antlr" % "stringtemplate" % "4.0.2",
-                        "com.github.tony19" % "named-regexp" % "0.2.3"
+                "com.github.tony19" % "named-regexp" % "0.2.3",
+                "org.scribe" % "scribe" % "1.3.2"
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
                          

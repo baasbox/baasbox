@@ -123,6 +123,7 @@ public class WrapResponse {
 		Logger.trace("Method Start");
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
+		ctx.response().setHeader("Access-Control-Allow-Headers", "X-Requested-With");
 		//this is an hack because scala can't access to the http context, and we need this information for the access log
 		String username=(String) ctx.args.get("username");
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);

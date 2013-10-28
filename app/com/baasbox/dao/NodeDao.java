@@ -146,7 +146,7 @@ public abstract class NodeDao  {
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException {
 		Logger.trace("Method Start");
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
-		List<ODocument> result = DbHelper.commandExecute(command, criteria.getParams());
+		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		Logger.trace("Method End");
 		return result;
 	}
@@ -227,7 +227,7 @@ public abstract class NodeDao  {
 	public long getCount(QueryParams criteria) throws SqlInjectionException{
 		Logger.trace("Method Start");
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, true, criteria);
-		List<ODocument> result = DbHelper.commandExecute(command, criteria.getParams());
+		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();
 	}

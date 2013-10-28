@@ -17,9 +17,11 @@ String.prototype.endsWith = function(suffix) {
 };
 
 var userDataArray;
+var roleDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
+var settingSocialData = {};
 var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
@@ -59,7 +61,7 @@ function refreshCollectionCache(arr,fun){
 			success: function(data) {
 				var data = data["data"];
 				dbCollectionsCache = data["data"]["collections_details"];
-				console.log(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
 				if(fun){
 					fun(dbCollectionsCache)
 				}
@@ -192,7 +194,7 @@ $('a.downloadExport').live('click',function(e){
 			var builder;
 			var blob;
 			if(!BlobBuilder){
-				console.log("BlobBuilder is not available...Using plain BLOB")
+				//console.debug("BlobBuilder is not available...Using plain BLOB")
 				blob = new Blob([binStr],{ "type" : "application\/zip" });
 			}else{
 				builder = new BlobBuilder();
@@ -243,12 +245,21 @@ $('.btn-changepwd').click(function(e){
 $('.btn-adduser').click(function(e){
 	loadUserRole();
 	resetAddUserForm();
-	$("#userTitle").text("Create new User");
+	$("#userTitle").text("Create a new User");
 	$(".groupUserPwd").removeClass("hide");
 	$("#txtUsername").removeClass("disabled");
 	$("#txtUsername").prop('disabled', false);
 	$('#addUserModal').modal('show');
 }); // Show Modal for Add User
+
+
+$('.btn-addRole').click(function(e){
+	//console.debug("btn-addrole clicked");
+	resetAddRoleForm();
+	$("#roleTitle").text("Create a new Role");
+	$('#addRoleModal').modal('show');
+	$('#roleModalMode').text("insert");
+}); // Show Modal for Add role
 
 $('.btn-newAsset').click(function(e){
 
@@ -265,7 +276,6 @@ $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
-
 
 	switch (action)	{
 	case "insert":
@@ -293,6 +303,9 @@ $(".btn-action").live("click", function() {
 			break;
 		case "asset":
 			break;
+		case "role":
+			openRoleEditForm(parameters);
+			break;	
 		}
 		break;
 	case "delete":
@@ -304,14 +317,19 @@ $(".btn-action").live("click", function() {
 		case "document":
 			break;
 		case "asset":
-			if(!confirm("Do you want delete '"+ parameters +"' asset?"))
+			if(!confirm("Do you want to delete '"+ parameters +"' asset?"))
 				return;
 			deleteAsset(parameters);
 			break;
+		case "role":
+			if(!confirm("Do you want to delete '"+ parameters +"' role? All users belonging to this role will be assigned ro the role 'registered'"))
+				return;
+			deleteRole(parameters);
+			break;
 		}
 		break;
-	}
-});
+		}
+	});
 
 function deleteAsset(assetName)
 {
@@ -329,33 +347,56 @@ function deleteAsset(assetName)
 			})	
 }
 
-function openUserEditForm(editUserName)
-{
-	var userObject;
+function deleteRole(roleName){
+	BBRoutes.com.baasbox.controllers.Admin.deleteRole(roleName).ajax(
+			{
+				data: {"name": roleName},
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					loadRoleTable();
+				}
+			})	
+}
 
+function openUserEditForm(editUserName){
+	var userObject;
 	resetAddUserForm();
-	loadUserRole();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
 	$("#userTitle").text("Edit User information");
 	$(".groupUserPwd").addClass("hide");
-
 	for(i=0;i<userDataArray.length;i++)
 	{
 		if(userDataArray[i].user.name == editUserName)
 			userObject = userDataArray[i];
 	}
-
 	$("#txtUsername").val(userObject.user.name);
-	$("#cmbSelectRole option:contains("+ userObject.user.roles[0].name +")").prop('selected',true)
-	$("#cmbSelectRole").trigger("liszt:updated");
-
+	loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser));
 	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend));
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers));
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers));
-
 	$('#addUserModal').modal('show');
+}
+
+function openRoleEditForm(editRoleName){
+	var roleObject;
+	resetAddRoleForm();
+	$("#roleTitle").text("Edit Role information");
+	$('#roleModalMode').text("edit");
+	for(i=0;i<roleDataArray.length;i++)
+	{
+		if(roleDataArray[i].name == editRoleName)
+			roleObject = roleDataArray[i];
+	}
+	$("#txtRoleName").val(roleObject.name);
+	$("#roleOriginalName").val(roleObject.name);
+	$("#txtRoleDescription").val(roleObject.description);
+	$('#addRoleModal').modal('show');
 }
 
 function openSettingEditForm(editSettingName)
@@ -434,6 +475,11 @@ function loadAssetTable()
 	callMenu("#assets");
 }
 
+function loadRoleTable()
+{
+	callMenu("#roles");
+}
+
 function loadUserTable()
 {
 	callMenu("#users");
@@ -459,7 +505,15 @@ function resetAddUserForm()
 	$(".error").removeClass("error");
 }
 
-function loadUserRole()
+function resetAddRoleForm(){
+	//console.debug("resetAddRoleForm");
+	$("#roleForm")[0].reset();
+	$("#errorAddRole").addClass("hide");
+	$("#errorAddRole2").addClass("hide");
+	$(".error").removeClass("error");
+}
+
+function loadUserRole(defaultRole)
 {
 	BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
 		data: {orderBy: "name asc"},
@@ -475,7 +529,56 @@ function loadUserRole()
 				}));
 			});
 			$("#cmbSelectRole").trigger("liszt:updated");
+			if (defaultRole) {
+				$("#cmbSelectRole option:contains('"+defaultRole+"')").prop('selected',true);
+				$("#cmbSelectRole").trigger("liszt:updated");
+			}
 		}});
+}
+
+
+function addRole() {
+	var roleName = $("#txtRoleName").val();
+	var desc = $("#txtRoleDescription").val();
+	BBRoutes.com.baasbox.controllers.Admin.createRole(roleName).ajax(
+			{
+				data: JSON.stringify({"description": desc}),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					closeRoleForm();
+				}
+			})	
+}
+function updateRole(){
+	var roleName = $("#txtRoleName").val();
+	var roleOriginalName = $("#roleOriginalName").val();
+	var desc = $("#txtRoleDescription").val();
+
+	BBRoutes.com.baasbox.controllers.Admin.editRole(roleOriginalName).ajax(
+			{
+				data: JSON.stringify({"description": desc,"new_name": roleName}),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					closeRoleForm();
+				}
+			})	
+}//updateRole
+
+function closeRoleForm() {
+	$('#addRoleModal').modal('hide');
+	loadRoleTable();
 }
 
 function addUser()
@@ -559,7 +662,7 @@ function updateSetting()
 
 				error: function(data)
 				{
-					//console.log(data)
+					////console.debug(data)
 					alert("Error updating settings:" + data["message"]);
 				},
 				success: function(data)
@@ -576,6 +679,28 @@ function closeSettingForm()
 	$('#EditSettingModal').modal('hide');
 	loadSettingTable();
 }
+
+$('.btn-RoleCommit').click(function(e){
+	var action=$('#roleModalMode').text();
+	var roleName = $("#txtRoleName").val();
+	var desc = $("#txtRoleDescription").val();
+	var errorMessage = '';
+	$("#errorAddRole").addClass("hide");
+	
+	if($.trim(roleName) == "")	errorMessage = "The 'Role name' field is required<br/>"
+	if(errorMessage != "")
+	{
+		$("#errorAddRole").html(errorMessage);
+		$("#errorAddRole").removeClass("hide");
+		return;
+	}
+
+	if(action == "insert")
+		addRole();
+	else
+		updateRole();
+	return;
+}); // Validate and Ajax submit for Insert/Update Role
 
 $('.btn-UserCommit').click(function(e){
 	var action;
@@ -597,52 +722,51 @@ $('.btn-UserCommit').click(function(e){
 		action = "Insert";
 
 	if($.trim(userName) == "")
-		errorMessage = "The field 'Username' is required<br/>"
+		errorMessage = "The 'Username' field is required<br/>"
 
 			if(action == "Insert"){
 				if($.trim(password) == "")
-					errorMessage += "The field 'Password' is required<br/>"
+					errorMessage += "The 'Password' field is required<br/>"
 
 						if($.trim(retypePassword) == "")
-							errorMessage += "The field 'Retype Password' is required<br/>"
+							errorMessage += "The 'Retype Password' field  is required<br/>"
 
 								if(password != retypePassword)
 								{
 									$(".groupUserPwd").addClass("error");
-									errorMessage += "'Password' and 'Retype Password' don't match<br/>"
+									errorMessage += "'Password' and 'Retype Password' fields don't match<br/>"
 								}
 								else
 									$(".groupUserPwd").removeClass("error");		
 			}
 
-
 	if($.trim(role) == "")
-		errorMessage += "The field 'Role' is required<br/>"
+		errorMessage += "The 'Role' field  is required<br/>"
 
 			if(!isValidJson(visibleByTheUser)){
 				$("#auVisibleByTheUser").addClass("error");
-				errorMessage += "The field 'Visible By The User' must be a valid JSON string<br/>"
+				errorMessage += "The 'Visible By The User' field  must be a valid JSON string<br/>"
 			}
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
-		errorMessage += "The field 'Visible By Friend' must be a valid JSON string<br/>"
+		errorMessage += "The 'Visible By Friend' field  must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByFriend").removeClass("error");
 
 	if(!isValidJson(visibleByRegisteredUsers)){
 		$("#auVisibleByRegisteredUsers").addClass("error");
-		errorMessage += "The field 'Visible By Registered Users' must be a valid JSON string<br/>"
+		errorMessage += "The 'Visible By Registered Users' field  must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByRegisteredUsers").removeClass("error");
 
 	if(!isValidJson(visibleByAnonymousUsers)){
 		$("#auVisibleByAnonymousUsers").addClass("error");
-		errorMessage += "The field 'Visible By Anonymous Users' must be a valid JSON string<br/>"
+		errorMessage += "The 'Visible By Anonymous Users' field  must be a valid JSON string<br/>"
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
@@ -940,7 +1064,7 @@ function getActionButton(action, actionType,parameters){
 	case "delete":
 		iconType = "icon-trash";
 		classType = "btn-danger";
-		labelName = "Delete";
+		labelName = "Delete...";
 		break;
 	}
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
@@ -953,6 +1077,9 @@ function setBradCrumb(type)
 	var sBradCrumb;
 
 	switch (type){
+	case "#roles":
+		sBradCrumb = "Roles";
+		break;	
 	case "#users":
 		sBradCrumb = "Users";
 		break;
@@ -972,7 +1099,7 @@ function setBradCrumb(type)
 		sBradCrumb = "Documents";
 		break;
 	case "#assets":
-		sBradCrumb = "Assests";
+		sBradCrumb = "Assets";
 		break;
 	}
 
@@ -1018,13 +1145,28 @@ function getAssetIcon(type)
 
 
 function setupTables(){
+	$('#roleTable').dataTable( {
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ {"mData": "name"},
+		               {"mData": "description"},
+		               {"mData": "modifiable", "mRender": function ( data, type, full ) {
+		            	   if(data) //role is modifiable
+		            		   return getActionButton("edit","role",full.name) +" "+ getActionButton("delete","role",full.name);
+		            	   return "No action available";
+		               }
+		               }],
+		               "bRetrieve": true,
+		               "bDestroy":true
+	} ).makeEditable();
 	$('#userTable').dataTable( {
 		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "user.name"},
 		               {"mData": "user.roles.0.name"},
-		               {"mData": "_creation_date","sDefaultContent":""},
+		               {"mData": "signUpDate","sDefaultContent":""},
 		               {"mData": "user.status","mRender": function ( data, type, full ) {
 		            	   var classStyle="label-success"
 		            		   if (data!="ACTIVE") classStyle="label-important";
@@ -1035,7 +1177,7 @@ function setupTables(){
 		               {"mData": "user.name", "mRender": function ( data, type, full ) {
 		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
 		            		   return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
-		            	   return "";
+		            	   return "No action available";
 		               }
 		               }],
 		               "bRetrieve": true,
@@ -1307,13 +1449,26 @@ function callMenu(action){
 	setBradCrumb(action);
 
 	switch (action)	{
+	case "#roles":
+		BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
+			data: {orderBy: "name asc"},
+			success: function(data) {
+				roleDataArray = data["data"];
+				//console.debug("Admin.getRoles success:");
+				//console.debug(data);
+				applySuccessMenu(action,roleDataArray);
+				$('#roleTable').dataTable().fnClearTable();
+				$('#roleTable').dataTable().fnAddData(roleDataArray);
+			}
+		});
+		break;//#users
 	case "#users":
 		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
 				userDataArray = data["data"];
-				console.log("Admin.getUsers success:");
-				console.log(data);
+				//console.debug("Admin.getUsers success:");
+				//console.debug(data);
 				applySuccessMenu(action,userDataArray);
 				$('#userTable').dataTable().fnClearTable();
 				$('#userTable').dataTable().fnAddData(userDataArray);
@@ -1356,7 +1511,9 @@ function callMenu(action){
 						"jve": data["java"]["java_version"],
 						"rand": Math.random().toString(36).substr(2,7)
 				};
-				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
+				refreshCollectionCache(data["data"]["collections_details"],function(dd){
+					//console.debug("refreshed ", dd)
+				});
 				var bbId = data["installation"]["bb_id"];
 				var bbv = data["installation"]["bb_version"];
 				if(bbId){
@@ -1396,8 +1553,8 @@ function callMenu(action){
 	case "#settings":		
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
 			success: function(data) {
-				console.log("dumpConfiguration Application success:");
-				console.log(data);
+				//console.debug("dumpConfiguration Application success:");
+				//console.debug(data);
 				settingDataArray = data["data"];
 				
 				
@@ -1408,8 +1565,8 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("PasswordRecovery").ajax({
 			success: function(data) {
-				console.log("dumpConfiguration PasswordRecovery success:");
-				console.log(data);
+				//console.debug("dumpConfiguration PasswordRecovery success:");
+				//console.debug(data);
 				settingPwdDataArray = data["data"];
 				//applySuccessMenu(action,data);
 				$('#settingsPwdTable').dataTable().fnClearTable();
@@ -1418,9 +1575,9 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
 			success: function(data) {
-				console.log("dumpConfiguration Push success:");
+				//console.debug("dumpConfiguration Push success:");
 				settingPushDataArray = data["data"];
-				console.log(settingPushDataArray);
+				//console.debug(settingPushDataArray);
 				settingPushMap = {}
 				
 				settingPushMap.add = function(setting,section){
@@ -1455,12 +1612,43 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
 			success: function(data) {
-				console.log("dumpConfiguration Images success:");
-				console.log(data);
+
 				settingImgDataArray = data["data"];
-				applySuccessMenu(action,settingImgDataArray);
+				
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
+			}
+		});
+		
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Social").ajax({
+			success: function(data) {
+				var result =  data["data"];
+				for(var i=0;i<result.length;i++){
+					var components = result[i]["key"].split(".");
+					var key = components[1];
+					var component = components[2];
+					console.log(result)
+					if(!settingSocialData[key]){
+						settingSocialData[key] = {}
+					}
+					if(component.indexOf("token")>-1){
+						settingSocialData[key]["token"] = result[i]["value"] == 'null' ? '' : result[i]["value"];
+					}else if(component.indexOf("secret")>-1){
+						settingSocialData[key]["secret"] = result[i]["value"] == 'null' ? '' : result[i]["value"];;
+					}else if(component.indexOf("enabled")>-1){
+						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
+						settingSocialData[key]["enabled"] = def;
+						console.log("enabled?",def);
+						settingSocialData[key]["saved"] = def;
+						
+					}
+					
+					
+				}
+				
+				applySuccessMenu(action,settingSocialData);
+				
+				
 			}
 		});
 		break;	//#settings
@@ -1477,7 +1665,7 @@ function callMenu(action){
 	case "#collections":
 		var collections = [];
 		var ref = function(coll){
-			console.log("refreshing",coll);
+			//console.debug("refreshing",coll);
 			collections = coll;
 			applySuccessMenu(action,collections);
 			$('#collectionTable').dataTable().fnClearTable();
@@ -1523,8 +1711,8 @@ function callMenu(action){
 			success: function(data) {
 				data=data["data"];
 				applySuccessMenu(action,data);
-				//console.log("getAll");
-				//console.log(data);
+				////console.debug("getAll");
+				////console.debug(data);
 				$('#assetTable').dataTable().fnClearTable();
 				$('#assetTable').dataTable().fnAddData(data);
 			}
@@ -1532,6 +1720,10 @@ function callMenu(action){
 		break;//#assets	  
 	}
 }//callMenu
+
+function RolesController($scope){
+
+}
 function AssetsController($scope){
 }
 function UsersController($scope){
@@ -1546,10 +1738,10 @@ function tryToLogin(user, pass,appCode){
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
 			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-			console.log("login success");
-			console.log("data received: ");
-			console.log(data);
-			console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+			//console.debug("login success");
+			//console.debug("data received: ");
+			//console.debug(data);
+			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 			callMenu("#dashboard");
 			//refresh the sessiontoken every 5 minutes
 			refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
@@ -1574,6 +1766,100 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
+	
+
+	$scope.sociallogins = $scope.data;
+	
+	$scope.$watch('data',function(){
+		$scope.sociallogins = $scope.data;
+	});
+	
+	$scope.showForm = function(name){
+		$scope.sociallogins[name].enabled = true;
+		$scope.sociallogins[name].saved = false;
+	}
+	
+	
+	
+	
+	
+	$scope.disable = function(name){
+		var toModify = $scope.sociallogins[name];
+		toModify.enabled = false;
+		toModify.saved = false;
+		toModify.token = null;
+		toModify.secret = null;
+		var key = "social."+name+".token"
+		var value = toModify.token;
+		
+		updateSettings(key,value,function(){
+			var key2 = "social."+name+".secret"
+			var value2 = toModify.secret;
+			updateSettings(key2,value2,function(){
+				var key3 = "social."+name+".enabled"
+				var value3 = false;
+				updateSettings(key3,value3,null);
+			})
+		})
+		
+	}
+	
+	
+	function updateSettings(key,value,onSuccess){
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, value).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating settings:" + data["message"]);
+					},
+					success: function(data)
+					{
+						if(onSuccess)
+							onSuccess();
+					}
+				});
+	}
+	
+	$scope.postsocialsettings = function(name){
+		var toModify = $scope.sociallogins[name];
+		toModify.errors = [];
+		if(!toModify.token || toModify.token == null || toModify.token===''){
+			toModify.errors.push('Token can\'t be empty');
+		}
+		if(!toModify.secret || toModify.secret == null || toModify.secret===''){
+			toModify.errors.push('Secret can\'t be empty');
+		}
+		if(toModify.errors.length > 0){
+			return;
+		}else{
+			var key = "social."+name+".token"
+			var value = toModify.token;
+			
+			updateSettings(key,value,function(){
+				console.log("saving token")
+				var key2 = "social."+name+".secret"
+				var value2 = toModify.secret;
+				updateSettings(key2,value2,function(){
+					console.log("saving secret")
+					var key3 = "social."+name+".enabled"
+					var value3 = true;
+					updateSettings(key3,value3,function(){
+						console.log("enabling")
+						$scope.sociallogins[name].saved = true;
+					});
+					
+				})
+			})
+			
+				
+
+		}
+		
+	}
+	
+	
 	
 }
 
@@ -1631,7 +1917,7 @@ function PushSettingsController($scope){
 
 					error: function(data)
 					{
-						//console.log(data)
+						////console.debug(data)
 						alert("Error updating sandbox mode:" + data["message"]);
 					},
 					success: function(data)
@@ -1639,7 +1925,7 @@ function PushSettingsController($scope){
 						$scope.$apply(function(){
 							
 							$scope.pushData['push'][0].value = ""+enable+"";
-							console.log($scope.pushData['push'][0].value)
+							//console.debug($scope.pushData['push'][0].value)
 						})
 						
 					}
@@ -1647,7 +1933,7 @@ function PushSettingsController($scope){
 	}
 	
 	$scope.updateInlineSetting = function(section,s){
-		console.log(s.value)
+		//console.debug(s.value)
 		s.error = null;
 		if(!s.value || s.value==''){
 			s.error = "Value can't be empty";
@@ -1658,7 +1944,7 @@ function PushSettingsController($scope){
 
 					error: function(data)
 					{
-						//console.log(data)
+						////console.debug(data)
 						alert("Error updating settings:" + data["message"]);
 					},
 					success: function(data)
@@ -1670,7 +1956,7 @@ function PushSettingsController($scope){
 	
 	
 	$scope.updateFileSetting = function(section,s){
-		console.log("s",$scope[s.key])
+		//console.debug("s",$scope[s.key])
 		s.error = null;
 		if($scope.file==null){
 			s.error ="File can't be empty"
@@ -1696,7 +1982,7 @@ function PushSettingsController($scope){
 				}, //success
 				error: function(data) {
 					alert("There was an error uploading the file.Please check your logs");
-					console.log(data);
+					//console.debug(data);
 				}
 		};
 		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);	
@@ -1714,7 +2000,7 @@ function DashboardController($scope) {
 
 	$scope.countDocuments = function(statistics){
 		var tot=0;
-		//console.log(statistics);
+		////console.debug(statistics);
 		if (statistics){
 			angular.forEach(statistics.data.collections_details, function(value){
 				tot += value.records;
@@ -1762,5 +2048,27 @@ function getPlatform(os){
 	}
 }
 
-
-
+(function(hasOwnProperty) {
+	  /**
+	   * Iterates over all of the properties of the specified object and returns an
+	   * array of their names.
+	   * @param {!Object} obj  The object whose properties will be iterated over.
+	   * @param {function(string, *, !Object):*=} fnCallback  Optional function
+	   *     callback which, if specified, will be called for each property found.
+	   *     The parameters passed will be the name of the property, the value of
+	   *     the property and the object.
+	   * @return {!Array.<string>}  Returns an array of the names of the properties
+	   *     found.  If the fnCallback was specified, the only property names that
+	   *     will be returned will be those for which the fnCallback function
+	   *     returned a true-ish value.
+	   */
+	  eachProperty = function(obj, fnCallback) {
+	    var ret = [];
+	    for(var name in obj) {
+	      if(hasOwnProperty.call(obj, name) && (!fnCallback || fnCallback(name, obj[name], obj))) {
+	        ret.push(name);
+	      }
+	    }
+	    return ret;
+	  };
+	})(({}).hasOwnProperty);

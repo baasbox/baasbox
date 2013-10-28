@@ -1,3 +1,4 @@
+<div>				
 				<p class="hint">
 					This is the settings page.
 					From here you can customize many aspect of you BaasBox instance.
@@ -15,6 +16,7 @@
 							<li data-rel="tooltip" title="Settings related to the 'Password Recovery' feature" ><a href="#password-recovery">Password Recovery</a></li>
 							<li data-rel="tooltip" title="Useful settings for the 'Automatic Image Resize' feature" ><a href="#images">Images</a></li>
 							<li data-rel="tooltip" title="Settings for the 'Push Notification' feature" ><a href="#push">Push Notifications</a></li>
+							<li data-rel="tooltip" title="Settings for the Integration with other social networks"><a href="#social">Social Login</a></li>
 						</ul>
 						<div id="settingsTabContent" class="tab-content">
 							<div class="tab-pane active" id="application">
@@ -90,10 +92,43 @@
 												<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
 											</form>
 										</div>
+									</div>		
+								
+							</div><!-- Push Pane-->
+							<div class="tab-pane" id="social">
+								
+								<div >
+									<div ng-repeat="(name,config) in sociallogins" >
+ 										
+										<div ng-show="config.enabled">
+											<form class="form-horizontal" novalidate id="{{name}}-tokens" name="{{name}}-tokens" ng-submit="postsocialsettings(name)">
+												<fieldset>
+													<legend>{{name}}</legend>
+													<span ng-show="!config.saved" class="form-saved pull-right">not saved yet </span>
+													<div  ng-show="config.errors.length > 0">
+ 														<p class="error" ng-repeat="err in config.errors">
+ 															{{err}}
+ 														</p>
+ 													</div>
+													<input type="text" ng-model="config.token" name="token" required/>
+													<input type="text" ng-model="config.secret" name="secret" required/>
+													<input class="btn btn-primary" type="submit" value="Save"/>
+													<button type="button" class="btn btn-warning" ng-click="disable(name)" >Disable {{name}}</button>
+												</fieldset>
+											</form>
+										</div>
+										<div ng-show="!config.enabled" class="social-button-container" >
+											<button class="btn btn-{{name}}" ng-click="showForm(name)">Connect with {{name}}</button>
+										</div>
 									</div>
+								</div>
+							</div>
+				
+							</div><!-- Social Pane-->							
+						
+							
 										
-									
-							</div><!-- Push Pane-->							
+														
 						</div><!-- tab-content -->
 					</div><!--/box-content-->
 				</div><!--/span-->
