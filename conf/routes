@@ -1,6 +1,6 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
+# ~~~~ 
 
 # Swagger - Root Resources Listing
 # GET     /api-docs.json               controllers.ApiHelpController.getResources
@@ -80,6 +80,7 @@ DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controlle
 
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
+GET		/admin/user/:username			com.baasbox.controllers.Admin.getUser(username: String)
 POST	/admin/user						com.baasbox.controllers.Admin.createUser()
 PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
 POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(name: String)
@@ -87,7 +88,15 @@ GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
+GET		/admin/role/:name				com.baasbox.controllers.Admin.getRole(name: String)
+POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
+PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
+DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)
+
+#deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
+
 
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
