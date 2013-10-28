@@ -83,6 +83,9 @@ create index _bb_internal dictionary;
 create index _bb_application dictionary;
 create index _bb_images dictionary;
 create index _bb_push dictionary;
+create index _bb_internal dictionary;
+create index _bb_social_login dictionary;
 create index _bb_password_recovery dictionary;
+
 
 

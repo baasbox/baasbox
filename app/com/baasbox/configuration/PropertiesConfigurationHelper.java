@@ -30,6 +30,7 @@ public class PropertiesConfigurationHelper {
 														,"Application",(Class)Application.class
 														,"Push",(Class)Push.class
 														,"Images",(Class)ImagesConfiguration.class
+														,"Social",(Class)SocialLoginConfiguration.class
 	);
 	
 	

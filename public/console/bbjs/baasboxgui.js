@@ -21,6 +21,7 @@ var roleDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
+var settingSocialData = {};
 var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
@@ -1611,12 +1612,43 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
 			success: function(data) {
-				//console.debug("dumpConfiguration Images success:");
-				//console.debug(data);
+
 				settingImgDataArray = data["data"];
-				applySuccessMenu(action,settingImgDataArray);
+				
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
+			}
+		});
+		
+		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Social").ajax({
+			success: function(data) {
+				var result =  data["data"];
+				for(var i=0;i<result.length;i++){
+					var components = result[i]["key"].split(".");
+					var key = components[1];
+					var component = components[2];
+					console.log(result)
+					if(!settingSocialData[key]){
+						settingSocialData[key] = {}
+					}
+					if(component.indexOf("token")>-1){
+						settingSocialData[key]["token"] = result[i]["value"] == 'null' ? '' : result[i]["value"];
+					}else if(component.indexOf("secret")>-1){
+						settingSocialData[key]["secret"] = result[i]["value"] == 'null' ? '' : result[i]["value"];;
+					}else if(component.indexOf("enabled")>-1){
+						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
+						settingSocialData[key]["enabled"] = def;
+						console.log("enabled?",def);
+						settingSocialData[key]["saved"] = def;
+						
+					}
+					
+					
+				}
+				
+				applySuccessMenu(action,settingSocialData);
+				
+				
 			}
 		});
 		break;	//#settings
@@ -1734,6 +1766,100 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
+	
+
+	$scope.sociallogins = $scope.data;
+	
+	$scope.$watch('data',function(){
+		$scope.sociallogins = $scope.data;
+	});
+	
+	$scope.showForm = function(name){
+		$scope.sociallogins[name].enabled = true;
+		$scope.sociallogins[name].saved = false;
+	}
+	
+	
+	
+	
+	
+	$scope.disable = function(name){
+		var toModify = $scope.sociallogins[name];
+		toModify.enabled = false;
+		toModify.saved = false;
+		toModify.token = null;
+		toModify.secret = null;
+		var key = "social."+name+".token"
+		var value = toModify.token;
+		
+		updateSettings(key,value,function(){
+			var key2 = "social."+name+".secret"
+			var value2 = toModify.secret;
+			updateSettings(key2,value2,function(){
+				var key3 = "social."+name+".enabled"
+				var value3 = false;
+				updateSettings(key3,value3,null);
+			})
+		})
+		
+	}
+	
+	
+	function updateSettings(key,value,onSuccess){
+		BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, value).ajax(
+				{
+
+					error: function(data)
+					{
+						//console.log(data)
+						alert("Error updating settings:" + data["message"]);
+					},
+					success: function(data)
+					{
+						if(onSuccess)
+							onSuccess();
+					}
+				});
+	}
+	
+	$scope.postsocialsettings = function(name){
+		var toModify = $scope.sociallogins[name];
+		toModify.errors = [];
+		if(!toModify.token || toModify.token == null || toModify.token===''){
+			toModify.errors.push('Token can\'t be empty');
+		}
+		if(!toModify.secret || toModify.secret == null || toModify.secret===''){
+			toModify.errors.push('Secret can\'t be empty');
+		}
+		if(toModify.errors.length > 0){
+			return;
+		}else{
+			var key = "social."+name+".token"
+			var value = toModify.token;
+			
+			updateSettings(key,value,function(){
+				console.log("saving token")
+				var key2 = "social."+name+".secret"
+				var value2 = toModify.secret;
+				updateSettings(key2,value2,function(){
+					console.log("saving secret")
+					var key3 = "social."+name+".enabled"
+					var value3 = true;
+					updateSettings(key3,value3,function(){
+						console.log("enabling")
+						$scope.sociallogins[name].saved = true;
+					});
+					
+				})
+			})
+			
+				
+
+		}
+		
+	}
+	
+	
 	
 }
 
@@ -1922,5 +2048,27 @@ function getPlatform(os){
 	}
 }
 
-
-
+(function(hasOwnProperty) {
+	  /**
+	   * Iterates over all of the properties of the specified object and returns an
+	   * array of their names.
+	   * @param {!Object} obj  The object whose properties will be iterated over.
+	   * @param {function(string, *, !Object):*=} fnCallback  Optional function
+	   *     callback which, if specified, will be called for each property found.
+	   *     The parameters passed will be the name of the property, the value of
+	   *     the property and the object.
+	   * @return {!Array.<string>}  Returns an array of the names of the properties
+	   *     found.  If the fnCallback was specified, the only property names that
+	   *     will be returned will be those for which the fnCallback function
+	   *     returned a true-ish value.
+	   */
+	  eachProperty = function(obj, fnCallback) {
+	    var ret = [];
+	    for(var name in obj) {
+	      if(hasOwnProperty.call(obj, name) && (!fnCallback || fnCallback(name, obj[name], obj))) {
+	        ret.push(name);
+	      }
+	    }
+	    return ret;
+	  };
+	})(({}).hasOwnProperty);
