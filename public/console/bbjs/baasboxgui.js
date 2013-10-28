@@ -1614,10 +1614,7 @@ function callMenu(action){
 			success: function(data) {
 
 				settingImgDataArray = data["data"];
-				//applySuccessMenu(action,data);
-
-				applySuccessMenu(action,settingImgDataArray);
-
+				
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
 			}
