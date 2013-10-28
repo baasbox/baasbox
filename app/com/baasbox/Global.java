@@ -37,6 +37,7 @@ import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
 import com.baasbox.configuration.Internal;
+import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
@@ -45,6 +46,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.typesafe.config.Config;
 
 public class Global extends GlobalSettings {
@@ -67,10 +69,22 @@ public class Global extends GlobalSettings {
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
+			  
+			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
+			  
+			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+			  
+			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
+			  OGlobalConfiguration.FILE_LOCK.setValue(false);
+			  
+			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
+			  
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase ( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -126,10 +140,22 @@ public class Global extends GlobalSettings {
     	try {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
 			DbHelper.updateDefaultUsers();
+			
 			String bbid=Internal.INSTALLATION_ID.getValueAsString();
 			if (bbid==null) throw new Exception ("Unique id not found! Hint: could the DB be corrupted?");
 			info ("BaasBox unique id is " + bbid);
 		} catch (Exception e) {
+	    	error("!! Error initializing BaasBox!", e);
+	    	error("Abnormal BaasBox termination.");
+	    	System.exit(-1);
+		} finally {
+    		if (db!=null && !db.isClosed()) db.close();
+    	}
+    	
+    	try{
+    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+    		IosCertificateHandler.init();
+    	}catch (Exception e) {
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
 	    	System.exit(-1);
@@ -142,6 +168,7 @@ public class Global extends GlobalSettings {
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
+	    
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");

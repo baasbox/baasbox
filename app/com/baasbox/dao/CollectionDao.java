@@ -24,6 +24,7 @@ import play.Logger;
 
 import ch.qos.logback.classic.db.DBHelper;
 
+import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
@@ -76,6 +77,9 @@ public class CollectionDao extends NodeDao {
 		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
+		if(collectionName.toUpperCase().startsWith("_BB_")){
+			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
+		}
 		save(doc);
 		
 		//create new class

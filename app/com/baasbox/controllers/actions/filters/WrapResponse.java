@@ -59,9 +59,9 @@ public class WrapResponse {
 		}else{
 			result= prepareOK(statusCode, request, data);
 		}
-		result.put("http_code", customCode.gethttpCode());
+		result.put("http_code", customCode.getHttpCode());
 		result.put("bb_code", String.valueOf(customCode.getBbCode()));
-		return Results.status(customCode.gethttpCode(), result);	
+		return Results.status(customCode.getHttpCode(), result);	
 	}
 	
 	

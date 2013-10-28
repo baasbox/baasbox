@@ -1,4 +1,4 @@
-package com.baasbox.dao;
+package com.baasbox.dao.exception;
 
 public class CollectionAlreadyExistsException extends Exception {
 

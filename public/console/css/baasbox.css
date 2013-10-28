@@ -27,6 +27,7 @@ p.hint{
 	color: #777;
 }
 
+
 .social-button-container {
 	margin-bottom:15px;
 }
@@ -66,5 +67,37 @@ span.form-saved{
 .btn-google:active,
 .btn-google.active {
   background-color: #9a2b1f \9;
+}
+
+
+div.settings{
+	margin-bottom:24px;
+}
+div.setting {
+	margin-bottom:12px;
+}
+div.setting p {
+	margin:0 0 3px 0;
+}
+div.setting button.save {
+	margin-top:-10px;
+}
+div.setting span.error{
+	color:red;
+	padding-left:12px;
+}
+
+div.setting div.uploaded{
+	background-color:#aeaeae;
+	padding:3px;
+	margin-bottom:13px;
+}
+div.setting input[type=file]{
+	clear:left;
+	display:block;
+}
+
+div.setting button.upload {
+	margin-top:0;
 }
 
