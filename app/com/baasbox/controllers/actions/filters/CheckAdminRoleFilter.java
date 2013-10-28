@@ -26,6 +26,7 @@ import play.mvc.Result;
 
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.DefaultRoles;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
@@ -44,7 +45,7 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		Set<ORole> roles=user.getRoles();
 		
 		Result result=null;
-		if (roles.contains(RoleDao.getRole("admin"))){
+		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
 			result = delegate.call(ctx);
 		}else result=forbidden("User " + ctx.args.get("username") + " is not an administrator");
 		Logger.trace("Method End");

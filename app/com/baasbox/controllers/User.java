@@ -71,12 +71,12 @@ public class User extends Controller {
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
 	
-	private static String prepareResponseToJsonUserInfo(ODocument doc){
+	static String prepareResponseToJsonUserInfo(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.JSON);
 	}
 	
-	private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
+	static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
 		response().setContentType("application/json");
 		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
 	}
@@ -127,7 +127,7 @@ public class User extends Controller {
 		  //try to signup new user
 		  ODocument profile = null;
 		  try {
-			  profile = UserService.signUp(username, password, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		  } catch (UserAlreadyExistsException e){
 			  Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");

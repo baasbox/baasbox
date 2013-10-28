@@ -1,0 +1,50 @@
+<!-- Add/Edit Role starts -->
+	<div class="modal hide fade" id="addRoleModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">×</button>
+			<h3 id="roleTitle">Add/Edit Role</h3>
+		</div>
+		<div class="modal-body">
+			<div class="row-fluid">
+			<div class="box span12" id="RoleForm">
+					<div class="box-content">
+						<form class="form-horizontal" id="roleForm">
+						<div class="alert alert-info">
+							Please enter the role information
+						</div>
+						<p class="hint">
+							Provide the required information.
+						</p>
+							<fieldset>
+								<div id="roleModalMode" class="hide"> </div>
+								<div id="roleOriginalName" class="hide"> </div>
+								<div id="errorAddRole" class="alert alert-error hide">
+
+								</div>
+								<div id="errorAddRole2" class="control-group error hide" >
+									 <span class="help-inline" id="errorAddRoleMessage"></span>
+								</div>							
+							  <div class="control-group">
+								<label class="control-label" for="txtRoleName">Role name*</label>
+								<div class="controls">
+								  <input class="input-xlarge focused" id="txtRoleName" type="text" value="" required>
+								</div>
+							  </div>
+							  <div class="control-group">
+								<label class="control-label" for="txtRoleDescription">Short description</label>
+								<div class="controls">
+								  <input class="input-xlarge focused" id="txtRoleDescription" type="text" value="" >
+								</div>
+							  </div>
+							</fieldset>
+						  </form>
+					</div>
+				</div><!--/span-->
+		</div><!--/row-->
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<a href="#" class="btn btn-primary btn-RoleCommit">Save</a>
+		</div>
+	</div>
+	<!-- Add/Edit Role ends -->
