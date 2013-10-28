@@ -53,7 +53,7 @@ public class PartFactory {
 			//return null;
 		}
 		if(p== null){
-			throw new PartValidationException(part, position, "Unrecognized Part Type");
+			throw new PartValidationException(part, position, "Unrecognized Part Type.HINT: did you put a . before any field?");
 		}
 		String error;
 		if((error= p.validate()) != null){

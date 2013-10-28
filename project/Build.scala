@@ -25,7 +25,8 @@ object ApplicationBuild extends Build {
     )
 
     val main = play.Project(appName, appVersion, appDependencies).settings(
-      resolvers := Seq(
+       sources in doc in Compile := List(),
+	resolvers := Seq(
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 	    )
