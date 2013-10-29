@@ -179,7 +179,14 @@ public class DbHelper {
 		List<ODocument> queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
-	
+	public static Integer sqlCommandExecute(OCommandRequest command, String[] params){
+		Integer updateQueryResult = command.execute((Object[])params);
+		return updateQueryResult;
+	}
+	public static List<ODocument> commandExecute(OCommandRequest command, String[] params){
+          List<ODocument> queryResult = command.execute((Object[])params);
+          return queryResult;
+	}
 	
 	/**
 	 * Prepares the command API to execute an arbitrary SQL statement
