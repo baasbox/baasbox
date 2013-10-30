@@ -26,6 +26,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 
+import play.Logger;
 import play.api.libs.json.JsPath;
 import play.api.libs.json.JsValue;
 import play.api.libs.json.Json;
@@ -116,10 +117,10 @@ public class DocumentService {
 		}
 
 		StringBuffer q = new StringBuffer();
-
-		q.append("select ").append(parser.treeFields()).append(" from ").append(collectionName);
+		q.append("select ")
+		.append(parser.fullTreeFields()).append(" from ").append(collectionName);
 		q.append(" where @rid=").append(rid);
-		ObjectMapper mp = new ObjectMapper();
+		Logger.debug("Query:"+q.toString());
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
 		//TODO:

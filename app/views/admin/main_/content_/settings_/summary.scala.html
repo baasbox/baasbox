@@ -110,8 +110,16 @@
  															{{err}}
  														</p>
  													</div>
-													<input type="text" ng-model="config.token" name="token" required/>
-													<input type="text" ng-model="config.secret" name="secret" required/>
+ 													<div class="field">
+ 														<label>Token:
+															<input type="text" ng-model="config.token" name="token" required/>
+														</label>
+													</div>
+													<div class="field">
+														<label>Secret:
+															<input type="text" ng-model="config.secret" name="secret" required/>
+														</label>
+													</div>
 													<input class="btn btn-primary" type="submit" value="Save"/>
 													<button type="button" class="btn btn-warning" ng-click="disable(name)" >Disable {{name}}</button>
 												</fieldset>
