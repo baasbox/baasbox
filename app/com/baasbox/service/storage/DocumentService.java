@@ -66,6 +66,7 @@ public class DocumentService {
 
 
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
+	private static final String OBJECT_QUERY_ALIAS = "result";
 
 	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
@@ -118,9 +119,10 @@ public class DocumentService {
 
 		StringBuffer q = new StringBuffer();
 		q.append("select ")
-		.append(parser.fullTreeFields()).append(" from ").append(collectionName);
+		.append(parser.fullTreeFields())
+		.append(" as ").append(OBJECT_QUERY_ALIAS)
+		.append(" from ").append(collectionName);
 		q.append(" where @rid=").append(rid);
-		Logger.debug("Query:"+q.toString());
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
 		//TODO:
