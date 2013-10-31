@@ -122,6 +122,7 @@ public class Evolution_0_7_0 implements IEvolution {
 						newValue.save();
 					}//the value is not null
 				} //for each key into the index	
+				db.getMetadata().getIndexManager().dropIndex(i.getName());
 			}//the index is a baasbox index
 		}//for each index defined on the db	
 		Logger.info("...end indices migration");
