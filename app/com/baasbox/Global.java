@@ -140,6 +140,7 @@ public class Global extends GlobalSettings {
     	info("Updating default users passwords...");
     	try {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+    		DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
 			
 			String bbid=Internal.INSTALLATION_ID.getValueAsString();
