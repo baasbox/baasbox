@@ -23,7 +23,8 @@ import java.util.UUID;
 
 import play.Logger;
 
-import com.baasbox.BBConfiguration;
+import ch.qos.logback.classic.db.DBHelper;
+
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -33,14 +34,15 @@ import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 
 public abstract class NodeDao  {
@@ -87,7 +89,19 @@ public abstract class NodeDao  {
 			throw new InvalidModelException();
 	}
 
-
+	public Integer updateByQuery(String query){
+		OCommandRequest command = db.command(new OCommandSQL(
+				query
+				));
+		return DbHelper.sqlCommandExecute(command, null);
+	}
+	
+	public List<ODocument> selectByQuery(String query){
+		return DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
+				query
+				), null);
+	}
+	
 	public ODocument create() throws Throwable {
 		Logger.trace("Method Start");
 		try{

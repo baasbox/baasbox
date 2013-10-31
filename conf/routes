@@ -35,17 +35,23 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
-POST	/login						com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
-POST 	/logout						com.baasbox.controllers.User.logoutWithoutDevice()
-POST	/user						com.baasbox.controllers.User.signUp()
-GET		/user						com.baasbox.controllers.User.getCurrentUser()
-PUT		/user						com.baasbox.controllers.User.updateProfile()
-PUT		/user/password				com.baasbox.controllers.User.changePassword()
-GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: String)
-GET		/user/:username/password/reset   			com.baasbox.controllers.User.resetPasswordStep1(username: String)
-GET		/user/password/reset/:base64     			com.baasbox.controllers.User.resetPasswordStep2(base64: String)
-POST	/user/password/reset/:base64     			com.baasbox.controllers.User.resetPasswordStep3(base64: String)
+POST	/login										com.baasbox.controllers.User.login()
+POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
+POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
+PUT		/social/:socialNetwork						com.baasbox.controllers.Social.linkWith(socialNetwork: String)
+DELETE  /social/:socialNetwork						com.baasbox.controllers.Social.unlink(socialNetwork: String)
+GET		/social/login/:socialNetwork/callback		com.baasbox.controllers.Social.callback(socialNetwork: String)
+
+POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
+POST	/user								com.baasbox.controllers.User.signUp()
+GET		/user								com.baasbox.controllers.User.getCurrentUser()
+PUT		/user								com.baasbox.controllers.User.updateProfile()
+PUT		/user/password						com.baasbox.controllers.User.changePassword()
+GET		/user/:username/exists				com.baasbox.controllers.User.exists(username: String)
+GET		/user/:username/password/reset   	com.baasbox.controllers.User.resetPasswordStep1(username: String)
+GET		/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep2(base64: String)
+POST	/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep3(base64: String)
 
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
@@ -63,6 +69,10 @@ DELETE	 /document/:collection/%23:rid					com.baasbox.controllers.Document.delet
 PUT 	 /document/:collection/:uuid					com.baasbox.controllers.Document.updateDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+
+
+GET      /document/:collection/:uuid/$parts<((/)?([.])?([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+PUT      /document/:collection/:uuid/$parts<((/)?([.])?([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 
 

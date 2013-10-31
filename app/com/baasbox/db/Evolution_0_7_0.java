@@ -54,6 +54,8 @@ public class Evolution_0_7_0 implements IEvolution {
 		updateOldRoles();
 		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();
 		updateDBVersion();
+		
+		updateSocialLoginIndex(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -64,6 +66,10 @@ public class Evolution_0_7_0 implements IEvolution {
 	private void updateDBVersion(){
 		Logger.info("changing db level version to " + version);
 		Internal.DB_VERSION.setValue(version);
+	}
+	
+	private void updateSocialLoginIndex(OGraphDatabase db){
+		db.getMetadata().getIndexManager().createIndex("_bb_social_login","DICTIONARY", null, null, null);
 	}
 	
 	private void recreateDefaultRoles(){
