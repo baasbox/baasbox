@@ -82,6 +82,9 @@ public class Global extends GlobalSettings {
 			  
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
+			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
+			  
+			  
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
