@@ -16,25 +16,12 @@
  */
 package com.baasbox.service.storage;
 
-import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.List;
 
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-
-import play.Logger;
-import play.api.libs.json.JsPath;
-import play.api.libs.json.JsValue;
-import play.api.libs.json.Json;
-import play.api.libs.json.PathNode;
-import play.api.libs.json.Reads;
-import scala.Function1;
-import scala.Tuple2;
-import scala.util.Either;
 
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
@@ -50,9 +37,6 @@ import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.MissingNodeException;
-import com.baasbox.service.query.PartsLexer;
-import com.baasbox.service.query.PartsLexer.ArrayField;
-import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
