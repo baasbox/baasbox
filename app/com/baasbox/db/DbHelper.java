@@ -22,12 +22,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import javax.management.RuntimeErrorException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
@@ -45,7 +42,6 @@ import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.hook.HooksManager;
-import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -57,7 +53,6 @@ import com.baasbox.service.role.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -66,11 +61,9 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -504,10 +497,18 @@ public class DbHelper {
 			 HooksManager.registerAll(db);
 			 //check for evolutions
 			 Logger.info("...looking for evolutions...");
-			 String fromVersion=Internal.DB_VERSION.getValueAsString();
+			 String fromVersion="";
+			 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+				 Logger.info("...db is < 0.7 ....");
+				 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
+				 ODocument od = db.load(o);
+				 fromVersion=od.field("value");
+			 }else fromVersion=Internal.DB_VERSION.getValueAsString();
 			 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
 				 Logger.info("...imported DB needs evolutions!...");
 				 Evolutions.performEvolutions(db, fromVersion);
+				 Internal.DB_VERSION.setValue(BBConfiguration.getApiVersion());
+				 Logger.info("DB version is now " + BBConfiguration.getApiVersion());
 			 }//end of evolutions
 		}catch(Exception ioe){
 			Logger.error("*** Error importing the db: ", ioe);
