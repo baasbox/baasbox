@@ -69,23 +69,19 @@ create property _BB_FileAsset.file link;
 alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
-
-
-
 --indices
 create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
 
---configuration
-create index _bb_internal dictionary;
-create index _bb_application dictionary;
-create index _bb_images dictionary;
-create index _bb_push dictionary;
-create index _bb_internal dictionary;
-create index _bb_social_login dictionary;
-create index _bb_password_recovery dictionary;
+--configuration class
+create class _BB_Index;
+create property _BB_Index.key String;
+alter property _BB_Index.key mandatory=true;
+alter property _BB_Index.key notnull=true;
+create index _BB_Index.key unique;
+
 
 
 

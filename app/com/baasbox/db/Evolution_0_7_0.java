@@ -1,15 +1,29 @@
 package com.baasbox.db;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import play.Logger;
 
 import com.baasbox.configuration.Internal;
+import com.baasbox.dao.IndexDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.role.RoleService;
+import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Evolves the DB to the 0.7.0 schema
@@ -52,10 +66,10 @@ public class Evolution_0_7_0 implements IEvolution {
 		recreateDefaultRoles();
 		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();
 		updateOldRoles();
-		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();
+		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();		
+		createNewIndexClass(db);
+		updateIndices(db);
 		updateDBVersion();
-		
-		updateSocialLoginIndex(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -68,9 +82,50 @@ public class Evolution_0_7_0 implements IEvolution {
 		Internal.DB_VERSION.setValue(version);
 	}
 	
-	private void updateSocialLoginIndex(OGraphDatabase db){
-		db.getMetadata().getIndexManager().createIndex("_bb_social_login","DICTIONARY", null, null, null);
+	
+	private void createNewIndexClass(OGraphDatabase db){
+		Logger.info("...creating INDEX CLASS...");
+		OClass indexClass = db.getMetadata().getSchema().createClass(IndexDao.MODEL_NAME);
+		OProperty keyProp = indexClass.createProperty("key", OType.STRING);
+		keyProp.createIndex(INDEX_TYPE.UNIQUE);
+		keyProp.setNotNull(true).setMandatory(true);
 	}
+	
+	private void updateIndices(OGraphDatabase db){
+		List<String> indicesName = Arrays.asList(new String [] {
+				"_bb_internal",
+				"_bb_application",
+				"_bb_images",
+				"_bb_push",
+				"_bb_social_login",
+				"_bb_password_recovery"}
+		);
+		Logger.info("...migrating indices...");
+		Collection indices= db.getMetadata().getIndexManager().getIndexes();
+		for (Object in:indices){
+			OIndex i = (OIndex)in;
+			if (indicesName.contains(i.getName())){
+				//migrate the index
+				Logger.info("....." + i.getName());
+				ArrayList keys = Lists.newArrayList(i.keys()) ;
+				for (int j=0;j<keys.size();j++){
+					String key = (String) keys.get(j);
+					Object valueOnDb=i.get(key);
+					valueOnDb=db.load((ORID)valueOnDb);
+					if (valueOnDb!=null){
+						Logger.info(".....   key: " + key);
+						Object value=((ODocument)valueOnDb).field("value");
+						String indexKey = i.getName().toUpperCase()+":"+key;
+						ODocument newValue = new ODocument(IndexDao.MODEL_NAME);
+						newValue.field("key",indexKey);
+						newValue.field("value",value);
+						newValue.save();
+					}//the value is not null
+				} //for each key into the index	
+			}//the index is a baasbox index
+		}//for each index defined on the db	
+		Logger.info("...end indices migration");
+	}//update indices
 	
 	private void recreateDefaultRoles(){
 		Logger.info("Ricreating default roles");
