@@ -495,21 +495,7 @@ public class DbHelper {
 			 updateDefaultUsers();
 			 Logger.info("...registering hooks...");
 			 HooksManager.registerAll(db);
-			 //check for evolutions
-			 Logger.info("...looking for evolutions...");
-			 String fromVersion="";
-			 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
-				 Logger.info("...db is < 0.7 ....");
-				 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
-				 ODocument od = db.load(o);
-				 fromVersion=od.field("value");
-			 }else fromVersion=Internal.DB_VERSION.getValueAsString();
-			 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
-				 Logger.info("...imported DB needs evolutions!...");
-				 Evolutions.performEvolutions(db, fromVersion);
-				 Internal.DB_VERSION.setValue(BBConfiguration.getApiVersion());
-				 Logger.info("DB version is now " + BBConfiguration.getApiVersion());
-			 }//end of evolutions
+			 evolveDB(db);
 		}catch(Exception ioe){
 			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
@@ -524,6 +510,29 @@ public class DbHelper {
 			}
 			Logger.info("...restore terminated");
 		}
+	}
+
+	/**
+	 * Check the db level and evolve it
+	 * @param db
+	 */
+	public static void evolveDB(OGraphDatabase db) {
+		//check for evolutions
+		 Logger.info("...looking for evolutions...");
+		 String fromVersion="";
+		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+			 Logger.info("...db is < 0.7 ....");
+			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
+			 ODocument od = db.load(o);
+			 fromVersion=od.field("value");
+		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
+		 Logger.info("...db version is: " + fromVersion);
+		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
+			 Logger.info("...imported DB needs evolutions!...");
+			 Evolutions.performEvolutions(db, fromVersion);
+			 Internal.DB_VERSION.setValue(BBConfiguration.getApiVersion());
+			 Logger.info("DB version is now " + BBConfiguration.getApiVersion());
+		 }//end of evolutions
 	}
 	
 	
