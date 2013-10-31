@@ -1,7 +1,5 @@
 package com.baasbox.service.query;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -12,7 +10,6 @@ import play.libs.Json;
 
 import com.baasbox.service.query.PartsLexer.ArrayField;
 import com.baasbox.service.query.PartsLexer.Part;
-import com.google.common.base.Joiner;
 
 public class PartsParser {
 	
@@ -69,6 +66,23 @@ public class PartsParser {
 				sb.append(".");
 			}
 			sb.append(p.getName());
+			
+		}
+		return sb.toString();
+		
+	}
+	public String fullTreeFields() {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < this.parts.size(); i++) {
+			Part p = this.parts.get(i);
+			if(i>0){
+				sb.append(".");
+			}
+			sb.append(p.getName());
+			if(p instanceof ArrayField){
+				ArrayField af  = (ArrayField)p;
+				sb.append("[").append(af.arrayIndex).append("]");
+			}
 			
 		}
 		return sb.toString();
