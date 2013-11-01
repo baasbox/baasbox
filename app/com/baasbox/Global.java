@@ -23,6 +23,7 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -204,7 +205,11 @@ public class Global extends GlobalSettings {
 		debug("Global.onStop() ended");
 	  }  
 	  
-	  
+	private void setCallIdOnResult(RequestHeader request, ObjectNode result) {
+		String callId = request.getQueryString("call_id");
+		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
+	}
+	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
@@ -215,6 +220,7 @@ public class Global extends GlobalSettings {
 			result.put("method", request.method());
 			result.put("request_header", mapper.valueToTree(request.headers()));
 			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
+			setCallIdOnResult(request, result);
 		return result;
 	} 
 		
