@@ -113,6 +113,7 @@ public abstract class NodeDao  {
 				UUID token = UUID.randomUUID();
 				Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
+				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getUser().getName());
 			return doc;
 		}catch (Throwable e){
 			throw e;

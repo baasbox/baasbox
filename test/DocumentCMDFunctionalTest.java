@@ -105,7 +105,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
 					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
-				
+					String sAuthor = getAuthor();
+					Assert.assertTrue("_author field is not admin, found: " + sAuthor, sAuthor.equals("admin"));
 			 		continueOnFail(true);
 					
 					try
@@ -277,6 +278,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					assertServer("testServerCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
 					String sUuid = getUuid();
+					String sAuthor = getAuthor();
+					Assert.assertTrue("_author field is not admin, found: " + sAuthor, sAuthor.equals("admin"));
 					continueOnFail(true);
 					
 					try
@@ -533,5 +536,22 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		
 		return sUuid;
+	}
+	
+	private String getAuthor()
+	{
+		String sRet = null;
+
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_author");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get _author value: " + ex.getMessage());
+		}
+		
+		return sRet;
 	}
 }
