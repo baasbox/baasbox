@@ -18,6 +18,7 @@ package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -47,6 +48,7 @@ public class WrapResponse {
 		result.put("method", request.method());
 		result.put("request_header", mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
+		setCallIdOnResult(request, result);
 		return result;
 	} 
 
@@ -101,6 +103,7 @@ public class WrapResponse {
     private ObjectNode prepareOK(int statusCode,RequestHeader request, String stringBody) throws IOException{
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode result = Json.newObject();
+		setCallIdOnResult(request, result);
 		result.put("result", "ok");
 		try {
 			result.put("data", mapper.readTree(stringBody));
@@ -112,6 +115,16 @@ public class WrapResponse {
 		}    
 		return result;
     }
+
+
+	/**
+	 * @param request
+	 * @param result
+	 */
+	private void setCallIdOnResult(RequestHeader request, ObjectNode result) {
+		String callId = request.getQueryString("call_id");
+		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
+	}
     
 	private Result onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
 		ObjectNode result = prepareOK(statusCode, request, stringBody);
