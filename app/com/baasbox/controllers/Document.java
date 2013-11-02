@@ -42,6 +42,7 @@ import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -271,6 +272,7 @@ public class Document extends Controller {
 			Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
+			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
 			Logger.trace("updateDocument collectionName: " + collectionName);
 			Logger.trace("updateDocument id: " + id);
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
@@ -285,6 +287,8 @@ public class Document extends Controller {
 					Logger.debug("Retrieved RID: " + rid);
 				}
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);   
+			}catch (UpdateOldVersionException e){
+				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
