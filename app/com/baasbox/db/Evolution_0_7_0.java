@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import play.Logger;
 
@@ -13,6 +14,9 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.role.RoleService;
 import com.google.common.collect.Lists;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -63,13 +67,14 @@ public class Evolution_0_7_0 implements IEvolution {
 	public void evolve(OGraphDatabase db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
-		recreateDefaultRoles();
-		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();
-		updateOldRoles();
-		db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();		
-		createNewIndexClass(db);
-		updateIndices(db);
-		updateDBVersion();
+			edgeAndClassOptimization(db);	
+			recreateDefaultRoles();
+			db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();
+			updateOldRoles();
+			db.getMetadata().getIndexManager().getIndex("ORole.name").rebuild();		
+			createNewIndexClass(db);
+			updateIndices(db);
+			updateDBVersion();
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -77,6 +82,16 @@ public class Evolution_0_7_0 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
+	private void edgeAndClassOptimization(OGraphDatabase db) {
+		Logger.info("...enabling edges and vertexes optimization attributes..:");
+		ATTRIBUTES attribute = ODatabase.ATTRIBUTES.CUSTOM;
+		((ODatabaseComplex<?>) db).setInternal(attribute,  "useLightweightEdges=false");
+		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForEdgeLabel=false");
+		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForVertexLabel=false");
+		((ODatabaseComplex<?>) db).setInternal(attribute,  "useVertexFieldsForEdgeLabels=false");
+		Logger.info("...done...");
+	}
+
 	private void updateDBVersion(){
 		Logger.info("changing db level version to " + version);
 		Internal.DB_VERSION.setValue(version);
