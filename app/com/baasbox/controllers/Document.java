@@ -287,7 +287,7 @@ public class Document extends Controller {
 				}
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);   
 			}catch (InvalidObjectVersionException e){
-				return badRequest("You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
+				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
