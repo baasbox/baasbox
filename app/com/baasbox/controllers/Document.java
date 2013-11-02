@@ -42,6 +42,7 @@ import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.InvalidObjectVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -285,6 +286,8 @@ public class Document extends Controller {
 					Logger.debug("Retrieved RID: " + rid);
 				}
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);   
+			}catch (InvalidObjectVersionException e){
+				return badRequest("You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){

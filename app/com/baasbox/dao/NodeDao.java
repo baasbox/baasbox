@@ -22,10 +22,10 @@ import java.util.List;
 import java.util.UUID;
 
 import play.Logger;
-
 import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.InvalidObjectVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
@@ -132,7 +132,8 @@ public abstract class NodeDao  {
 	}
 	
 
-	public void update(ODocument originalDocument, ODocument documentToMerge)  {
+	public void update(ODocument originalDocument, ODocument documentToMerge) throws InvalidObjectVersionException  {
+		if (documentToMerge.getVersion()!=0 && documentToMerge.getVersion()!=originalDocument.getVersion()) throw new InvalidObjectVersionException("The document to merge is older than the stored one v" +documentToMerge.getVersion() + " vs v"+documentToMerge.getVersion(),documentToMerge.getVersion(), originalDocument.getVersion());
 		//backup the baasbox's fields 
 		HashMap<String,Object> map = backupBaasBoxFields(originalDocument);
 		//update the document

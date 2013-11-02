@@ -30,6 +30,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.InvalidObjectVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -73,8 +74,9 @@ public class DocumentService {
 	 * @throws DocumentNotFoundException 
 	 * @throws IllegalArgumentException 
 	 * @throws ODatabaseException 
+	 * @throws InvalidObjectVersionException 
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, InvalidObjectVersionException {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
