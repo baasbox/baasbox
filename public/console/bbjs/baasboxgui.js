@@ -18,6 +18,7 @@ String.prototype.endsWith = function(suffix) {
 
 var userDataArray;
 var roleDataArray;
+var documentDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
@@ -300,6 +301,10 @@ $(".btn-action").live("click", function() {
 		case "setting":
 			openSettingEditForm(parameters);
 		case "document":
+			//in this case the parameter is pair ID/COLLECTION
+			var id=parameters.substring(0,36);
+			var collection=parameters.substr(36);
+			openDocumentEditForm(id,collection);
 			break;
 		case "asset":
 			break;
@@ -314,8 +319,6 @@ $(".btn-action").live("click", function() {
 			break;
 		case "collection":
 			break;
-		case "document":
-			break;
 		case "asset":
 			if(!confirm("Do you want to delete '"+ parameters +"' asset?"))
 				return;
@@ -326,6 +329,14 @@ $(".btn-action").live("click", function() {
 				return;
 			deleteRole(parameters);
 			break;
+		case "document":
+		//in this case the parameter is pair ID/COLLECTION
+			var id=parameters.substring(0,36);
+			var collection=parameters.substr(36);
+			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
+				return;
+			deleteDocument(collection,id);
+			break;	
 		}
 		break;
 		}
@@ -343,6 +354,18 @@ function deleteAsset(assetName)
 				success: function(data)
 				{
 					loadAssetTable();
+				}
+			})	
+}
+
+function deleteDocument(collection,id){
+	BBRoutes.com.baasbox.controllers.Document.deleteDocument(collection,id,true).ajax(
+			{
+				error: function(data)	{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)	{
+					$("#selectCollection").trigger("change");
 				}
 			})	
 }
@@ -376,10 +399,10 @@ function openUserEditForm(editUserName){
 	}
 	$("#txtUsername").val(userObject.user.name);
 	loadUserRole(userObject.user.roles[0].name);
-	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser));
-	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend));
-	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers));
-	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers));
+	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
+	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend)).trigger("change");
+	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
+	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
 	$('#addUserModal').modal('show');
 }
 
@@ -397,6 +420,37 @@ function openRoleEditForm(editRoleName){
 	$("#roleOriginalName").val(roleObject.name);
 	$("#txtRoleDescription").val(roleObject.description);
 	$('#addRoleModal').modal('show');
+}
+
+function populateDocumentEditForm(docObject){
+	$("#txtDocumentId").val(docObject.id);
+	$("#txtDocumentAuthor").val(docObject["_author"]);
+	$("#txtDocumentCreationDate").val(docObject["_creation_date"]);
+	$("#txtDocumentVersion").val(docObject["@version"]);
+	$("#txtDocumentCollection").val(docObject["@class"]);
+	var obj = JSON.parse(JSON.stringify(docObject));
+	delete obj["@rid"];
+	delete obj["@class"];
+	delete obj["@version"];
+	delete obj["id"];
+	delete obj["_author"];
+	delete obj["_creation_date"];
+	$("#txtDocumentData").val(JSON.stringify(obj, undefined, 2));
+	$("#txtDocumentData").trigger("change");
+}
+
+function openDocumentEditForm(id,collection){
+	var docObject;
+	resetAddDocumentForm();
+	$("#documentTitle").text("Edit Document");
+	$('#documentModalMode').text("edit");
+	for(i=0;i<documentDataArray.length;i++)
+	{
+		if(documentDataArray[i].id == id)
+			docObject = documentDataArray[i];
+	}
+	populateDocumentEditForm(docObject);
+	$('#addDocumentModal').modal('show');
 }
 
 function openSettingEditForm(editSettingName)
@@ -513,6 +567,14 @@ function resetAddRoleForm(){
 	$(".error").removeClass("error");
 }
 
+function resetAddDocumentForm(){
+	//console.debug("resetAddDocumentForm");
+	$("#documentForm")[0].reset();
+	$("#errorAddDocument").addClass("hide");
+	$("#errorAddDocument2").addClass("hide");
+	$(".error").removeClass("error");
+}
+
 function loadUserRole(defaultRole)
 {
 	BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
@@ -575,6 +637,40 @@ function updateRole(){
 				}
 			})	
 }//updateRole
+
+function updateDocument(){
+	var id=$("#txtDocumentId").val();
+	var collection=$("#txtDocumentCollection").val();
+	var version=$("#txtDocumentVersion").val();
+	var data=JSON.parse($("#txtDocumentData").val());
+	data["@version"]=parseInt(version);
+	
+	BBRoutes.com.baasbox.controllers.Document.updateDocument(collection,id,true).ajax(
+			{
+				data: JSON.stringify(data),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					var error=JSON.parse(data.responseText);
+					var message=error["message"];
+					var bb_code=error["bb_code"];
+					if (bb_code=="40001") message += " HINT: reload the document from the server and redo your update";
+					alert(message);
+					$("#errorAddDocument").text(message).removeClass("hide");
+				},
+				success: function(data)
+				{
+					closeDocumentForm();
+				}
+			})	
+}//updateDocument
+
+function closeDocumentForm() {
+	$('#addDocumentModal').modal('hide');
+	$("#selectCollection").trigger("change");
+}
+
 
 function closeRoleForm() {
 	$('#addRoleModal').modal('hide');
@@ -701,6 +797,56 @@ $('.btn-RoleCommit').click(function(e){
 		updateRole();
 	return;
 }); // Validate and Ajax submit for Insert/Update Role
+
+
+$('.btn-DocumentCommit').click(function(e){
+	var errorMessage = '';
+	$("#errorAddDocument").addClass("hide");
+	var action=$('#documentModalMode').text();
+	var data=$("#txtDocumentData").val();
+	if ($.trim(data)=="") $("#txtDocumentData").val("{}");
+	//check json data
+	try{
+		$.parseJSON(data);
+	}catch (e) {
+        errorMessage+="Please provide data in JSON format. "
+		if ($.trim(data).indexOf("{") != 0) errorMessage+=" HINT: check if the data fields are between {..}";
+    }
+	if(errorMessage != "")	{
+		$("#errorAddDocument").html(errorMessage);
+		$("#errorAddDocument").removeClass("hide");
+		return;
+	}
+
+	if(action == "insert")	addDocument();
+	else updateDocument();
+	return;
+}); // Validate and Ajax submit for Insert/Update Document
+
+$('.btn-DocumentReload').click(function(e){
+	var errorMessage = '';
+	$("#errorAddDocument").addClass("hide");
+	
+	var id=$("#txtDocumentId").val();
+	var collection=$("#txtDocumentCollection").val();
+	
+	BBRoutes.com.baasbox.controllers.Document.getDocument(collection,id,true).ajax(
+			{
+				error: function(data)
+				{
+					var error=JSON.parse(data.responseText);
+					var message=error["message"];
+					alert(JSON.parse(message));
+					$("#errorAddDocument").text(message);
+					$("#errorAddDocument").removeClass("hide");
+				},
+				success: function(data)	{
+				    populateDocumentEditForm(data["data"]);
+					$("#selectCollection").trigger("change");
+				}
+			});	
+	return;
+}); // Validate and Ajax submit for reload document
 
 $('.btn-UserCommit').click(function(e){
 	var action;
@@ -1146,7 +1292,7 @@ function getAssetIcon(type)
 
 function setupTables(){
 	$('#roleTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
@@ -1161,7 +1307,7 @@ function setupTables(){
 		               "bDestroy":true
 	} ).makeEditable();
 	$('#userTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "user.name"},
@@ -1185,7 +1331,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1205,7 +1351,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsPwdTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1224,7 +1370,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsImgTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1243,7 +1389,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsPushTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1262,7 +1408,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"aaSorting": [[ 2, "desc" ]],
 		"sPaginationType": "bootstrap",
 		"aoColumns": [ {"mData": "name"},
@@ -1274,7 +1420,7 @@ function setupTables(){
 
 	});
 	$('#collectionTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
@@ -1285,32 +1431,48 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#documentTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "id", sWidth:"280px"},
-		               {"mData": "@rid","mRender": function ( data, type, full ) 
-						{
+		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
+    	    			var datetime = data.split(" "); 
+    	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
+						}
+					   },
+					   {"mData": "id", sWidth:"280px","mRender": function ( data, type, full ) 	{
+			 				return "<span style='font-family:Courier'>"+data+"</span>";
+						}
+					   },
+		               {"mData": "_author"},
+		               {"mData": "@rid","mRender": function ( data, type, full ) 	{
 		            	   var obj=JSON.parse(JSON.stringify(full)); 
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
 						   delete obj["id"];
+						   delete obj["_author"];
+						   delete obj["_creation_date"];
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
-						}
+						},bSortable:false
+		               },
+		               {"mData": "id","mRender": function ( data, type, full ) {
+							var obj=JSON.parse(JSON.stringify(full)); 
+		            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
+		            	},bSortable:false,bSearchable:false
 		               }
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable(); 
-	$('#btnReloadDocumkents').click(function(){
+
+	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
 	$('#btnReloadExports').click(function(){
 		callMenu('#dbmanager')
 	});
 	$('#assetTable').dataTable( {
-		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ 
@@ -1357,7 +1519,7 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
-}
+} //setupTables()
 
 function setupSelects(){
 
@@ -1373,6 +1535,7 @@ function setupSelects(){
 				});	
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
+				documentDataArray=data;
 			}
 		})//BBRoutes.com.baasbox.controllers.Document.getDocuments
 	});//selectCollection
