@@ -1,29 +1,29 @@
 package com.baasbox.dao.exception;
 
-public class InvalidObjectVersionException extends Exception {
+public class UpdateOldVersionException extends Exception {
 	private int version1;
 	private int version2;
 
-	public InvalidObjectVersionException() {
+	public UpdateOldVersionException() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public InvalidObjectVersionException(String message) {
+	public UpdateOldVersionException(String message) {
 		super(message);
 		// TODO Auto-generated constructor stub
 	}
 
-	public InvalidObjectVersionException(Throwable cause) {
+	public UpdateOldVersionException(Throwable cause) {
 		super(cause);
 		// TODO Auto-generated constructor stub
 	}
 
-	public InvalidObjectVersionException(String message, Throwable cause) {
+	public UpdateOldVersionException(String message, Throwable cause) {
 		super(message, cause);
 		// TODO Auto-generated constructor stub
 	}
 
-	public InvalidObjectVersionException(String message, int version,
+	public UpdateOldVersionException(String message, int version,
 			int version2) {
 		super(message);
 		this.version1=version;

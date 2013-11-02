@@ -30,7 +30,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.InvalidObjectVersionException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -42,6 +42,7 @@ import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -74,14 +75,15 @@ public class DocumentService {
 	 * @throws DocumentNotFoundException 
 	 * @throws IllegalArgumentException 
 	 * @throws ODatabaseException 
-	 * @throws InvalidObjectVersionException 
+	 * @throws UpdateOldVersionException 
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, InvalidObjectVersionException {
+	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, UpdateOldVersionException {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}//update
 
