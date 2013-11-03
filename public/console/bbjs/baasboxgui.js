@@ -1907,7 +1907,7 @@ function tryToLogin(user, pass,appCode){
 			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 			callMenu("#dashboard");
 			//refresh the sessiontoken every 5 minutes
-			refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
+			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
 			var scope=$("#loggedIn").scope();
 			scope.$apply(function(){
 				scope.loggedIn=true;
