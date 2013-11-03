@@ -52,6 +52,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
@@ -583,16 +584,16 @@ return profile;
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
 	}
 	
-	public static void disableUser(String username){
+	public static void disableUser(String username) throws UserNotFoundException{
 		UserDao.getInstance().disableUser(username);
 	}
 
-	public static void disableCurrentUser(){
+	public static void disableCurrentUser() throws UserNotFoundException{
 		String username = DbHelper.currentUsername();
 		disableUser(username);
 	}
 	
-	public static void enableUser(String username){
+	public static void enableUser(String username) throws UserNotFoundException{
 		UserDao.getInstance().enableUser(username);
 	}
 

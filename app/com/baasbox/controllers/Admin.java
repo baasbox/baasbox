@@ -79,6 +79,7 @@ import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
@@ -728,7 +729,11 @@ public class Admin extends Controller {
 		  if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 				  username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
 			  		return badRequest("Cannot disable/suspend internal users");
-		  UserService.disableUser(username);
+		  try {
+			UserService.disableUser(username);
+		} catch (UserNotFoundException e) {
+			return badRequest(e.getMessage());
+		}
 		  return ok();
 	  }
 
@@ -742,7 +747,11 @@ public class Admin extends Controller {
 		  if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 				  username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
 			  		return badRequest("Cannot enable/activate internal users");
-		  UserService.enableUser(username);
+		  try {
+			UserService.enableUser(username);
+		} catch (UserNotFoundException e) {
+			return badRequest(e.getMessage());
+		}
 		  return ok();
 	  }
 

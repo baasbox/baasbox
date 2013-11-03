@@ -27,6 +27,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -126,17 +127,19 @@ public class UserDao extends NodeDao  {
 		return result;
 	}
 
-	public void disableUser(String username){
+	public void disableUser(String username) throws UserNotFoundException{
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
+		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.SUSPENDED);
 		user.save();
 		//cannot resume the old connection because now the user is disabled
 	}
 	
-	public void enableUser(String username){
+	public void enableUser(String username) throws UserNotFoundException{
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
+		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.ACTIVE);
 		user.save();
 	}

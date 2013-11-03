@@ -54,6 +54,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.user.UserService;
@@ -532,7 +533,11 @@ public class User extends Controller {
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result disable(){
-		  UserService.disableCurrentUser();
+		  	try {
+				UserService.disableCurrentUser();
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			}
 		  return ok();
 	  }
 
