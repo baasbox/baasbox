@@ -4,6 +4,7 @@ import play.mvc.Results.Status;
 import play.mvc.Results;
 
 public enum CustomHttpCode {
+			DOCUMENT_VERSION(40001,400,"You are attempting to update a database object with older data. Versions is not the same","error"),
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNRECHEABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error");

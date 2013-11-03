@@ -105,7 +105,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
 					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
-				
+					String sAuthor = getAuthor();
+					Assert.assertTrue("_author field is not admin, found: " + sAuthor, sAuthor.equals("admin"));
 			 		continueOnFail(true);
 					
 					try
@@ -157,8 +158,21 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Retrieve document in a collection
 						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
+						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + "> using call_id", Status.OK, null, true);
+						assertJSONString(json, TEST_MODIFY_JSON);
+					}
+					catch (UnsupportedEncodingException uex)
+					{
+						assertFail("Unexcpeted exception. " + uex.getMessage());
+					}
+					
+					try
+					{
+						// Retrieve document in a collection using a call_id
+						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1")+"?call_id=123");
 						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
+						assertJSONString(json, "\"call_id\":\"123\"");
 					}
 					catch (UnsupportedEncodingException uex)
 					{
@@ -277,6 +291,8 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					assertServer("testServerCMDDocument CREATE", Status.OK, null, true);
 					String sRid = getRid();
 					String sUuid = getUuid();
+					String sAuthor = getAuthor();
+					Assert.assertTrue("_author field is not admin, found: " + sAuthor, sAuthor.equals("admin"));
 					continueOnFail(true);
 					
 					try
@@ -533,5 +549,22 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		
 		return sUuid;
+	}
+	
+	private String getAuthor()
+	{
+		String sRet = null;
+
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_author");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get _author value: " + ex.getMessage());
+		}
+		
+		return sRet;
 	}
 }

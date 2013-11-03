@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.stringtemplate.v4.ST;
@@ -426,15 +427,17 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logoutWithDevice(String deviceId) throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
-		  UserService.logout(deviceId);
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  if (!StringUtils.isEmpty(token)) {
+			  UserService.logout(deviceId);
+			  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  }		
 		  return noContent();
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logoutWithoutDevice() throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  return noContent();
 	  }
 	  

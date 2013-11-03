@@ -1,9 +1,3 @@
---compatibility with 1.3.0
-alter database custom useLightweightEdges=false;
-alter database custom useClassForEdgeLabel=false;
-alter database custom useClassForVertexLabel=false;
-alter database custom useVertexFieldsForEdgeLabels=false;
-
 --classes
 --Node
 create class _BB_NodeVertex extends V;
