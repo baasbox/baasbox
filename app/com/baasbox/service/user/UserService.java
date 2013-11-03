@@ -389,7 +389,7 @@ return profile;
 	public static void changePasswordCurrentUser(String newPassword) {
 		OGraphDatabase db = DbHelper.getConnection();
 		String username=db.getUser().getName();
-		db = DbHelper.sudo();
+		db = DbHelper.reconnectAsAdmin();
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 		//DbHelper.removeConnectionFromPool();
 	}
@@ -583,5 +583,17 @@ return profile;
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
 	}
 	
+	public static void disableUser(String username){
+		UserDao.getInstance().disableUser(username);
+	}
+
+	public static void disableCurrentUser(){
+		String username = DbHelper.currentUsername();
+		disableUser(username);
+	}
+	
+	public static void enableUser(String username){
+		UserDao.getInstance().enableUser(username);
+	}
 
 }

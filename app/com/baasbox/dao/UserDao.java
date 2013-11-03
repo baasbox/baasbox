@@ -24,6 +24,7 @@ import java.util.Map;
 import play.Logger;
 
 import com.baasbox.dao.exception.UserAlreadyExistsException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.sociallogin.UserInfo;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -124,6 +126,19 @@ public class UserDao extends NodeDao  {
 		return result;
 	}
 
+	public void disableUser(String username){
+		db = DbHelper.reconnectAsAdmin();
+		OUser user = db.getMetadata().getSecurity().getUser(username);
+		user.setAccountStatus(STATUSES.SUSPENDED);
+		user.save();
+		//cannot resume the old connection because now the user is disabled
+	}
 	
+	public void enableUser(String username){
+		db = DbHelper.reconnectAsAdmin();
+		OUser user = db.getMetadata().getSecurity().getUser(username);
+		user.setAccountStatus(STATUSES.ACTIVE);
+		user.save();
+	}
 
 }

@@ -714,9 +714,37 @@ public class Admin extends Controller {
 		}else{
 			return badRequest("The form was submitted without a multipart file field.");
 		}
+	}//importDb
+	
 
+	
+	/***
+	 * /admin/user/suspend/:username (PUT)
+	 * 
+	 * @param username
+	 * @return
+	 */
+	  public static Result disable(String username){
+		  if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				  username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			  		return badRequest("Cannot disable/suspend internal users");
+		  UserService.disableUser(username);
+		  return ok();
+	  }
 
+	/***
+	 * /admin/user/activate/:username (PUT)
+	 * 
+	 * @param username
+	 * @return
+	 */
+	  public static Result enable(String username){
+		  if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				  username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			  		return badRequest("Cannot enable/activate internal users");
+		  UserService.enableUser(username);
+		  return ok();
+	  }
 
-	}
-
+		  	  
 }

@@ -147,7 +147,6 @@ public class User extends Controller {
 		  return created(on);
 	  }
 	  
-
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
@@ -531,6 +530,10 @@ public class User extends Controller {
 		  return ok(on);
 	  }
 	  
-	 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result disable(){
+		  UserService.disableCurrentUser();
+		  return ok();
+	  }
 
 }
