@@ -21,8 +21,8 @@
 			element: ".navbar-inner .btn-group",
 			placement: "left",
 			title: "Your profile",
-			content: "This is a quick access way to your profile.<br>From here you can change your password.<br>If this is the first time you access to this instance,"
-					+" you are strongly encouraged to change your default password.<br>"
+			content: "This is a quick access way to your profile.<br>From here you can change your password.<br>If this is the first time you access this instance,"
+					+" you are strongly recommended to change your default password.<br>"
 		});
 		
 		tours["general"].addStep({
@@ -38,21 +38,21 @@
 			placement: "right",
 			title: "Help section",
 			content: "From here you can access to many useful resources.<br>"
-					+"You can repeat this tour, access to the support site and read the online documentation.<br>"
+					+"You can repeat this tour, access the support site and read the online documentation.<br>"
 		});
 		
 		tours["general"].addStep({
 			element: "#zenbox_tab",
 			placement: "left",
 			title: "Feedbacks",
-			content: "You can also send feedbacks and comments to the BaasBox team through this 'Feedback' tab. You will even record and attach 2 minutes video.<br>"
+			content: "You can also send feedbacks and comments to the BaasBox team through this 'Feedback' tab. You may even record and attach 2 minutes video.<br>"
 		});
 		
 		tours["general"].addStep({
 			element: ".main-menu .logout",
 			placement: "right",
 			title: "Logout",
-			content: "To exit from the console, click the 'Logout' item of the main menu.<br>"
+			content: "To exit the console, click on the 'Logout' item of the main menu.<br>"
 		});		
 		tours["general"].addStep({
 			element: ".navbar-inner a:contains('Version')", 
