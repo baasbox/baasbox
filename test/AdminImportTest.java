@@ -90,7 +90,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();
-					setAssetFile("/adminImportJson.zip", "application/zip");
+					setAssetFile("adminImportJson.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
 					assertTrue(status==200);
 				}
