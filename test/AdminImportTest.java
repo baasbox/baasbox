@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -125,7 +126,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 		);
 	}
 	
-	
+	@AfterClass
 	public static void removeGeneratedFile() throws Exception {
 		if(correctZipFile!=null && correctZipFile.exists()){
 			correctZipFile.delete();
