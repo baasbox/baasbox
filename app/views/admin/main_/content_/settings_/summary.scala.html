@@ -1,7 +1,6 @@
 <div>				
 				<p class="hint">
-					This is the settings page.
-					From here you can customize many aspect of you BaasBox instance.
+					This is the settings page. <br />From here you can customize many aspects of your BaasBox instance.
 				</p>
 				<div class="box span11">
 					<div data-rel="tooltip" title="Select a tab to access the related settings" class="box-header well" data-original-title>
@@ -58,7 +57,7 @@
 							<div class="tab-pane" id="push" data-ng-controller="PushSettingsController">
 									
 									<div class="settings push">
-										<h3>sandbox mode</h3>
+										<h3>Sandbox Mode</h3>
 											<p>{{pushData['push'][0].description}}</p>
 											<span ng-show="!isSandboxMode()"><button ng-click="sandboxMode(true)" type="button" class="btn btn-success" >Enable Sandbox Mode</button></span>
 											<span ng-show="isSandboxMode()"><button ng-click="sandboxMode(false)" type="button" class="btn btn-danger">Disable Sandbox Mode</button></span>
