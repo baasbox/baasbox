@@ -61,7 +61,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					Util.createZipFile(classloaderPath+File.separator+"adminImportJson.zip",json,manifest);
 					//json.delete();
 					manifest.delete();
-					correctZipFile = new File(Play.application().path().getAbsoluteFile()+File.separator+"target"+File.separator+"adminImportJson.zip");
+					correctZipFile = new File(classloaderPath+File.separator+"adminImportJson.zip");
 					if(!correctZipFile.exists()){
 						fail();
 					}
