@@ -1790,7 +1790,7 @@ function callMenu(action){
 					var components = result[i]["key"].split(".");
 					var key = components[1];
 					var component = components[2];
-					console.log(result)
+					//console.log(result)
 					if(!settingSocialData[key]){
 						settingSocialData[key] = {}
 					}
@@ -1801,7 +1801,7 @@ function callMenu(action){
 					}else if(component.indexOf("enabled")>-1){
 						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
 						settingSocialData[key]["enabled"] = def;
-						console.log("enabled?",def);
+						//console.log("enabled?",def);
 						settingSocialData[key]["saved"] = def;
 						
 					}

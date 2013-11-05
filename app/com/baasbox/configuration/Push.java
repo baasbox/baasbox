@@ -8,14 +8,14 @@ import com.baasbox.util.ConfigurationFileContainer;
 
 
 public enum Push implements IProperties{
-	PUSH_SANDBOX_ENABLE("push.sandbox.enable", "The value to verify if BaasBox needs to contact the Sandbox server or the Production server", Boolean.class),
-	PUSH_APPLE_TIMEOUT("push.apple.timeout", "The timeout of push notifications for Apple devices", Integer.class),
-	SANDBOX_ANDROID_API_KEY("sandbox.android.api.key", "The key to send push notifications to Android devices in sandbox mode", String.class),
-	SANDBOX_IOS_CERTIFICATE("sandbox.ios.certificate", "The path of the Apple certificate in sandbox mode", ConfigurationFileContainer.class,new IosCertificateHandler()),
-	SANDBOX_IOS_CERTIFICATE_PASSWORD("sandbox.ios.certificate.password", "The password of the Apple certificate in sandbox mode", String.class),
-	PRODUCTION_ANDROID_API_KEY("production.android.api.key", "The key to send push notifications to Android devices in production mode", String.class),
-	PRODUCTION_IOS_CERTIFICATE("production.ios.certificate", "The path of the Apple certificate in production mode", ConfigurationFileContainer.class,new IosCertificateHandler()),	
-	PRODUCTION_IOS_CERTIFICATE_PASSWORD("production.ios.certificate.password", "The password of the Apple certificate in production mode", String.class);
+	PUSH_SANDBOX_ENABLE("push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server", Boolean.class),
+	PUSH_APPLE_TIMEOUT("push.apple.timeout", "The timeout for push notifications on Apple devices", Integer.class),
+	SANDBOX_ANDROID_API_KEY("sandbox.android.api.key", "The key to send push notifications to Android devices in SANDBOX mode", String.class),
+	SANDBOX_IOS_CERTIFICATE("sandbox.ios.certificate", "The Apple certificate in SANDBOX mode", ConfigurationFileContainer.class,new IosCertificateHandler()),
+	SANDBOX_IOS_CERTIFICATE_PASSWORD("sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode", String.class),
+	PRODUCTION_ANDROID_API_KEY("production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode", String.class),
+	PRODUCTION_IOS_CERTIFICATE("production.ios.certificate", "The Apple certificate in PRODUCTION mode", ConfigurationFileContainer.class,new IosCertificateHandler()),	
+	PRODUCTION_IOS_CERTIFICATE_PASSWORD("production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode", String.class);
 
 
 
