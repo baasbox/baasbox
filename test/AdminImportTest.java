@@ -10,10 +10,10 @@ import java.io.File;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import play.Logger;
 import play.Play;
 import play.libs.F.Callback;
 import play.test.TestBrowser;
@@ -62,7 +62,9 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					//json.delete();
 					manifest.delete();
 					correctZipFile = new File(Play.application().path().getAbsoluteFile()+File.separator+"target"+File.separator+"adminImportJson.zip");
-					
+					if(!correctZipFile.exists()){
+						fail();
+					}
 				}catch(Exception e){
 					fail();
 				}
@@ -87,10 +89,11 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();
-					setAssetFile("adminImportJson.zip", "application/zip");
+					setAssetFile("/adminImportJson.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
 					assertTrue(status==200);
 				}
@@ -123,7 +126,6 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	}
 	
 	
-	@AfterClass
 	public static void removeGeneratedFile() throws Exception {
 		if(correctZipFile!=null && correctZipFile.exists()){
 			correctZipFile.delete();
