@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +43,6 @@ import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
@@ -59,7 +59,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 
 public class Asset extends Controller{
 	private static String prepareResponseToJson(ODocument doc){
@@ -228,7 +227,7 @@ public class Asset extends Controller{
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			record.toOutputStream(out);
 			response().setContentType(AssetService.getContentType(doc));
-			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+(String)doc.field("fileName")+"\"");
+			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode((String)doc.field("fileName"),"UTF-8")+"\"");
 			response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
 			return ok(new ByteArrayInputStream(out.toByteArray()));
 		} catch (IllegalArgumentException e) {
