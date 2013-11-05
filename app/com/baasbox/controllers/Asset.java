@@ -261,7 +261,7 @@ public class Asset extends Controller{
 		Map<String, String[]> data=body.asFormUrlEncoded();
 		String[] meta=data.get("meta");
 		String[] name=data.get("name");
-		if (name==null || name.length==0 || StringUtils.isEmpty(name[0])) return badRequest("missing name field");
+		if (name==null || name.length==0 || StringUtils.isEmpty(name[0].trim())) return badRequest("missing name field");
 		String ret="";
 		if (file!=null){
 			String metaJson=null;
@@ -301,7 +301,8 @@ public class Asset extends Controller{
 		
 		String assetName = (name!=null && name.length>0) ? name[0] : null;
 		
-		if (assetName!=null && StringUtils.isNotEmpty(assetName)){
+		
+		if (assetName!=null && StringUtils.isNotEmpty(assetName.trim())){
 			String metaJson=null;
 			if (meta!=null && meta.length>0){
 				metaJson = meta[0];
