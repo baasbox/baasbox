@@ -286,6 +286,8 @@ $(".btn-action").live("click", function() {
 		case "collection":
 			break;
 		case "document":
+			var collection=parameters;
+			openDocumentEditForm(null,collection)
 			break;
 		case "asset":
 			break;
@@ -300,6 +302,7 @@ $(".btn-action").live("click", function() {
 			break;
 		case "setting":
 			openSettingEditForm(parameters);
+			break;
 		case "document":
 			//in this case the parameter is pair ID/COLLECTION
 			var id=parameters.substring(0,36);
@@ -442,14 +445,20 @@ function populateDocumentEditForm(docObject){
 function openDocumentEditForm(id,collection){
 	var docObject;
 	resetAddDocumentForm();
-	$("#documentTitle").text("Edit Document");
-	$('#documentModalMode').text("edit");
-	for(i=0;i<documentDataArray.length;i++)
-	{
-		if(documentDataArray[i].id == id)
-			docObject = documentDataArray[i];
+	$("#documentTitle").text(id!=null?"Edit Document":"Create New Document");
+	$('#documentModalMode').text(id!=null?"edit":"insert");
+	docObject = {}
+	if(id!=null){
+		for(i=0;i<documentDataArray.length;i++)
+		{
+			if(documentDataArray[i].id == id)
+				docObject = documentDataArray[i];
+		}
+	}else{
+		docObject["@class"] = collection;
 	}
 	populateDocumentEditForm(docObject);
+	
 	$('#addDocumentModal').modal('show');
 }
 
@@ -637,6 +646,31 @@ function updateRole(){
 				}
 			})	
 }//updateRole
+
+function addDocument(){
+	var collection=$("#txtDocumentCollection").val();
+	var data=JSON.parse($("#txtDocumentData").val());
+	BBRoutes.com.baasbox.controllers.Document.createDocument(collection).ajax(
+			{
+				data: JSON.stringify(data),
+				contentType: "application/json",
+				processData: false,
+				error: function(data)
+				{
+					var error=JSON.parse(data.responseText);
+					var message=error["message"];
+					var bb_code=error["bb_code"];
+					if (bb_code=="40001") message += " HINT: reload the document from the server and redo your update";
+					$("#errorAddDocument").text(message).removeClass("hide");
+				},
+				success: function(data)
+				{
+					closeDocumentForm();
+				}
+			})	
+}//addDocument
+
+
 
 function updateDocument(){
 	var id=$("#txtDocumentId").val();
@@ -1531,7 +1565,7 @@ function setupSelects(){
 				data=data["data"];
 				var scope=$("#documents").scope();
 				scope.$apply(function(){
-					scope.collectioName=val;
+					scope.collectionName=val;
 				});	
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
@@ -1790,7 +1824,7 @@ function callMenu(action){
 					var components = result[i]["key"].split(".");
 					var key = components[1];
 					var component = components[2];
-					console.log(result)
+					//console.log(result)
 					if(!settingSocialData[key]){
 						settingSocialData[key] = {}
 					}
@@ -1801,7 +1835,7 @@ function callMenu(action){
 					}else if(component.indexOf("enabled")>-1){
 						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
 						settingSocialData[key]["enabled"] = def;
-						console.log("enabled?",def);
+						//console.log("enabled?",def);
 						settingSocialData[key]["saved"] = def;
 						
 					}

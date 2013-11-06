@@ -8,7 +8,7 @@ import org.apache.regexp.RESyntaxException;
 import play.Logger;
 
 public enum ImagesConfiguration implements IProperties{
-	IMAGE_ALLOWS_AUTOMATIC_RESIZE("image.allows.automatic.resize", "Enable or disable automatic resize of images", Boolean.class),
+	IMAGE_ALLOWS_AUTOMATIC_RESIZE("image.allows.automatic.resize", "Enable or disable automatic resizing of images", Boolean.class),
 	IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS("image.allowed.automatic.resize.formats", "A comma-separated-values list of image size, both in px or in %. Syntax for eache entry: (<width>[|px|%]-<height>[|px|%]|<ratio>%|<width>x<height>). Example: 120px-60px,135px-22%,50%,125-250, in the last case size are in pixels by default", String.class,
 		//this callback function is invoked when the value changes. It checks the correctness of the input and raises an error if it is invalid
 		new IPropertyChangeCallback(){

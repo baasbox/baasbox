@@ -93,6 +93,10 @@ public class DbHelper {
 	
 	private static final String fetchPlan = "*:?";
 
+	public static String currentUsername(){
+		return username.get();
+	}
+	
 	public static boolean isInTransaction(){
 		OGraphDatabase db = getConnection();
 		return !(db.getTransaction() instanceof OTransactionNoTx);
@@ -270,10 +274,19 @@ public class DbHelper {
 		return db;
 	}
 
-	public static OGraphDatabase sudo (){
+	public static OGraphDatabase reconnectAsAdmin (){
 		getConnection().close();
 		try {
 			return open (appcode.get(),BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
+		} catch (InvalidAppCodeException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static OGraphDatabase reconnectAsAuthenticatedUser (){
+		getConnection().close();
+		try {
+			return open (appcode.get(),DbHelper.username.get(),DbHelper.password.get());
 		} catch (InvalidAppCodeException e) {
 			throw new RuntimeException(e);
 		}

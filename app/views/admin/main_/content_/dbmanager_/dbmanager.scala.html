@@ -1,14 +1,17 @@
 <div ng-controller="DBManagerController" id="dbmanager">
 	<div class="row-fluid">
-		<p class="hint">This is the database management tools page.
-		You will be able to make a backup, download it, restore it, or delete it from the backup list.<br />
-		Note: all generated backups are stored on the BaasBox server.
+		<p class="hint">
+This is the database management tools page. You will be able to perform a backup, download it, restore it, or delete it from the backup list.
+<br />
+Note: all generated backups are stored on the BaasBox server.
 		</p>
 		
 		<form class="form-inline "id="importDbForm" method="post" enctype="multipart/form-data" action="@com.baasbox.controllers.routes.Admin.importDb()">
 			<fieldset>
 			<legend>Restore from a backup file</legend>
-			<p class="hint">Here you can upload a backup file to restore the database. 	Select a file on your local filesystem and then click on the 'Restore...' button</p>
+			<p class="hint">
+			Here you can upload a backup file to restore the database. 	Select a file on your local filesystem and then click on the 'Restore...' button
+			</p>
 			<p class="errors hide" id="importErrors"></p>
 					<label class="control-label">File to restore
 						<input type="file" name="file" id="zipfile"/>
@@ -42,8 +45,10 @@
 	<div class="row-fluid">
 		<div class="actions">
 			<p class="title">Backup</p>
-			<p class="hint">Click the 'Create a new backup..." button in order to create a new backup.<br/>
-Your backups are listed in the list below. From there you can download  or delete them.</p>
+			<p class="hint">
+				Click on the 'Create a new backup...' button in order to create a new backup.<br />
+				Your backups are listed below. From there you can download or delete them.
+			</p>
 			<a href="#" id="exportDb" class="btn btn-success">Create a new backup...</a>      
 			
 			

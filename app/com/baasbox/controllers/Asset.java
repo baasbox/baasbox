@@ -23,10 +23,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.mvc.Controller;
@@ -42,7 +44,6 @@ import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
@@ -59,7 +60,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
 
 public class Asset extends Controller{
 	private static String prepareResponseToJson(ODocument doc){
@@ -228,7 +228,7 @@ public class Asset extends Controller{
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			record.toOutputStream(out);
 			response().setContentType(AssetService.getContentType(doc));
-			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+(String)doc.field("fileName")+"\"");
+			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode((String)doc.field("fileName"),"UTF-8")+"\"");
 			response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
 			return ok(new ByteArrayInputStream(out.toByteArray()));
 		} catch (IllegalArgumentException e) {
@@ -261,7 +261,7 @@ public class Asset extends Controller{
 		Map<String, String[]> data=body.asFormUrlEncoded();
 		String[] meta=data.get("meta");
 		String[] name=data.get("name");
-		if (name==null || name.length==0) return badRequest("missing name field");
+		if (name==null || name.length==0 || StringUtils.isEmpty(name[0].trim())) return badRequest("missing name field");
 		String ret="";
 		if (file!=null){
 			String metaJson=null;
@@ -298,13 +298,17 @@ public class Asset extends Controller{
 		String[] meta=body.get("meta");
 		String[] name=body.get("name");
 		String ret="";
-		if (name!=null && name.length>0){
+		
+		String assetName = (name!=null && name.length>0) ? name[0] : null;
+		
+		
+		if (assetName!=null && StringUtils.isNotEmpty(assetName.trim())){
 			String metaJson=null;
 			if (meta!=null && meta.length>0){
 				metaJson = meta[0];
 			}
 		    try{
-		    	ODocument doc=AssetService.create(name[0],metaJson);
+		    	ODocument doc=AssetService.create(assetName,metaJson);
 		    	ret=prepareResponseToJson(doc);
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");

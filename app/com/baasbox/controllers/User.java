@@ -54,6 +54,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.user.UserService;
@@ -147,7 +148,6 @@ public class User extends Controller {
 		  return created(on);
 	  }
 	  
-
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
@@ -531,6 +531,14 @@ public class User extends Controller {
 		  return ok(on);
 	  }
 	  
-	 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result disable(){
+		  	try {
+				UserService.disableCurrentUser();
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			}
+		  return ok();
+	  }
 
 }
