@@ -364,12 +364,38 @@ public class Admin extends Controller {
 			return badRequest("The 'role' field is missing");	
 
 		//extract fields
-		JsonNode nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
-		JsonNode privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
-		JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
-		JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+		String missingField = null;
+		JsonNode nonAppUserAttributes;
+		JsonNode privateAttributes;
+		JsonNode friendsAttributes;
+		JsonNode appUsersAttributes;
+		try{
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER;
+			nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+			if(nonAppUserAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER;
+			privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+			if(privateAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER;
+			friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+			if(friendsAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER;
+			appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+			if(appUsersAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			
+		}catch(Exception npe){
+			return badRequest("The '"+ missingField+"' field is missing");
+		}
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
-
+		
 		if (privateAttributes.has("email")) {
 			//check if email address is valid
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
