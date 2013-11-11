@@ -13,6 +13,7 @@ import play.Logger;
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.UnableToExportDbException;
 
 public class ExportJob implements Runnable{
 
@@ -63,6 +64,9 @@ public class ExportJob implements Runnable{
 
 		}catch(Exception e){
 			Logger.error(e.getMessage());
+			if(e instanceof UnableToExportDbException){
+				((UnableToExportDbException)e).printStackTrace();
+			}
 		}finally{
 			try{
 				if(zip!=null)
