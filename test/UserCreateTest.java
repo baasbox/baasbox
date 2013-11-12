@@ -17,6 +17,7 @@
 
 // @author: Marco Tibuzzi
 
+import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
@@ -35,6 +36,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -239,6 +241,7 @@ public class UserCreateTest extends AbstractUserTest
 			}
 		);
 	}
+	
 	
 	@Test
 	public void testUserAutoSuspend(){
