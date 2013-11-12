@@ -87,6 +87,7 @@ import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
+import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.base.Objects;
@@ -401,10 +402,11 @@ public class Admin extends Controller {
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
 				return badRequest("The email address must be valid.");
 		}
-
+		
+		ODocument user=null;
 		//try to update new user
 		try {
-			UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){
@@ -420,7 +422,7 @@ public class Admin extends Controller {
 			else return internalServerError(e.getMessage());
 		}
 		Logger.trace("Method End");
-		return ok();
+		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
 
