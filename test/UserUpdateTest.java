@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.DELETE;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
@@ -37,8 +38,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 import core.AbstractUserTest;
@@ -149,34 +150,34 @@ public class UserUpdateTest extends AbstractUserTest
 					try {
 						//create a user
 						String userName = "fake"+UUID.randomUUID().toString();
-						String sFakeCreateUser = "/admin/user/"+ userName;
-						FakeRequest requestCreation = new FakeRequest(POST, sFakeCreateUser);
-	                    requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-	                    requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+						String sFakeAdminUserRoute = "/admin/user";
+						FakeRequest request = new FakeRequest(POST, sFakeAdminUserRoute);
+	                    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 	                    ObjectMapper mapper = new ObjectMapper();
 	                    JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
 	                    		+ "\"password\":\"test\","	
 	                    		+ "\"role\":\"registered\"}");
-	                    requestCreation = requestCreation.withJsonBody(actualObj);
-	                    requestCreation = requestCreation.withHeader("Content-Type", "application/json");
-	                    Result result = route(requestCreation);
-	                    assertRoute(result, "testRoleCreate.createUser", Status.CREATED, null, true);
+	                    request = request.withJsonBody(actualObj);
+	                    request = request.withHeader("Content-Type", "application/json");
+	                    Result result = route(request);
+	                    assertRoute(result, "testUserChangeRole.createUser", Status.CREATED, null, true);
 	                   
 						//change its role
-	                    requestCreation = new FakeRequest(PUT, sFakeCreateUser);
-	                    requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-	                    requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	                    FakeRequest request1 = new FakeRequest(PUT, "/admin/user/"+userName);
+	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 	                    mapper = new ObjectMapper();
-	                    actualObj = mapper.readTree("{\"role\":\"administrator\"}");
-	                    requestCreation = requestCreation.withJsonBody(actualObj);
-	                    requestCreation = requestCreation.withHeader("Content-Type", "application/json");
-	                    result = route(requestCreation);
-	                    assertRoute(result, "testRoleCreate.createUser", Status.OK, "\"role\":\"administrator\"", true);
-						//check the role is changed
-						//drop the user
+	                    actualObj = mapper.readTree("{\"role\":\"backoffice\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriend\":{},"+
+	                    	 "\"visibleByRegisteredUsers\":{} }");
+	                    request1 = request1.withJsonBody(actualObj,PUT);
+	                    request1 = request1.withHeader("Content-Type", "application/json");
+	                    result = route(request1);
+	                    assertRoute(result, "testUserChangeRole.changeRole", Status.OK, "\"roles\":[{\"name\":\"backoffice\"", true);
+						
                     }catch (Exception e) {
                 		e.printStackTrace();
-                		fail(e.getMessage());
+                		fail();
 				}						
 				}
 			});
