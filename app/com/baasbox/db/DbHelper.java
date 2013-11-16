@@ -439,7 +439,7 @@ public class DbHelper {
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
 		OGraphDatabase db = null;
 		try{
-			db = open(appcode, "admin", "admin");
+			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
 			
 			ODatabaseExport oe = new ODatabaseExport(db, os, new OCommandOutputListener() {
 				@Override
