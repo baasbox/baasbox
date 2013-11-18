@@ -18,9 +18,10 @@
 // @author: Marco Tibuzzi
 
 import static play.test.Helpers.DELETE;
-import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.GET;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
+import static play.test.Helpers.PUT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
@@ -38,8 +39,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 import core.AbstractDocumentTest;
@@ -274,6 +275,89 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);
 	}
 
+	
+	@Test
+	public void testAccessDocumentsWithoutAuth() {
+		running
+		(
+			fakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+
+					//Anonymous user looking for a non existent collection
+					FakeRequest request = new FakeRequest(GET, getRouteAddress("PIPPOPLUTO"));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					Result result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.not_exists", Status.NOT_FOUND, null, false);
+					
+					//Admin creates a collection					
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();		
+					//Anonymous user looking for its documents
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.get_all", Status.OK, "\"result\":\"ok\",\"data\":[]", true);
+					
+					//Admin creates a document
+					 result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testAccessDocumentsWithoutAuth,create", Status.OK, null, true);
+					String sUUID = getUuid();
+					
+					//Anonymous user looking for it and grab jus an error 404
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/" + sUUID);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.not_exists", Status.NOT_FOUND, null, false);
+					
+					//Admin changes the grant to the document
+					
+					request = new FakeRequest(PUT, getRouteAddress(sFakeCollection) + "/" + sUUID + "/read/role/anonymous");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.grant", Status.OK, null, false);
+					
+					//Anonymous user looking for it and obtains it
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/" + sUUID);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.get_after_grant", Status.OK, null, false);	
+					
+					//Anonymous user looking for the collection and obtain a list with one record
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.get_all", Status.OK, "\"result\":\"ok\",\"data\":[{\"", true);
+
+					
+					//Admin revokes  the grant to the document
+					request = new FakeRequest(DELETE, getRouteAddress(sFakeCollection) + "/" + sUUID + "/read/role/anonymous");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.revoke", Status.OK, null, false);
+					
+					//Anonymous user looking for it and obtains nothing
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/" + sUUID);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.not_found_2", Status.NOT_FOUND, null, false);	
+					
+				}
+			}
+		);		
+	}
+	
 	@Test
 	public void testServerCMDDocument()
 	{
