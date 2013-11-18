@@ -57,7 +57,7 @@ public class FileAssetDao extends NodeDao {
 		asset.field("contentType",contentType);
 		asset.field("contentLength",content.length);
 		super.grantPermission(asset, Permissions.ALLOW_READ,DefaultRoles.getORoles());
-		super.grantPermission(asset, Permissions.ALLOW_UPDATE,DefaultRoles.getORoles());
+		super.grantPermission(asset, Permissions.ALLOW_UPDATE,DefaultRoles.getORoles()); //this is necessary due the resize API
 		return asset;
 	}
 	

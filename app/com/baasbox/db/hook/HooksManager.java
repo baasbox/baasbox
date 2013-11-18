@@ -18,7 +18,10 @@ package com.baasbox.db.hook;
 
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.collections.IteratorUtils;
 
 import play.Logger;
 
@@ -26,7 +29,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
-public class HooksManager {
+public class HooksManager { 
 	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
 		Logger.debug("Registering hooks...");
@@ -53,10 +56,11 @@ public class HooksManager {
 	public static void unregisteredAll(OGraphDatabase db){
 
 		Logger.trace("Method Start");
-		/*
+		
 		Logger.debug("unregistering hooks...");
 		Set<ORecordHook> hooks = db.getHooks();
-		Iterator<ORecordHook> it =hooks.iterator();
+		List hs = IteratorUtils.toList(hooks.iterator());
+		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
 			if (h instanceof BaasBoxHook) {
@@ -64,7 +68,7 @@ public class HooksManager {
 				db.unregisterHook(h);
 			}
 		}
-				*/
+				
 		Logger.trace("Method End");
 
 	}
