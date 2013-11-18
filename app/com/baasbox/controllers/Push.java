@@ -69,7 +69,7 @@ public class Push extends Controller {
 		 }
 		 catch (UnknownHostException e){
 			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_HOST_UNRECHEABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNRECHEABLE.getDescription());
+			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 		 }catch (IOException e) {
 			 return badRequest(e.getMessage());
 		}

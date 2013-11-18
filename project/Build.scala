@@ -13,6 +13,7 @@ object ApplicationBuild extends Build {
     			javaCore,filters,
     			"commons-io" % "commons-io" % "2.4",
     			"commons-lang" % "commons-lang" % "2.6",
+    			"commons-collections" % "commons-collections" % "3.2",
     			"xalan"  % "xalan"  % "2.7.1",
     			"org.imgscalr" % "imgscalr-lib" % "4.2",
     			"org.apache.commons" % "commons-email" % "1.3.1",

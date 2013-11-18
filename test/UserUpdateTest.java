@@ -17,21 +17,29 @@
 
 // @author: Marco Tibuzzi
 
+import static org.junit.Assert.fail;
 import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.DELETE;
 import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.util.UUID;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 import core.AbstractUserTest;
@@ -132,6 +140,49 @@ public class UserUpdateTest extends AbstractUserTest
 	        }
 		);
 	}
+	
+	@Test
+	public void testUserChangeRole(){
+		running
+		(
+			fakeApplication(), 	new Runnable() 	{
+				public void run() 	{
+					try {
+						//create a user
+						String userName = "fake"+UUID.randomUUID().toString();
+						String sFakeAdminUserRoute = "/admin/user";
+						FakeRequest request = new FakeRequest(POST, sFakeAdminUserRoute);
+	                    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	                    ObjectMapper mapper = new ObjectMapper();
+	                    JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
+	                    		+ "\"password\":\"test\","	
+	                    		+ "\"role\":\"registered\"}");
+	                    request = request.withJsonBody(actualObj);
+	                    request = request.withHeader("Content-Type", "application/json");
+	                    Result result = route(request);
+	                    assertRoute(result, "testUserChangeRole.createUser", Status.CREATED, null, true);
+	                   
+						//change its role
+	                    FakeRequest request1 = new FakeRequest(PUT, "/admin/user/"+userName);
+	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	                    mapper = new ObjectMapper();
+	                    actualObj = mapper.readTree("{\"role\":\"backoffice\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriend\":{},"+
+	                    	 "\"visibleByRegisteredUsers\":{} }");
+	                    request1 = request1.withJsonBody(actualObj,PUT);
+	                    request1 = request1.withHeader("Content-Type", "application/json");
+	                    result = route(request1);
+	                    assertRoute(result, "testUserChangeRole.changeRole", Status.OK, "\"roles\":[{\"name\":\"backoffice\"", true);
+						
+                    }catch (Exception e) {
+                		e.printStackTrace();
+                		fail();
+				}						
+				}
+			});
+	}
+
 	
 	//@After
 	public void afterTest()

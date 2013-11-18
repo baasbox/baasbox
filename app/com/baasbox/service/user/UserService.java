@@ -373,11 +373,12 @@ return profile;
 					break;
 				}
 			}
+			ORole oldORole=RoleDao.getRole(oldRole);
 			//TODO: update role
-			// OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
-			// ouser.removeRole(oldRole);
-			//ouser.addRole(newORole);
-			//ouser.save();
+			OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
+			ouser.getRoles().remove(oldORole);
+			ouser.addRole(newORole);
+			ouser.save();
 			profile.save();
 			profile.reload();
 

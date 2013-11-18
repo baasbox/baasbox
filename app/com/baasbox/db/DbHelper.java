@@ -224,7 +224,7 @@ public class DbHelper {
 
 		try{
 			//WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
-			db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+			db = getConnection();
 
 			synchronized(DbHelper.class)  {
 				if(!dbFreeze.get()){
@@ -295,7 +295,7 @@ public class DbHelper {
 	public static void close(OGraphDatabase db) {
 		Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
-			HooksManager.unregisteredAll(db);
+			//HooksManager.unregisteredAll(db);
 			db.close();
 		}else Logger.debug("connection already close or null");
 	}
@@ -439,7 +439,7 @@ public class DbHelper {
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
 		OGraphDatabase db = null;
 		try{
-			db = open(appcode, "admin", "admin");
+			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
 			
 			ODatabaseExport oe = new ODatabaseExport(db, os, new OCommandOutputListener() {
 				@Override
@@ -507,8 +507,8 @@ public class DbHelper {
 			 Logger.info("...setting up internal user credential...");
 			 updateDefaultUsers();
 			 Logger.info("...registering hooks...");
-			 HooksManager.registerAll(db);
 			 evolveDB(db);
+			 HooksManager.registerAll(db);
 		}catch(Exception ioe){
 			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
