@@ -19,17 +19,28 @@
 
 package core;
 
+import static play.mvc.Http.Status.BAD_REQUEST;
+import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.GET;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+import static play.test.Helpers.testServer;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 
+
+import org.junit.Test;
+
+import play.libs.F.Callback;
 import play.mvc.Result;
 import play.test.FakeRequest;
+import play.test.TestBrowser;
 
 
 public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest 
@@ -113,6 +124,83 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 		( 
 			sAddress,
 			GET
+		);
+	}
+	
+	@Test
+	@Override
+	public void testRouteNotValid() {
+		running
+		(
+			fakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					// No AppCode, No Authorization
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					Result result = routeAndCall(request);
+					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
+	
+					
+					// Invalid AppCode
+					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					assertRoute(result, "Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
+	
+					// Invalid Authorization
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, "Basic dXNlcjE6cGFzc3c=");
+					result = routeAndCall(request);
+					assertRoute(result, "Invalid Authorization", UNAUTHORIZED, null, false);
+					
+					// No AppCode
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					assertRoute(result, "No AppCode", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+				}
+			}
+		);		
+	}
+
+	@Test
+	@Override
+	public void testServerNotValid() {
+		running
+		(
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					// No AppCode, No Authorization
+					removeAllHeaders();
+					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
+					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
+					
+					
+					// Invalid AppCode
+					setHeader(TestConfig.KEY_APPCODE, "1");
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
+					assertServer("Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
+	
+					// Invalid Authorization
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, "Basic dXNlcjE6cGFzc3c=");
+					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
+					assertServer("Invalid Autorization", UNAUTHORIZED, null, false);
+	
+					// No AppCode
+					removeHeader(TestConfig.KEY_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
+					assertServer("No AppCode", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+	            }
+	        }
 		);
 	}
 }

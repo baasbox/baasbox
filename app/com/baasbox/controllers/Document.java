@@ -38,6 +38,7 @@ import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -62,7 +63,7 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+
 public class Document extends Controller {
 
 	private static String prepareResponseToJson(ODocument doc){
@@ -86,6 +87,7 @@ public class Document extends Controller {
 	 * @param collectionName
 	 * @return the number of documents in the collection
 	 */
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getCount(String collectionName){
 		Logger.trace("Method Start");
 		Logger.trace("collectionName: " + collectionName);
@@ -108,7 +110,7 @@ public class Document extends Controller {
 		return ok("{\"count\":\""+ count +"\"}");
 	}
 
-
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getDocuments(String collectionName){
 		Logger.trace("Method Start");
 		Logger.trace("collectionName: " + collectionName);
@@ -149,7 +151,8 @@ public class Document extends Controller {
 		}
 		return rid;
 	}
-	
+
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result queryDocument(String collectionName,String id,boolean isUUID,String parts){
 
 		if(parts==null || StringUtils.isEmpty(parts)){
@@ -196,7 +199,7 @@ public class Document extends Controller {
 		}
 	}
 
-
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocument(String collectionName, String id, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("collectionName: " + collectionName);
@@ -224,7 +227,7 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(doc));
 		}
 
-
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocumentByRid(String rid){
 			Logger.trace("Method Start");
 			rid="#"+rid;
@@ -243,7 +246,7 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(doc));
 		}
 
-
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result createDocument(String collection){
 			Logger.trace("Method Start");
@@ -267,6 +270,7 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(document));
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocument(String collectionName, String id, boolean isUUID){
 			Logger.trace("Method Start");
@@ -310,6 +314,7 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(document));
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocumentWithParts(String collectionName, String id, boolean isUUID,String parts){
 			Logger.trace("Method Start");
@@ -359,6 +364,7 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(document));
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result deleteDocument(String collectionName, String id, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("deleteDocument collectionName: " + collectionName);
@@ -384,6 +390,7 @@ public class Document extends Controller {
 			return ok("");
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToUser(String collectionName, String rid, String username, String action, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);
@@ -395,6 +402,7 @@ public class Document extends Controller {
 			return res;
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToUser(String collectionName, String rid, String username, String action, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);
@@ -406,6 +414,7 @@ public class Document extends Controller {
 			return res;
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);
@@ -417,6 +426,7 @@ public class Document extends Controller {
 			return res;
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
 			Logger.trace("Method Start");
 			Logger.trace("grant collectionName: " + collectionName);
@@ -428,6 +438,7 @@ public class Document extends Controller {
 			return res;
 		}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		private static Result grantOrRevokeToUser(String collectionName, String id,
 				String username, String action, boolean grant, boolean isUUID) {
 			try {
@@ -464,6 +475,7 @@ public class Document extends Controller {
 			return ok();
 		}//grantOrRevokeToUser
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		private static Result grantOrRevokeToRole(String collectionName, String id,
 				String rolename, String action, boolean grant, boolean isUUID) {
 			try {
