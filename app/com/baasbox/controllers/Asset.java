@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 public class Asset extends Controller{
 	private static String prepareResponseToJson(ODocument doc){
@@ -310,6 +311,8 @@ public class Asset extends Controller{
 		    try{
 		    	ODocument doc=AssetService.create(assetName,metaJson);
 		    	ret=prepareResponseToJson(doc);
+		    }catch (ORecordDuplicatedException e){
+		    	return badRequest("An asset with the same name already exists");
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");
 		    }catch (OSerializationException e){
