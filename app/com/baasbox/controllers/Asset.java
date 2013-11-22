@@ -281,6 +281,8 @@ public class Asset extends Controller{
 		    try{
 		    	ODocument doc=AssetService.createFile(name[0],fileName,metaJson,contentType, fileContentAsByteArray);
 		    	ret=prepareResponseToJson(doc);
+		    }catch (ORecordDuplicatedException e){
+		    	return badRequest("An asset with the same name already exists");
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");
 		    }

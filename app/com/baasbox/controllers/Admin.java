@@ -97,6 +97,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
@@ -261,6 +262,8 @@ public class Admin extends Controller {
 			return badRequest("Role " + name + " is not modifiable");
 		} catch (RoleNotFoundException e) {
 			return notFound("Role " + name + " does not exists");
+		}catch (ORecordDuplicatedException e){
+	    	return badRequest("Role " + name + " already exists");
 		} catch (OIndexException e){
 			return badRequest("Role " + name + " already exists");
 		}
