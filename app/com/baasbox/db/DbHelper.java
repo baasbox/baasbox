@@ -312,7 +312,7 @@ public class DbHelper {
 		return (String) Http.Context.current().args.get("username");
 	}
 
-	public static String getCurrentUserName(){
+	public static String getCurrentUserNameFromConnection(){
 		return getConnection().getUser().getName();
 	}
 

@@ -20,6 +20,7 @@ import play.Configuration;
 import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
+
 	public static Configuration configuration = Play.application().configuration();
 	
 	@Deprecated
@@ -45,6 +46,18 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	public static String getBaasBoxAdminPassword(){
 		return configuration.getString(ADMIN_PASSWORD);
+	}
+
+	public static  Boolean getStatisticsSystemOS(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_OS);
+	}	
+
+	public static Boolean getStatisticsSystemMemory(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_MEMORY);
+	}
+
+	public static Boolean getWriteAccessLog(){
+		return configuration.getBoolean(WRITE_ACCESS_LOG);
 	}
 	
 	public static String getApiVersion(){

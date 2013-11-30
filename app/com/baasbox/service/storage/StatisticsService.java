@@ -133,12 +133,22 @@ public class StatisticsService {
 		
 		public static ImmutableMap os() {
 			Logger.trace("Method Start");
-			ImmutableMap response = ImmutableMap.of(
-					"os_name", System.getProperty("os.name"),
-					"os_arch",  System.getProperty("os.arch"),
-					"os_version",  System.getProperty("os.version"),
-					"processors",  Runtime.getRuntime().availableProcessors()
-					);
+			ImmutableMap response=null;
+			if (BBConfiguration.getStatisticsSystemOS()){
+				response = ImmutableMap.of(
+						"os_name", System.getProperty("os.name"),
+						"os_arch",  System.getProperty("os.arch"),
+						"os_version",  System.getProperty("os.version"),
+						"processors",  Runtime.getRuntime().availableProcessors()
+						);
+			}else{
+				response = ImmutableMap.of(
+						"os_name", "N/A",
+						"os_arch", "N/A",
+						"os_version",  "N/A",
+						"processors",  0
+						);				
+			}
 			Logger.trace("Method End");
 			return response;
 		}
@@ -157,16 +167,28 @@ public class StatisticsService {
 		
 		public static ImmutableMap memory() {
 			Logger.trace("Method Start");
-			Runtime rt = Runtime.getRuntime(); 
-			long maxMemory=rt.maxMemory();
-			long freeMemory=rt.freeMemory();
-			long totalMemory=rt.totalMemory();
-			ImmutableMap response = ImmutableMap.of(
-					"max_allocable_memory",maxMemory,
-					"current_allocate_memory", totalMemory,
-					"used_memory_in_the_allocate_memory",totalMemory - freeMemory,
-					"free_memory_in_the_allocated_memory", freeMemory
-					);
+			ImmutableMap response=null;
+
+			if (BBConfiguration.getStatisticsSystemMemory()){
+				Runtime rt = Runtime.getRuntime(); 
+				long maxMemory=rt.maxMemory();
+				long freeMemory=rt.freeMemory();
+				long totalMemory=rt.totalMemory();
+				response = ImmutableMap.of(
+						"max_allocable_memory",maxMemory,
+						"current_allocate_memory", totalMemory,
+						"used_memory_in_the_allocate_memory",totalMemory - freeMemory,
+						"free_memory_in_the_allocated_memory", freeMemory
+						);
+			}else{
+				response = ImmutableMap.of(
+						"max_allocable_memory",0,
+						"current_allocate_memory", 0,
+						"used_memory_in_the_allocate_memory",0 ,
+						"free_memory_in_the_allocated_memory", 0
+						);
+			}
+			
 			Logger.trace("Method End");
 			return response;
 		}	
