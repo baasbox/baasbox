@@ -99,7 +99,7 @@ public class UserService {
 
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
-		return getUserProfilebyUsername(DbHelper.getCurrentUserName());
+		return getUserProfilebyUsername(DbHelper.getCurrentUserNameFromConnection());
 	}
 
 	public static OUser getOUserByUsername(String username){
