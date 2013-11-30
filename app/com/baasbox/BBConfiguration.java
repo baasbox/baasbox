@@ -46,6 +46,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getBaasBoxAdminPassword(){
 		return configuration.getString(ADMIN_PASSWORD);
 	}
+
+	public static  Boolean getStatisticsSystemOS(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_OS);
+	}	
+
+	public static Boolean getStatisticsSystemMemory(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_MEMORY);
+	}
 	
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
