@@ -25,7 +25,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -49,7 +49,7 @@ public class GenericDao {
 	}
 	
 	public ODocument get(ORID rid) {
-		OGraphDatabase db =DbHelper.getConnection();
+		ODatabaseRecordTx db =DbHelper.getConnection();
 		Logger.trace("Method Start");
 		ODocument doc=db.load(rid);
 		Logger.trace("Method End");
@@ -57,7 +57,7 @@ public class GenericDao {
 	}
 	
 	public ORID getRidByUUID(UUID id){
-		OGraphDatabase db =DbHelper.getConnection();
+		ODatabaseRecordTx db =DbHelper.getConnection();
 		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
 		ORID rid = (ORID) index.get(id.toString());
 		return rid;
@@ -77,7 +77,7 @@ public class GenericDao {
 
 
 	public void executeCommand(String commandString, Object[] params) {
-		OGraphDatabase db =  DbHelper.getConnection();
+		ODatabaseRecordTx db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
 		command.execute(params);
 	}
