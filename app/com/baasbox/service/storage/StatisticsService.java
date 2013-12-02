@@ -41,7 +41,7 @@ import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -56,7 +56,7 @@ public class StatisticsService {
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
-			OGraphDatabase db = DbHelper.getConnection();
+			ODatabaseRecordTx db = DbHelper.getConnection();
 			
 			long usersCount =userDao.getCount();
 			long assetsCount = assetDao.getCount();
@@ -111,7 +111,7 @@ public class StatisticsService {
 		
 		public static ImmutableMap db() {
 			Logger.trace("Method Start");
-			OGraphDatabase db = DbHelper.getConnection();
+			ODatabaseRecordTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);

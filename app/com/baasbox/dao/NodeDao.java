@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 
 import play.Logger;
-import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
@@ -34,6 +33,7 @@ import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -58,7 +58,7 @@ public abstract class NodeDao  {
 	public static final String EDGE_CLASS_CREATED = "Created";
 	
 
-	protected OGraphDatabase db;
+	protected ODatabaseRecordTx db;
 
 	 
 	public NodeDao(String modelName) {
@@ -104,6 +104,7 @@ public abstract class NodeDao  {
 	
 	public ODocument create() throws Throwable {
 		Logger.trace("Method Start");
+		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.createVertex(CLASS_VERTEX_NAME);
@@ -223,7 +224,7 @@ public abstract class NodeDao  {
 
 	
 	public long getCount(){
-		return db.countClass(MODEL_NAME);
+		return DbHelper.getODatabaseDocumentTxConnection().countClass(MODEL_NAME);
 	}
 	
 	public long getCount(QueryParams criteria) throws SqlInjectionException{
@@ -244,6 +245,7 @@ public abstract class NodeDao  {
 	
 	public void delete(ORID rid) throws Throwable{
 		Logger.trace("Method Start");
+		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		//retrieve the vertex associated to this node
 		try{
 			DbHelper.requestTransaction();

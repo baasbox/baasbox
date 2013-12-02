@@ -20,8 +20,8 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 import core.AbstractRouteHeaderTest;
 import core.TestConfig;
@@ -67,14 +67,13 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 					assertTrue(folder.exists());
 					File certificate = Play.application().getFile("certificates/TestFakeCertificate.p12");
 					assertTrue(certificate.exists());
-					OGraphDatabase db = null;
+					ODatabaseRecordTx db = null;
 					try {
 						db = DbHelper.open("1234567890", "admin", "admin");
 					} catch (InvalidAppCodeException e) {
 						fail();
 					}
-					ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) 
-							db.getUnderlying());
+					ODatabaseRecordThreadLocal.INSTANCE.set(db);
 					ConfigurationFileContainer cfc = Push.SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 					assertNotNull(cfc);
 					assertNotNull(cfc.getName());

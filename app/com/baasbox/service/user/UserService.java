@@ -56,7 +56,7 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -183,7 +183,7 @@ public class UserService {
             JsonNode appUsersAttributes,boolean generated) throws Exception{
 
 
-OGraphDatabase db =  DbHelper.getConnection();
+ODatabaseRecordTx db =  DbHelper.getConnection();
 ODocument profile=null;
 UserDao dao = UserDao.getInstance();
 try{
@@ -389,7 +389,7 @@ return profile;
 	}//updateProfile with role
 
 	public static void changePasswordCurrentUser(String newPassword) {
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();

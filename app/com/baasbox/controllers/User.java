@@ -62,7 +62,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -483,7 +483,7 @@ public class User extends Controller {
 
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
-		  OGraphDatabase db=null;
+		  ODatabaseRecordTx db=null;
 		  JsonNode user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
