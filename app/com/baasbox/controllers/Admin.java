@@ -92,7 +92,7 @@ import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -192,7 +192,7 @@ public class Admin extends Controller {
 	}
 
 	public static Result getDBStatistics(){
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		ImmutableMap response;
 		try {
 			String bbId = Internal.INSTALLATION_ID.getValueAsString();
