@@ -43,8 +43,22 @@ create property _BB_Collection.name String;
 alter property _BB_Collection.name mandatory=true;
 alter property _BB_Collection.name notnull=true;
 
+--files
+create class _BB_File extends _BB_Node;
+create property _BB_File.fileName String;
+alter property _BB_File.fileName mandatory=true;
+alter property _BB_File.fileName notnull=true;
+create property _BB_File.contentType String;
+alter property _BB_File.contentType mandatory=true;
+alter property _BB_File.contentType notnull=true;
+create property _BB_File.contentLength long;
+alter property _BB_File.contentLength mandatory=true;
+alter property _BB_File.contentLength notnull=true;
+create property _BB_File.file link;
+alter property _BB_File.file mandatory=true;
+alter property _BB_File.file notnull=true;
 
-
+--Assets
 create class _BB_Asset extends _BB_Node;
 create class _BB_FileAsset extends _BB_Asset;
 create property _BB_Asset.name String;

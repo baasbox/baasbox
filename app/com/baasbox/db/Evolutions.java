@@ -31,6 +31,8 @@ public class Evolutions {
 	public Evolutions(){
 		IEvolution ev= (IEvolution)new Evolution_0_7_0();
 		me.put(ev.getFinalVersion(), ev);
+		ev= (IEvolution)new Evolution_0_7_3();
+		me.put(ev.getFinalVersion(), ev);
 	}
 	
 	public Collection<IEvolution> getEvolutions(){

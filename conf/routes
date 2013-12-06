@@ -107,6 +107,9 @@ POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
 PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
 DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)
 
+#Files
+POST /file								com.baasbox.controllers.File.storeFile()
+
 #deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 
