@@ -1,6 +1,10 @@
 package com.baasbox.dao;
 
+import java.util.List;
+
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
@@ -40,6 +44,13 @@ public class FileDao extends NodeDao  {
 	@Override
 	public  void save(ODocument document) throws InvalidModelException{
 		super.save(document);
+	}
+
+	public ODocument getById(String id) throws SqlInjectionException {
+		QueryParams criteria=QueryParams.getInstance().where("id=?").params(new String[]{id});
+		List<ODocument> listOfFiles = this.get(criteria);
+		if (listOfFiles==null || listOfFiles.size()==0) return null;
+		return listOfFiles.get(0);
 	}	
 
 }

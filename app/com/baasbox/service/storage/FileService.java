@@ -1,6 +1,12 @@
 package com.baasbox.service.storage;
 
+import com.baasbox.dao.AssetDao;
 import com.baasbox.dao.FileDao;
+import com.baasbox.dao.exception.FileNotFoundException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.exception.AssetNotFoundException;
+import com.baasbox.exception.SqlInjectionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class FileService {
@@ -17,4 +23,16 @@ public class FileService {
 			return doc;
 		}
 
+		
+		public static ODocument getById(String id) throws SqlInjectionException {
+			FileDao dao = FileDao.getInstance();
+			return dao.getById(id);
+		}
+		
+		public static void deleteById(String id) throws Throwable, SqlInjectionException, FileNotFoundException{
+			FileDao dao = FileDao.getInstance();
+			ODocument file=getById(id);
+			if (file==null) throw new FileNotFoundException();
+			dao.delete(file.getIdentity());
+		}	
 }
