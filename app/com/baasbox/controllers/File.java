@@ -16,21 +16,91 @@
  */
 package com.baasbox.controllers;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URLConnection;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import play.mvc.Controller;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
+import play.mvc.With;
+
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.service.storage.FileService;
+import com.baasbox.util.JSONFormats;
+import com.google.common.io.Files;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+
 
 
 public class File extends Controller {
+	private static final String FILE_FIELD_NAME="file";
+	private static final String DATA_FIELD_NAME="attachedData";
+	
+	private static String prepareResponseToJson(ODocument doc){
+		response().setContentType("application/json");
+		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.FILE);
+	}
+	
 	  /*------------------FILE--------------------*/
-	  public static Result storeFile(){
-		  return status(NOT_IMPLEMENTED);
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class})
+	  public static Result storeFile() throws  Throwable {
+		  MultipartFormData  body = request().body().asMultipartFormData();
+			if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+			FilePart file = body.getFile(FILE_FIELD_NAME);
+			Map<String, String[]> data=body.asFormUrlEncoded();
+			String[] datas=data.get(DATA_FIELD_NAME);
+			String ret="";
+			if (file!=null){
+				String dataJson=null;
+				if (datas!=null && datas.length>0){
+					dataJson = datas[0];
+				}else dataJson="{}";
+			    java.io.File fileContent=file.getFile();
+			    byte [] fileContentAsByteArray=Files.toByteArray(fileContent);
+				String fileName = file.getFilename();
+			    String contentType = file.getContentType(); 
+			    if (contentType==null || contentType.isEmpty() || contentType.equalsIgnoreCase("application/octet-stream")){	//try to guess the content type
+			    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
+			    	contentType = URLConnection.guessContentTypeFromStream(is);
+			    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
+			    }
+			    try{
+			    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
+			    	ret=prepareResponseToJson(doc);
+			    }catch (ORecordDuplicatedException e){
+			    	return badRequest("An file with the same name already exists");
+			    }catch (OIndexException e){
+			    	return badRequest("An file with the same name already exists");
+			    }
+			}else{
+				return badRequest("missing '"+FILE_FIELD_NAME+"' field");
+			}
+		  return created(ret);
 	  }
 	  
 	  public static Result getFileMetadata(){
 		  return status(NOT_IMPLEMENTED);
 	  }
 	  
-	  public static Result getFile(){
+	  public static Result getFileData(){
 		  return status(NOT_IMPLEMENTED);
 	  }
+	  
+	  public static Result streamFile(){
+		  return status(NOT_IMPLEMENTED);
+	  }
+	  
+	  public static Result updateData(){
+		  return status(NOT_IMPLEMENTED);
+	  }
+	  
 }
