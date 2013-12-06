@@ -32,6 +32,8 @@ import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.http.protocol.HTTP;
+import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,6 +55,7 @@ public class FileCreateTest extends AbstractFileTest
 
 	private Map<String, String> mParametersFile = new HashMap<String, String>();
 
+	private Object json = null;
 	
 
 	
@@ -71,11 +74,24 @@ public class FileCreateTest extends AbstractFileTest
 	@Override
 	protected void assertContent(String s)
 	{
-		Object json = toJSON(s);
+		json = toJSON(s);
 		assertJSON(json, "@rid");
+		assertJSON(json, "id");
 		assertJSON(json, PARAM_DATA);
 	}
 
+	private String getUuid()
+	{
+		String sUuid = null;
+		try	{
+			JSONObject jo = (JSONObject)json;
+			sUuid = jo.getJSONObject("data").getString("id");
+		}catch (Exception ex)	{
+			Assert.fail("Cannot get UUID (id) value: " + ex.getMessage() + "\n The json object is: \n" + json);
+		}
+		return sUuid;
+	}
+	
 	@Before
 	public void beforeTest()
 	{
@@ -115,12 +131,33 @@ public class FileCreateTest extends AbstractFileTest
 					httpRequest(getURLAddress(), getMethod(), mParametersFile);
 					assertServer("testServerCreateFile. wrong media type", Status.BAD_REQUEST, null, false);
 
-					//serverDeleteFile();
 				}
 	        }
 		);
 	}
 
+	@Test
+	public void testServerDeleteFakeFile()
+	{
+		running
+		(
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					continueOnFail(true);
+				
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					httpRequest(getURLAddress() + "/iamafakeid", DELETE);
+					assertServer("testServerCreateFile. delete fake id", Status.NOT_FOUND, null, false);
+				}
+	        }
+		);
+	}
 	
 	public void serverCreateFile()
 	{
@@ -132,29 +169,42 @@ public class FileCreateTest extends AbstractFileTest
 		setFile("/logo_baasbox_lp.png", "image/png");
 		httpRequest(getURLAddress(), getMethod(), mParametersFile);
 		assertServer("serverCreateFile_1", Status.CREATED, null, true);
-		
+		String uuid1=getUuid();
+
 		//try to create another one
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setMultipartFormData();
+		setFile("/logo_baasbox_lp.png", "image/png");
 		httpRequest(getURLAddress(), getMethod(), mParametersFile);
 		assertServer("serverCreateFile_2", Status.CREATED, null, true);
+		String uuid2=getUuid();
+		
 		
 		//try to create another one without attached data
 		mParametersFile.remove(PARAM_DATA);
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setMultipartFormData();
+		setFile("/logo_baasbox_lp.png", "image/png");
 		httpRequest(getURLAddress(), getMethod(), mParametersFile);
 		assertServer("serverCreateFile_3", Status.CREATED, null, true);		
+		String uuid3=getUuid();
 		
-		
+		//delete 
+		serverDeleteFile(uuid3);
+		serverDeleteFile(uuid2);
+		serverDeleteFile(uuid1);
 	}
 	
-	/*
-	public void serverDeleteFile()
-	{
-		
+	
+	public void serverDeleteFile(String id)
+	{	
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		setHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-		httpRequest(getURLAddress() + "/" + mParametersFile.get(PARAM_NAME), DELETE);
+		httpRequest(getURLAddress() + "/" + id, DELETE);
 		assertServer("testServerCreateFileAsset. Delete", Status.OK, null, false);
-		
 	}
-	*/
+	
 }

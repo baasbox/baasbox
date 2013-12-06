@@ -31,7 +31,12 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.dao.exception.FileNotFoundException;
+import com.baasbox.exception.AssetNotFoundException;
+import com.baasbox.service.storage.AssetService;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.util.JSONFormats;
 import com.google.common.io.Files;
@@ -85,8 +90,19 @@ public class File extends Controller {
 				return badRequest("missing '"+FILE_FIELD_NAME+"' field");
 			}
 		  return created(ret);
-	  }
+	  }//storeFile()
 	  
+
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	public static Result deleteFile(String id) throws Throwable{
+		try{
+			FileService.deleteById(id);
+		}catch(FileNotFoundException e){
+			return notFound(id + " file not found");
+		}
+		return ok();
+	}
+	
 	  public static Result getFileMetadata(){
 		  return status(NOT_IMPLEMENTED);
 	  }
