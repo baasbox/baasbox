@@ -42,7 +42,7 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.exception.FileNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;

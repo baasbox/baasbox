@@ -25,7 +25,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;

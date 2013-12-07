@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.baasbox.dao.FileDao;
 import com.baasbox.dao.exception.FileNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 

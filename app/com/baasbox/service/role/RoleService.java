@@ -6,11 +6,11 @@ import org.apache.commons.lang.StringUtils;
 
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
