@@ -110,6 +110,12 @@ DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: Stri
 #Files
 POST 	 /file							com.baasbox.controllers.File.storeFile()
 DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
+GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
+GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
+GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
+GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
+GET		 /file							com.baasbox.controllers.File.getAllFile()
+
 
 #deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
