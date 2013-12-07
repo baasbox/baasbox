@@ -2,9 +2,9 @@ package com.baasbox.dao;
 
 import java.util.List;
 
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.IndexNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
