@@ -41,11 +41,11 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
+import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
-import com.baasbox.exception.DocumentNotFoundException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.query.MissingNodeException;
@@ -438,7 +438,6 @@ public class Document extends Controller {
 			return res;
 		}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		private static Result grantOrRevokeToUser(String collectionName, String id,
 				String username, String action, boolean grant, boolean isUUID) {
 			try {
@@ -475,7 +474,6 @@ public class Document extends Controller {
 			return ok();
 		}//grantOrRevokeToUser
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		private static Result grantOrRevokeToRole(String collectionName, String id,
 				String rolename, String action, boolean grant, boolean isUUID) {
 			try {
