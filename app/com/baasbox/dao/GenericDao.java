@@ -21,8 +21,8 @@ import java.util.UUID;
 
 import play.Logger;
 
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;

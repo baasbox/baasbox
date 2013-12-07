@@ -1,17 +1,19 @@
 package com.baasbox.service.storage;
 
-import com.baasbox.dao.AssetDao;
+import java.util.List;
+
 import com.baasbox.dao.FileDao;
 import com.baasbox.dao.exception.FileNotFoundException;
-import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.exception.AssetNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
-import com.orientechnologies.orient.core.id.ORID;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class FileService {
-	private static final String DATA_FIELD_NAME="attachedData";
-
+	public static final String DATA_FIELD_NAME="attachedData";
+	public static final String BINARY_FIELD_NAME=FileDao.BINARY_FIELD_NAME;
+	public final static String CONTENT_TYPE_FIELD_NAME=FileDao.CONTENT_TYPE_FIELD_NAME;
+	public final static String CONTENT_LENGTH_FIELD_NAME=FileDao.CONTENT_LENGTH_FIELD_NAME;
+	
 		public static ODocument createFile(String fileName,String data,String contentType, byte[] content) throws Throwable{
 			FileDao dao = FileDao.getInstance();
 			ODocument doc=dao.create(fileName,contentType,content);
@@ -34,5 +36,11 @@ public class FileService {
 			ODocument file=getById(id);
 			if (file==null) throw new FileNotFoundException();
 			dao.delete(file.getIdentity());
+		}
+
+
+		public static List<ODocument> getFiles(QueryParams criteria) throws SqlInjectionException {
+			FileDao dao = FileDao.getInstance();
+			return dao.get(criteria);
 		}	
 }

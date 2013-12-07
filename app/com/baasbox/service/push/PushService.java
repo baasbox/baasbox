@@ -10,7 +10,7 @@ import play.Logger;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.providers.Factory;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;

@@ -75,7 +75,6 @@ public class FileCreateTest extends AbstractFileTest
 	protected void assertContent(String s)
 	{
 		json = toJSON(s);
-		assertJSON(json, "@rid");
 		assertJSON(json, "id");
 		assertJSON(json, PARAM_DATA);
 	}

@@ -16,6 +16,7 @@
  */
 package com.baasbox.dao;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,18 +24,20 @@ import java.util.UUID;
 
 import play.Logger;
 
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -146,10 +149,15 @@ public abstract class NodeDao  {
 	
 
 
-	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException {
+	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
 		Logger.trace("Method Start");
+		List<ODocument> result = new ArrayList<ODocument>();
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
-		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException(e);
+		}
 		Logger.trace("Method End");
 		return result;
 	}
