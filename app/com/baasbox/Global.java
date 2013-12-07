@@ -226,6 +226,7 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
+		  result.put("http_code", 400);
 		  return badRequest(result);
 		  
 	  }  
