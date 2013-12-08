@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import play.Logger;
 
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 
@@ -70,7 +72,12 @@ public class GenericDao {
 	
 	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
 		OCommandRequest command = DbHelper.selectCommandBuilder(oclass, false, criteria);
-		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		List<ODocument> result = null;
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
 		return result;
 	}
 	

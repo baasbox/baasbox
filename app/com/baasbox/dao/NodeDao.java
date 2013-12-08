@@ -16,7 +16,6 @@
  */
 package com.baasbox.dao;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -92,17 +92,33 @@ public abstract class NodeDao  {
 			throw new InvalidModelException();
 	}
 
-	public Integer updateByQuery(String query){
+	public Integer updateByQuery(String query) throws InvalidCriteriaException{
 		OCommandRequest command = db.command(new OCommandSQL(
 				query
 				));
-		return DbHelper.sqlCommandExecute(command, null);
+		Integer records=null;
+		try{
+			records=DbHelper.sqlCommandExecute(command, null);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
+		return records;
 	}
 	
-	public List<ODocument> selectByQuery(String query){
-		return DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
+	public List<ODocument> selectByQuery(String query) throws InvalidCriteriaException{
+		List<ODocument> list=null;
+		try{
+			list = DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
 				query
 				), null);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}	
+		return list;
 	}
 	
 	public ODocument create() throws Throwable {
@@ -151,12 +167,14 @@ public abstract class NodeDao  {
 
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
 		Logger.trace("Method Start");
-		List<ODocument> result = new ArrayList<ODocument>();
+		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		}catch (OQueryParsingException e ){
-			throw new InvalidCriteriaException(e);
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
 		}
 		Logger.trace("Method End");
 		return result;
@@ -237,8 +255,15 @@ public abstract class NodeDao  {
 	
 	public long getCount(QueryParams criteria) throws SqlInjectionException{
 		Logger.trace("Method Start");
+		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, true, criteria);
-		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
 		Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();
 	}

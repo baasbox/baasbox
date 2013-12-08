@@ -18,13 +18,10 @@
 // @author: Marco Tibuzzi
 
 import static play.test.Helpers.GET;
-import static play.test.Helpers.POST;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.contentAsString;
-import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.status;
 import static play.test.Helpers.testServer;
 
 import java.util.HashMap;
@@ -55,7 +52,22 @@ public class FileGetTest extends AbstractFileTest{
 	@Override
 	public String getRouteAddress()
 	{
+		return "/file/details";
+	}
+	
+	public String getPostServerRouteAddress()
+	{
+		return TestConfig.SERVER_URL +"/file";
+	}
+	
+	public String getStreamFileRouteAddress()
+	{
 		return "/file";
+	}
+
+	public String getAttachedDataFileRouteAddress()
+	{
+		return "/file/attachedData";
 	}
 	
 	@Override
@@ -99,12 +111,12 @@ public class FileGetTest extends AbstractFileTest{
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();
 					setFile("/logo_baasbox_lp.png", "image/png");
-					httpRequest(getURLAddress(), POST, mParametersFile);
+					httpRequest(getPostServerRouteAddress(), POST, mParametersFile);
 					assertServer(sTestName + " create", Status.CREATED, null, true);
 					String uuid1=getUuid();
 					
 					//get it
-					FakeRequest request = new FakeRequest(GET, getRouteAddress() + "/"+uuid1);
+					FakeRequest request = new FakeRequest(GET, getStreamFileRouteAddress() + "/"+uuid1);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result = routeAndCall(request);
@@ -112,7 +124,7 @@ public class FileGetTest extends AbstractFileTest{
 					Assert.assertEquals(sTestName + " download 1", "image/png", contentType);
 					
 					//download it
-					request = new FakeRequest(GET, getRouteAddress() + "/download/"+uuid1);
+					request = new FakeRequest(GET, getStreamFileRouteAddress() + "/download/"+uuid1);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
@@ -120,7 +132,7 @@ public class FileGetTest extends AbstractFileTest{
 					Assert.assertEquals(sTestName + " download 2", "attachment; filename=\"logo_baasbox_lp.png\"", contentDisposition);
 					
 					//get its attached data
-					request = new FakeRequest(GET, getRouteAddress() + "/attachedData/"+uuid1);
+					request = new FakeRequest(GET, getAttachedDataFileRouteAddress() + "/"+uuid1);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result1 = routeAndCall(request);

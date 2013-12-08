@@ -30,6 +30,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
@@ -93,7 +94,7 @@ public class DocumentService {
 		return doc;
 	}
 
-	public static ODocument get(String collectionName,String rid,PartsParser parser) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
+	public static ODocument get(String collectionName,String rid,PartsParser parser) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException, InvalidCriteriaException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
 		if(parser.isMultiField()){

@@ -52,7 +52,7 @@ public class FileService {
 
 		public static List<ODocument> getFiles(QueryParams criteria) throws SqlInjectionException {
 			FileDao dao = FileDao.getInstance();
-			return dao.get(criteria);
+			return dao.get(criteria); 
 		}
 
 
