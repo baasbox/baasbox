@@ -47,6 +47,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.Permissions;
@@ -107,14 +108,8 @@ public class File extends Controller {
 			    	contentType = URLConnection.guessContentTypeFromStream(is);
 			    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
 			    }
-			    try{
-			    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
-			    	ret=prepareResponseToJson(doc);
-			    }catch (ORecordDuplicatedException e){
-			    	return badRequest("An file with the same name already exists");
-			    }catch (OIndexException e){
-			    	return badRequest("An file with the same name already exists");
-			    }
+		    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
+		    	ret=prepareResponseToJson(doc);
 			}else{
 				return badRequest("missing '"+FILE_FIELD_NAME+"' field");
 			}
@@ -152,6 +147,8 @@ public class File extends Controller {
 		List<ODocument> listOfFiles;
 		try {
 			listOfFiles = FileService.getFiles(criteria);
+		} catch (InvalidCriteriaException e) {
+			return badRequest(e.getMessage()!=null?e.getMessage():"");
 		} catch (SqlInjectionException e) {
 			return badRequest("the supplied criteria appear invalid (Sql Injection Attack detected)");
 		}

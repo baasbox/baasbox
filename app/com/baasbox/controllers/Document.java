@@ -43,6 +43,7 @@ import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
@@ -192,6 +193,8 @@ public class Document extends Controller {
 				return notFound(id + " not found"); 
 			} catch (RidNotFoundException e) {
 				return notFound(e.getMessage());
+			} catch (InvalidCriteriaException e) {
+				return badRequest(e.getMessage()!=null?e.getMessage():"");
 			}
 			Logger.trace("Method End");
 
