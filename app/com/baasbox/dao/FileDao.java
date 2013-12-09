@@ -37,7 +37,7 @@ public class FileDao extends NodeDao  {
 		file.field(BINARY_FIELD_NAME,record);
 		file.field(FILENAME_FIELD_NAME,fileName);
 		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
-		file.field(CONTENT_LENGTH_FIELD_NAME,content.length);
+		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(content.length));
 		return file;
 	}
 	
