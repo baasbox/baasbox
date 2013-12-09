@@ -19,17 +19,17 @@ package com.baasbox.dao;
 import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import play.Logger;
 
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -81,6 +81,7 @@ public class UserDao extends NodeDao  {
 	};
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException,InvalidParameterException {
+		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
 		OUser user=null;
 		if (role==null) user=db.getMetadata().getSecurity().createUser(username,password,new 

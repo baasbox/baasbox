@@ -35,13 +35,13 @@ import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -56,7 +56,7 @@ public class StatisticsService {
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
-			OGraphDatabase db = DbHelper.getConnection();
+			ODatabaseRecordTx db = DbHelper.getConnection();
 			
 			long usersCount =userDao.getCount();
 			long assetsCount = assetDao.getCount();
@@ -111,7 +111,7 @@ public class StatisticsService {
 		
 		public static ImmutableMap db() {
 			Logger.trace("Method Start");
-			OGraphDatabase db = DbHelper.getConnection();
+			ODatabaseRecordTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
@@ -133,12 +133,22 @@ public class StatisticsService {
 		
 		public static ImmutableMap os() {
 			Logger.trace("Method Start");
-			ImmutableMap response = ImmutableMap.of(
-					"os_name", System.getProperty("os.name"),
-					"os_arch",  System.getProperty("os.arch"),
-					"os_version",  System.getProperty("os.version"),
-					"processors",  Runtime.getRuntime().availableProcessors()
-					);
+			ImmutableMap response=null;
+			if (BBConfiguration.getStatisticsSystemOS()){
+				response = ImmutableMap.of(
+						"os_name", System.getProperty("os.name"),
+						"os_arch",  System.getProperty("os.arch"),
+						"os_version",  System.getProperty("os.version"),
+						"processors",  Runtime.getRuntime().availableProcessors()
+						);
+			}else{
+				response = ImmutableMap.of(
+						"os_name", "N/A",
+						"os_arch", "N/A",
+						"os_version",  "N/A",
+						"processors",  0
+						);				
+			}
 			Logger.trace("Method End");
 			return response;
 		}
@@ -157,16 +167,28 @@ public class StatisticsService {
 		
 		public static ImmutableMap memory() {
 			Logger.trace("Method Start");
-			Runtime rt = Runtime.getRuntime(); 
-			long maxMemory=rt.maxMemory();
-			long freeMemory=rt.freeMemory();
-			long totalMemory=rt.totalMemory();
-			ImmutableMap response = ImmutableMap.of(
-					"max_allocable_memory",maxMemory,
-					"current_allocate_memory", totalMemory,
-					"used_memory_in_the_allocate_memory",totalMemory - freeMemory,
-					"free_memory_in_the_allocated_memory", freeMemory
-					);
+			ImmutableMap response=null;
+
+			if (BBConfiguration.getStatisticsSystemMemory()){
+				Runtime rt = Runtime.getRuntime(); 
+				long maxMemory=rt.maxMemory();
+				long freeMemory=rt.freeMemory();
+				long totalMemory=rt.totalMemory();
+				response = ImmutableMap.of(
+						"max_allocable_memory",maxMemory,
+						"current_allocate_memory", totalMemory,
+						"used_memory_in_the_allocate_memory",totalMemory - freeMemory,
+						"free_memory_in_the_allocated_memory", freeMemory
+						);
+			}else{
+				response = ImmutableMap.of(
+						"max_allocable_memory",0,
+						"current_allocate_memory", 0,
+						"used_memory_in_the_allocate_memory",0 ,
+						"free_memory_in_the_allocated_memory", 0
+						);
+			}
+			
 			Logger.trace("Method End");
 			return response;
 		}	

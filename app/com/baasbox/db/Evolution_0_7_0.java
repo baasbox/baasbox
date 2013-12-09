@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 
 import play.Logger;
 
@@ -17,7 +16,7 @@ import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -64,7 +63,7 @@ public class Evolution_0_7_0 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(OGraphDatabase db) {
+	public void evolve(ODatabaseRecordTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			edgeAndClassOptimization(db);	
@@ -82,7 +81,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
-	private void edgeAndClassOptimization(OGraphDatabase db) {
+	private void edgeAndClassOptimization(ODatabaseRecordTx db) {
 		Logger.info("...enabling edges and vertexes optimization attributes..:");
 		ATTRIBUTES attribute = ODatabase.ATTRIBUTES.CUSTOM;
 		((ODatabaseComplex<?>) db).setInternal(attribute,  "useLightweightEdges=false");
@@ -98,7 +97,7 @@ public class Evolution_0_7_0 implements IEvolution {
 	}
 	
 	
-	private void createNewIndexClass(OGraphDatabase db){
+	private void createNewIndexClass(ODatabaseRecordTx db){
 		Logger.info("...creating INDEX CLASS...");
 		OClass indexClass = db.getMetadata().getSchema().createClass(IndexDao.MODEL_NAME);
 		OProperty keyProp = indexClass.createProperty("key", OType.STRING);
@@ -106,7 +105,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		keyProp.setNotNull(true).setMandatory(true);
 	}
 	
-	private void updateIndices(OGraphDatabase db){
+	private void updateIndices(ODatabaseRecordTx db){
 		List<String> indicesName = Arrays.asList(new String [] {
 				"_bb_internal",
 				"_bb_application",

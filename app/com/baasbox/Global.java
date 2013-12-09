@@ -44,11 +44,10 @@ import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.typesafe.config.Config;
 
 public class Global extends GlobalSettings {
 	
@@ -89,7 +88,7 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase ( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -117,7 +116,7 @@ public class Global extends GlobalSettings {
 		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
 
-	    OGraphDatabase db =null;
+	    ODatabaseRecordTx db =null;
 	    try{
 	    	if (justCreated){
 		    	try {
@@ -190,7 +189,7 @@ public class Global extends GlobalSettings {
 	    info("BaasBox is shutting down...");
 	    try{
 	    	info("Closing the DB connections...");
-	    	OGraphDatabasePool.global().close();
+	    	ODatabaseDocumentPool.global().close();
 	    	info("Shutting down embedded OrientDB Server");
 	    	Orient.instance().shutdown();
 	    	info("...ok");
@@ -227,6 +226,7 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
+		  result.put("http_code", 400);
 		  return badRequest(result);
 		  
 	  }  

@@ -47,16 +47,16 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.ResetPasswordException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.RoleIsNotAssignableException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -99,7 +99,7 @@ public class UserService {
 
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
-		return getUserProfilebyUsername(DbHelper.getCurrentUserName());
+		return getUserProfilebyUsername(DbHelper.getCurrentUserNameFromConnection());
 	}
 
 	public static OUser getOUserByUsername(String username){
@@ -183,7 +183,7 @@ public class UserService {
             JsonNode appUsersAttributes,boolean generated) throws Exception{
 
 
-OGraphDatabase db =  DbHelper.getConnection();
+ODatabaseRecordTx db =  DbHelper.getConnection();
 ODocument profile=null;
 UserDao dao = UserDao.getInstance();
 try{
@@ -389,7 +389,7 @@ return profile;
 	}//updateProfile with role
 
 	public static void changePasswordCurrentUser(String newPassword) {
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();

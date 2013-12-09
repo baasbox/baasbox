@@ -2,20 +2,17 @@ package com.baasbox.dao;
 
 import java.util.List;
 
-import javax.ws.rs.QueryParam;
-
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.IndexNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class IndexDao{
 	public final String INDEX_NAME;
 	public static final String MODEL_NAME = "_BB_Index";
-	protected OGraphDatabase db;
+	protected ODatabaseRecordTx db;
 	
 	protected IndexDao(String indexName) throws IndexNotFoundException {
 		this.INDEX_NAME=indexName.toUpperCase();

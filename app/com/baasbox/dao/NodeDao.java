@@ -22,25 +22,28 @@ import java.util.List;
 import java.util.UUID;
 
 import play.Logger;
-import ch.qos.logback.classic.db.DBHelper;
 
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
-import com.baasbox.exception.DocumentNotFoundException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -58,7 +61,7 @@ public abstract class NodeDao  {
 	public static final String EDGE_CLASS_CREATED = "Created";
 	
 
-	protected OGraphDatabase db;
+	protected ODatabaseRecordTx db;
 
 	 
 	public NodeDao(String modelName) {
@@ -89,21 +92,38 @@ public abstract class NodeDao  {
 			throw new InvalidModelException();
 	}
 
-	public Integer updateByQuery(String query){
+	public Integer updateByQuery(String query) throws InvalidCriteriaException{
 		OCommandRequest command = db.command(new OCommandSQL(
 				query
 				));
-		return DbHelper.sqlCommandExecute(command, null);
+		Integer records=null;
+		try{
+			records=DbHelper.sqlCommandExecute(command, null);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
+		return records;
 	}
 	
-	public List<ODocument> selectByQuery(String query){
-		return DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
+	public List<ODocument> selectByQuery(String query) throws InvalidCriteriaException{
+		List<ODocument> list=null;
+		try{
+			list = DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
 				query
 				), null);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}	
+		return list;
 	}
 	
 	public ODocument create() throws Throwable {
 		Logger.trace("Method Start");
+		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.createVertex(CLASS_VERTEX_NAME);
@@ -145,10 +165,17 @@ public abstract class NodeDao  {
 	
 
 
-	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException {
+	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
 		Logger.trace("Method Start");
+		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
-		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
 		Logger.trace("Method End");
 		return result;
 	}
@@ -223,13 +250,20 @@ public abstract class NodeDao  {
 
 	
 	public long getCount(){
-		return db.countClass(MODEL_NAME);
+		return DbHelper.getODatabaseDocumentTxConnection().countClass(MODEL_NAME);
 	}
 	
 	public long getCount(QueryParams criteria) throws SqlInjectionException{
 		Logger.trace("Method Start");
+		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, true, criteria);
-		List<ODocument> result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
 		Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();
 	}
@@ -244,6 +278,7 @@ public abstract class NodeDao  {
 	
 	public void delete(ORID rid) throws Throwable{
 		Logger.trace("Method Start");
+		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		//retrieve the vertex associated to this node
 		try{
 			DbHelper.requestTransaction();

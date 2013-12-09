@@ -1,4 +1,4 @@
-package com.baasbox.exception;
+package com.baasbox.dao.exception;
 
 public class DocumentNotFoundException extends Exception {
 

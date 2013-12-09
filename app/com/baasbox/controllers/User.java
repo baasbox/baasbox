@@ -50,10 +50,10 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.ResetPasswordException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
@@ -62,7 +62,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -483,7 +483,7 @@ public class User extends Controller {
 
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
-		  OGraphDatabase db=null;
+		  ODatabaseRecordTx db=null;
 		  JsonNode user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);

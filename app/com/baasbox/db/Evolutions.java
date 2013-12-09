@@ -7,7 +7,7 @@ import java.util.TreeMap;
 
 import play.Logger;
 
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public class Evolutions {
 	private  TreeMap<String,IEvolution> me = new TreeMap<String,IEvolution>();
@@ -16,7 +16,7 @@ public class Evolutions {
 	 * Executes db evolutions from the given version (excluded) that is supposed to be the current one
 	 * @param fromVersion
 	 */
-	public static void performEvolutions(OGraphDatabase db,String fromVersion){
+	public static void performEvolutions(ODatabaseRecordTx db,String fromVersion){
 		Evolutions evs=new Evolutions();
 		Collection<IEvolution> evolutions = evs.getEvolutionsFromVersion(fromVersion);
 		Logger.info("Found " + evolutions.size() + " evolutions to apply");
@@ -30,6 +30,8 @@ public class Evolutions {
 	
 	public Evolutions(){
 		IEvolution ev= (IEvolution)new Evolution_0_7_0();
+		me.put(ev.getFinalVersion(), ev);
+		ev= (IEvolution)new Evolution_0_7_3();
 		me.put(ev.getFinalVersion(), ev);
 	}
 	

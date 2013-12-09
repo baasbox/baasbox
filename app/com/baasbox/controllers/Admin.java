@@ -71,6 +71,7 @@ import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
 import com.baasbox.enumerations.DefaultRoles;
@@ -78,7 +79,6 @@ import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.role.RoleService;
 import com.baasbox.service.storage.CollectionService;
@@ -92,7 +92,7 @@ import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -192,7 +192,7 @@ public class Admin extends Controller {
 	}
 
 	public static Result getDBStatistics(){
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		ImmutableMap response;
 		try {
 			String bbId = Internal.INSTALLATION_ID.getValueAsString();
