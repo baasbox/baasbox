@@ -35,19 +35,33 @@ import play.mvc.Http.Context;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
+import play.mvc.Results;
 import play.mvc.With;
 
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.PermissionsHelper;
+import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidCriteriaException;
+import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.RoleNotFoundException;
+import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.storage.DocumentService;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.google.common.io.Files;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -94,14 +108,8 @@ public class File extends Controller {
 			    	contentType = URLConnection.guessContentTypeFromStream(is);
 			    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
 			    }
-			    try{
-			    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
-			    	ret=prepareResponseToJson(doc);
-			    }catch (ORecordDuplicatedException e){
-			    	return badRequest("An file with the same name already exists");
-			    }catch (OIndexException e){
-			    	return badRequest("An file with the same name already exists");
-			    }
+		    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
+		    	ret=prepareResponseToJson(doc);
 			}else{
 				return badRequest("missing '"+FILE_FIELD_NAME+"' field");
 			}
@@ -139,6 +147,8 @@ public class File extends Controller {
 		List<ODocument> listOfFiles;
 		try {
 			listOfFiles = FileService.getFiles(criteria);
+		} catch (InvalidCriteriaException e) {
+			return badRequest(e.getMessage()!=null?e.getMessage():"");
 		} catch (SqlInjectionException e) {
 			return badRequest("the supplied criteria appear invalid (Sql Injection Attack detected)");
 		}
@@ -196,7 +206,45 @@ public class File extends Controller {
 			}		  
 	  }//downloadFile
 	  
-	
+		@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+		public static Result grantOrRevokeToRole(String id,String rolename, String action, boolean grant) {
+			try {
+				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
+				if (grant) FileService.grantPermissionToRole(id, permission, rolename);
+				else       FileService.revokePermissionToRole(id, permission, rolename);
+			} catch (IllegalArgumentException e) {
+				return badRequest(e.getMessage());
+			} catch (RoleNotFoundException e) {
+				return notFound("role " + rolename + " not found");
+			} catch (OSecurityAccessException e ){
+				return Results.forbidden();
+			} catch (OSecurityException e ){
+				return Results.forbidden();				
+			} catch (Throwable e ){
+				return internalServerError(e.getMessage());
+			}
+			return ok();
+		}//grantOrRevokeToRole
+		
+		@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+		public static Result grantOrRevokeToUser(String id, String username, String action, boolean grant) {
+			try {
+				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
+				if (grant) FileService.grantPermissionToUser(id, permission, username);
+				else       FileService.revokePermissionToUser(id, permission, username);
+			} catch (IllegalArgumentException e) {
+				return badRequest(e.getMessage());
+			} catch (RoleNotFoundException e) {
+				return notFound("user " + username + " not found");
+			} catch (OSecurityAccessException e ){
+				return Results.forbidden();
+			} catch (OSecurityException e ){
+				return Results.forbidden();				
+			} catch (Throwable e ){
+				return internalServerError(e.getMessage());
+			}
+			return ok();
+		}//grantOrRevokeToUser
 		
 	  public static Result updateAttachedData(){
 		  return status(NOT_IMPLEMENTED);

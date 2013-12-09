@@ -19,10 +19,13 @@
 
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
@@ -44,11 +47,27 @@ public class FileGetTest extends AbstractFileTest{
 	
 	private Object json = null;
 	
+	private String sTestName="FileGetTest";
 	
 	@Override
 	public String getRouteAddress()
 	{
+		return "/file/details";
+	}
+	
+	public String getPostServerRouteAddress()
+	{
+		return TestConfig.SERVER_URL +"/file";
+	}
+	
+	public String getStreamFileRouteAddress()
+	{
 		return "/file";
+	}
+
+	public String getAttachedDataFileRouteAddress()
+	{
+		return "/file/attachedData";
 	}
 	
 	@Override
@@ -79,25 +98,45 @@ public class FileGetTest extends AbstractFileTest{
 	{
 		running
 		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
+			testServer(TestConfig.SERVER_PORT), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
 				{
+					Map<String, String> mParametersFile = new HashMap<String, String>();
+					mParametersFile.put(PARAM_DATA, getPayload("/adminAssetCreateMeta.json").toString());
 					//create a file
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setMultipartFormData();
+					setFile("/logo_baasbox_lp.png", "image/png");
+					httpRequest(getPostServerRouteAddress(), POST, mParametersFile);
+					assertServer(sTestName + " create", Status.CREATED, null, true);
+					String uuid1=getUuid();
 					
 					//get it
-					
-					//download it
-					
-					//get its attached data
-					
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					FakeRequest request = new FakeRequest(GET, getStreamFileRouteAddress() + "/"+uuid1);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testRouteGet", Status.OK, null, false);
+					String contentType=play.test.Helpers.header("Content-Type", result);
+					Assert.assertEquals(sTestName + " download 1", "image/png", contentType);
+					
+					//download it
+					request = new FakeRequest(GET, getStreamFileRouteAddress() + "/download/"+uuid1);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					String contentDisposition=play.test.Helpers.header("Content-Disposition", result);
+					Assert.assertEquals(sTestName + " download 2", "attachment; filename=\"logo_baasbox_lp.png\"", contentDisposition);
+					
+					//get its attached data
+					request = new FakeRequest(GET, getAttachedDataFileRouteAddress() + "/"+uuid1);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result1 = routeAndCall(request);
+					assertRoute(result1, sTestName + " attachedData", Status.OK, "\"name\":\"Margherita\"", true);
 				}
 			}
 		);		
