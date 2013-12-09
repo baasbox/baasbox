@@ -64,9 +64,6 @@ public class ExportJob implements Runnable{
 
 		}catch(Exception e){
 			Logger.error(e.getMessage());
-			if(e instanceof UnableToExportDbException){
-				((UnableToExportDbException)e).printStackTrace();
-			}
 		}finally{
 			try{
 				if(zip!=null)
