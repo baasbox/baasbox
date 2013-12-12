@@ -257,7 +257,7 @@ public class Asset extends Controller{
 	
 	private static Result postFile() throws  Throwable{
 		MultipartFormData  body = request().body().asMultipartFormData();
-		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+		if (body==null) return badRequest("missing data: is the body multipart/form-data? Check if it contains boundaries too!");
 		FilePart file = body.getFile("file");
 		Map<String, String[]> data=body.asFormUrlEncoded();
 		String[] meta=data.get("meta");
