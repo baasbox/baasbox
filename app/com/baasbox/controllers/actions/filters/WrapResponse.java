@@ -145,7 +145,7 @@ public class WrapResponse {
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
 			Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
-			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
 			if (ctx.response().getHeaders().get("Content-Type")!=null 
 		    		&& 
 		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
@@ -186,7 +186,7 @@ public class WrapResponse {
 			Logger.debug("The response will not be wrapped due configuration parameter");
 		}
 
-	    Logger.debug("  + result: \n" + result.toString() + "\n" + result.getWrappedResult());
+	    Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		Logger.trace("Method End");
 		
 	    return result;
