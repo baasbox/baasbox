@@ -59,15 +59,14 @@ public class GenericDao {
 	}
 	
 	public ORID getRidByUUID(UUID id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
-		ORID rid = (ORID) index.get(id.toString());
-		return rid;
+		return getRidByUUID(id.toString());
 	}
 	
 	public ORID getRidByUUID(String id){
-		  UUID uuid=UUID.fromString(id);
-		  return getRidByUUID(uuid);
+		ODatabaseRecordTx db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
+		ORID rid = (ORID) index.get(id);  
+		return rid;
 	}
 	
 	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
