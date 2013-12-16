@@ -89,8 +89,11 @@ public class File extends Controller {
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result storeFile() throws  Throwable {
 		  MultipartFormData  body = request().body().asMultipartFormData();
-			if (body==null) return badRequest("missing data: is the body multipart/form-data?");
-			FilePart file = body.getFile(FILE_FIELD_NAME);
+			if (body==null) return badRequest("missing data: is the body multipart/form-data? Check if it contains boundaries too! " );
+			//FilePart file = body.getFile(FILE_FIELD_NAME);
+			List<FilePart> files = body.getFiles();
+			FilePart file = null;
+			if (!files.isEmpty()) file = files.get(0);
 			Map<String, String[]> data=body.asFormUrlEncoded();
 			String[] datas=data.get(DATA_FIELD_NAME);
 			String ret="";
@@ -111,7 +114,7 @@ public class File extends Controller {
 		    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
 		    	ret=prepareResponseToJson(doc);
 			}else{
-				return badRequest("missing '"+FILE_FIELD_NAME+"' field");
+				return badRequest("missing the file data in the body payload");
 			}
 		  return created(ret);
 	  }//storeFile()

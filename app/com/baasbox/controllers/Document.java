@@ -142,14 +142,14 @@ public class Document extends Controller {
 	}		
 
 	private static String getRidByString(String id , boolean isUUID) throws RidNotFoundException {
-		String rid="#"+id;
+		String rid=null;
 		if (isUUID) {
 			Logger.debug("id is an UUID, try to get a valid RID");
 			ORID orid=GenericDao.getInstance().getRidByUUID(id);
 			if (orid==null) throw new RidNotFoundException(id);
 			rid = orid.toString();
 			Logger.debug("Retrieved RID: " + rid);
-		}
+		}else rid="#"+id;
 		return rid;
 	}
 
@@ -279,23 +279,18 @@ public class Document extends Controller {
 			Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
+			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
 			Logger.trace("updateDocument collectionName: " + collectionName);
 			Logger.trace("updateDocument id: " + id);
-			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			ODocument document=null;
 			try{
-				String rid="#"+id;
-				if (isUUID) {
-					Logger.debug("id is an UUID, try to get a valid RID");
-					ORID orid=GenericDao.getInstance().getRidByUUID(id);
-					if (orid==null) return notFound("UUID " + id + " not found");
-					rid = orid.toString();
-					Logger.debug("Retrieved RID: " + rid);
-				}
-				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);   
+				String rid=getRidByString(id,isUUID);
+				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);  
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
+			}catch (RidNotFoundException e){
+				return notFound("id " + id + " not found");
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
@@ -373,15 +368,10 @@ public class Document extends Controller {
 			Logger.trace("deleteDocument collectionName: " + collectionName);
 			Logger.trace("deleteDocument rid: " + id);
 			try {
-				String rid="#"+id;
-				if (isUUID) {
-					Logger.debug("id is an UUID, try to get a valid RID");
-					ORID orid=GenericDao.getInstance().getRidByUUID(id);
-					if (orid==null) return notFound("UUID " + id + " not found");
-					rid = orid.toString();
-					Logger.debug("Retrieved RID: " + rid);
-				}
+				String rid=getRidByString(id,isUUID);
 				DocumentService.delete(collectionName,rid);
+			}catch (RidNotFoundException e){
+				return notFound("id  " + id + " not found");  
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to delete " + id);  
 			} catch (InvalidCollectionException e) {
@@ -445,18 +435,13 @@ public class Document extends Controller {
 				String username, String action, boolean grant, boolean isUUID) {
 			try {
 				//converts uuid in rid
-				String rid="#"+id;
-				if (isUUID) {
-					Logger.debug("id is an UUID, try to get a valid RID");
-					ORID orid=GenericDao.getInstance().getRidByUUID(id);
-					if (orid==null) return notFound("UUID " + id + " not found");
-					rid = orid.toString();
-					Logger.debug("Retrieved RID: " + rid);
-				}			
+				String rid=getRidByString(id,isUUID);			
 				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
 				if (permission==null) return badRequest(action + " is not a valid action");
 				if (grant) DocumentService.grantPermissionToUser(collectionName, rid, permission, username);
 				else       DocumentService.revokePermissionToUser(collectionName, rid, permission, username);
+			} catch (RidNotFoundException e) {
+				return notFound("id " + id + " not found");
 			} catch (IllegalArgumentException e) {
 				return badRequest(e.getMessage());
 			} catch (UserNotFoundException e) {
@@ -483,16 +468,11 @@ public class Document extends Controller {
 				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
 				if (permission==null) return badRequest(action + " is not a valid action");
 				//converts uuid in rid
-				String rid="#"+id;
-				if (isUUID) {
-					Logger.debug("id is an UUID, try to get a valid RID");
-					ORID orid=GenericDao.getInstance().getRidByUUID(id);
-					if (orid==null) return notFound("UUID " + id + " not found");
-					rid = orid.toString();
-					Logger.debug("Retrieved RID: " + rid);
-				}
+				String rid = getRidByString(id, isUUID);
 				if (grant) DocumentService.grantPermissionToRole(collectionName, rid, permission, rolename);
 				else       DocumentService.revokePermissionToRole(collectionName, rid, permission, rolename);
+			} catch (RidNotFoundException e) {
+				return notFound("id " + id + " no found");
 			} catch (IllegalArgumentException e) {
 				return badRequest(e.getMessage());
 			} catch (RoleNotFoundException e) {

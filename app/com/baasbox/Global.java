@@ -23,6 +23,8 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import java.io.UnsupportedEncodingException;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -31,8 +33,10 @@ import org.codehaus.jackson.node.ObjectNode;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
+import play.Logger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
+import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
@@ -227,8 +231,13 @@ public class Global extends GlobalSettings {
 	  public Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 400);
-		  return badRequest(result);
-		  
+		  Result resultToReturn =  badRequest(result);
+		  try {
+			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  } catch (UnsupportedEncodingException e) {
+				//
+		  }
+		  return resultToReturn;
 	  }  
 
 	// 404
@@ -237,8 +246,13 @@ public class Global extends GlobalSettings {
 		  debug("API not found: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
-		  return notFound(result);
-		  
+		  Result resultToReturn= notFound(result);
+		  try {
+			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  } catch (UnsupportedEncodingException e) {
+				//
+		  }
+		  return resultToReturn;
 	    }
 
 	  // 500 - internal server error
@@ -249,8 +263,13 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
-		  return internalServerError(result);
-		  
+		  Result resultToReturn= internalServerError(result);
+		  try {
+			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  } catch (UnsupportedEncodingException e) {
+				//
+		  }
+		  return resultToReturn;
 	  }
 
 
