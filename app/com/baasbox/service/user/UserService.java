@@ -551,7 +551,8 @@ return profile;
 
 	}
 
-
+	
+	
 	public static void moveUsersToRole(String from, String to) {
 		String sqlAdd="update ouser add roles = {TO_ROLE} where roles contains {FROM_ROLE}";
 		String sqlRemove="update ouser remove roles = {FROM_ROLE} where roles contains {FROM_ROLE}";
@@ -566,6 +567,25 @@ return profile;
 		
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {});
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {});
+	}
+	
+	public static void addUserToRole(String username,String role){
+		DbHelper.reconnectAsAdmin();
+		String sqlAdd="update ouser add roles = {TO_ROLE} where name = ?";
+		ORole toRole=RoleDao.getRole(role);
+		ORID toRID=toRole.getDocument().getRecord().getIdentity();
+		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString());
+		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
+		
+	}
+	
+	public static void removeUserFromRole(String username,String role){
+		DbHelper.reconnectAsAdmin();
+		String sqlRemove="update ouser remove roles = {FROM_ROLE} where roles contains {FROM_ROLE} and name = ?";
+		ORole fromRole=RoleDao.getRole(role);
+		ORID fromRID=fromRole.getDocument().getRecord().getIdentity();
+		sqlRemove=sqlRemove.replace("{FROM_ROLE}", fromRID.toString());
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
 	}
 	
 	public static void moveUserToRole(String username,String from, String to) {
@@ -596,6 +616,11 @@ return profile;
 	
 	public static void enableUser(String username) throws UserNotFoundException{
 		UserDao.getInstance().enableUser(username);
+	}
+
+	public static List<ODocument> getUserProfilebyUsernames(List<String> usernames) throws SqlInjectionException {
+		return UserDao.getInstance().getByUsernames(usernames);
+		
 	}
 
 }
