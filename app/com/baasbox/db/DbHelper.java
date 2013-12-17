@@ -229,10 +229,9 @@ public class DbHelper {
 				if(!dbFreeze.get()){
 					dbFreeze.set(true);
 				}
-
-				db.drop();
 				db.getLevel1Cache().clear();
 				db.getLevel2Cache().clear();
+				db.drop();
 				db.create();
 				if(repopulate){
 					HooksManager.registerAll(db);
