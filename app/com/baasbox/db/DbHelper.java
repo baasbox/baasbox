@@ -231,6 +231,8 @@ public class DbHelper {
 				}
 
 				db.drop();
+				db.getLevel1Cache().clear();
+				db.getLevel2Cache().clear();
 				db.create();
 				if(repopulate){
 					HooksManager.registerAll(db);
