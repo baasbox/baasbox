@@ -61,6 +61,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -550,6 +551,9 @@ public class User extends Controller {
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result follow(String toFollowUsername){
+		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			  		return badRequest("Cannot follow internal users");
 		  String currentUsername = DbHelper.currentUsername();
 		  OUser me = null;
 		  try{
@@ -560,16 +564,8 @@ public class User extends Controller {
 			 return internalServerError(e.getMessage()); 
 		  }
 		  if(UserService.exists(toFollowUsername)){
-			OUser userToFollow = UserService.getOUserByUsername(toFollowUsername);
-			Set<ORole> roles = me.getRoles();
-			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+userToFollow.getName();
-			boolean alreadyFriendOf = false;
-			for (ORole oRole : roles) {
-				if(oRole.getName().equals(friendshipRoleName)){
-					alreadyFriendOf = true;
-					break;
-				}
-			}
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
 			if(!alreadyFriendOf){
 				UserService.addUserToRole(me.getName(), friendshipRoleName);
 				return created();
@@ -620,18 +616,10 @@ public class User extends Controller {
 			 return internalServerError(e.getMessage()); 
 		  }
 		  if(UserService.exists(toUnfollowUsername)){
-			OUser userToFollow = UserService.getOUserByUsername(toUnfollowUsername);
-			Set<ORole> roles = me.getRoles();
-			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+userToFollow.getName();
-			boolean alreadyFriendOf = false;
-			for (ORole oRole : roles) {
-				if(oRole.getName().equals(friendshipRoleName)){
-					alreadyFriendOf = true;
-					break;
-				}
-			}
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
 			if(alreadyFriendOf){
-				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+userToFollow.getName());
+				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
 				return ok();
 		  	}else{
 		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);

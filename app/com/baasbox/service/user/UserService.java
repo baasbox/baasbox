@@ -570,22 +570,36 @@ return profile;
 	}
 	
 	public static void addUserToRole(String username,String role){
-		DbHelper.reconnectAsAdmin();
+		boolean admin = false;
+		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
+			DbHelper.reconnectAsAdmin();
+			admin = true;
+		}
 		String sqlAdd="update ouser add roles = {TO_ROLE} where name = ?";
 		ORole toRole=RoleDao.getRole(role);
 		ORID toRID=toRole.getDocument().getRecord().getIdentity();
 		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString());
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
+		if(admin){
+			DbHelper.reconnectAsAuthenticatedUser();
+		}
 		
 	}
 	
 	public static void removeUserFromRole(String username,String role){
-		DbHelper.reconnectAsAdmin();
+		boolean admin = false;
+		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
+			DbHelper.reconnectAsAdmin();
+			admin = true;
+		}
 		String sqlRemove="update ouser remove roles = {FROM_ROLE} where roles contains {FROM_ROLE} and name = ?";
 		ORole fromRole=RoleDao.getRole(role);
 		ORID fromRID=fromRole.getDocument().getRecord().getIdentity();
 		sqlRemove=sqlRemove.replace("{FROM_ROLE}", fromRID.toString());
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
+		if(admin){
+			DbHelper.reconnectAsAuthenticatedUser();
+		}
 	}
 	
 	public static void moveUserToRole(String username,String from, String to) {
@@ -604,6 +618,8 @@ return profile;
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
 	}
+	
+	
 	
 	public static void disableUser(String username) throws UserNotFoundException{
 		UserDao.getInstance().disableUser(username);
