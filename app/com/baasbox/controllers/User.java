@@ -597,9 +597,12 @@ public class User extends Controller {
 			  return notFound("User "+toFollowUsername+" does not exists.");
 		  }
 	  }
-	  
+	  /***
+	   * Returns the user that the current user is following
+	   * @return
+	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result followers(){
+	  public static Result following(){
 		  String currentUsername = DbHelper.currentUsername();
 		  OUser me = null;
 		  try{
