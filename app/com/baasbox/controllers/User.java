@@ -26,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
@@ -104,7 +105,19 @@ public class User extends Controller {
 		  return ok(result);
 	  }
 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
+	  public static Result getUser(String username) throws SqlInjectionException{
+		  Logger.trace("Method Start");
+		  if (ArrayUtils.contains(
+				  new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
+				  username)) return badRequest(username + " cannot be queried");
+		  ODocument profile = UserService.getUserProfilebyUsername(username);
+		  String result=prepareResponseToJson(profile);
+		  Logger.trace("Method End");
+		  return ok(result);
+	  }
 
+	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp(){
@@ -568,14 +581,20 @@ public class User extends Controller {
 			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
 			if(!alreadyFriendOf){
 				UserService.addUserToRole(me.getName(), friendshipRoleName);
-				return created();
+				ODocument userToFollowObject;
+				try {
+					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
+				} catch (SqlInjectionException e) {
+					return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
+				}
+				return created(prepareResponseToJson(userToFollowObject));
 			}else{
 				return badRequest("User "+me.getName()+" is already a friend of "+toFollowUsername);
 			}
 			
 			
 		  }else{
-			  return notFound("User "+me.getName()+" does not exists.");
+			  return notFound("User "+toFollowUsername+" does not exists.");
 		  }
 	  }
 	  

@@ -77,7 +77,7 @@ public class FriendshipUserTest extends AbstractTest{
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(follower, "passw1"));
 		
 		Result result = routeAndCall(request);
-		assertRoute(result, "Create friendship.", Status.CREATED, null, false);
+		assertRoute(result, "Create friendship.", Status.CREATED, "+39334060606",true);
 
 		
 	}
@@ -90,7 +90,7 @@ public class FriendshipUserTest extends AbstractTest{
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(follower, "passw1"));
 		
 		Result result = routeAndCall(request);
-		assertRoute(result, "Create friendship.", Status.NOT_FOUND, null, false);
+		assertRoute(result, "Create friendship.", Status.NOT_FOUND, "User "+toFollow+" does not exists.", true);
 
 		
 	}
@@ -104,7 +104,15 @@ public class FriendshipUserTest extends AbstractTest{
 		
 		Result result = routeAndCall(request);
 		assertRoute(result, "Delete friendship.", Status.OK, null, false);
-
+		//now if I ask for the ex-friend profile, I couldn't see its FriendAttributes fields
+		
+		request = new FakeRequest(GET, "/user/"+toUnfollow);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(follower, "passw1"));
+		result = routeAndCall(request);
+		assertRoute(result, "Check no friendship.", Status.OK, null, false);
+		String resultString = contentAsString(result);
+		if (resultString.contains("+39334060606")) assertFail("FriendshipUserTest (routeDeleteFollowRelationship) failed! The ex-friend still see private fields!");
 		
 	}
 	
@@ -183,9 +191,7 @@ public class FriendshipUserTest extends AbstractTest{
 						JSONObject followersJson = (JSONObject)toJSON(contentAsString(getFollowersResult));
 						
 						//assertEquals(secondUser,followersJson.getString("name"));
-						
-					
-						
+
 						routeDeleteFollowRelationship(firstUser,secondUser);
 						getDocumentResult = routeAndCall(fk);
 						assertRoute(getDocumentResult, "Get document by unknows", Status.NOT_FOUND, null, false);
