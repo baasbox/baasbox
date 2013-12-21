@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 
 
 
@@ -114,6 +115,13 @@ public class UserDao extends NodeDao  {
 		List<ODocument> resultList= super.get(criteria);
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 		return result;
+	}
+	
+	public List<ODocument> getByUsernames(List<String> usernames) throws SqlInjectionException{
+		QueryParams criteria = QueryParams.getInstance().where("user.name in ?").params(new Object [] {usernames});
+		List<ODocument> resultList= super.get(criteria);
+		
+		return resultList;
 	}
 
 	public ODocument getBySocialUserId(UserInfo ui) throws SqlInjectionException{

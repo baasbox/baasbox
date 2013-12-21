@@ -17,11 +17,13 @@
 package com.baasbox.controllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -45,9 +47,11 @@ import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
+import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -57,13 +61,17 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.role.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
@@ -539,6 +547,87 @@ public class User extends Controller {
 				return badRequest(e.getMessage());
 			}
 		  return ok();
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result follow(String toFollowUsername){
+		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			  		return badRequest("Cannot follow internal users");
+		  String currentUsername = DbHelper.currentUsername();
+		  OUser me = null;
+		  try{
+			
+			 me = UserService.getOUserByUsername(currentUsername);
+			
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  if(UserService.exists(toFollowUsername)){
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
+			if(!alreadyFriendOf){
+				UserService.addUserToRole(me.getName(), friendshipRoleName);
+				return created();
+			}else{
+				return badRequest("User "+me.getName()+" is already a friend of "+toFollowUsername);
+			}
+			
+			
+		  }else{
+			  return notFound("User "+me.getName()+" does not exists.");
+		  }
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	  public static Result followers(){
+		  String currentUsername = DbHelper.currentUsername();
+		  OUser me = null;
+		  try{
+			
+			 me = UserService.getOUserByUsername(currentUsername);
+			 Set<ORole> roles = me.getRoles();
+			 List<String> usernames = new ArrayList<String>();
+			 for (ORole oRole : roles) {
+				  
+				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
+					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
+				}
+			 }
+			 if(usernames.isEmpty()){
+				 return notFound();
+			 }else{
+				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
+				 return ok(prepareResponseToJson(followers));
+			 }
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result unfollow(String toUnfollowUsername){
+		  OUser me = null;
+		  String currentUsername = DbHelper.currentUsername();
+		  try{
+			 me = UserService.getOUserByUsername(currentUsername);
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  if(UserService.exists(toUnfollowUsername)){
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
+			if(alreadyFriendOf){
+				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				return ok();
+		  	}else{
+		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);
+		  	}
+			
+		  }else{
+			  return notFound("User "+me.getName()+" does not exists.");
+		  }  	
 	  }
 
 }
