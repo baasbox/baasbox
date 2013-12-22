@@ -38,7 +38,7 @@ public class FriendshipUserTest extends AbstractTest{
 	@Override
 	public String getRouteAddress()
 	{
-		return "/follower";
+		return "/follow";
 	}
 	
 	@Override 
@@ -183,12 +183,12 @@ public class FriendshipUserTest extends AbstractTest{
 						String author = createdDocument.getJSONObject("data").getString("_author");
 						assertEquals(secondUser,author);
 						
-						FakeRequest followers = new FakeRequest(GET, "/follower");
-						followers = followers.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						followers = followers.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
+						FakeRequest theFolloweds = new FakeRequest(GET, "/following");
+						theFolloweds = theFolloweds.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						theFolloweds = theFolloweds.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
 						
-						Result getFollowersResult = routeAndCall(followers);
-						JSONObject followersJson = (JSONObject)toJSON(contentAsString(getFollowersResult));
+						Result getTheFollowedResult = routeAndCall(theFolloweds);
+						JSONObject followersJson = (JSONObject)toJSON(contentAsString(getTheFollowedResult));
 						
 						//assertEquals(secondUser,followersJson.getString("name"));
 
