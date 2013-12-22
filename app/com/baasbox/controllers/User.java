@@ -73,10 +73,13 @@ import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -93,6 +96,18 @@ public class User extends Controller {
 	static String prepareResponseToJson(List<ODocument> listOfDoc) {
 		response().setContentType("application/json");
 		try {
+			for (ODocument doc : listOfDoc){
+				doc.detach();
+				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+				if (roles.size()>1){
+					Iterator<OIdentifiable> it = roles.iterator();
+					while (it.hasNext()){
+						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+					        it.remove();
+					    }
+					}
+				}
+			}
 			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
