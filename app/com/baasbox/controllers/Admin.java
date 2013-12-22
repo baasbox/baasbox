@@ -82,9 +82,9 @@ import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.role.RoleService;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.baasbox.util.IQueryParametersKeys;
@@ -794,25 +794,25 @@ public class Admin extends Controller {
 	 * POST /admin/Fw/:follower/to/:tofollow
 	 * Create a follow relationship beetwen user follower and user to follow
 	 * @param follower
-	 * @param toFollow
+	 * @param theFollowed
 	 * @return
 	 */
-	public static Result createFollowRelationship(String follower,String toFollow){
+	public static Result createFollowRelationship(String follower,String theFollowed){
 		/**
 		 * Test if the usernames provided do not match internal users' usernames 
 		 */
 		if ((follower.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 				follower.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())) || 
-				(toFollow.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
-						toFollow.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())))
+				(theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+						theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())))
 			return badRequest("Cannot create followship relationship with internal users");
 
 		boolean firstUserExists = UserService.exists(follower);
-		boolean secondUserExists = UserService.exists(toFollow);
+		boolean secondUserExists = UserService.exists(theFollowed);
 		if(firstUserExists && secondUserExists){
-			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +toFollow;
+			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
 			if(RoleService.hasRole(follower, friendshipRole)){
-				return badRequest("User "+follower+" is already a friend of "+toFollow);
+				return badRequest("User "+follower+" is already a friend of "+theFollowed);
 			}
 			try{
 				UserService.addUserToRole(follower,friendshipRole);
@@ -831,7 +831,7 @@ public class Admin extends Controller {
 				errorString.append(" ").append(follower).append(" ");
 			}
 			if(!secondUserExists){
-				errorString.append(" ").append(toFollow).append(" ");
+				errorString.append(" ").append(theFollowed).append(" ");
 			}
 			errorString.append(" does not exists on the db");
 			return notFound(errorString.toString());
@@ -847,16 +847,16 @@ public class Admin extends Controller {
 	 * @param toFollow
 	 * @return
 	 */
-	public static Result removeFollowRelationship(String follower,String toUnfollow){
+	public static Result removeFollowRelationship(String follower,String theFollowed){
 		/**
 		 * Test if the usernames provided do not match internal users' usernames 
 		 */
 		boolean firstUserExists = UserService.exists(follower);
-		boolean secondUserExists = UserService.exists(toUnfollow);
+		boolean secondUserExists = UserService.exists(theFollowed);
 		if(firstUserExists && secondUserExists){
-			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +toUnfollow;
+			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
 			if(!RoleService.hasRole(follower, friendshipRole)){
-				return notFound("User "+follower+" is not a friend of "+toUnfollow);
+				return notFound("User "+follower+" is not a friend of "+theFollowed);
 			}
 			try{
 				UserService.removeUserFromRole(follower,friendshipRole);
@@ -875,7 +875,7 @@ public class Admin extends Controller {
 				errorString.append(" ").append(follower).append(" ");
 			}
 			if(!secondUserExists){
-				errorString.append(" ").append(toUnfollow).append(" ");
+				errorString.append(" ").append(theFollowed).append(" ");
 			}
 			errorString.append(" does not exists on the db");
 			return notFound(errorString.toString());
@@ -884,7 +884,7 @@ public class Admin extends Controller {
 		}
 	}
 	
-	public static Result followersForUser(String username){
+	public static Result following(String username){
 		if(!UserService.exists(username)){
 			return notFound("User "+username+" does not exists");
 		}

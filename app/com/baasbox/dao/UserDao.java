@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 public class UserDao extends NodeDao  {
 
 	public final static String MODEL_NAME="_BB_User";
-	private final static String USER_LINK = "user";
+	public final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
 
 	public final static String USER_DEVICE_ID="deviceId";

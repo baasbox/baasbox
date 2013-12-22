@@ -11,7 +11,7 @@ import com.baasbox.configuration.Internal;
 import com.baasbox.dao.IndexDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.service.role.RoleService;
+import com.baasbox.service.user.RoleService;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;

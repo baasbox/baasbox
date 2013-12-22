@@ -1,4 +1,4 @@
-package com.baasbox.service.role;
+package com.baasbox.service.user;
 
 import java.util.List;
 import java.util.Set;
@@ -13,7 +13,6 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
-import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;

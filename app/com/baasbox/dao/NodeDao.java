@@ -35,6 +35,7 @@ import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -171,6 +172,9 @@ public abstract class NodeDao  {
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OCommandExecutionException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+			
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
@@ -259,6 +263,9 @@ public abstract class NodeDao  {
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, true, criteria);
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OCommandExecutionException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+			
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){

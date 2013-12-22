@@ -57,12 +57,14 @@ POST	/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswor
 
 
 #friendship
+GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false)
+GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
 GET      /following									com.baasbox.controllers.User.following()
-POST     /follower/:username                  		com.baasbox.controllers.User.follow(username: String)
-DELETE   /follower/:username                  		com.baasbox.controllers.User.unfollow(username: String)
-GET      /admin/follower/:username					com.baasbox.controllers.Admin.followersForUser(username:String)
-POST     /admin/follower/:follower/to/:toFollow		com.baasbox.controllers.Admin.createFollowRelationship(follower:String, toFollow:String)
-DELETE   /admin/follower/:follower/to/:toFollow		com.baasbox.controllers.Admin.removeFollowRelationship(follower:String, toFollow:String)
+POST     /follow/:username                  		com.baasbox.controllers.User.follow(username: String)
+DELETE   /follow/:username                  		com.baasbox.controllers.User.unfollow(username: String)
+GET      /admin/following/:username					com.baasbox.controllers.Admin.following(username:String)
+POST     /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.createFollowRelationship(follower:String, theFollowed:String)
+DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.removeFollowRelationship(follower:String, theFollowed:String)
 
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
