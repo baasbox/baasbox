@@ -67,7 +67,7 @@ public class AdminFriendshipTest extends AbstractTest{
 
 	@Override
 	public String getRouteAddress() {
-		return "/admin/follower";
+		return "/admin/follow";
 	}
 
 	@Override
@@ -103,11 +103,11 @@ public class AdminFriendshipTest extends AbstractTest{
 						String follower = createNewUser("user1");
 						String toFollow = createNewUser("user2");
 						createFriendship(follower, toFollow);
-						FakeRequest fk = new FakeRequest(GET,getRouteAddress()+"/"+follower);
+						FakeRequest fk = new FakeRequest(GET,"/admin/following/"+follower);
 						fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 						Result r = routeAndCall(fk);
-						assertRoute(r, "Get friendships.", Status.OK, null, false);
+						assertRoute(r, "Get who is following.", Status.OK, null, false);
 						String result = contentAsString(r);
 						JSONObject resultJson = (JSONObject)toJSON(result);
 						assertNotNull(resultJson);

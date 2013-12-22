@@ -49,7 +49,7 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
-import com.baasbox.service.role.RoleService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;

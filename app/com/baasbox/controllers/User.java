@@ -40,6 +40,7 @@ import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
+import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -54,6 +55,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
@@ -62,18 +64,22 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.role.RoleService;
+import com.baasbox.service.user.FriendShipService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -87,9 +93,25 @@ public class User extends Controller {
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.JSON);
 	}
 	
-	static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
+	static String prepareResponseToJson(List<ODocument> listOfDoc) {
 		response().setContentType("application/json");
-		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		try {
+			for (ODocument doc : listOfDoc){
+				doc.detach();
+				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+				if (roles.size()>1){
+					Iterator<OIdentifiable> it = roles.iterator();
+					while (it.hasNext()){
+						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+					        it.remove();
+					    }
+					}
+				}
+			}
+			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/*
@@ -598,8 +620,41 @@ public class User extends Controller {
 		  }
 	  }
 	  
+	  /***
+	   * Returns the followers of the current user
+	   * @return
+	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result followers(){
+	  public static Result followers(boolean justCountThem){
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		List<ODocument> listOfFollowers=new ArrayList<ODocument>();
+		long count=0;
+		try {
+			if (justCountThem) count = FriendShipService.getCountFriendsOf(DbHelper.currentUsername(), criteria);
+			else listOfFollowers = FriendShipService.getFriendsOf(DbHelper.currentUsername(), criteria);
+		} catch (InvalidCriteriaException e) {
+			return badRequest(ExceptionUtils.getMessage(e));
+		} catch (SqlInjectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (justCountThem) {
+			response().setContentType("application/json");
+			return ok("{\"count\":\""+ count +"\"}");
+		}
+		else{
+		  String ret = prepareResponseToJson(listOfFollowers);
+		  return ok(ret);
+		}
+	  }
+	  
+	  /***
+	   * Returns the user that the current user is following
+	   * @return
+	   */
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	  public static Result following(){
 		  String currentUsername = DbHelper.currentUsername();
 		  OUser me = null;
 		  try{

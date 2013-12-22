@@ -53,7 +53,6 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.role.RoleService;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
