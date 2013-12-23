@@ -188,9 +188,19 @@ public class FriendshipUserTest extends AbstractTest{
 						theFolloweds = theFolloweds.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
 						
 						Result getTheFollowedResult = routeAndCall(theFolloweds);
-						JSONObject followersJson = (JSONObject)toJSON(contentAsString(getTheFollowedResult));
+						JSONObject followedJson = (JSONObject)toJSON(contentAsString(getTheFollowedResult));
+						String followed = followedJson.getJSONArray("data").getJSONObject(0).getJSONObject("user").getString("name");
+						assertEquals(followed,secondUser);
 						
-						//assertEquals(secondUser,followersJson.getString("name"));
+						//check the followers
+						FakeRequest followers = new FakeRequest(GET, "/followers");
+						followers = followers.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						followers = followers.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(secondUser, "passw1"));
+						Result getFollowersResult = routeAndCall(followers);
+						JSONObject followersJson = (JSONObject)toJSON(contentAsString(getFollowersResult));
+						String follower = followersJson.getJSONArray("data").getJSONObject(0).getJSONObject("user").getString("name");
+						assertEquals(follower,firstUser);
+						
 
 						routeDeleteFollowRelationship(firstUser,secondUser);
 						getDocumentResult = routeAndCall(fk);
