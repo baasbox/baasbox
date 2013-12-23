@@ -1,20 +1,22 @@
-package com.baasbox.service.role;
+package com.baasbox.service.user;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
-import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class RoleService {
@@ -130,5 +132,20 @@ public class RoleService {
 		return true;
 	}
 	
-	
+	public static boolean hasRole(String username,String roleName){
+		boolean result = false;
+		if(UserDao.getInstance().existsUserName(username)){
+			OUser user = UserService.getOUserByUsername(username);
+			Set<ORole> roles = user.getRoles();
+			if(roles!=null){
+				for (ORole oRole : roles) {
+					if(oRole.getName().equals(roleName)){
+						result = true;
+						break;
+					}
+				}
+			}
+		}
+		return result;
+	}
 }

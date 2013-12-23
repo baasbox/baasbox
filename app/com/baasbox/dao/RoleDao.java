@@ -80,7 +80,7 @@ public class RoleDao {
 		}
 		
 		public static ORole getFriendRole(){
-			return getRole(getFriendRoleName());
+			return getRole(getFriendRoleName(DbHelper.currentUsername()));
 		}
 		public static ORole getFriendRole(String username){
 			return getRole(getFriendRoleName(username));

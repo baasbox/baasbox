@@ -49,7 +49,7 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
-import com.baasbox.service.role.RoleService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
@@ -171,15 +171,15 @@ public class DbHelper {
 	 * @param params positional parameters
 	 * @return the List of the record retrieved (the command MUST be a select)
 	 */
-	public static List<ODocument> selectCommandExecute(OCommandRequest command, String[] params){
+	public static List<ODocument> selectCommandExecute(OCommandRequest command, Object[] params){
 		List<ODocument> queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
-	public static Integer sqlCommandExecute(OCommandRequest command, String[] params){
+	public static Integer sqlCommandExecute(OCommandRequest command, Object[] params){
 		Integer updateQueryResult = command.execute((Object[])params);
 		return updateQueryResult;
 	}
-	public static List<ODocument> commandExecute(OCommandRequest command, String[] params){
+	public static List<ODocument> commandExecute(OCommandRequest command, Object[] params){
           List<ODocument> queryResult = command.execute((Object[])params);
           return queryResult;
 	}
@@ -201,7 +201,7 @@ public class DbHelper {
 	 * @param params The positional parameters to pass to the statement
 	 * @return
 	 */
-	public static Object genericSQLCommandExecute(OCommandRequest command, String[] params){
+	public static Object genericSQLCommandExecute(OCommandRequest command, Object[] params){
 		Object queryResult = command.execute((Object[])params);
 		return queryResult;
 	}
@@ -212,7 +212,7 @@ public class DbHelper {
 	 * @param params
 	 * @return
 	 */
-	public static Object genericSQLStatementExecute(String statement, String[] params){
+	public static Object genericSQLStatementExecute(String statement, Object[] params){
 		OCommandRequest command = genericSQLStatementCommandBuilder(statement);
 		Object ret = genericSQLCommandExecute(command,params);
 		return ret;
@@ -229,7 +229,8 @@ public class DbHelper {
 				if(!dbFreeze.get()){
 					dbFreeze.set(true);
 				}
-
+				db.getLevel1Cache().clear();
+				db.getLevel2Cache().clear();
 				db.drop();
 				db.create();
 				if(repopulate){
