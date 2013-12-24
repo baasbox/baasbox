@@ -179,6 +179,10 @@ public abstract class NodeDao  {
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
 			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}catch (StringIndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
+		}catch (IndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
 		}
 		Logger.trace("Method End");
 		return result;
