@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.mvc.Controller;
@@ -42,37 +44,38 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
-import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
-import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.DocumentIsNotAFileException;
+import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
-import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.storage.DocumentService;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.google.common.io.Files;
+import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
 
 public class File extends Controller {
 	private static final String FILE_FIELD_NAME="file";
 	private static final String DATA_FIELD_NAME="attachedData";
+	private static final String QUERY_STRING_FIELD_DOWNLOAD="download";
+	private static final String QUERY_STRING_FIELD_RESIZE_W="width";
+	private static final String QUERY_STRING_FIELD_RESIZE_H="height";
+	private static final String QUERY_STRING_FIELD_RESIZE_ID="sizeId";
 	
 	private static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
@@ -137,6 +140,8 @@ public class File extends Controller {
 				doc = FileService.getById(id);
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied id appears invalid (possible Sql Injection Attack detected)");
+			} catch (InvalidModelException e) {
+				return badRequest("The id " + id + " is not a file");
 			}
 			if (doc==null) return notFound(id + " file was not found");
 			String ret=OJSONWriter.writeValue(doc.rawField(FileService.DATA_FIELD_NAME));
@@ -160,54 +165,73 @@ public class File extends Controller {
 	
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getFile(String id){
+		
 		ODocument doc;
 		try {
 			doc = FileService.getById(id);
 		} catch (SqlInjectionException e) {
 			return badRequest("the supplied id appears invalid (possible Sql Injection Attack detected)");
+		} catch (InvalidModelException e) {
+			return badRequest("The id " + id + " is not a file");
 		}
 		if (doc==null) return notFound(id + " file was not found");
 		return ok(prepareResponseToJson(doc));
 	}
 	
 		@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class})
-	  public static Result streamFile(String id) throws IOException{
+	  public static Result streamFile(String id) throws IOException, InvalidModelException{
 			try {
 				ODocument doc=FileService.getById(id);
 				if (doc==null) return notFound(id + " file was not found");
-				ORecordBytes record = doc.field(FileService.BINARY_FIELD_NAME);
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				record.toOutputStream(out);
+				String filename=(String)doc.field("fileName");
+				
+				Context ctx=Http.Context.current.get();
+				Boolean download = BooleanUtils.toBoolean(ctx.request().getQueryString(QUERY_STRING_FIELD_DOWNLOAD));
+				String width = ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_W);
+				boolean widthIsEmpty=StringUtils.isEmpty(width);
+				String height = ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_H);
+				boolean heightIsEmpty=StringUtils.isEmpty(width);
+				Integer sizeId = Ints.tryParse(ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_ID)+"");
+				
+				
+				byte[] output;
+				if (sizeId!=null){
+					output = FileService.getResizedPicture(id, sizeId);
+					String[] fileName=((String)doc.field("fileName")).split("\\.");
+					filename=fileName[0] + "_" + sizeId + "." + (fileName.length>1?fileName[1]:"");
+				}else if (!widthIsEmpty || !heightIsEmpty){
+					output = FileService.getResizedPicture(id, widthIsEmpty? "100%":width, heightIsEmpty? "100%":height);
+					String[] fileName=((String)doc.field("fileName")).split("\\.");
+					filename=fileName[0] + "_" + width + "-" + height + "." + (fileName.length>1?fileName[1]:"");
+				}else{
+					ORecordBytes record = doc.field(FileService.BINARY_FIELD_NAME);
+					ByteArrayOutputStream out = new ByteArrayOutputStream();
+					record.toOutputStream(out);
+					output=out.toByteArray();
+				}
 				response().setContentType((String)doc.field(FileService.CONTENT_TYPE_FIELD_NAME));
-				response().setHeader("Content-Length", ((Long)doc.field(FileService.CONTENT_LENGTH_FIELD_NAME)).toString());
-				return ok(new ByteArrayInputStream(out.toByteArray()));
+				response().setHeader("Content-Length", String.valueOf(output.length));
+				if (download) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode(filename,"UTF-8")+"\"");
+				return ok(new ByteArrayInputStream(output));
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied id appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
 				Logger.error("error retrieving file content " + id, e);
 				throw e;
+			} catch (DocumentIsNotAnImageException e){
+				return badRequest("The id "+id+"is not an image and cannot be resize");
+			} catch(DocumentIsNotAFileException e){
+				return badRequest("The id "+id+"is not a file");
+			} catch(InvalidSizePatternException e){
+				return badRequest("The resize parameters are not valid");
+			} catch(InvalidModelException e) {
+				throw e;
+			} catch(DocumentNotFoundException e) {
+				return notFound("The requested file does not exists: " + id);
 			}
 	  }//streamFile
 	  
-		@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class})
-	  public static Result downloadFile(String id) throws IOException{
-		   try {
-				ODocument doc=FileService.getById(id);
-				if (doc==null) return notFound(id + " file was not found");
-				ORecordBytes record = doc.field(FileService.BINARY_FIELD_NAME);
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				record.toOutputStream(out);
-				response().setContentType((String)doc.field(FileService.CONTENT_TYPE_FIELD_NAME));
-				response().setHeader("Content-Length", ((Long)doc.field(FileService.CONTENT_LENGTH_FIELD_NAME)).toString());
-				response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode((String)doc.field("fileName"),"UTF-8")+"\"");
-				return ok(new ByteArrayInputStream(out.toByteArray()));
-			} catch (SqlInjectionException e) {
-				return badRequest("the supplied id appears invalid (Sql Injection Attack detected)");
-			} catch (IOException e) {
-				Logger.error("error retrieving file content " + id, e);
-				throw e;
-			}		  
-	  }//downloadFile
+
 	  
 		@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantOrRevokeToRole(String id,String rolename, String action, boolean grant) {
@@ -248,6 +272,8 @@ public class File extends Controller {
 			}
 			return ok();
 		}//grantOrRevokeToUser
+	
+
 		
 	  public static Result updateAttachedData(){
 		  return status(NOT_IMPLEMENTED);

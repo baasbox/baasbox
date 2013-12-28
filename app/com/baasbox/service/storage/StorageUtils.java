@@ -10,6 +10,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.imgscalr.Scalr;
 
 import com.baasbox.dao.FileAssetDao;
+import com.baasbox.dao.FileDao;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.InvalidSizePatternException;
@@ -34,7 +35,7 @@ public class StorageUtils {
 		}
 	}
 	
-	public static ImmutableSet<String> fileClasses = ImmutableSet.of(FileAssetDao.MODEL_NAME);
+	public static ImmutableSet<String> fileClasses = ImmutableSet.of(FileAssetDao.MODEL_NAME,FileDao.MODEL_NAME);
 	
 	private static byte[] resizeImage(BufferedImage bufferedImage, WritebleImageFormat format, int width,int height) throws IOException{
 		BufferedImage thumbnail = Scalr.resize(bufferedImage,Scalr.Method.SPEED,Scalr.Mode.FIT_EXACT,width,height);
@@ -52,7 +53,7 @@ public class StorageUtils {
 	 * @throws IOException
 	 * @throws InvalidSizePatternException 
 	 */
-	public static byte[] resizeImage(byte[] bytes, WritebleImageFormat format, ImageDimensions imgDim) throws IOException, InvalidSizePatternException{
+	public static byte[] resizeImage(byte[] bytes, WritebleImageFormat format, ImageDimensions imgDim) throws IOException{
 		ByteArrayInputStream bytesStream = new ByteArrayInputStream(bytes);
 		BufferedImage bufferedImage = ImageIO.read(bytesStream);
 		int destWidth=imgDim.width;
@@ -85,34 +86,38 @@ public class StorageUtils {
 		}
 		//guess if size is in the form 123px-256px  where w=123 pixels and h=256 pixels or in the form 25%-30% or mixed
 		String[] wandh = sizePattern.split("-");
-		if (wandh.length==2){
-			//width
-			String width = wandh[0];
-			if (width.endsWith("%")){
-				imgDim.width=Integer.parseInt(width.substring(0, width.length()));
-				imgDim.widthInPixel=false;
-			}else if (width.endsWith("px")){
-				imgDim.width=Integer.parseInt(width.substring(0, width.length()-1));
-				imgDim.widthInPixel=true;
-			}else {
-				imgDim.width=Integer.parseInt(width);
-				imgDim.widthInPixel=true;				
+		try{
+			if (wandh.length==2){
+				//width
+				String width = wandh[0];
+				if (width.endsWith("%")){
+					imgDim.width=Integer.parseInt(width.substring(0, width.length()));
+					imgDim.widthInPixel=false;
+				}else if (width.endsWith("px")){
+					imgDim.width=Integer.parseInt(width.substring(0, width.length()-1));
+					imgDim.widthInPixel=true;
+				}else {
+					imgDim.width=Integer.parseInt(width);
+					imgDim.widthInPixel=true;				
+				}
+				//height
+				String height = wandh[1];
+				if (width.endsWith("%")){
+					imgDim.height=Integer.parseInt(height.substring(0, height.length()));
+					imgDim.heightInPixel=false;
+				}else if (width.endsWith("px")){
+					imgDim.height=Integer.parseInt(height.substring(0, height.length()-1));
+					imgDim.heightInPixel=true;
+				}else {
+					imgDim.height=Integer.parseInt(height);
+					imgDim.heightInPixel=true;				
+				}		
+				return imgDim;
 			}
-			//height
-			String height = wandh[1];
-			if (width.endsWith("%")){
-				imgDim.height=Integer.parseInt(height.substring(0, height.length()));
-				imgDim.heightInPixel=false;
-			}else if (width.endsWith("px")){
-				imgDim.height=Integer.parseInt(height.substring(0, height.length()-1));
-				imgDim.heightInPixel=true;
-			}else {
-				imgDim.height=Integer.parseInt(height);
-				imgDim.heightInPixel=true;				
-			}		
-			return imgDim;
+		}catch (Throwable e){
+			throw new InvalidSizePatternException(sizePattern + " is not valid ", e);
 		}
-		throw new InvalidSizePatternException(sizePattern + " is not valid");
+		throw new InvalidSizePatternException(sizePattern + " is not valid: missing the '-' character between the width and the height");
 	}
 
 
