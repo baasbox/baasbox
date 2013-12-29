@@ -23,12 +23,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.mvc.Controller;
@@ -44,13 +42,14 @@ import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.OperationDisabledException;
+import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.AssetService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
@@ -60,7 +59,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+
 
 public class Asset extends Controller{
 	private static String prepareResponseToJson(ODocument doc){
@@ -229,7 +228,7 @@ public class Asset extends Controller{
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			record.toOutputStream(out);
 			response().setContentType(AssetService.getContentType(doc));
-			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode((String)doc.field("fileName"),"UTF-8")+"\"");
+			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+(String)doc.field("fileName")+"\"");
 			response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
 			return ok(new ByteArrayInputStream(out.toByteArray()));
 		} catch (IllegalArgumentException e) {
@@ -257,12 +256,12 @@ public class Asset extends Controller{
 	
 	private static Result postFile() throws  Throwable{
 		MultipartFormData  body = request().body().asMultipartFormData();
-		if (body==null) return badRequest("missing data: is the body multipart/form-data? Check if it contains boundaries too!");
+		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
 		FilePart file = body.getFile("file");
 		Map<String, String[]> data=body.asFormUrlEncoded();
 		String[] meta=data.get("meta");
 		String[] name=data.get("name");
-		if (name==null || name.length==0 || StringUtils.isEmpty(name[0].trim())) return badRequest("missing name field");
+		if (name==null || name.length==0) return badRequest("missing name field");
 		String ret="";
 		if (file!=null){
 			String metaJson=null;
@@ -281,8 +280,6 @@ public class Asset extends Controller{
 		    try{
 		    	ODocument doc=AssetService.createFile(name[0],fileName,metaJson,contentType, fileContentAsByteArray);
 		    	ret=prepareResponseToJson(doc);
-		    }catch (ORecordDuplicatedException e){
-		    	return badRequest("An asset with the same name already exists");
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");
 		    }
@@ -301,20 +298,14 @@ public class Asset extends Controller{
 		String[] meta=body.get("meta");
 		String[] name=body.get("name");
 		String ret="";
-		
-		String assetName = (name!=null && name.length>0) ? name[0] : null;
-		
-		
-		if (assetName!=null && StringUtils.isNotEmpty(assetName.trim())){
+		if (name!=null && name.length>0){
 			String metaJson=null;
 			if (meta!=null && meta.length>0){
 				metaJson = meta[0];
 			}
 		    try{
-		    	ODocument doc=AssetService.create(assetName,metaJson);
+		    	ODocument doc=AssetService.create(name[0],metaJson);
 		    	ret=prepareResponseToJson(doc);
-		    }catch (ORecordDuplicatedException e){
-		    	return badRequest("An asset with the same name already exists");
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");
 		    }catch (OSerializationException e){

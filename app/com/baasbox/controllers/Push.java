@@ -1,9 +1,5 @@
 package com.baasbox.controllers;
 
-import java.io.IOException;
-import java.net.NoRouteToHostException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -25,21 +21,20 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
-import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.service.user.UserService;
-import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
-	 public static Result send(String username)  {
+	 public static Result send(String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException {
 		 Logger.trace("Method Start");
 		 Http.RequestBody body = request().body();
 		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
@@ -54,27 +49,10 @@ public class Push extends Controller {
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
-			    return notFound("Username not found");
 		 }
 		 catch (SqlInjectionException e) {
 			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		 }
-		 catch (InvalidRequestException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(),CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
-		 }
-		 catch (PushNotInitializedException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
-		 }
-		 catch (UnknownHostException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
-		 }catch (IOException e) {
-			 return badRequest(e.getMessage());
-		}
-		 
-		
 		 Logger.trace("Method End");
 		 return ok();
 	  }

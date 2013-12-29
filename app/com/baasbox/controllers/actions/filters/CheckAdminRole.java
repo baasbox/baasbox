@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 
-public class CheckAdminRoleFilter extends Action.Simple{
+public class CheckAdminRole extends Action.Simple{
 
 	@Override
 	public Result call(Context ctx) throws Throwable {

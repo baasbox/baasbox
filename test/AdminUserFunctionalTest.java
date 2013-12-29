@@ -72,7 +72,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 		Object obj = toJSON(sContent);
 		assertJSON(obj, "user");
 		// Change role check
-		assertJSONString(obj, "\"name\":\"registered\"");
+		assertJSONString(obj, "\"name\":\"registereduser\"");
 		// Change attribute check
 		assertJSONString(obj, "\"quote\":\"I am very happy!\"");
 	}

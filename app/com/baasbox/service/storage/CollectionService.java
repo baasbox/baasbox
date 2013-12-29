@@ -22,7 +22,7 @@ import java.util.List;
 import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 

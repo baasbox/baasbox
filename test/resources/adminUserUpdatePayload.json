@@ -1,5 +1,5 @@
 {
-  "role":"registered",
+  "role":"registereduser",
   "visibleByTheUser": {
      "myPrivateEmail":"me@example.com"
    },

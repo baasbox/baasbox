@@ -5,10 +5,10 @@ import org.apache.commons.lang3.BooleanUtils;
 
 
 public enum PasswordRecovery implements IProperties{
-	EMAIL_TEMPLATE_TEXT("email.template.text", "The template (text format) of the email to send to the user when they request a password reset. Please ensure that you have written the keyword $link$ inside the text. This keyword will be replaced with the link that the user has to click on to start the password recovery process.", String.class),
-	EMAIL_TEMPLATE_HTML("email.template.html", "The template (html format) of the email to send to the user when they request a password reset. Please ensure that you have written the keyword $link$ inside the text. This keyword will be replaced with the link that the user has to click on to start the password recovery process.", String.class),	
-	EMAIL_FROM("email.from", "The name and address to specify in the from field of the email to send. Example: example.com <email_from@example.com>", String.class),
-	EMAIL_SUBJECT("email.subject", "The subject of the email to send.", String.class),
+	EMAIL_TEMPLATE_TEXT("email.template.text", "The template (in text format) of the email to be send to the user when he/she requests a password reset. Be sure you've written inside the keyword $link$. This keyword will be replaced with the link that the user has to click to begin the password recovery process.", String.class),
+	EMAIL_TEMPLATE_HTML("email.template.html", "The template (in html format) of the email to be send to the user when he/she requests a password reset. Be sure you've written inside the keyword $link$. This keyword will be replaced with the link that the user has to click to begin the password recovery process.", String.class),	
+	EMAIL_FROM("email.from", "The name and address to specify in the from field of the email to be send. ex.site_name<email_from@site.xxx>", String.class),
+	EMAIL_SUBJECT("email.subject", "The subject of the email to be send.", String.class),
 	EMAIL_EXPIRATION_TIME("email.expiration.time", "Minutes before the reset code expires.", Integer.class),
 
 	PAGE_HTML_TEMPLATE("page.html.template","The HTML template of the reset password page. You coud use the following placeholder: $user_name$, $link$, $error$, $password$, $repeat_password$, $application_name$.", String.class),
@@ -19,7 +19,7 @@ public enum PasswordRecovery implements IProperties{
 	NETWORK_SMTP_SSL("network.smtp.ssl", "Enable or disable the SSL protocol for the SMTP server. Used only if network.smtp.enable is set to TRUE", Boolean.class),
 	NETWORK_SMTP_TLS("network.smtp.tls", "Enable or disable the TLS protocol for the SMTP server. Used only if network.smtp.enable is set to TRUE", Boolean.class),
 	NETWORK_SMTP_AUTHENTICATION("network.smtp.authentication", "Set to TRUE if the SMTP server requires authentication. Used only if network.smtp.enable is set to TRUE", Boolean.class),
-	NETWORK_SMTP_USER("network.smtp.user", "The username required by the SMTP server when authentication is required. Used only if network.smtp.authentication is set to TRUE", String.class),
+	NETWORK_SMTP_USER("network.smtp.user", "The username required by the SMTP server if it requires authentication. Used only if network.smtp.authentication is set to TRUE", String.class),
 	NETWORK_SMTP_PASSWORD("network.smtp.password", "The password required by the SMTP server if it requires authentication. Used only if network.smtp.authentication is set to TRUE", String.class);
 	
 	private final String                 key;

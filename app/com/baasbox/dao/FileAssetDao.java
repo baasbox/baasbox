@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,7 +57,7 @@ public class FileAssetDao extends NodeDao {
 		asset.field("contentType",contentType);
 		asset.field("contentLength",content.length);
 		super.grantPermission(asset, Permissions.ALLOW_READ,DefaultRoles.getORoles());
-		super.grantPermission(asset, Permissions.ALLOW_UPDATE,DefaultRoles.getORoles()); //this is necessary due the resize API
+		super.grantPermission(asset, Permissions.ALLOW_UPDATE,DefaultRoles.getORoles());
 		return asset;
 	}
 	

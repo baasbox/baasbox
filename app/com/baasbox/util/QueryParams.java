@@ -30,7 +30,7 @@ public class QueryParams implements IQueryParametersKeys{
 	Integer recordPerPage=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_PER_PAGE));
 	String orderBy="";
 	Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
-	Object[] params={};
+	String[] params={};
 	
 	protected QueryParams(){};
 	
@@ -101,7 +101,7 @@ public class QueryParams implements IQueryParametersKeys{
 	/**
 	 * @return the params
 	 */
-	public Object[] getParams() {
+	public String[] getParams() {
 		return params;
 	}
 
@@ -138,13 +138,6 @@ public class QueryParams implements IQueryParametersKeys{
 			this.params=params;
 		return this;
 	}
-	
-	public QueryParams params (Object[] params){
-		if (params!=null)
-			this.params=params;
-		return this;
-	}
-	
 	
 	public static QueryParams getInstance(){
 		return new QueryParams();
