@@ -1,9 +1,3 @@
---compatibility with 1.3.0
-alter database custom useLightweightEdges=false;
-alter database custom useClassForEdgeLabel=false;
-alter database custom useClassForVertexLabel=false;
-alter database custom useVertexFieldsForEdgeLabels=false;
-
 --classes
 --Node
 create class _BB_NodeVertex extends V;
@@ -49,8 +43,22 @@ create property _BB_Collection.name String;
 alter property _BB_Collection.name mandatory=true;
 alter property _BB_Collection.name notnull=true;
 
+--files
+create class _BB_File extends _BB_Node;
+create property _BB_File.fileName String;
+alter property _BB_File.fileName mandatory=true;
+alter property _BB_File.fileName notnull=true;
+create property _BB_File.contentType String;
+alter property _BB_File.contentType mandatory=true;
+alter property _BB_File.contentType notnull=true;
+create property _BB_File.contentLength long;
+alter property _BB_File.contentLength mandatory=true;
+alter property _BB_File.contentLength notnull=true;
+create property _BB_File.file link;
+alter property _BB_File.file mandatory=true;
+alter property _BB_File.file notnull=true;
 
-
+--Assets
 create class _BB_Asset extends _BB_Node;
 create class _BB_FileAsset extends _BB_Asset;
 create property _BB_Asset.name String;
@@ -69,22 +77,19 @@ create property _BB_FileAsset.file link;
 alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
---Edges
-create class Created extends E;
-
-
-
 --indices
 create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
 
---configuration
-create index _bb_password_recovery dictionary;
-create index _bb_application dictionary;
-create index _bb_images dictionary;
-create index _bb_push dictionary;
-create index _bb_internal dictionary;
+--configuration class
+create class _BB_Index;
+create property _BB_Index.key String;
+alter property _BB_Index.key mandatory=true;
+alter property _BB_Index.key notnull=true;
+create index _BB_Index.key unique;
+
+
 
 

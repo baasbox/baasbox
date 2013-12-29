@@ -19,24 +19,24 @@
 								<div id="errorAddUser2" class="control-group error hide" >
 									 <span class="help-inline" id="errorAssetMessage"></span>
 								</div>							
-							  <div class="control-group">
+							  <div data-rel="tooltip" title="Assets have names. You must provide a valid name"  class="control-group">
 								<label class="control-label" for="txtAssetName">Name*</label>
 								<div class="controls">
 								  <input class="input-xlarge focused" id="txtAssetName" name="name" type="text" value="" >
 								</div>
 							  </div>
-							  <div class="control-group" id="divAssetMeta">
+							  <div data-rel="tooltip" title="You can specify associated data in JSON format"  class="control-group" id="divAssetMeta">
 								<label class="control-label" for="txtAssetMeta">Meta</label>
 								<div class="controls">
 								  <textarea class="autogrow" id="txtAssetMeta" name="meta"></textarea>
 								</div>
 							  </div>
-							  <div class="control-group" id="divAssetUpload">
+							  <div data-rel="tooltip" title="You can provide a file for this asset"  class="control-group" id="divAssetUpload">
 								<label class="control-label" for="fuAsset">File</label>
 								<div class="controls">
 									<span class="btn btn-success fileinput-button">
 										<i class="icon-plus icon-white"></i>
-										<span>Add file...</span>
+										<span>Pick a file...</span>
 										<input class="" id="fuAsset" type="file" name="file">
 									</span>
 								</div>

@@ -30,4 +30,13 @@ public interface IBBConfigurationKeys {
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
 	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
+	
+	public static final String PUSH_CERTIFICATES_FOLDER = "push.baasbox.certificates.folder";
+	public static final String MVCC_MAX_RETRIES = "orient.baasbox.MVCC.maxRetries";
+	
+	public static final String STATISTICS_SYSTEM_OS="baasbox.statistics.system.os";
+	public static final String STATISTICS_SYSTEM_MEMORY="baasbox.statistics.system.memory";
+	
+	public static final String WRITE_ACCESS_LOG = "baasbox.server.accesslog";
+	
 }

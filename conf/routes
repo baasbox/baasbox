@@ -1,6 +1,6 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~
+# ~~~~ 
 
 # Swagger - Root Resources Listing
 # GET     /api-docs.json               controllers.ApiHelpController.getResources
@@ -35,17 +35,39 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
-POST	/login						com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
-POST 	/logout						com.baasbox.controllers.User.logoutWithoutDevice()
-POST	/user						com.baasbox.controllers.User.signUp()
-GET		/user						com.baasbox.controllers.User.getCurrentUser()
-PUT		/user						com.baasbox.controllers.User.updateProfile()
-PUT		/user/password				com.baasbox.controllers.User.changePassword()
-GET		/user/:username/exists		com.baasbox.controllers.User.exists(username: String)
-GET		/user/:username/password/reset   			com.baasbox.controllers.User.resetPasswordStep1(username: String)
-GET		/user/password/reset/:base64     			com.baasbox.controllers.User.resetPasswordStep2(base64: String)
-POST	/user/password/reset/:base64     			com.baasbox.controllers.User.resetPasswordStep3(base64: String)
+POST	/login										com.baasbox.controllers.User.login()
+POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
+POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
+PUT		/social/:socialNetwork						com.baasbox.controllers.Social.linkWith(socialNetwork: String)
+DELETE  /social/:socialNetwork						com.baasbox.controllers.Social.unlink(socialNetwork: String)
+GET		/social/login/:socialNetwork/callback		com.baasbox.controllers.Social.callback(socialNetwork: String)
+
+POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
+POST	/user								com.baasbox.controllers.User.signUp()
+GET		/user								com.baasbox.controllers.User.getCurrentUser()
+PUT		/user								com.baasbox.controllers.User.updateProfile()
+PUT 	/user/suspend						com.baasbox.controllers.User.disable()
+PUT		/user/password						com.baasbox.controllers.User.changePassword()
+GET		/user/:username/password/reset   	com.baasbox.controllers.User.resetPasswordStep1(username: String)
+GET		/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep2(base64: String)
+POST	/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep3(base64: String)
+GET 	/people								com.baasbox.controllers.User.getUsers()
+
+#DEPRECATED - use /people instead
+GET		/user/:username						com.baasbox.controllers.User.getUser(username: String)
+GET		/user/:username/exists				com.baasbox.controllers.User.exists(username: String)
+
+
+#friendship
+GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false)
+GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
+GET      /following									com.baasbox.controllers.User.following()
+POST     /follow/:username                  		com.baasbox.controllers.User.follow(username: String)
+DELETE   /follow/:username                  		com.baasbox.controllers.User.unfollow(username: String)
+GET      /admin/following/:username					com.baasbox.controllers.Admin.following(username:String)
+POST     /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.createFollowRelationship(follower:String, theFollowed:String)
+DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.removeFollowRelationship(follower:String, theFollowed:String)
 
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
@@ -65,8 +87,12 @@ GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocume
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
 
+GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
-#grant and revoke permissions
+
+
+#grant and revoke permissions on documents
 PUT		/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
 DELETE	/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
 PUT		/document/:collection/%23:rid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, rid:String, rolename:String, action:String, isUUID: Boolean ?= false)
@@ -78,16 +104,45 @@ PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers
 DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
 
+
+
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
+GET		/admin/user/:username			com.baasbox.controllers.Admin.getUser(username: String)
 POST	/admin/user						com.baasbox.controllers.Admin.createUser()
 PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
+PUT 	/admin/user/suspend/:username	com.baasbox.controllers.Admin.disable(username: String)
+PUT 	/admin/user/activate/:username	com.baasbox.controllers.Admin.enable(username: String)
 POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(name: String)
 GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
+GET		/admin/role/:name				com.baasbox.controllers.Admin.getRole(name: String)
+POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
+PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
+DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)
+
+#Files
+GET		 /file/details					com.baasbox.controllers.File.getAllFile()
+POST 	 /file							com.baasbox.controllers.File.storeFile()
+DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
+GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
+GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
+GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
+GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
+
+#grants on Files
+PUT		/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= true)
+DELETE	/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= false)
+PUT		/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= true)
+DELETE	/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= false)
+
+
+#deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
+
 
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")

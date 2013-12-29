@@ -14,7 +14,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package com.baasbox.exception;
+package com.baasbox.dao.exception;
 
 @SuppressWarnings("serial")
 public class SqlInjectionException extends Exception {

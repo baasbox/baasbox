@@ -18,6 +18,7 @@ package com.baasbox.controllers;
 
 import static play.libs.Json.toJson;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -59,38 +61,53 @@ import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
+import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
-import com.baasbox.dao.CollectionAlreadyExistsException;
+import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.RoleAlreadyExistsException;
+import com.baasbox.exception.RoleNotFoundException;
+import com.baasbox.exception.RoleNotModifiableException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.ConfigurationFileContainer;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
+import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
 
 	static String backupDir = BBConfiguration.getDBBackupDir();
-	static String sep = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
+	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	public static Result getUsers(){
 		Logger.trace("Method Start");
@@ -105,6 +122,28 @@ public class Admin extends Controller {
 		}
 		try{
 			ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER.toString());
+		}catch (Throwable e){
+			return internalServerError(ExceptionUtils.getFullStackTrace(e));
+		}
+		Logger.trace("Method End");
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+
+	public static Result getUser(String username){
+		Logger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+
+		ODocument user=null;
+		try {
+			user = com.baasbox.service.user.UserService.getUserProfilebyUsername(username);
+		} catch (SqlInjectionException e1) {
+			return badRequest("The request is malformed: check your query criteria");
+		}
+		if (user==null) return notFound("User " + username + " not found");
+		String ret="";
+		try{
+			ret=user.toJSON(JSONFormats.Formats.USER.toString());
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
@@ -157,7 +196,7 @@ public class Admin extends Controller {
 	}
 
 	public static Result getDBStatistics(){
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		ImmutableMap response;
 		try {
 			String bbId = Internal.INSTALLATION_ID.getValueAsString();
@@ -184,14 +223,87 @@ public class Admin extends Controller {
 		return ok(toJson(response));
 	}
 
-	public static Result createRole(){
-		return status(NOT_IMPLEMENTED);
+	public static Result createRole(String name){
+		String inheritedRole=DefaultRoles.REGISTERED_USER.toString();
+		String description="";
+		JsonNode json = request().body().asJson();
+		if(json != null) {
+			description = Objects.firstNonNull(json.findPath("description").getTextValue(),"");
+		}
+		try {
+			RoleService.createRole(name, inheritedRole, description);
+		} catch (RoleNotFoundException e) {
+			return badRequest("Role " + inheritedRole + " does not exist. Hint: check the 'inheritedRole' in your payload");
+		} catch (RoleAlreadyExistsException e) {
+			return badRequest("Role " + name + " already exists");
+		}
+		return created();
+	}
+
+	/**
+	 * Edits an existent role.
+	 * Only roles that have the modifiable flag set to true can be modified. I.E. only custom roles
+	 * The method accepts a JSON payload like this (all fields are optional):
+	 * {
+	 * 		"newname":"xxx",	//the new name to assign to this role
+	 * 		"description:"xxx",	//role description
+	 * }
+	 * 
+	 * @param name the role name to edit
+	 * @return
+	 */
+	public static Result editRole(String name){
+		String description="";
+		String newName="";
+		JsonNode json = request().body().asJson();
+		if(json != null) {
+			description = json.findPath("description").getTextValue();
+			newName = json.findPath("new_name").getTextValue();
+		}
+		try {
+			RoleService.editRole(name, null, description,newName);
+		} catch (RoleNotModifiableException e) {
+			return badRequest("Role " + name + " is not modifiable");
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exists");
+		}catch (ORecordDuplicatedException e){
+			return badRequest("Role " + name + " already exists");
+		} catch (OIndexException e){
+			return badRequest("Role " + name + " already exists");
+		}
+		return ok();
 	}
 
 
+	/**
+	 * Delete a Role. Users belonging to that role will be moved to the "registered" role
+	 * @param name
+	 * @return
+	 */
+
+	public static Result deleteRole(String name){
+		try {
+			RoleService.delete(name);
+		} catch (RoleNotFoundException e) {
+			return notFound("Role " + name + " does not exist");
+		} catch (RoleNotModifiableException e) {
+			badRequest("Role " + name + " is not deletable. HINT: maybe you tried to delete an internal role?");
+		}
+		return ok();
+	}
+
 	public static Result getRoles() throws SqlInjectionException{
-		List<ODocument> listOfRoles=UserService.getRoles();
+		List<ODocument> listOfRoles=RoleService.getRoles();
 		String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+
+	public static Result getRole(String name) throws SqlInjectionException{
+		List<ODocument> listOfRoles=RoleService.getRoles(name);
+		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
+		ODocument role = listOfRoles.get(0);
+		String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());
 		response().setContentType("application/json");
 		return ok(ret);
 	}
@@ -222,7 +334,7 @@ public class Admin extends Controller {
 		String password=(String)  bodyJson.findValuesAsText("password").get(0);
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
 
-		if (privateAttributes.has("email")) {
+		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
 				return badRequest("The email address must be valid.");
@@ -230,7 +342,7 @@ public class Admin extends Controller {
 
 		//try to signup new user
 		try {
-			UserService.signUp(username, password, role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){
@@ -240,10 +352,9 @@ public class Admin extends Controller {
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 					" they must be an object, not a value.");
-		}catch (Throwable e){
-			Logger.warn("signUp", e);
-			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+		}catch (Exception e) {
+			Logger.error(ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e) ;
 		}
 		Logger.trace("Method End");
 		return created();
@@ -261,10 +372,36 @@ public class Admin extends Controller {
 			return badRequest("The 'role' field is missing");	
 
 		//extract fields
-		JsonNode nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
-		JsonNode privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
-		JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
-		JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+		String missingField = null;
+		JsonNode nonAppUserAttributes;
+		JsonNode privateAttributes;
+		JsonNode friendsAttributes;
+		JsonNode appUsersAttributes;
+		try{
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER;
+			nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+			if(nonAppUserAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER;
+			privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+			if(privateAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER;
+			friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+			if(friendsAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+			missingField = UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER;
+			appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+			if(appUsersAttributes==null){
+				throw new IllegalArgumentException(missingField);
+			}
+
+		}catch(Exception npe){
+			return badRequest("The '"+ missingField+"' field is missing");
+		}
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
 
 		if (privateAttributes.has("email")) {
@@ -273,9 +410,10 @@ public class Admin extends Controller {
 				return badRequest("The email address must be valid.");
 		}
 
+		ODocument user=null;
 		//try to update new user
 		try {
-			UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
 		}catch (OSerializationException e){
@@ -291,7 +429,7 @@ public class Admin extends Controller {
 			else return internalServerError(e.getMessage());
 		}
 		Logger.trace("Method End");
-		return ok();
+		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
 
@@ -322,9 +460,7 @@ public class Admin extends Controller {
 		return ok();
 	}
 
-	public static Result dropRole(){
-		return status(NOT_IMPLEMENTED);
-	}
+
 
 	public static Result deleteDocument(){
 		return status(NOT_IMPLEMENTED);
@@ -347,7 +483,24 @@ public class Admin extends Controller {
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		try {
-			PropertiesConfigurationHelper.setByKey(conf, key, value);
+			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
+			if(i.getType().equals(ConfigurationFileContainer.class)){
+				MultipartFormData  body = request().body().asMultipartFormData();
+				if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+				FilePart file = body.getFile("file");
+				if(file==null) return badRequest("missing file");
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				try{
+					FileUtils.copyFile(file.getFile(),baos);
+					Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
+					baos.close();
+					conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+				}catch(Exception e){
+					internalServerError(e.getMessage());
+				}
+			}else{
+				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			}
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}
@@ -377,7 +530,7 @@ public class Admin extends Controller {
 			}
 			r = ok();
 		}catch(Exception e){
-			Logger.debug(e.getMessage());
+			Logger.error(e.getMessage());
 			r = internalServerError(e.getMessage());
 		}
 		return r;
@@ -402,7 +555,7 @@ public class Admin extends Controller {
 			unauthorized("appcode can not be null");
 		}
 
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			boolean createdDir = dir.mkdir();
 			if(!createdDir){
@@ -414,7 +567,7 @@ public class Admin extends Controller {
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
 				Duration.create(2, TimeUnit.SECONDS),
-				new ExportJob(dir.getAbsolutePath()+sep+fileName,appcode),
+				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
 				Akka.system().dispatcher()
 				); 
 		return status(202,Json.toJson(fileName));
@@ -431,7 +584,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and the stream of the file
 	 */
 	public static Result getExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -451,7 +604,7 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir+sep+fileName);
+		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -484,7 +637,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+sep+backupDir);
+		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
 		if(!dir.exists()){
 			dir.mkdir();
 		}
@@ -538,10 +691,10 @@ public class Admin extends Controller {
 				if(ze!=null){
 					File newFile = File.createTempFile("export",".json");
 					FileOutputStream fout = new FileOutputStream(newFile);
-			        for (int c = zis.read(); c != -1; c = zis.read()) {
-			          fout.write(c);
-			        }
-			        fout.close();
+					for (int c = zis.read(); c != -1; c = zis.read()) {
+						fout.write(c);
+					}
+					fout.close();
 					fileContent = FileUtils.readFileToString(newFile);
 					newFile.delete();
 				}else{
@@ -551,24 +704,24 @@ public class Admin extends Controller {
 				if(manifest!=null){
 					File manifestFile = File.createTempFile("manifest",".txt");
 					FileOutputStream fout = new FileOutputStream(manifestFile);
-			        for (int c = zis.read(); c != -1; c = zis.read()) {
-			          fout.write(c);
-			        }
-			        fout.close();
-			        String manifestContent  = FileUtils.readFileToString(manifestFile);
-			        manifestFile.delete();
-			        Pattern p = Pattern.compile(BBInternalConstants.IMPORT_MANIFEST_VERSION_PATTERN);
-			        Matcher m = p.matcher(manifestContent);
-			        if(m.matches()){
-			        	String version = m.group(1);
-			        	if(!(version.equalsIgnoreCase(BBConfiguration.getApiVersion()))){
-			        		return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
-			        	}else{
-			        		Logger.debug("Version : "+version+" is valid");
-			        	}
-			        }else{
-			        	return badRequest("The manifest file does not contain a version number");
-			        }
+					for (int c = zis.read(); c != -1; c = zis.read()) {
+						fout.write(c);
+					}
+					fout.close();
+					String manifestContent  = FileUtils.readFileToString(manifestFile);
+					manifestFile.delete();
+					Pattern p = Pattern.compile(BBInternalConstants.IMPORT_MANIFEST_VERSION_PATTERN);
+					Matcher m = p.matcher(manifestContent);
+					if(m.matches()){
+						String version = m.group(1);
+						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
+							return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
+						}else{
+							Logger.debug("Version : "+version+" is valid");
+						}
+					}else{
+						return badRequest("The manifest file does not contain a version number");
+					}
 				}else{
 					return badRequest("Looks like zip file does not contain a manifest file");
 				}
@@ -597,9 +750,165 @@ public class Admin extends Controller {
 		}else{
 			return badRequest("The form was submitted without a multipart file field.");
 		}
+	}//importDb
 
 
 
+	/***
+	 * /admin/user/suspend/:username (PUT)
+	 * 
+	 * @param username
+	 * @return
+	 */
+	public static Result disable(String username){
+		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			return badRequest("Cannot disable/suspend internal users");
+		try {
+			UserService.disableUser(username);
+		} catch (UserNotFoundException e) {
+			return badRequest(e.getMessage());
+		}
+		return ok();
+	}
+
+	/***
+	 * /admin/user/activate/:username (PUT)
+	 * 
+	 * @param username
+	 * @return
+	 */
+	public static Result enable(String username){
+		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			return badRequest("Cannot enable/activate internal users");
+		try {
+			UserService.enableUser(username);
+		} catch (UserNotFoundException e) {
+			return badRequest(e.getMessage());
+		}
+		return ok();
+	}
+	
+	/**
+	 * POST /admin/Fw/:follower/to/:tofollow
+	 * Create a follow relationship beetwen user follower and user to follow
+	 * @param follower
+	 * @param theFollowed
+	 * @return
+	 */
+	public static Result createFollowRelationship(String follower,String theFollowed){
+		/**
+		 * Test if the usernames provided do not match internal users' usernames 
+		 */
+		if ((follower.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				follower.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())) || 
+				(theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+						theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())))
+			return badRequest("Cannot create followship relationship with internal users");
+
+		boolean firstUserExists = UserService.exists(follower);
+		boolean secondUserExists = UserService.exists(theFollowed);
+		if(firstUserExists && secondUserExists){
+			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
+			if(RoleService.hasRole(follower, friendshipRole)){
+				return badRequest("User "+follower+" is already a friend of "+theFollowed);
+			}
+			try{
+				UserService.addUserToRole(follower,friendshipRole);
+				return created();
+			}catch(Exception e){
+				return internalServerError(e.getMessage());
+			}
+			
+		}else{
+			StringBuilder errorString = new StringBuilder("The user");
+			if(!firstUserExists && !secondUserExists){
+				errorString = new StringBuilder("Both the users do not exists in the db.");
+				return notFound(errorString.toString());
+			}
+			if(!firstUserExists){
+				errorString.append(" ").append(follower).append(" ");
+			}
+			if(!secondUserExists){
+				errorString.append(" ").append(theFollowed).append(" ");
+			}
+			errorString.append(" does not exists on the db");
+			return notFound(errorString.toString());
+
+
+		}
+	}
+	
+	/**
+	 * DELETE /admin/follow/:follower/to/:tofollow
+	 * Delete a follow relationship beetwen user follower and user to follow
+	 * @param follower
+	 * @param toFollow
+	 * @return
+	 */
+	public static Result removeFollowRelationship(String follower,String theFollowed){
+		/**
+		 * Test if the usernames provided do not match internal users' usernames 
+		 */
+		boolean firstUserExists = UserService.exists(follower);
+		boolean secondUserExists = UserService.exists(theFollowed);
+		if(firstUserExists && secondUserExists){
+			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
+			if(!RoleService.hasRole(follower, friendshipRole)){
+				return notFound("User "+follower+" is not a friend of "+theFollowed);
+			}
+			try{
+				UserService.removeUserFromRole(follower,friendshipRole);
+				return ok();
+			}catch(Exception e){
+				return internalServerError(e.getMessage());
+			}
+			
+		}else{
+			StringBuilder errorString = new StringBuilder("The user");
+			if(!firstUserExists && !secondUserExists){
+				errorString = new StringBuilder("Both the users do not exists in the db.");
+				return notFound(errorString.toString());
+			}
+			if(!firstUserExists){
+				errorString.append(" ").append(follower).append(" ");
+			}
+			if(!secondUserExists){
+				errorString.append(" ").append(theFollowed).append(" ");
+			}
+			errorString.append(" does not exists on the db");
+			return notFound(errorString.toString());
+
+
+		}
+	}
+	
+	public static Result following(String username){
+		if(!UserService.exists(username)){
+			return notFound("User "+username+" does not exists");
+		}
+		 OUser user = UserService.getOUserByUsername(username);
+		 Set<ORole> roles = user.getRoles();
+		 List<String> usernames = new ArrayList<String>();
+		 for (ORole oRole : roles) {
+			  
+			if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
+				usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
+			}
+		 }
+		 if(usernames.isEmpty()){
+			 return notFound();
+		 }else{
+			 List<ODocument> followers;
+			try {
+				followers = UserService.getUserProfilebyUsernames(usernames);
+				return ok(User.prepareResponseToJson(followers));
+			} catch (Exception e) {
+				Logger.error(e.getMessage());
+				return internalServerError(e.getMessage());
+			}
+		 }
 	}
 
 }
