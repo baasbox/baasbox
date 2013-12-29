@@ -43,10 +43,6 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		Logger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
-		//try to retrieve from querystring
-		if(appCode==null){
-			appCode = ctx.request().getQueryString("appcode");
-		}
 
 		String adminUser=BBConfiguration.getBaasBoxAdminUsername();
 		String adminPassword = BBConfiguration.getBaasBoxAdminPassword();

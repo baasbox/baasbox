@@ -26,7 +26,7 @@ import play.mvc.Result;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.ShuttingDownDBException;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 
@@ -47,7 +47,7 @@ public class ConnectToDBFilter extends Action.Simple {
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
-		ODatabaseRecordTx database = null;
+		OGraphDatabase database = null;
 		Result result=null;
 		try{
 			

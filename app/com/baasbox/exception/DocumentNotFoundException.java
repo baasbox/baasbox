@@ -1,22 +1,22 @@
 package com.baasbox.exception;
 
-public class RoleAlreadyExistsException extends Exception {
+public class DocumentNotFoundException extends Exception {
 
-	public RoleAlreadyExistsException() {
+	public DocumentNotFoundException() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public RoleAlreadyExistsException(String message) {
+	public DocumentNotFoundException(String message) {
 		super(message);
 		// TODO Auto-generated constructor stub
 	}
 
-	public RoleAlreadyExistsException(Throwable cause) {
+	public DocumentNotFoundException(Throwable cause) {
 		super(cause);
 		// TODO Auto-generated constructor stub
 	}
 
-	public RoleAlreadyExistsException(String message, Throwable cause) {
+	public DocumentNotFoundException(String message, Throwable cause) {
 		super(message, cause);
 		// TODO Auto-generated constructor stub
 	}

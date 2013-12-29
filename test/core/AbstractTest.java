@@ -114,11 +114,6 @@ public abstract class AbstractTest extends FluentTest
 		nvpFile = new BasicNameValuePair(sFile, sEncoding);
 	}
 	
-	protected void setFile(String sFile, String sEncoding)
-	{
-		nvpFile = new BasicNameValuePair(sFile, sEncoding);
-	}
-	
 	protected void removeHeader(String sName)
 	{
 		mHeaders.remove(sName);

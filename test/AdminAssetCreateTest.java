@@ -27,7 +27,6 @@ import static play.test.Helpers.testServer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -46,23 +45,11 @@ import core.TestConfig;
 
 public class AdminAssetCreateTest extends AbstractAdminAssetTest
 {
-	public static final String TEST_ASSET_NAME_ = "testSimpleAsset";
-	public static final String TEST_FILE_ASSET_NAME_ = "testFileAsset";
+	public static final String TEST_ASSET_NAME = "testSimpleAsset";
+	public static final String TEST_FILE_ASSET_NAME = "testFileAsset";
 	
 	private Map<String, String> mParametersSimple = new HashMap<String, String>();
 	private Map<String, String> mParametersFile = new HashMap<String, String>();
-	
-	private static  String assetName;
-	public static String TEST_ASSET_NAME(){
-		if (assetName == null ) assetName = TEST_ASSET_NAME_ + UUID.randomUUID();
-		return assetName;
-	}
-	
-	private static String assetFileName;
-	public static String TEST_FILE_ASSET_NAME(){
-		if (assetFileName == null ) assetFileName = TEST_FILE_ASSET_NAME_ + UUID.randomUUID();
-		return assetFileName;
-	}
 	
 	@Override
 	public String getRouteAddress()
@@ -94,10 +81,10 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 			{
 				public void run() 
 				{
-					mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME());
+					mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
 					mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 					
-					mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME());
+					mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME);
 					mParametersFile.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 				}
 			}
@@ -211,7 +198,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void routeCreateAsset()
 	{
-		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME());
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
 		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
@@ -225,7 +212,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 
 	public void routeDeleteAsset()
 	{
-		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME());
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
 		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		FakeRequest request = new FakeRequest(DELETE, getRouteAddress() + "/" + mParametersSimple.get(PARAM_NAME));
@@ -240,7 +227,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void serverCreateAsset()
 	{
-		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME());
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
 		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -252,7 +239,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void serverDeleteAsset()
 	{
-		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME());
+		mParametersSimple.put(PARAM_NAME, TEST_ASSET_NAME);
 		mParametersSimple.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -264,7 +251,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void serverCreateFileAsset()
 	{
-		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME());
+		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME);
 		mParametersFile.put(PARAM_META, getPayload("/adminAssetCreateMeta.json").toString());
 
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -277,7 +264,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	
 	public void serverDeleteFileAsset()
 	{
-		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME());
+		mParametersFile.put(PARAM_NAME, TEST_FILE_ASSET_NAME);
 		
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);

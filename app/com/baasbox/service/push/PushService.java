@@ -1,23 +1,24 @@
 package com.baasbox.service.push;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
+import play.mvc.Http;
+import play.mvc.Http.Context;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
-import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.providers.Factory;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
-import com.google.android.gcm.server.InvalidRequestException;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -45,7 +46,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
+	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{
 		Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);

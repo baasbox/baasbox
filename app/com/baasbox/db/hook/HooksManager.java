@@ -18,19 +18,16 @@ package com.baasbox.db.hook;
 
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.collections.IteratorUtils;
 
 import play.Logger;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
-public class HooksManager { 
-	public static void registerAll(ODatabaseRecordTx db){
+public class HooksManager {
+	public static void registerAll(OGraphDatabase db){
 		Logger.trace("Method Start");
 		Logger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
@@ -53,14 +50,13 @@ public class HooksManager {
 		Logger.trace("Method End");
 	}
 	
-	public static void unregisteredAll(ODatabaseRecordTx db){
+	public static void unregisteredAll(OGraphDatabase db){
 
 		Logger.trace("Method Start");
-		
+		/*
 		Logger.debug("unregistering hooks...");
 		Set<ORecordHook> hooks = db.getHooks();
-		List hs = IteratorUtils.toList(hooks.iterator());
-		Iterator<ORecordHook> it =hs.iterator();
+		Iterator<ORecordHook> it =hooks.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
 			if (h instanceof BaasBoxHook) {
@@ -68,7 +64,7 @@ public class HooksManager {
 				db.unregisterHook(h);
 			}
 		}
-				
+				*/
 		Logger.trace("Method End");
 
 	}

@@ -10,11 +10,8 @@
 					<div class="box-content">
 						<form class="form-horizontal" id="userForm">
 						<div class="alert alert-info">
-							Please enter the user information
+							Please enter the User information
 						</div>
-						<p class="hint">
-							Provide the required information to create/modify a user profile.
-						</p>
 							<fieldset>
 								<div id="errorAddUser" class="alert alert-error hide">
 
@@ -40,39 +37,33 @@
 								  <input class="input-xlarge" id="txtRetypePassword" type="password" value="" required>
 								</div>
 							  </div>
-							  <div data-rel="tooltip" title="Each user must belong to a role" class="control-group">
+							  <div class="control-group">
 								<label class="control-label" for="cmbSelectRole">Role*</label>
 								<div class="controls">
 								  <select id="cmbSelectRole" data-rel="chosen" required>
 								  </select>
 								</div>
-							  </div>
-							  
-							<p class="hint">
-								In the fields below you can insert arbitrary fields in JSON format, i.e. key/value pairs in curly brackets
-							</p>							  
-							  <div data-rel="tooltip" title="Private fields are visible only by the user itself. The 'Recovery Password' feature needs a valid 'email' field  " class="control-group" id="auVisibleByTheUser">
-								<label class="control-label" for="txtVisibleByTheUser">Private profile fields (visible only by the user)</label>
+							  </div>							  
+							  <div class="control-group" id="auVisibleByTheUser">
+								<label class="control-label" for="txtVisibleByTheUser">Private profile fields(visible only by the user itself)</label>
 								<div class="controls">
 								  <textarea class="autogrow" id="txtVisibleByTheUser"></textarea>
 								</div>
 							  </div>
-							  
-							  <div style="display:none" data-rel="tooltip" title="These fields are visible by the user itself and by its friends. Currently this feature is not available" class="control-group" id="auVisibleByFriend">
-								<label class="control-label" for="txtVisibleByFriend">Fields visibles also by followers</label>
+							  <div class="control-group" id="auVisibleByFriend">
+								<label class="control-label" for="txtVisibleByFriend">Fields visibles also by friends</label>
 								<div class="controls">
 								  <textarea class="autogrow" id="txtVisibleByFriend"></textarea>
 								</div>
 							  </div>
-							  
-							  <div data-rel="tooltip" title="These fields are visible by all the registered users" class="control-group" id="auVisibleByRegisteredUsers">
-								<label class="control-label" for="txtVisibleByRegisteredUsers">Fields visible by all registered users </label>
+							  <div class="control-group" id="auVisibleByRegisteredUsers">
+								<label class="control-label" for="txtVisibleByRegisteredUsers">Fields visible by all the registered users</label>
 								<div class="controls">
 								  <textarea class="autogrow" id="txtVisibleByRegisteredUsers"></textarea>
 								</div>
 							  </div>
-							  <div data-rel="tooltip" title="These fields are visible by anyone performs a call to BaasBox, even without authentication " class="control-group" id="auVisibleByAnonymousUsers">
-								<label class="control-label" for="txtVisibleByAnonymousUsers">Fields visible by anyone </label>
+							  <div class="control-group" id="auVisibleByAnonymousUsers">
+								<label class="control-label" for="txtVisibleByAnonymousUsers">Fields visible anyone(even by the anonymous users)</label>
 								<div class="controls">
 								  <textarea class="autogrow" id="txtVisibleByAnonymousUsers"></textarea>
 								</div>

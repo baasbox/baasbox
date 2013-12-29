@@ -1,7 +1,7 @@
 {
   "username":"user1",
   "password":"passw1",
-  "role":"registered",
+  "role":"registereduser",
   "visibleByTheUser": {
      "myPrivateEmail":"me@example.com"
    },

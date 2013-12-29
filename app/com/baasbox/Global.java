@@ -23,9 +23,6 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.UnsupportedEncodingException;
-
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -33,25 +30,22 @@ import org.codehaus.jackson.node.ObjectNode;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
-import play.Logger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
-import play.core.j.JavaResultExtractor;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
 import com.baasbox.configuration.Internal;
-import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.typesafe.config.Config;
 
 public class Global extends GlobalSettings {
 	
@@ -73,26 +67,10 @@ public class Global extends GlobalSettings {
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
-			  
-			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
-			  //Deprecated due to OrientDB 1.6
-			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
-			  
-			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
-			  
-			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
-			  OGlobalConfiguration.FILE_LOCK.setValue(false);
-			  
-			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
-			  
-			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
-			  
-			  
 			  Orient.instance().startup();
 			  OGraphDatabase db = null;
 			  try{
-				db = new OGraphDatabase( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db = new OGraphDatabase ( "local:" + config.getString(BBConfiguration.DB_PATH) ) ; 
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -120,14 +98,14 @@ public class Global extends GlobalSettings {
 		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
 
-	    ODatabaseRecordTx db =null;
+	    OGraphDatabase db =null;
 	    try{
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
 		    		DbHelper.setupDb(db);
-			    	info("Initializing session manager");
+			    	info("Initilizing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
 		    	}catch (Throwable e){
@@ -147,24 +125,11 @@ public class Global extends GlobalSettings {
     	info("Updating default users passwords...");
     	try {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
-    		DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
-			
 			String bbid=Internal.INSTALLATION_ID.getValueAsString();
 			if (bbid==null) throw new Exception ("Unique id not found! Hint: could the DB be corrupted?");
 			info ("BaasBox unique id is " + bbid);
 		} catch (Exception e) {
-	    	error("!! Error initializing BaasBox!", e);
-	    	error("Abnormal BaasBox termination.");
-	    	System.exit(-1);
-		} finally {
-    		if (db!=null && !db.isClosed()) db.close();
-    	}
-    	
-    	try{
-    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
-    		IosCertificateHandler.init();
-    	}catch (Exception e) {
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");
 	    	System.exit(-1);
@@ -177,11 +142,10 @@ public class Global extends GlobalSettings {
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
-	    
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
-	    info("Documentation is available at http://www.baasbox.com/documentation");
+	    info("Documentation is available at http://www.baasbox.com/documentation/v." + BBConfiguration.getApiVersion() + "/introduction");
 		debug("Global.onStart() ended"); 
 	  }
 	  
@@ -193,7 +157,7 @@ public class Global extends GlobalSettings {
 	    info("BaasBox is shutting down...");
 	    try{
 	    	info("Closing the DB connections...");
-	    	ODatabaseDocumentPool.global().close();
+	    	OGraphDatabasePool.global().close();
 	    	info("Shutting down embedded OrientDB Server");
 	    	Orient.instance().shutdown();
 	    	info("...ok");
@@ -208,11 +172,7 @@ public class Global extends GlobalSettings {
 		debug("Global.onStop() ended");
 	  }  
 	  
-	private void setCallIdOnResult(RequestHeader request, ObjectNode result) {
-		String callId = request.getQueryString("call_id");
-		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
-	}
-	
+	  
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
@@ -223,21 +183,14 @@ public class Global extends GlobalSettings {
 			result.put("method", request.method());
 			result.put("request_header", mapper.valueToTree(request.headers()));
 			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
-			setCallIdOnResult(request, result);
 		return result;
 	} 
 		
 	  @Override
 	  public Result onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
-		  result.put("http_code", 400);
-		  Result resultToReturn =  badRequest(result);
-		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
-		  }
-		  return resultToReturn;
+		  return badRequest(result);
+		  
 	  }  
 
 	// 404
@@ -246,13 +199,8 @@ public class Global extends GlobalSettings {
 		  debug("API not found: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
-		  Result resultToReturn= notFound(result);
-		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
-		  }
-		  return resultToReturn;
+		  return notFound(result);
+		  
 	    }
 
 	  // 500 - internal server error
@@ -263,13 +211,8 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
-		  Result resultToReturn= internalServerError(result);
-		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
-		  }
-		  return resultToReturn;
+		  return internalServerError(result);
+		  
 	  }
 
 

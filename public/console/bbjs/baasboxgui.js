@@ -1,32 +1,14 @@
 /**
  * javascript functions for the Admin GUI 
  */
-
-
-/**
- * Utility Functions
- * 
- */
-
-/**
- * http://stackoverflow.com/a/2548133/487576
- * String endsWith
- */
-String.prototype.endsWith = function(suffix) {
-    return this.indexOf(suffix, this.length - suffix.length) !== -1;
-};
-
 var userDataArray;
-var roleDataArray;
-var documentDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
-var settingSocialData = {};
 var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
-var settingPushMap = {};
+
 var dbCollectionsCache = [];
 
 $(document).ready(function(){
@@ -62,7 +44,7 @@ function refreshCollectionCache(arr,fun){
 			success: function(data) {
 				var data = data["data"];
 				dbCollectionsCache = data["data"]["collections_details"];
-				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				console.log(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
 				if(fun){
 					fun(dbCollectionsCache)
 				}
@@ -112,7 +94,7 @@ $('#exportDb').click(function(e){
 				},
 				success: function(data)
 				{
-					alert("Your database backup has been scheduled");
+					alert("your db export has been scheduled");
 				}
 
 			});	
@@ -167,7 +149,7 @@ $('a.deleteCollection').live('click',function(e){
 $('a.deleteExport').live('click',function(e){
 
 	var name = $(e.target).parents('tr').children()[0].innerHTML
-	if(confirm("Are you sure you want to delete this backup file?")){
+	if(confirm("Are you sure you want to delete this export?")){
 		BBRoutes.com.baasbox.controllers.Admin.deleteExport(name).ajax({
 			error:function(data){
 				alert(JSON.parse(data.responseText)["message"]);
@@ -195,7 +177,7 @@ $('a.downloadExport').live('click',function(e){
 			var builder;
 			var blob;
 			if(!BlobBuilder){
-				//console.debug("BlobBuilder is not available...Using plain BLOB")
+				console.log("BlobBuilder is not available...Using plain BLOB")
 				blob = new Blob([binStr],{ "type" : "application\/zip" });
 			}else{
 				builder = new BlobBuilder();
@@ -246,21 +228,12 @@ $('.btn-changepwd').click(function(e){
 $('.btn-adduser').click(function(e){
 	loadUserRole();
 	resetAddUserForm();
-	$("#userTitle").text("Create a new User");
+	$("#userTitle").text("Create new User");
 	$(".groupUserPwd").removeClass("hide");
 	$("#txtUsername").removeClass("disabled");
 	$("#txtUsername").prop('disabled', false);
 	$('#addUserModal').modal('show');
 }); // Show Modal for Add User
-
-
-$('.btn-addRole').click(function(e){
-	//console.debug("btn-addrole clicked");
-	resetAddRoleForm();
-	$("#roleTitle").text("Create a new Role");
-	$('#addRoleModal').modal('show');
-	$('#roleModalMode').text("insert");
-}); // Show Modal for Add role
 
 $('.btn-newAsset').click(function(e){
 
@@ -278,6 +251,7 @@ $(".btn-action").live("click", function() {
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
 
+
 	switch (action)	{
 	case "insert":
 		switch (actionType)	{
@@ -286,8 +260,6 @@ $(".btn-action").live("click", function() {
 		case "collection":
 			break;
 		case "document":
-			var collection=parameters;
-			openDocumentEditForm(null,collection)
 			break;
 		case "asset":
 			break;
@@ -302,18 +274,10 @@ $(".btn-action").live("click", function() {
 			break;
 		case "setting":
 			openSettingEditForm(parameters);
-			break;
 		case "document":
-			//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
-			openDocumentEditForm(id,collection);
 			break;
 		case "asset":
 			break;
-		case "role":
-			openRoleEditForm(parameters);
-			break;	
 		}
 		break;
 	case "delete":
@@ -322,28 +286,17 @@ $(".btn-action").live("click", function() {
 			break;
 		case "collection":
 			break;
+		case "document":
+			break;
 		case "asset":
-			if(!confirm("Do you want to delete '"+ parameters +"' asset?"))
+			if(!confirm("Do you want delete '"+ parameters +"' asset?"))
 				return;
 			deleteAsset(parameters);
 			break;
-		case "role":
-			if(!confirm("Do you want to delete '"+ parameters +"' role? All users belonging to this role will be assigned ro the role 'registered'"))
-				return;
-			deleteRole(parameters);
-			break;
-		case "document":
-		//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
-			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
-				return;
-			deleteDocument(collection,id);
-			break;	
 		}
 		break;
-		}
-	});
+	}
+});
 
 function deleteAsset(assetName)
 {
@@ -361,105 +314,33 @@ function deleteAsset(assetName)
 			})	
 }
 
-function deleteDocument(collection,id){
-	BBRoutes.com.baasbox.controllers.Document.deleteDocument(collection,id,true).ajax(
-			{
-				error: function(data)	{
-					alert(JSON.parse(data.responseText)["message"]);
-				},
-				success: function(data)	{
-					$("#selectCollection").trigger("change");
-				}
-			})	
-}
-
-function deleteRole(roleName){
-	BBRoutes.com.baasbox.controllers.Admin.deleteRole(roleName).ajax(
-			{
-				data: {"name": roleName},
-				error: function(data)
-				{
-					alert(JSON.parse(data.responseText)["message"]);
-				},
-				success: function(data)
-				{
-					loadRoleTable();
-				}
-			})	
-}
-
-function openUserEditForm(editUserName){
+function openUserEditForm(editUserName)
+{
 	var userObject;
+
 	resetAddUserForm();
+	loadUserRole();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
 	$("#userTitle").text("Edit User information");
 	$(".groupUserPwd").addClass("hide");
+
 	for(i=0;i<userDataArray.length;i++)
 	{
 		if(userDataArray[i].user.name == editUserName)
 			userObject = userDataArray[i];
 	}
+
 	$("#txtUsername").val(userObject.user.name);
-	loadUserRole(userObject.user.roles[0].name);
-	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
-	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend)).trigger("change");
-	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
-	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
+	$("#cmbSelectRole option:contains("+ userObject.user.roles[0].name +")").prop('selected',true)
+	$("#cmbSelectRole").trigger("liszt:updated");
+
+	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser));
+	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend));
+	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers));
+	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers));
+
 	$('#addUserModal').modal('show');
-}
-
-function openRoleEditForm(editRoleName){
-	var roleObject;
-	resetAddRoleForm();
-	$("#roleTitle").text("Edit Role information");
-	$('#roleModalMode').text("edit");
-	for(i=0;i<roleDataArray.length;i++)
-	{
-		if(roleDataArray[i].name == editRoleName)
-			roleObject = roleDataArray[i];
-	}
-	$("#txtRoleName").val(roleObject.name);
-	$("#roleOriginalName").val(roleObject.name);
-	$("#txtRoleDescription").val(roleObject.description);
-	$('#addRoleModal').modal('show');
-}
-
-function populateDocumentEditForm(docObject){
-	$("#txtDocumentId").val(docObject.id);
-	$("#txtDocumentAuthor").val(docObject["_author"]);
-	$("#txtDocumentCreationDate").val(docObject["_creation_date"]);
-	$("#txtDocumentVersion").val(docObject["@version"]);
-	$("#txtDocumentCollection").val(docObject["@class"]);
-	var obj = JSON.parse(JSON.stringify(docObject));
-	delete obj["@rid"];
-	delete obj["@class"];
-	delete obj["@version"];
-	delete obj["id"];
-	delete obj["_author"];
-	delete obj["_creation_date"];
-	$("#txtDocumentData").val(JSON.stringify(obj, undefined, 2));
-	$("#txtDocumentData").trigger("change");
-}
-
-function openDocumentEditForm(id,collection){
-	var docObject;
-	resetAddDocumentForm();
-	$("#documentTitle").text(id!=null?"Edit Document":"Create New Document");
-	$('#documentModalMode').text(id!=null?"edit":"insert");
-	docObject = {}
-	if(id!=null){
-		for(i=0;i<documentDataArray.length;i++)
-		{
-			if(documentDataArray[i].id == id)
-				docObject = documentDataArray[i];
-		}
-	}else{
-		docObject["@class"] = collection;
-	}
-	populateDocumentEditForm(docObject);
-	
-	$('#addDocumentModal').modal('show');
 }
 
 function openSettingEditForm(editSettingName)
@@ -496,7 +377,6 @@ function openSettingEditForm(editSettingName)
 		}
 
 	}	
-	
 	$("#lblDescription").text(settingObject.description);
 	$("#txtKey").val(settingObject.key);
 	$("#txtKey").addClass("disabled");
@@ -538,11 +418,6 @@ function loadAssetTable()
 	callMenu("#assets");
 }
 
-function loadRoleTable()
-{
-	callMenu("#roles");
-}
-
 function loadUserTable()
 {
 	callMenu("#users");
@@ -568,23 +443,7 @@ function resetAddUserForm()
 	$(".error").removeClass("error");
 }
 
-function resetAddRoleForm(){
-	//console.debug("resetAddRoleForm");
-	$("#roleForm")[0].reset();
-	$("#errorAddRole").addClass("hide");
-	$("#errorAddRole2").addClass("hide");
-	$(".error").removeClass("error");
-}
-
-function resetAddDocumentForm(){
-	//console.debug("resetAddDocumentForm");
-	$("#documentForm")[0].reset();
-	$("#errorAddDocument").addClass("hide");
-	$("#errorAddDocument2").addClass("hide");
-	$(".error").removeClass("error");
-}
-
-function loadUserRole(defaultRole)
+function loadUserRole()
 {
 	BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
 		data: {orderBy: "name asc"},
@@ -600,115 +459,7 @@ function loadUserRole(defaultRole)
 				}));
 			});
 			$("#cmbSelectRole").trigger("liszt:updated");
-			if (defaultRole) {
-				$("#cmbSelectRole option:contains('"+defaultRole+"')").prop('selected',true);
-				$("#cmbSelectRole").trigger("liszt:updated");
-			}
 		}});
-}
-
-
-function addRole() {
-	var roleName = $("#txtRoleName").val();
-	var desc = $("#txtRoleDescription").val();
-	BBRoutes.com.baasbox.controllers.Admin.createRole(roleName).ajax(
-			{
-				data: JSON.stringify({"description": desc}),
-				contentType: "application/json",
-				processData: false,
-				error: function(data)
-				{
-					alert(JSON.parse(data.responseText)["message"]);
-				},
-				success: function(data)
-				{
-					closeRoleForm();
-				}
-			})	
-}
-function updateRole(){
-	var roleName = $("#txtRoleName").val();
-	var roleOriginalName = $("#roleOriginalName").val();
-	var desc = $("#txtRoleDescription").val();
-
-	BBRoutes.com.baasbox.controllers.Admin.editRole(roleOriginalName).ajax(
-			{
-				data: JSON.stringify({"description": desc,"new_name": roleName}),
-				contentType: "application/json",
-				processData: false,
-				error: function(data)
-				{
-					alert(JSON.parse(data.responseText)["message"]);
-				},
-				success: function(data)
-				{
-					closeRoleForm();
-				}
-			})	
-}//updateRole
-
-function addDocument(){
-	var collection=$("#txtDocumentCollection").val();
-	var data=JSON.parse($("#txtDocumentData").val());
-	BBRoutes.com.baasbox.controllers.Document.createDocument(collection).ajax(
-			{
-				data: JSON.stringify(data),
-				contentType: "application/json",
-				processData: false,
-				error: function(data)
-				{
-					var error=JSON.parse(data.responseText);
-					var message=error["message"];
-					var bb_code=error["bb_code"];
-					if (bb_code=="40001") message += " HINT: reload the document from the server and redo your update";
-					$("#errorAddDocument").text(message).removeClass("hide");
-				},
-				success: function(data)
-				{
-					closeDocumentForm();
-				}
-			})	
-}//addDocument
-
-
-
-function updateDocument(){
-	var id=$("#txtDocumentId").val();
-	var collection=$("#txtDocumentCollection").val();
-	var version=$("#txtDocumentVersion").val();
-	var data=JSON.parse($("#txtDocumentData").val());
-	data["@version"]=parseInt(version);
-	
-	BBRoutes.com.baasbox.controllers.Document.updateDocument(collection,id,true).ajax(
-			{
-				data: JSON.stringify(data),
-				contentType: "application/json",
-				processData: false,
-				error: function(data)
-				{
-					var error=JSON.parse(data.responseText);
-					var message=error["message"];
-					var bb_code=error["bb_code"];
-					if (bb_code=="40001") message += " HINT: reload the document from the server and redo your update";
-					alert(message);
-					$("#errorAddDocument").text(message).removeClass("hide");
-				},
-				success: function(data)
-				{
-					closeDocumentForm();
-				}
-			})	
-}//updateDocument
-
-function closeDocumentForm() {
-	$('#addDocumentModal').modal('hide');
-	$("#selectCollection").trigger("change");
-}
-
-
-function closeRoleForm() {
-	$('#addRoleModal').modal('hide');
-	loadRoleTable();
 }
 
 function addUser()
@@ -792,7 +543,7 @@ function updateSetting()
 
 				error: function(data)
 				{
-					////console.debug(data)
+					//console.log(data)
 					alert("Error updating settings:" + data["message"]);
 				},
 				success: function(data)
@@ -802,85 +553,11 @@ function updateSetting()
 			})	
 }
 
-
-
 function closeSettingForm()
 {
 	$('#EditSettingModal').modal('hide');
 	loadSettingTable();
 }
-
-$('.btn-RoleCommit').click(function(e){
-	var action=$('#roleModalMode').text();
-	var roleName = $("#txtRoleName").val();
-	var desc = $("#txtRoleDescription").val();
-	var errorMessage = '';
-	$("#errorAddRole").addClass("hide");
-	
-	if($.trim(roleName) == "")	errorMessage = "The 'Role name' field is required<br/>"
-	if(errorMessage != "")
-	{
-		$("#errorAddRole").html(errorMessage);
-		$("#errorAddRole").removeClass("hide");
-		return;
-	}
-
-	if(action == "insert")
-		addRole();
-	else
-		updateRole();
-	return;
-}); // Validate and Ajax submit for Insert/Update Role
-
-
-$('.btn-DocumentCommit').click(function(e){
-	var errorMessage = '';
-	$("#errorAddDocument").addClass("hide");
-	var action=$('#documentModalMode').text();
-	var data=$("#txtDocumentData").val();
-	if ($.trim(data)=="") $("#txtDocumentData").val("{}");
-	//check json data
-	try{
-		$.parseJSON(data);
-	}catch (e) {
-        errorMessage+="Please provide data in JSON format. "
-		if ($.trim(data).indexOf("{") != 0) errorMessage+=" HINT: check if the data fields are between {..}";
-    }
-	if(errorMessage != "")	{
-		$("#errorAddDocument").html(errorMessage);
-		$("#errorAddDocument").removeClass("hide");
-		return;
-	}
-
-	if(action == "insert")	addDocument();
-	else updateDocument();
-	return;
-}); // Validate and Ajax submit for Insert/Update Document
-
-$('.btn-DocumentReload').click(function(e){
-	var errorMessage = '';
-	$("#errorAddDocument").addClass("hide");
-	
-	var id=$("#txtDocumentId").val();
-	var collection=$("#txtDocumentCollection").val();
-	
-	BBRoutes.com.baasbox.controllers.Document.getDocument(collection,id,true).ajax(
-			{
-				error: function(data)
-				{
-					var error=JSON.parse(data.responseText);
-					var message=error["message"];
-					alert(JSON.parse(message));
-					$("#errorAddDocument").text(message);
-					$("#errorAddDocument").removeClass("hide");
-				},
-				success: function(data)	{
-				    populateDocumentEditForm(data["data"]);
-					$("#selectCollection").trigger("change");
-				}
-			});	
-	return;
-}); // Validate and Ajax submit for reload document
 
 $('.btn-UserCommit').click(function(e){
 	var action;
@@ -902,51 +579,52 @@ $('.btn-UserCommit').click(function(e){
 		action = "Insert";
 
 	if($.trim(userName) == "")
-		errorMessage = "The 'Username' field is required<br/>"
+		errorMessage = "The field 'Username' is required<br/>"
 
 			if(action == "Insert"){
 				if($.trim(password) == "")
-					errorMessage += "The 'Password' field is required<br/>"
+					errorMessage += "The field 'Password' is required<br/>"
 
 						if($.trim(retypePassword) == "")
-							errorMessage += "The 'Retype Password' field  is required<br/>"
+							errorMessage += "The field 'Retype Password' is required<br/>"
 
 								if(password != retypePassword)
 								{
 									$(".groupUserPwd").addClass("error");
-									errorMessage += "'Password' and 'Retype Password' fields don't match<br/>"
+									errorMessage += "'Password' and 'Retype Password' don't match<br/>"
 								}
 								else
 									$(".groupUserPwd").removeClass("error");		
 			}
 
+
 	if($.trim(role) == "")
-		errorMessage += "The 'Role' field  is required<br/>"
+		errorMessage += "The field 'Role' is required<br/>"
 
 			if(!isValidJson(visibleByTheUser)){
 				$("#auVisibleByTheUser").addClass("error");
-				errorMessage += "The 'Visible By The User' field  must be a valid JSON string<br/>"
+				errorMessage += "The field 'Visible By The User' must be a valid Json text<br/>"
 			}
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
 	if(!isValidJson(visibleByFriend)){
 		$("#auVisibleByFriend").addClass("error");
-		errorMessage += "The 'Visible By Friend' field  must be a valid JSON string<br/>"
+		errorMessage += "The field 'Visible By Friend' must be a valid Json text<br/>"
 	}
 	else
 		$("#auVisibleByFriend").removeClass("error");
 
 	if(!isValidJson(visibleByRegisteredUsers)){
 		$("#auVisibleByRegisteredUsers").addClass("error");
-		errorMessage += "The 'Visible By Registered Users' field  must be a valid JSON string<br/>"
+		errorMessage += "The field 'Visible By Registered Users' must be a valid Json text<br/>"
 	}
 	else
 		$("#auVisibleByRegisteredUsers").removeClass("error");
 
 	if(!isValidJson(visibleByAnonymousUsers)){
 		$("#auVisibleByAnonymousUsers").addClass("error");
-		errorMessage += "The 'Visible By Anonymous Users' field  must be a valid JSON string<br/>"
+		errorMessage += "The field 'Visible By Anonymous Users' must be a valid Json text<br/>"
 	}
 	else
 		$("#auVisibleByAnonymousUsers").removeClass("error");
@@ -1083,7 +761,7 @@ $('#importBtn').on('click',function(e){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to restore")
+		$('#importErrors').html("You have to pick a file to download")
 		return false;
 	}
 	$('#importModal').modal('show');
@@ -1105,7 +783,7 @@ $('#importDbForm').on('submit',function(){
 	var filename = $('#zipfile').val();
 	if(filename==null ||filename==''){
 		$('#importErrors').removeClass("hide");
-		$('#importErrors').html("You have to pick a file to restore")
+		$('#importErrors').html("You have to pick a file to download")
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
@@ -1155,7 +833,7 @@ $('#assetForm').submit(function() {
 
 			if(!isValidJson(assetMeta)){
 				$("#divAssetMeta").addClass("error");
-				errorMessage += "The field 'Meta' must be a valid JSON string<br/>"
+				errorMessage += "The field 'Meta' must be a valid Json text<br/>"
 			}
 			else
 				$("#divAssetMeta").removeClass("error");
@@ -1189,10 +867,7 @@ $('#assetForm').submit(function() {
 			success: function(){
 				$('#addAssetModal').modal('hide');
 				loadAssetTable();
-			}, //success
-			error: function(data) {
-				$("#errorAsset").removeClass("hide").html(JSON.parse(data.responseText)["message"])
-			}
+			} //success
 	};
 
 	$(this).ajaxSubmit(options);
@@ -1244,7 +919,7 @@ function getActionButton(action, actionType,parameters){
 	case "delete":
 		iconType = "icon-trash";
 		classType = "btn-danger";
-		labelName = "Delete...";
+		labelName = "Delete";
 		break;
 	}
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
@@ -1257,9 +932,6 @@ function setBradCrumb(type)
 	var sBradCrumb;
 
 	switch (type){
-	case "#roles":
-		sBradCrumb = "Roles";
-		break;	
 	case "#users":
 		sBradCrumb = "Users";
 		break;
@@ -1279,7 +951,7 @@ function setBradCrumb(type)
 		sBradCrumb = "Documents";
 		break;
 	case "#assets":
-		sBradCrumb = "Assets";
+		sBradCrumb = "Assests";
 		break;
 	}
 
@@ -1325,28 +997,13 @@ function getAssetIcon(type)
 
 
 function setupTables(){
-	$('#roleTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "name"},
-		               {"mData": "description"},
-		               {"mData": "modifiable", "mRender": function ( data, type, full ) {
-		            	   if(data) //role is modifiable
-		            		   return getActionButton("edit","role",full.name) +" "+ getActionButton("delete","role",full.name);
-		            	   return "No action available";
-		               }
-		               }],
-		               "bRetrieve": true,
-		               "bDestroy":true
-	} ).makeEditable();
 	$('#userTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "user.name"},
 		               {"mData": "user.roles.0.name"},
-		               {"mData": "signUpDate","sDefaultContent":""},
+		               {"mData": "_creation_date","sDefaultContent":""},
 		               {"mData": "user.status","mRender": function ( data, type, full ) {
 		            	   var classStyle="label-success"
 		            		   if (data!="ACTIVE") classStyle="label-important";
@@ -1357,7 +1014,7 @@ function setupTables(){
 		               {"mData": "user.name", "mRender": function ( data, type, full ) {
 		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
 		            		   return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
-		            	   return "No action available";
+		            	   return "";
 		               }
 		               }],
 		               "bRetrieve": true,
@@ -1365,7 +1022,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1385,7 +1042,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsPwdTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1404,7 +1061,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsImgTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1423,7 +1080,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#settingsPushTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "key"},
@@ -1442,19 +1099,19 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"aaSorting": [[ 2, "desc" ]],
 		"sPaginationType": "bootstrap",
 		"aoColumns": [ {"mData": "name"},
 		               {"mData": "date"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"> <a class=\"btn downloadExport\" href=\"#\">Download</a> <a class=\"btn btn-danger deleteExport\">Delete</a> </div>"}}
+		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteExport\">Delete</a><a class=\"btn downloadExport\" href=\"#\">Download</a>"}}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
 
 	});
 	$('#collectionTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
@@ -1465,48 +1122,31 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#documentTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-    	    			var datetime = data.split(" "); 
-    	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
-						}
-					   },
-					   {"mData": "id", sWidth:"280px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		               {"mData": "_author"},
-		               {"mData": "@rid","mRender": function ( data, type, full ) 	{
+		"aoColumns": [ {"mData": "@rid"},
+		               {"mData": "@rid", "mRender": function ( data, type, full ) {
 		            	   var obj=JSON.parse(JSON.stringify(full)); 
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
-						   delete obj["id"];
-						   delete obj["_author"];
-						   delete obj["_creation_date"];
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
-						},bSortable:false
-		               },
-		               {"mData": "id","mRender": function ( data, type, full ) {
-							var obj=JSON.parse(JSON.stringify(full)); 
-		            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
-		            	},bSortable:false,bSearchable:false
 		               }
+		               },
+		               {"mData": "@version"}
 		               ],
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable(); 
-
-	$('#btnReloadDocuments').click(function(){
+	$('#btnReloadDocumkents').click(function(){
 		$("#selectCollection").trigger("change");
 	});
 	$('#btnReloadExports').click(function(){
 		callMenu('#dbmanager')
 	});
 	$('#assetTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ 
@@ -1553,7 +1193,7 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
-} //setupTables()
+}
 
 function setupSelects(){
 
@@ -1565,11 +1205,10 @@ function setupSelects(){
 				data=data["data"];
 				var scope=$("#documents").scope();
 				scope.$apply(function(){
-					scope.collectionName=val;
+					scope.collectioName=val;
 				});	
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
-				documentDataArray=data;
 			}
 		})//BBRoutes.com.baasbox.controllers.Document.getDocuments
 	});//selectCollection
@@ -1596,30 +1235,17 @@ function setupAjax(){
 function setupMenu(){
 	//ajaxify menus
 	$('a.ajax-link').click(function(e){
+		//console.log("a.ajax-link click");
+		//console.log(e);
 		if($.browser.msie) e.which=1;
+		//console.log("go on...");
 		e.preventDefault();
 		var $clink=$(this);
 		callMenu($clink.attr('href'));
 		$('ul.main-menu li.active').removeClass('active');
 		$clink.parent('li').addClass('active');
 	});
-	$(".directLink").unbind("click");
-	//initializeTours
-	$(".tour").click(function(){
-		for (var key in tours) {
-			var tour = tours[key];
-			if (!tour.ended()) tour.end();
-		}
-		tours[$(this).data("tour")].restart();
-	});
 }//setupMenu
-
-function initializeData(action,data){
-	var scope=$('#settings').scope();
-	scope.$apply(function(){
-		scope.$broadcast(action+"-data",data);
-	});
-}
 
 function applySuccessMenu(action,data){
 	$('#loading').remove();
@@ -1646,26 +1272,13 @@ function callMenu(action){
 	setBradCrumb(action);
 
 	switch (action)	{
-	case "#roles":
-		BBRoutes.com.baasbox.controllers.Admin.getRoles().ajax({
-			data: {orderBy: "name asc"},
-			success: function(data) {
-				roleDataArray = data["data"];
-				//console.debug("Admin.getRoles success:");
-				//console.debug(data);
-				applySuccessMenu(action,roleDataArray);
-				$('#roleTable').dataTable().fnClearTable();
-				$('#roleTable').dataTable().fnAddData(roleDataArray);
-			}
-		});
-		break;//#users
 	case "#users":
 		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
 				userDataArray = data["data"];
-				//console.debug("Admin.getUsers success:");
-				//console.debug(data);
+				console.log("Admin.getUsers success:");
+				console.log(data);
 				applySuccessMenu(action,userDataArray);
 				$('#userTable').dataTable().fnClearTable();
 				$('#userTable').dataTable().fnAddData(userDataArray);
@@ -1708,11 +1321,8 @@ function callMenu(action){
 						"jve": data["java"]["java_version"],
 						"rand": Math.random().toString(36).substr(2,7)
 				};
-				refreshCollectionCache(data["data"]["collections_details"],function(dd){
-					//console.debug("refreshed ", dd)
-				});
+				refreshCollectionCache(data["data"]["collections_details"],function(dd){console.log("refreshed ", dd)});
 				var bbId = data["installation"]["bb_id"];
-				var bbv = data["installation"]["bb_version"];
 				if(bbId){
 					changeTopBarLink(bbId);
 				}
@@ -1740,9 +1350,7 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
 						});
-				if (localStorage.generalTour!=bbv) 
-					tours["general"].restart();
-				localStorage.generalTour=bbv;
+
 			}//success function
 		});//ajax call
 
@@ -1750,11 +1358,10 @@ function callMenu(action){
 	case "#settings":		
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
 			success: function(data) {
-				//console.debug("dumpConfiguration Application success:");
-				//console.debug(data);
+				console.log("dumpConfiguration Application success:");
+				console.log(data);
 				settingDataArray = data["data"];
-				
-				
+
 				//applySuccessMenu(action,data);
 				$('#settingsTable').dataTable().fnClearTable();
 				$('#settingsTable').dataTable().fnAddData(settingDataArray);
@@ -1762,8 +1369,8 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("PasswordRecovery").ajax({
 			success: function(data) {
-				//console.debug("dumpConfiguration PasswordRecovery success:");
-				//console.debug(data);
+				console.log("dumpConfiguration PasswordRecovery success:");
+				console.log(data);
 				settingPwdDataArray = data["data"];
 				//applySuccessMenu(action,data);
 				$('#settingsPwdTable').dataTable().fnClearTable();
@@ -1772,80 +1379,24 @@ function callMenu(action){
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
 			success: function(data) {
-				//console.debug("dumpConfiguration Push success:");
+				console.log("dumpConfiguration Push success:");
+				console.log(data);
 				settingPushDataArray = data["data"];
-				//console.debug(settingPushDataArray);
-				settingPushMap = {}
-				
-				settingPushMap.add = function(setting,section){
-					if(settingPushMap[section]==null){
-						settingPushMap[section]=[];
-					}
-					settingPushMap[section].push(setting)
-				};
-				$(settingPushDataArray).each(function(i,setting){
-					var k = setting["key"];
-					
-					if(k.endsWith(".certificate")){
-						setting["file"] = true
-						if(setting.value){
-							setting["filename"] = JSON.parse(setting.value).name
-						}
-					}else{
-						setting["file"] = false;
-					}
-					if(k.indexOf('.apple.')>-1 || k.indexOf('.ios.')>-1){
-						settingPushMap.add(setting,'ios');
-					}else if(k.indexOf('.android')>-1){
-						settingPushMap.add(setting,'android');
-					}else{
-						settingPushMap.add(setting,'push');
-					}
-				})
-				initializeData("push",settingPushMap);
 				//applySuccessMenu(action,data);
-				
+				$('#settingsPushTable').dataTable().fnClearTable();
+				$('#settingsPushTable').dataTable().fnAddData(settingPushDataArray);
 			}
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
 			success: function(data) {
-
+				console.log("dumpConfiguration Images success:");
+				console.log(data);
 				settingImgDataArray = data["data"];
-				
+				console.log("action: ");
+				console.log(action);
+				applySuccessMenu(action,settingImgDataArray);
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
-			}
-		});
-		
-		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Social").ajax({
-			success: function(data) {
-				var result =  data["data"];
-				for(var i=0;i<result.length;i++){
-					var components = result[i]["key"].split(".");
-					var key = components[1];
-					var component = components[2];
-					//console.log(result)
-					if(!settingSocialData[key]){
-						settingSocialData[key] = {}
-					}
-					if(component.indexOf("token")>-1){
-						settingSocialData[key]["token"] = result[i]["value"] == 'null' ? '' : result[i]["value"];
-					}else if(component.indexOf("secret")>-1){
-						settingSocialData[key]["secret"] = result[i]["value"] == 'null' ? '' : result[i]["value"];;
-					}else if(component.indexOf("enabled")>-1){
-						var def = result[i]["value"] == undefined ? false : result[i]["value"] == "true" ? true : false;
-						settingSocialData[key]["enabled"] = def;
-						//console.log("enabled?",def);
-						settingSocialData[key]["saved"] = def;
-						
-					}
-					
-					
-				}
-				
-				applySuccessMenu(action,settingSocialData);
-				
-				
 			}
 		});
 		break;	//#settings
@@ -1862,7 +1413,7 @@ function callMenu(action){
 	case "#collections":
 		var collections = [];
 		var ref = function(coll){
-			//console.debug("refreshing",coll);
+			console.log("refreshing",coll);
 			collections = coll;
 			applySuccessMenu(action,collections);
 			$('#collectionTable').dataTable().fnClearTable();
@@ -1908,8 +1459,8 @@ function callMenu(action){
 			success: function(data) {
 				data=data["data"];
 				applySuccessMenu(action,data);
-				////console.debug("getAll");
-				////console.debug(data);
+				//console.log("getAll");
+				//console.log(data);
 				$('#assetTable').dataTable().fnClearTable();
 				$('#assetTable').dataTable().fnAddData(data);
 			}
@@ -1917,10 +1468,6 @@ function callMenu(action){
 		break;//#assets	  
 	}
 }//callMenu
-
-function RolesController($scope){
-
-}
 function AssetsController($scope){
 }
 function UsersController($scope){
@@ -1935,13 +1482,13 @@ function tryToLogin(user, pass,appCode){
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
 			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-			//console.debug("login success");
-			//console.debug("data received: ");
-			//console.debug(data);
-			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+			console.log("login success");
+			console.log("data received: ");
+			console.log(data);
+			console.log("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
 			callMenu("#dashboard");
 			//refresh the sessiontoken every 5 minutes
-			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
+			refreshSessionToken=setInterval(BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax(),300000);
 			var scope=$("#loggedIn").scope();
 			scope.$apply(function(){
 				scope.loggedIn=true;
@@ -1963,101 +1510,6 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
-	
-
-	$scope.sociallogins = $scope.data;
-	
-	$scope.$watch('data',function(){
-		$scope.sociallogins = $scope.data;
-	});
-	
-	$scope.showForm = function(name){
-		$scope.sociallogins[name].enabled = true;
-		$scope.sociallogins[name].saved = false;
-	}
-	
-	
-	
-	
-	
-	$scope.disable = function(name){
-		var toModify = $scope.sociallogins[name];
-		toModify.enabled = false;
-		toModify.saved = false;
-		toModify.token = null;
-		toModify.secret = null;
-		var key = "social."+name+".token"
-		var value = toModify.token;
-		
-		updateSettings(key,value,function(){
-			var key2 = "social."+name+".secret"
-			var value2 = toModify.secret;
-			updateSettings(key2,value2,function(){
-				var key3 = "social."+name+".enabled"
-				var value3 = false;
-				updateSettings(key3,value3,null);
-			})
-		})
-		
-	}
-	
-	
-	function updateSettings(key,value,onSuccess){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, value).ajax(
-				{
-
-					error: function(data)
-					{
-						//console.log(data)
-						alert("Error updating settings:" + data["message"]);
-					},
-					success: function(data)
-					{
-						if(onSuccess)
-							onSuccess();
-					}
-				});
-	}
-	
-	$scope.postsocialsettings = function(name){
-		var toModify = $scope.sociallogins[name];
-		toModify.errors = [];
-		if(!toModify.token || toModify.token == null || toModify.token===''){
-			toModify.errors.push('Token can\'t be empty');
-		}
-		if(!toModify.secret || toModify.secret == null || toModify.secret===''){
-			toModify.errors.push('Secret can\'t be empty');
-		}
-		if(toModify.errors.length > 0){
-			return;
-		}else{
-			var key = "social."+name+".token"
-			var value = toModify.token;
-			
-			updateSettings(key,value,function(){
-				console.log("saving token")
-				var key2 = "social."+name+".secret"
-				var value2 = toModify.secret;
-				updateSettings(key2,value2,function(){
-					console.log("saving secret")
-					var key3 = "social."+name+".enabled"
-					var value3 = true;
-					updateSettings(key3,value3,function(){
-						console.log("enabling")
-						$scope.sociallogins[name].saved = true;
-					});
-					
-				})
-			})
-			
-				
-
-		}
-		
-	}
-	
-	
-	
 }
 
 function DBManagerController($scope){
@@ -2085,119 +1537,11 @@ function DBManagerController($scope){
 	});
 }
 
-function PushSettingsController($scope){
-	$scope.pushData = {};
-	$scope.$on("push-data",function(e,data){
-		$scope.pushData = data;
-	});
-	
-	$scope.keyName = function(k){
-		return k.replace(/\./g,'');
-	}
-	
-	$scope.isSandboxMode = function(){
-		if(!$scope.pushData['push']){
-			return false;
-		}
-		if($scope.pushData['push'][0].value==undefined || 
-		   $scope.pushData['push'][0].value=='false'  || 
-		   !$scope.pushData['push'][0].value){
-			return false;
-		}else{
-			return true;
-		}
-	}
-	
-	$scope.sandboxMode = function(enable){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key, enable).ajax(
-				{
-
-					error: function(data)
-					{
-						////console.debug(data)
-						alert("Error updating sandbox mode:" + data["message"]);
-					},
-					success: function(data)
-					{
-						$scope.$apply(function(){
-							
-							$scope.pushData['push'][0].value = ""+enable+"";
-							//console.debug($scope.pushData['push'][0].value)
-						})
-						
-					}
-				});	
-	}
-	
-	$scope.updateInlineSetting = function(section,s){
-		//console.debug(s.value)
-		s.error = null;
-		if(!s.value || s.value==''){
-			s.error = "Value can't be empty";
-			return;
-		}
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, s.value).ajax(
-				{
-
-					error: function(data)
-					{
-						////console.debug(data)
-						alert("Error updating settings:" + data["message"]);
-					},
-					success: function(data)
-					{
-						alert("Setting "+s.key+" saved succesfully")
-					}
-				});	
-	}
-	
-	
-	$scope.updateFileSetting = function(section,s){
-		//console.debug("s",$scope[s.key])
-		s.error = null;
-		if($scope.file==null){
-			s.error ="File can't be empty"
-			return;
-		}
-		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
-		if (window.location.protocol == "https:"){
-			serverUrl=serverUrl.replace("http:","https:");
-		}
-
-		var options = {
-				url: serverUrl,
-				method:"PUT",
-				type: "PUT",
-				dataType: "json",
-				clearForm: true,
-				resetForm: true,
-				success: function(){
-					alert("File has been uploaded successfully");
-					$scope.$apply(function(scope){
-						s.filename=$scope.file.name
-					});
-				}, //success
-				error: function(data) {
-					alert("There was an error uploading the file.Please check your logs");
-					//console.debug(data);
-				}
-		};
-		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);	
-		
-	}
-	
-	$scope.setFiles = function(element) {
-	    $scope.$apply(function(scope) {
-	        scope.file =  element.files[0]
-	      });
-	    };
-}
-
 function DashboardController($scope) {
 
 	$scope.countDocuments = function(statistics){
 		var tot=0;
-		////console.debug(statistics);
+		//console.log(statistics);
 		if (statistics){
 			angular.forEach(statistics.data.collections_details, function(value){
 				tot += value.records;
@@ -2244,28 +1588,3 @@ function getPlatform(os){
 		return "other";
 	}
 }
-
-(function(hasOwnProperty) {
-	  /**
-	   * Iterates over all of the properties of the specified object and returns an
-	   * array of their names.
-	   * @param {!Object} obj  The object whose properties will be iterated over.
-	   * @param {function(string, *, !Object):*=} fnCallback  Optional function
-	   *     callback which, if specified, will be called for each property found.
-	   *     The parameters passed will be the name of the property, the value of
-	   *     the property and the object.
-	   * @return {!Array.<string>}  Returns an array of the names of the properties
-	   *     found.  If the fnCallback was specified, the only property names that
-	   *     will be returned will be those for which the fnCallback function
-	   *     returned a true-ish value.
-	   */
-	  eachProperty = function(obj, fnCallback) {
-	    var ret = [];
-	    for(var name in obj) {
-	      if(hasOwnProperty.call(obj, name) && (!fnCallback || fnCallback(name, obj[name], obj))) {
-	        ret.push(name);
-	      }
-	    }
-	    return ret;
-	  };
-	})(({}).hasOwnProperty);

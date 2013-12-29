@@ -1,23 +1,20 @@
 				<div class="box span11">
-					<div data-rel="tooltip" title="These are the objects belonging to the selected collection." class="box-header well" >
-						<h2><i class="icon-book"></i> {{collectionName}}</h2>
+					<div class="box-header well" >
+						<h2><i class="icon-book"></i> {{collectioName}}</h2>
 						<div class="box-icon">
-							<a href="#" id="btnReloadDocuments" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
+							<a href="#" id="btnReloadDocumkents" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
 						</div>
 					</div>
 					<div class="box-content">
-						<table id="documentTable" class="table table-striped table-bordered bootstrap-datatable datatable resizabletable">
+						<table id="documentTable" class="table table-striped table-bordered bootstrap-datatable datatable">
 						  <thead>
 							  <tr>
-							  	  <th>Creation Date</th>
-							  	  <th>ID</th>
-							  	  <th>Author</th>
-								  <th >Data</th>
-								  <th >Actions</th>
+							  	  <th>#RID</th>
+								  <th>Data</th>
+								  <th>Version</th>
 							  </tr>
 						  </thead>   
 						</table>
-					&nbsp;&nbsp;&nbsp;<a ng-show="collectionName" href="#" id="newDocumentBtn" action="insert" actionType="document" parameters="{{collectionName}}" class="btn btn-primary btn-newdocument btn-action">New Document</a>
 					</div><!-- box-content -->
 				</div> <!--  box span12 -->
