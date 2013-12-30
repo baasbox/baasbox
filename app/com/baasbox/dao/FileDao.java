@@ -7,6 +7,7 @@ import java.util.Map;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -78,7 +79,11 @@ public class FileDao extends NodeDao  {
 		if (resizedMap==null) resizedMap=new HashMap<String,ORID>();
 		resizedMap.put(sizePattern, new ORecordBytes().fromStream(resizedImage).save().getIdentity());
 		file.field(RESIZED_IMAGE_FIELD_NAME,resizedMap);
-		this.save(file);
+		try{
+			this.save(file);
+		}catch (OConcurrentModificationException e){
+			//just ignore it...
+		}
 	}
 
 }
