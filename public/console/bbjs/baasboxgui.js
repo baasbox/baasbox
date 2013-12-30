@@ -792,8 +792,10 @@ function updateSetting()
 
 				error: function(data)
 				{
-					////console.debug(data)
-					alert("Error updating settings:" + data["message"]);
+					////console.debug(data);
+					var error=JSON.parse(data.responseText);
+					var message=error["message"];
+					alert("Error updating settings:" + message);
 				},
 				success: function(data)
 				{
