@@ -51,6 +51,7 @@ import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
@@ -59,6 +60,8 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
+import com.baasbox.service.user.RoleService;
+import com.baasbox.service.user.UserService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -199,7 +202,7 @@ public class File extends Controller {
 					String[] fileName=((String)doc.field("fileName")).split("\\.");
 					filename=fileName[0] + "_" + sizeId + "." + (fileName.length>1?fileName[1]:"");
 				}else if (!resizeIsEmpty){
-					if (!ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().contains(resize))
+					if (!ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().contains(resize) && !UserService.userCanByPassRestrictedAccess(DbHelper.currentUsername()))
 						throw new InvalidSizePatternException("The requested resize format is not allowed");
 					ImageDimensions imgDim = StorageUtils.convertPatternToDimensions(resize);
 					output = FileService.getResizedPicture(id, imgDim);

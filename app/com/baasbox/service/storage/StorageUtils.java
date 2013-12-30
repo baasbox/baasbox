@@ -62,12 +62,17 @@ public class StorageUtils {
 		if (imgDim.maxDimension){
 			int origWidth=bufferedImage.getWidth();
 			int origHeight=bufferedImage.getHeight();
-			if (origWidth>origHeight){
-				destWidth=imgDim.width;
-				destHeight=(origHeight*destWidth)/origWidth;
+			if (origWidth>imgDim.width || origHeight>imgDim.height){
+				if (origWidth>origHeight){
+					destWidth=imgDim.width;
+					destHeight=(origHeight*destWidth)/origWidth;
+				}else{
+					destHeight=imgDim.height;
+					destWidth=(origWidth*destHeight)/origHeight;
+				}
 			}else{
-				destHeight=imgDim.height;
-				destWidth=(origWidth*destHeight)/origHeight;
+				destWidth=origWidth;
+				destHeight=origHeight;
 			}
 		}else{
 			if (!imgDim.heightInPixel || !imgDim.widthInPixel){
@@ -102,9 +107,9 @@ public class StorageUtils {
 			imgDim.maxDimension=false;
 			return imgDim;
 		}
-		regexp = "\\<=d+";
+		regexp = "<=\\d+px";
 		if (sizePattern.trim().matches(regexp)) { //size in the form <=58px, then w and h will be at max 58px each
-			int value=Integer.parseInt(sizePattern.substring(1, sizePattern.length()-2));
+			int value=Integer.parseInt(sizePattern.substring(2, sizePattern.length()-2));
 			imgDim.height=value;
 			imgDim.width=value;
 			imgDim.heightInPixel=false;

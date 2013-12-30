@@ -299,6 +299,12 @@ public class Admin extends Controller {
 		return ok(ret);
 	}
 
+	/***
+	 * Returns a role details
+	 * @param name the role name
+	 * @return
+	 * @throws SqlInjectionException
+	 */
 	public static Result getRole(String name) throws SqlInjectionException{
 		List<ODocument> listOfRoles=RoleService.getRoles(name);
 		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
