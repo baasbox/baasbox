@@ -39,7 +39,7 @@ public class StorageUtils {
 	public static ImmutableSet<String> fileClasses = ImmutableSet.of(FileAssetDao.MODEL_NAME,FileDao.MODEL_NAME);
 	
 	private static byte[] resizeImage(BufferedImage bufferedImage, WritebleImageFormat format, int width,int height) throws IOException{
-		BufferedImage thumbnail = Scalr.resize(bufferedImage,Scalr.Method.AUTOMATIC,Scalr.Mode.FIT_EXACT,width,height);
+		BufferedImage thumbnail = Scalr.resize(bufferedImage,Scalr.Method.ULTRA_QUALITY,Scalr.Mode.FIT_EXACT,width,height);
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		ImageIO.write(thumbnail, format.name(), output);
 		return output.toByteArray();
