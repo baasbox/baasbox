@@ -28,6 +28,7 @@ public class StorageUtils {
 		int height;
 		boolean widthInPixel;
 		boolean heightInPixel;
+		boolean maxDimension;
 		
 		@Override
 		public String toString(){
@@ -58,22 +59,38 @@ public class StorageUtils {
 		BufferedImage bufferedImage = ImageIO.read(bytesStream);
 		int destWidth=imgDim.width;
 		int destHeight=imgDim.height;
-		if (!imgDim.heightInPixel || !imgDim.widthInPixel){
+		if (imgDim.maxDimension){
 			int origWidth=bufferedImage.getWidth();
 			int origHeight=bufferedImage.getHeight();
-			if (!imgDim.widthInPixel) destWidth = origWidth * imgDim.width / 100;
-			if (!imgDim.heightInPixel) destHeight = origHeight * imgDim.height / 100;
+			if (origWidth>origHeight){
+				destWidth=imgDim.width;
+				destHeight=(origHeight*destWidth)/origWidth;
+			}else{
+				destHeight=imgDim.height;
+				destWidth=(origWidth*destHeight)/origHeight;
+			}
+		}else{
+			if (!imgDim.heightInPixel || !imgDim.widthInPixel){
+				int origWidth=bufferedImage.getWidth();
+				int origHeight=bufferedImage.getHeight();
+				if (!imgDim.widthInPixel) destWidth = origWidth * imgDim.width / 100;
+				if (!imgDim.heightInPixel) destHeight = origHeight * imgDim.height / 100;
+			}
 		}
 		return resizeImage(bufferedImage, format, destWidth, destHeight);
 	}
 	
+	public static ImageDimensions convertWidthHeightToDimension(String w, String h) throws InvalidSizePatternException{
+		return  convertPatternToDimensions (w+"-"+h);
+	}
+	
 	/**
 	 * Extracts width and height from the size in the String format
-	 * @param sizePattern
+	 * @param sizePattern the string pattern could be nn%, 24px-34px, 24%-23px, 345-456
 	 * @return an instance of ImageDimensions
 	 * @throws InvalidSizePatternException 
 	 */
-	public static ImageDimensions convertSizeToDimensions(final String sizePattern) throws InvalidSizePatternException{
+	public static ImageDimensions convertPatternToDimensions(final String sizePattern) throws InvalidSizePatternException{
 		ImageDimensions imgDim = new ImageDimensions();
 		String regexp = "\\d+%";
 		if (sizePattern.trim().matches(regexp)) { //size in the form 58%, then w and h are equals and expressed in %
@@ -82,6 +99,17 @@ public class StorageUtils {
 			imgDim.width=value;
 			imgDim.heightInPixel=false;
 			imgDim.widthInPixel=false;
+			imgDim.maxDimension=false;
+			return imgDim;
+		}
+		regexp = "\\<=d+";
+		if (sizePattern.trim().matches(regexp)) { //size in the form <=58px, then w and h will be at max 58px each
+			int value=Integer.parseInt(sizePattern.substring(1, sizePattern.length()-2));
+			imgDim.height=value;
+			imgDim.width=value;
+			imgDim.heightInPixel=false;
+			imgDim.widthInPixel=false;
+			imgDim.maxDimension=true;
 			return imgDim;
 		}
 		//guess if size is in the form 123px-256px  where w=123 pixels and h=256 pixels or in the form 25%-30% or mixed
