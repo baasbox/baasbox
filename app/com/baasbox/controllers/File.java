@@ -40,6 +40,7 @@ import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.With;
 
+import com.baasbox.configuration.ImagesConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
@@ -56,6 +57,8 @@ import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.service.storage.FileService;
+import com.baasbox.service.storage.StorageUtils;
+import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -73,8 +76,7 @@ public class File extends Controller {
 	private static final String FILE_FIELD_NAME="file";
 	private static final String DATA_FIELD_NAME="attachedData";
 	private static final String QUERY_STRING_FIELD_DOWNLOAD="download";
-	private static final String QUERY_STRING_FIELD_RESIZE_W="width";
-	private static final String QUERY_STRING_FIELD_RESIZE_H="height";
+	private static final String QUERY_STRING_FIELD_RESIZE="resize";
 	private static final String QUERY_STRING_FIELD_RESIZE_ID="sizeId";
 	
 	private static String prepareResponseToJson(ODocument doc){
@@ -178,7 +180,7 @@ public class File extends Controller {
 		return ok(prepareResponseToJson(doc));
 	}
 	
-		@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class})
+	  @With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class})
 	  public static Result streamFile(String id) throws IOException, InvalidModelException{
 			try {
 				ODocument doc=FileService.getById(id);
@@ -187,22 +189,22 @@ public class File extends Controller {
 				
 				Context ctx=Http.Context.current.get();
 				Boolean download = BooleanUtils.toBoolean(ctx.request().getQueryString(QUERY_STRING_FIELD_DOWNLOAD));
-				String width = ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_W);
-				boolean widthIsEmpty=StringUtils.isEmpty(width);
-				String height = ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_H);
-				boolean heightIsEmpty=StringUtils.isEmpty(width);
+				String resize = ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE);
+				boolean resizeIsEmpty=StringUtils.isEmpty(resize);
 				Integer sizeId = Ints.tryParse(ctx.request().getQueryString(QUERY_STRING_FIELD_RESIZE_ID)+"");
-				
 				
 				byte[] output;
 				if (sizeId!=null){
 					output = FileService.getResizedPicture(id, sizeId);
 					String[] fileName=((String)doc.field("fileName")).split("\\.");
 					filename=fileName[0] + "_" + sizeId + "." + (fileName.length>1?fileName[1]:"");
-				}else if (!widthIsEmpty || !heightIsEmpty){
-					output = FileService.getResizedPicture(id, widthIsEmpty? "100%":width, heightIsEmpty? "100%":height);
+				}else if (!resizeIsEmpty){
+					if (!ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().contains(resize))
+						throw new InvalidSizePatternException("The requested resize format is not allowed");
+					ImageDimensions imgDim = StorageUtils.convertPatternToDimensions(resize);
+					output = FileService.getResizedPicture(id, imgDim);
 					String[] fileName=((String)doc.field("fileName")).split("\\.");
-					filename=fileName[0] + "_" + width + "-" + height + "." + (fileName.length>1?fileName[1]:"");
+					filename=fileName[0] + "_" + resize + "." + (fileName.length>1?fileName[1]:"");
 				}else{
 					ORecordBytes record = doc.field(FileService.BINARY_FIELD_NAME);
 					ByteArrayOutputStream out = new ByteArrayOutputStream();

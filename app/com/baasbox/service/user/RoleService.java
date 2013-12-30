@@ -148,4 +148,14 @@ public class RoleService {
 		}
 		return result;
 	}
+	
+	/***
+	 * Returns true if the user belongs to an administrative role
+	 * @param username
+	 * @return
+	 */
+	public static boolean roleCanByPassRestrictedAccess(String roleName){
+		ORole role = getORole(roleName);
+		return role.allow(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
+	}
 }

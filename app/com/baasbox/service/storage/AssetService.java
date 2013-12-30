@@ -118,7 +118,7 @@ public class AssetService {
 	public static byte[] getResizedPicture (String fileAssetName, String sizePattern) throws SqlInjectionException, IOException, InvalidSizePatternException, DocumentIsNotAnImageException, DocumentIsNotAFileException{
 		if (!ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().contains(sizePattern))
 			throw new InvalidSizePatternException("The requested resize format is not allowed");
-		ImageDimensions dimensions = StorageUtils.convertSizeToDimensions(sizePattern);
+		ImageDimensions dimensions = StorageUtils.convertPatternToDimensions(sizePattern);
 		return getResizedPicture (fileAssetName,dimensions);
 	}
 

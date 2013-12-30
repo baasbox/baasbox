@@ -100,12 +100,25 @@ public class FileService {
 			return PermissionsHelper.revoke(doc, permission, user);
 		}
 		
-		public static byte[] getResizedPicture(String id, String width, String height) throws InvalidSizePatternException, SqlInjectionException, InvalidModelException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
+		/**
+		 * 
+		 * @param id
+		 * @param width The desired width. It can be expressed both in pixel or in percentage (100px, or 20%)
+		 * @param height The desired height. It can be expressed both in pixel or in percentage (100px, or 20%)
+		 * @return
+		 * @throws InvalidSizePatternException
+		 * @throws SqlInjectionException
+		 * @throws DocumentIsNotAnImageException
+		 * @throws DocumentIsNotAFileException
+		 * @throws DocumentNotFoundException
+		 * @throws IOException
+		 */
+		public static byte[] getResizedPicture(String id, String width, String height) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
 			String sizePattern = width + "-" + height;
 			return getResizedPicture (id,sizePattern);
 		}
 		
-		public static byte[] getResizedPicture(String id, int sizeId) throws InvalidSizePatternException, SqlInjectionException, InvalidModelException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
+		public static byte[] getResizedPicture(String id, int sizeId) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
 			String sizePattern = "";
 			try{
 				sizePattern=ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().split(" ")[sizeId];
@@ -115,15 +128,20 @@ public class FileService {
 			return getResizedPicture (id,sizePattern);
 		}
 		
-		private static byte[] getResizedPicture(String id, String sizePattern) throws InvalidSizePatternException, SqlInjectionException, InvalidModelException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException {
-			ImageDimensions dimensions = StorageUtils.convertSizeToDimensions(sizePattern);
+		public static byte[] getResizedPicture(String id, String sizePattern) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException {
+			ImageDimensions dimensions = StorageUtils.convertPatternToDimensions(sizePattern);
 			return getResizedPicture (id,dimensions);
 		}
 
 
-		private static byte[] getResizedPicture(String id, ImageDimensions dimensions) throws SqlInjectionException, InvalidModelException, DocumentIsNotAnImageException, DocumentNotFoundException, DocumentIsNotAFileException, IOException {
+		public static byte[] getResizedPicture(String id, ImageDimensions dimensions) throws SqlInjectionException, DocumentIsNotAnImageException, DocumentNotFoundException, DocumentIsNotAFileException, IOException {
 			//get the file
-			ODocument file = getById(id);
+			ODocument file;
+			try {
+				file = getById(id);
+			} catch (InvalidModelException e1) {
+				throw new DocumentIsNotAFileException("The id " + id + " is not a file");
+			}
 			if (file==null) throw new DocumentNotFoundException();
 			//is the file an image?
 			if (!StorageUtils.docIsAnImage(file)) throw new DocumentIsNotAnImageException("The file " + id + " is not an image");
