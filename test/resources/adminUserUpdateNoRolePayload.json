@@ -2,7 +2,7 @@
   "visibleByTheUser": {
      "myPrivateEmail":"me@example.com"
    },
-  "visibleByFriend": {
+  "visibleByFriends": {
      "mobilePhone":"+39334060606",
      "address":{
                  "city":"Rome",

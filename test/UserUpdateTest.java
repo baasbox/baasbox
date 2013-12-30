@@ -168,7 +168,7 @@ public class UserUpdateTest extends AbstractUserTest
 	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 	                    mapper = new ObjectMapper();
-	                    actualObj = mapper.readTree("{\"role\":\"backoffice\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriend\":{},"+
+	                    actualObj = mapper.readTree("{\"role\":\"backoffice\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
 	                    	 "\"visibleByRegisteredUsers\":{} }");
 	                    request1 = request1.withJsonBody(actualObj,PUT);
 	                    request1 = request1.withHeader("Content-Type", "application/json");
