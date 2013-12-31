@@ -67,11 +67,16 @@ public class UserService {
 		return dao.get(criteria);
 	}
 
+<<<<<<< HEAD
 	public static List<ODocument> getRoles() throws SqlInjectionException {
 		GenericDao dao = GenericDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance().where("name not like \""+RoleDao.FRIENDS_OF_ROLE+"%\"").orderBy("name asc");
 		return dao.executeQuery("orole", criteria);
 	}
+=======
+
+
+>>>>>>> upstream/master
 	
 	public static ODocument getCurrentUser() throws SqlInjectionException{
 		UserDao dao = UserDao.getInstance();
@@ -456,5 +461,43 @@ public class UserService {
 	}
 	
 
+<<<<<<< HEAD
+=======
+		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
+	}
+	
+	
+	
+	public static void disableUser(String username) throws UserNotFoundException{
+		UserDao.getInstance().disableUser(username);
+	}
 
+	public static void disableCurrentUser() throws UserNotFoundException{
+		String username = DbHelper.currentUsername();
+		disableUser(username);
+	}
+	
+	public static void enableUser(String username) throws UserNotFoundException{
+		UserDao.getInstance().enableUser(username);
+	}
+
+	public static List<ODocument> getUserProfilebyUsernames(List<String> usernames) throws SqlInjectionException {
+		return UserDao.getInstance().getByUsernames(usernames);
+		
+	}
+	
+	public static boolean userCanByPassRestrictedAccess(String userName){
+		ORole role = getUserRole(userName);
+		return RoleService.roleCanByPassRestrictedAccess(role.getName());
+	}
+>>>>>>> upstream/master
+
+	public static ORole getUserRole(String username){
+		OUser ouser = getOUserByUsername(username);
+		for (ORole r: ouser.getRoles()){
+			if (!r.getName().startsWith(FriendShipService.FRIEND_ROLE_NAME)) return r;
+		}
+		return null;
+	}
 }

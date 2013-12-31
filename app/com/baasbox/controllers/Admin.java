@@ -196,6 +196,24 @@ public class Admin extends Controller {
 		return ok(ret);
 	}
 
+<<<<<<< HEAD
+=======
+	/***
+	 * Returns a role details
+	 * @param name the role name
+	 * @return
+	 * @throws SqlInjectionException
+	 */
+	public static Result getRole(String name) throws SqlInjectionException{
+		List<ODocument> listOfRoles=RoleService.getRoles(name);
+		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
+		ODocument role = listOfRoles.get(0);
+		String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());
+		response().setContentType("application/json");
+		return ok(ret);
+	}
+
+>>>>>>> upstream/master
 	/* create user in any role */
 
 	public static Result createUser(){

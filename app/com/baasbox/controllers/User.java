@@ -163,7 +163,7 @@ public class User extends Controller {
 		  JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
 		  JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 
-		  if (privateAttributes.has("email")) {
+		  if (privateAttributes!=null && privateAttributes.has("email")) {
 			  //check if email address is valid
 			  if (!Util.validateEmail((String) privateAttributes.findValuesAsText("email").get(0)))
 				  return badRequest("The email address must be valid.");

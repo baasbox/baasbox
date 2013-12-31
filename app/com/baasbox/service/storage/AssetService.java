@@ -17,9 +17,7 @@
 package com.baasbox.service.storage;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
@@ -38,7 +36,6 @@ import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.storage.StorageUtils.WritebleImageFormat;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -98,7 +95,7 @@ public class AssetService {
 		return getFileAsStream (fileAssetName);
 	}
 	
-	public static byte[] getResizedPicture (String fileAssetName, String width, String height) throws SqlInjectionException, IOException, DocumentIsNotAnImageException, DocumentIsNotAFileException, InvalidSizePatternException, OperationDisabledException{
+	public static byte[] getResizedPicture (String fileAssetName, String width, String height) throws SqlInjectionException, IOException, DocumentIsNotAnImageException, DocumentIsNotAFileException, InvalidSizePatternException{
 		String sizePattern = width + "-" + height;
 		return getResizedPicture (fileAssetName,sizePattern);
 	}
@@ -118,17 +115,15 @@ public class AssetService {
 		return getResizedPicture (fileAssetName,sizePattern);
 	}
 	
-	public static byte[] getResizedPicture (String fileAssetName, String sizePattern) throws SqlInjectionException, IOException, InvalidSizePatternException, DocumentIsNotAnImageException, DocumentIsNotAFileException, OperationDisabledException{
+	public static byte[] getResizedPicture (String fileAssetName, String sizePattern) throws SqlInjectionException, IOException, InvalidSizePatternException, DocumentIsNotAnImageException, DocumentIsNotAFileException{
 		if (!ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().contains(sizePattern))
 			throw new InvalidSizePatternException("The requested resize format is not allowed");
-		ImageDimensions dimensions = StorageUtils.convertSizeToDimensions(sizePattern);
+		ImageDimensions dimensions = StorageUtils.convertPatternToDimensions(sizePattern);
 		return getResizedPicture (fileAssetName,dimensions);
 	}
 
 	
-	private static byte[] getResizedPicture(String fileAssetName, ImageDimensions dimensions) throws SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, IOException, InvalidSizePatternException, OperationDisabledException {
-		//check if the automatic resize is allowed
-		if (!ImagesConfiguration.IMAGE_ALLOWS_AUTOMATIC_RESIZE.getValueAsBoolean()) throw new OperationDisabledException("Image resizing was disabled by the administrator");
+	private static byte[] getResizedPicture(String fileAssetName, ImageDimensions dimensions) throws SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, IOException, InvalidSizePatternException {
 		//load the document
 		FileAssetDao dao = FileAssetDao.getInstance();
 		ODocument asset=dao.getByName(fileAssetName);

@@ -543,8 +543,15 @@ function updateSetting()
 
 				error: function(data)
 				{
+<<<<<<< HEAD
 					//console.log(data)
 					alert("Error updating settings:" + data["message"]);
+=======
+					////console.debug(data);
+					var error=JSON.parse(data.responseText);
+					var message=error["message"];
+					alert("Error updating settings:" + message);
+>>>>>>> upstream/master
 				},
 				success: function(data)
 				{

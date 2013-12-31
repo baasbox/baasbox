@@ -37,6 +37,7 @@ import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
 import play.mvc.With;
 
+import com.baasbox.configuration.ImagesConfiguration;
 import com.baasbox.controllers.actions.filters.AnonymousCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
@@ -104,6 +105,10 @@ public class Asset extends Controller{
 	
 	@With ({AnonymousCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result downloadResizedWH(String name,boolean forceDownload,String width, String height) throws InvalidModelException, IOException {
+		//check if the automatic resize is allowed
+		if (!ImagesConfiguration.IMAGE_ALLOWS_AUTOMATIC_RESIZE.getValueAsBoolean()) 
+			return badRequest("Image resizing was disabled by the administrator");
+				
 		try{
 			ODocument doc=AssetService.getByName(name);
 			if (doc==null || doc.field("file")==null) return notFound();
@@ -111,7 +116,7 @@ public class Asset extends Controller{
 			response().setContentType(AssetService.getContentType(doc));
 			if(forceDownload) {
 				String[] fileName=((String)doc.field("fileName")).split("\\.");
-				String newFileName=fileName[0] + "_" + width + "-" + height + "." + fileName[1];
+				String newFileName=fileName[0] + "_" + width + "-" + height + "." + (fileName.length>1?fileName[1]:"");
 				response().setHeader("Content-Disposition", "attachment; filename=\""+newFileName+"\"");
 			}
 			response().setHeader("Content-Length", Long.toString(output.length));
@@ -133,9 +138,7 @@ public class Asset extends Controller{
 			return badRequest("The requested asset is not an image and cannot be resized");
 		} catch (InvalidSizePatternException e) {
 			return badRequest("The requested resized dimensions are not allowed");
-		} catch (OperationDisabledException e) {
-			return badRequest("The picture resize is disable");
-		}
+		} 
 	}
 	
 	@With ({AnonymousCredentialWrapFilter.class, ConnectToDBFilter.class})

@@ -48,7 +48,7 @@ public class UserDao extends NodeDao  {
 	public final static String USER_ATTRIBUTES_CLASS = "_BB_UserAttributes";
 	public final static String ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER="visibleByAnonymousUsers";
 	public final static String ATTRIBUTES_VISIBLE_BY_REGISTERED_USER="visibleByRegisteredUsers";
-	public final static String ATTRIBUTES_VISIBLE_BY_FRIENDS_USER="visibleByFriend";
+	public final static String ATTRIBUTES_VISIBLE_BY_FRIENDS_USER="visibleByFriends";
 	public final static String ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER="visibleByTheUser";
 	public final static String USER_SIGNUP_DATE="signUpDate";
     public final static String ATTRIBUTES_SYSTEM="system";

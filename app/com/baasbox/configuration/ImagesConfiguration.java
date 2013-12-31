@@ -8,17 +8,22 @@ import org.apache.regexp.RESyntaxException;
 import play.Logger;
 
 public enum ImagesConfiguration implements IProperties{
+<<<<<<< HEAD
 	IMAGE_ALLOWS_AUTOMATIC_RESIZE("image.allows.automatic.resize", "Enable or disable automatic resize of images", Boolean.class),
 	IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS("image.allowed.automatic.resize.formats", "A comma-separated-values list of image size, both in px or in %. Syntax for eache entry: (<width>[|px|%]-<height>[|px|%]|<ratio>%|<width>x<height>). Example: 120px-60px,135px-22%,50%,125-250, in the last case size are in pixels by default", String.class,
+=======
+	IMAGE_ALLOWS_AUTOMATIC_RESIZE("image.allows.automatic.resize", "Enable or disable automatic resizing of images", Boolean.class),
+	IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS("image.allowed.automatic.resize.formats", "A space-separated-values list of image size, both in px or in %. Syntax for eache entry: (<width>[|px|%]-<height>[|px|%]|<ratio>%|<width>x<height>). Example: 120px-60px,135px-22%,50%,125-250, in the last case size are in pixels by default", String.class,
+>>>>>>> upstream/master
 		//this callback function is invoked when the value changes. It checks the correctness of the input and raises an error if it is invalid
 		new IPropertyChangeCallback(){
 			public void change(final Object iCurrentValue, final Object iNewValue){
 				//check the correctness of the passed string
 				String value=(String)iNewValue;
 				if (value.isEmpty()) return;
-				String regexp = "(\\d+(px|%)-\\d+(px|%))|(\\d+%($)|\\d+-\\d+)"; 
-				//if this is the input: 120px-60px,135px-22%,50%,%,00000000-5px,0px-2,09%-90,120px-60px,135px-22%,50%,%,00000000-5px,0px-2,09%-90,78-25,98%
-				//only the first two and the last two are valid
+				String regexp = "(\\d+(px|%)-\\d+(px|%))|(\\d+%($)|\\d+-\\d+)|(<=\\d+px($))"; 
+				//if this is the input: <=120px 120px-60px 135px-22% 50% % 00000000-5px 0px-2 09%-90 120px-60px 135px-22% 50% % 00000000-5px 0px-2 09%-90 78-25 98%
+				//only the first three and the last two are valid
 				//used this http://regexpal.com/ to build the regexp
 				try {
 					RE re = new RE(regexp);

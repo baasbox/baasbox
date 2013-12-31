@@ -87,6 +87,32 @@ GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
 GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+<<<<<<< HEAD
+=======
+GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
+GET		/admin/role/:name				com.baasbox.controllers.Admin.getRole(name: String)
+POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
+PUT		/admin/role/:name				com.baasbox.controllers.Admin.editRole(name: String)
+DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: String)
+
+#Files
+GET		 /file/details					com.baasbox.controllers.File.getAllFile()
+POST 	 /file							com.baasbox.controllers.File.storeFile()
+DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
+GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
+GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
+#GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
+GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
+
+#grants on Files
+PUT		/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= true)
+DELETE	/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= false)
+PUT		/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= true)
+DELETE	/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= false)
+
+
+#deprecated
+>>>>>>> upstream/master
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 
 
