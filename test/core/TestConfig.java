@@ -29,6 +29,8 @@ public class TestConfig
 	
 	public static final String KEY_APPCODE = "X-BAASBOX-APPCODE";
 	public static final String KEY_AUTH = "AUTHORIZATION";
+	public static final String KEY_TOKEN = "X-BB-SESSION";
+	
 	
 	public static final String VALUE_APPCODE = "1234567890";
 	

@@ -18,6 +18,7 @@ package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
@@ -47,6 +48,7 @@ public class WrapResponse {
 		result.put("method", request.method());
 		result.put("request_header", mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
+		setCallIdOnResult(request, result);
 		return result;
 	} 
 
@@ -59,9 +61,9 @@ public class WrapResponse {
 		}else{
 			result= prepareOK(statusCode, request, data);
 		}
-		result.put("http_code", customCode.gethttpCode());
+		result.put("http_code", customCode.getHttpCode());
 		result.put("bb_code", String.valueOf(customCode.getBbCode()));
-		return Results.status(customCode.gethttpCode(), result);	
+		return Results.status(customCode.getHttpCode(), result);	
 	}
 	
 	
@@ -101,6 +103,7 @@ public class WrapResponse {
     private ObjectNode prepareOK(int statusCode,RequestHeader request, String stringBody) throws IOException{
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode result = Json.newObject();
+		setCallIdOnResult(request, result);
 		result.put("result", "ok");
 		try {
 			result.put("data", mapper.readTree(stringBody));
@@ -112,6 +115,16 @@ public class WrapResponse {
 		}    
 		return result;
     }
+
+
+	/**
+	 * @param request
+	 * @param result
+	 */
+	private void setCallIdOnResult(RequestHeader request, ObjectNode result) {
+		String callId = request.getQueryString("call_id");
+		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
+	}
     
 	private Result onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
 		ObjectNode result = prepareOK(statusCode, request, stringBody);
@@ -123,6 +136,7 @@ public class WrapResponse {
 		Logger.trace("Method Start");
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
+		ctx.response().setHeader("Access-Control-Allow-Headers", "X-Requested-With");
 		//this is an hack because scala can't access to the http context, and we need this information for the access log
 		String username=(String) ctx.args.get("username");
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
@@ -131,7 +145,7 @@ public class WrapResponse {
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
 			Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
-			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+			Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
 			if (ctx.response().getHeaders().get("Content-Type")!=null 
 		    		&& 
 		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
@@ -172,7 +186,7 @@ public class WrapResponse {
 			Logger.debug("The response will not be wrapped due configuration parameter");
 		}
 
-	    Logger.debug("  + result: \n" + result.toString() + "\n" + result.getWrappedResult());
+	    Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		Logger.trace("Method End");
 		
 	    return result;

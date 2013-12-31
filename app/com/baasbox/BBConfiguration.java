@@ -20,11 +20,16 @@ import play.Configuration;
 import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
+
 	public static Configuration configuration = Play.application().configuration();
 	
 	@Deprecated
 	public static String getRealm(){
 		return configuration.getString(REALM);
+	}
+	
+	public static int getMVCCMaxRetries(){
+		return configuration.getInt(MVCC_MAX_RETRIES);
 	}
 	
 	public static String getBaasBoxUsername(){
@@ -41,6 +46,18 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	public static String getBaasBoxAdminPassword(){
 		return configuration.getString(ADMIN_PASSWORD);
+	}
+
+	public static  Boolean getStatisticsSystemOS(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_OS);
+	}	
+
+	public static Boolean getStatisticsSystemMemory(){
+		return configuration.getBoolean(STATISTICS_SYSTEM_MEMORY);
+	}
+
+	public static Boolean getWriteAccessLog(){
+		return configuration.getBoolean(WRITE_ACCESS_LOG);
 	}
 	
 	public static String getApiVersion(){
@@ -61,5 +78,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getDBBackupDir() {
 		return configuration.getString(DB_BACKUP_PATH);
 	}
+	
+	public static String getPushCertificateFolder(){
+		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
+	}
+	
 	
 }

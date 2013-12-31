@@ -25,9 +25,9 @@ The .zip file contains everything you need to run BaasBox.
 Unzip it, set the execution permission on the start.sh file and run it.
 BaasBox will create a new database in the ./db directory, and it will start.
 
-To test it visit <http://localhost:9000> and you will see the BaasBox start page.
+To test it visit <http://www.localhost:9000> and you will see the BaasBox start page.
 
-To access the **Admin Console Panel**, go to <http://localhost:9000/console>
+To access the **Admin Console Panel**, go to <http://www.localhost:9000/console>
 
 Default credentials are:
 
@@ -37,3 +37,4 @@ Default credentials are:
 
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/baasbox/baasbox/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+

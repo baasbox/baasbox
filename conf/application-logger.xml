@@ -80,7 +80,7 @@
     
   <!-- these are overriden by application.conf -->  
   <logger name="play" level="INFO" />
-  <logger name="application" level="DEBUG" />
+  <logger name="application" level="INFO" />
 
   <root level="ERROR">
     <appender-ref ref="STDOUT_ONLY_INFO" />

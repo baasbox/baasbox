@@ -17,14 +17,18 @@
 package com.baasbox.controllers;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.stringtemplate.v4.ST;
@@ -36,6 +40,7 @@ import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
+import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -44,25 +49,37 @@ import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
+import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.ResetPasswordException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.exception.SqlInjectionException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.user.FriendShipService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -71,14 +88,30 @@ public class User extends Controller {
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
 	
-	private static String prepareResponseToJsonUserInfo(ODocument doc){
+	static String prepareResponseToJsonUserInfo(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.JSON);
 	}
 	
-	private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
+	static String prepareResponseToJson(List<ODocument> listOfDoc) {
 		response().setContentType("application/json");
-		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		try {
+			for (ODocument doc : listOfDoc){
+				doc.detach();
+				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+				if (roles.size()>1){
+					Iterator<OIdentifiable> it = roles.iterator();
+					while (it.hasNext()){
+						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+					        it.remove();
+					    }
+					}
+				}
+			}
+			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/*
@@ -94,7 +127,43 @@ public class User extends Controller {
 		  return ok(result);
 	  }
 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
+	  public static Result getUser(String username) throws SqlInjectionException{
+		  Logger.trace("Method Start");
+		  if (ArrayUtils.contains(
+				  new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
+				  username)) return badRequest(username + " cannot be queried");
+		  ODocument profile = UserService.getUserProfilebyUsername(username);
+		  String result=prepareResponseToJson(profile);
+		  Logger.trace("Method End");
+		  return ok(result);
+	  }
 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})	
+	  public static Result getUsers() {
+		  Logger.trace("Method Start");
+		  Context ctx=Http.Context.current.get();
+		  QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		  String where="user.name not in ?" ;
+		  if (!StringUtils.isEmpty(criteria.getWhere())) {
+			  where += " and (" + criteria.getWhere() + ")";
+		  }
+		  Object[] params = criteria.getParams();
+		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
+		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
+		  criteria.where(where);
+		  criteria.params(veryNewParams);
+		  List<ODocument> profiles=null;;
+		  try {
+			profiles = UserService.getUsers(criteria);
+		  } catch (SqlInjectionException e) {
+			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
+		  }
+		  String result=prepareResponseToJson(profiles);
+		  Logger.trace("Method End");
+		  return ok(result);
+	  }
+	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp(){
@@ -127,7 +196,7 @@ public class User extends Controller {
 		  //try to signup new user
 		  ODocument profile = null;
 		  try {
-			  profile = UserService.signUp(username, password, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		  } catch (UserAlreadyExistsException e){
 			  Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");
@@ -146,7 +215,6 @@ public class User extends Controller {
 		  return created(on);
 	  }
 	  
-
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
@@ -426,15 +494,17 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logoutWithDevice(String deviceId) throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
-		  UserService.logout(deviceId);
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  if (!StringUtils.isEmpty(token)) {
+			  UserService.logout(deviceId);
+			  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  }		
 		  return noContent();
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logoutWithoutDevice() throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
-		  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+		  if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  return noContent();
 	  }
 	  
@@ -468,10 +538,10 @@ public class User extends Controller {
 			 else appcode=body.get("appcode")[0];
 			 Logger.debug("Username " + username);
 			 Logger.debug("Password " + password);
-			 Logger.debug("Appcode" + appcode);		
+			 Logger.debug("Appcode " + appcode);		
 			 if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					 ||
-				 username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+				 username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
 			 ) return forbidden(username + " cannot login");
 			 
 			 if (body.get("login_data")!=null)
@@ -480,7 +550,7 @@ public class User extends Controller {
 
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
-		  OGraphDatabase db=null;
+		  ODatabaseRecordTx db=null;
 		  JsonNode user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
@@ -528,6 +598,134 @@ public class User extends Controller {
 		  return ok(on);
 	  }
 	  
-	 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result disable(){
+		  	try {
+				UserService.disableCurrentUser();
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			}
+		  return ok();
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result follow(String toFollowUsername){
+		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
+				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+			  		return badRequest("Cannot follow internal users");
+		  String currentUsername = DbHelper.currentUsername();
+		  OUser me = null;
+		  try{
+			
+			 me = UserService.getOUserByUsername(currentUsername);
+			
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  if(UserService.exists(toFollowUsername)){
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
+			if(!alreadyFriendOf){
+				UserService.addUserToRole(me.getName(), friendshipRoleName);
+				ODocument userToFollowObject;
+				try {
+					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
+				} catch (SqlInjectionException e) {
+					return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
+				}
+				return created(prepareResponseToJson(userToFollowObject));
+			}else{
+				return badRequest("User "+me.getName()+" is already a friend of "+toFollowUsername);
+			}
+			
+			
+		  }else{
+			  return notFound("User "+toFollowUsername+" does not exists.");
+		  }
+	  }
+	  
+	  /***
+	   * Returns the followers of the current user
+	   * @return
+	   */
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	  public static Result followers(boolean justCountThem){
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		List<ODocument> listOfFollowers=new ArrayList<ODocument>();
+		long count=0;
+		try {
+			if (justCountThem) count = FriendShipService.getCountFriendsOf(DbHelper.currentUsername(), criteria);
+			else listOfFollowers = FriendShipService.getFriendsOf(DbHelper.currentUsername(), criteria);
+		} catch (InvalidCriteriaException e) {
+			return badRequest(ExceptionUtils.getMessage(e));
+		} catch (SqlInjectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (justCountThem) {
+			response().setContentType("application/json");
+			return ok("{\"count\":\""+ count +"\"}");
+		}
+		else{
+		  String ret = prepareResponseToJson(listOfFollowers);
+		  return ok(ret);
+		}
+	  }
+	  
+	  /***
+	   * Returns the user that the current user is following
+	   * @return
+	   */
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	  public static Result following(){
+		  String currentUsername = DbHelper.currentUsername();
+		  OUser me = null;
+		  try{
+			
+			 me = UserService.getOUserByUsername(currentUsername);
+			 Set<ORole> roles = me.getRoles();
+			 List<String> usernames = new ArrayList<String>();
+			 for (ORole oRole : roles) {
+				  
+				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
+					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
+				}
+			 }
+			 if(usernames.isEmpty()){
+				 return notFound();
+			 }else{
+				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
+				 return ok(prepareResponseToJson(followers));
+			 }
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  
+	  }
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  public static Result unfollow(String toUnfollowUsername){
+		  OUser me = null;
+		  String currentUsername = DbHelper.currentUsername();
+		  try{
+			 me = UserService.getOUserByUsername(currentUsername);
+		  }catch(Exception e){
+			 return internalServerError(e.getMessage()); 
+		  }
+		  if(UserService.exists(toUnfollowUsername)){
+			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
+			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
+			if(alreadyFriendOf){
+				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				return ok();
+		  	}else{
+		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);
+		  	}
+			
+		  }else{
+			  return notFound("User "+me.getName()+" does not exists.");
+		  }  	
+	  }
 
 }

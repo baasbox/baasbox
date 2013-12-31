@@ -22,8 +22,10 @@ import java.util.Set;
 
 import play.Logger;
 
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -79,7 +81,7 @@ public class PermissionsHelper {
 			Logger.warn("role is null! Grant command skipped");
 			return document;
 		}
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowRole(document, permission.toString(), role.getName());
 		document.save(); 
 		Logger.trace("Method End");
@@ -93,7 +95,7 @@ public class PermissionsHelper {
 			Logger.warn("user is null! Grant command skipped");
 			return document;
 		}		
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowUser(document, permission.toString(), user.getName());
 		Logger.trace("Method End");
 		return document;
@@ -106,7 +108,7 @@ public class PermissionsHelper {
 			Logger.warn("role is null! Revoke command skipped");
 			return document;
 		}
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowRole(document, permission.toString(), role.getName());
 		document.save(); 
 		Logger.trace("Method End");
@@ -120,7 +122,7 @@ public class PermissionsHelper {
 			Logger.warn("user is null! Revoke command skipped");
 			return document;
 		}		
-		OGraphDatabase db = DbHelper.getConnection();
+		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowUser(document, permission.toString(), user.getName());
 		Logger.trace("Method End");
 		return document;
@@ -134,10 +136,14 @@ public class PermissionsHelper {
 			Logger.warn("role is null! Grant command skipped");
 			return document;
 		}
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), role.getDocument().getIdentity());
+/*
 		Set<ORID> set = document.field(  permission.toString(), OType.LINKSET ); 
 		if (set==null) set = new HashSet<ORID>();
 		set.add( role.getDocument().getIdentity() ); 
 		document.field( permission.toString(), set, OType.LINKSET ); 
+*/ 
 		document.save(); 
 		Logger.trace("Method End");
 		return document;
@@ -146,10 +152,14 @@ public class PermissionsHelper {
 	public static ODocument grant(ODocument document, Permissions permission,
 			OUser user) {
 		Logger.trace("Method Start");
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), user.getDocument().getIdentity());
+/*
 		Set<ORID> set = document.field(  permission.toString(), OType.LINKSET ); 
 		if (set==null) set = new HashSet<ORID>();
 		set.add( user.getDocument().getIdentity() ); 
 		document.field( permission.toString(), set, OType.LINKSET ); 
+*/
 		document.save(); 
 		Logger.trace("Method End");
 		return document; 
@@ -158,11 +168,15 @@ public class PermissionsHelper {
 	public static ODocument revoke(ODocument document, Permissions permission,
 			ORole role) {
 		Logger.trace("Method Start");
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), role.getDocument().getIdentity());
+		/*
 		Set<ORID> set = document.field(  permission.toString(), OType.LINKSET ); 
 		if (set==null) return document;
 		set.remove( role.getDocument().getIdentity() ); 
-		document.field( permission.toString(), set, OType.LINKSET ); 
-		document.save(); 
+		document.field( permission.toString(), set, OType.LINKSET );
+		*/
+		document.save();
 		Logger.trace("Method End");
 		return document;
 	}
@@ -170,10 +184,14 @@ public class PermissionsHelper {
 	public static ODocument revoke(ODocument document, Permissions permission,
 			OUser user) {
 		Logger.trace("Method Start");
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), user.getDocument().getIdentity());
+/*
 		Set<ORID> set = document.field(  permission.toString(), OType.LINKSET ); 
 		if (set==null) return document;
 		set.remove( user.getDocument().getIdentity() ); 
 		document.field( permission.toString(), set, OType.LINKSET ); 
+*/
 		document.save(); 
 		Logger.trace("Method End");
 		return document;

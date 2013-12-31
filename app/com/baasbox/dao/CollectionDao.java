@@ -16,29 +16,18 @@
  */
 package com.baasbox.dao;
 
-import java.util.List;
-
 import play.Logger;
 
-
-
-import ch.qos.logback.classic.db.DBHelper;
-
+import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
-import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.UserAlreadyExistsException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.exception.SqlInjectionException;
-import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -76,6 +65,9 @@ public class CollectionDao extends NodeDao {
 		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
+		if(collectionName.toUpperCase().startsWith("_BB_")){
+			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
+		}
 		save(doc);
 		
 		//create new class

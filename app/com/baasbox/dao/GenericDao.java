@@ -21,16 +21,18 @@ import java.util.UUID;
 
 import play.Logger;
 
+import com.baasbox.dao.exception.InvalidCriteriaException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 
@@ -49,7 +51,7 @@ public class GenericDao {
 	}
 	
 	public ODocument get(ORID rid) {
-		OGraphDatabase db =DbHelper.getConnection();
+		ODatabaseRecordTx db =DbHelper.getConnection();
 		Logger.trace("Method Start");
 		ODocument doc=db.load(rid);
 		Logger.trace("Method End");
@@ -57,27 +59,31 @@ public class GenericDao {
 	}
 	
 	public ORID getRidByUUID(UUID id){
-		OGraphDatabase db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
-		ORID rid = (ORID) index.get(id.toString());
-		return rid;
+		return getRidByUUID(id.toString());
 	}
 	
 	public ORID getRidByUUID(String id){
-		  UUID uuid=UUID.fromString(id);
-		  return getRidByUUID(uuid);
+		ODatabaseRecordTx db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
+		ORID rid = (ORID) index.get(id);  
+		return rid;
 	}
 	
 	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
 		OCommandRequest command = DbHelper.selectCommandBuilder(oclass, false, criteria);
-		List<ODocument> result = DbHelper.commandExecute(command, criteria.getParams());
+		List<ODocument> result = null;
+		try{
+			result = DbHelper.selectCommandExecute(command, criteria.getParams());
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+		}
 		return result;
 	}
 	
 
 
 	public void executeCommand(String commandString, Object[] params) {
-		OGraphDatabase db =  DbHelper.getConnection();
+		ODatabaseRecordTx db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
 		command.execute(params);
 	}

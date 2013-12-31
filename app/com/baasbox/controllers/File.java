@@ -16,8 +16,6 @@
  */
 package com.baasbox.controllers;
 
-<<<<<<< HEAD
-=======
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -33,20 +31,12 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
->>>>>>> upstream/master
 import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
-<<<<<<< HEAD
-
-
-public class File extends Controller {
-	  /*------------------FILE--------------------*/
-	  public static Result storeFile(){
-		  return status(NOT_IMPLEMENTED);
-	  }
-	  
-	  public static Result getFileMetadata(){
-=======
 import play.mvc.Results;
 import play.mvc.With;
 
@@ -291,11 +281,7 @@ public class File extends Controller {
 
 		
 	  public static Result updateAttachedData(){
->>>>>>> upstream/master
 		  return status(NOT_IMPLEMENTED);
 	  }
 	  
-	  public static Result getFile(){
-		  return status(NOT_IMPLEMENTED);
-	  }
 }

@@ -17,21 +17,29 @@
 
 // @author: Marco Tibuzzi
 
+import static org.junit.Assert.fail;
 import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
+import static play.test.Helpers.DELETE;
 import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.util.UUID;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 import core.AbstractUserTest;
@@ -133,8 +141,6 @@ public class UserUpdateTest extends AbstractUserTest
 		);
 	}
 	
-<<<<<<< HEAD
-=======
 	@Test
 	public void testUserChangeRole(){
 		running
@@ -178,7 +184,6 @@ public class UserUpdateTest extends AbstractUserTest
 	}
 
 	
->>>>>>> upstream/master
 	//@After
 	public void afterTest()
 	{

@@ -20,11 +20,13 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -52,27 +54,6 @@ public class DocumentDao extends NodeDao {
 		Logger.trace("Method Start");
 		DbHelper.requestTransaction();
 		ODocument doc = super.create();
-		try{
-		
-			doc.save();
-			ODocument coll=null;
-			try{ 
-				coll=collDao.getByName(super.MODEL_NAME);
-			}catch (SqlInjectionException e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
-			}
-			ODocument docVertex = doc.field(super.FIELD_LINK_TO_VERTEX);
-			ODocument collVertex = coll.field(super.FIELD_LINK_TO_VERTEX);
-			ODocument edge=db.createEdge(collVertex, docVertex); //link the record in the Collection class to the record just created
-			doc.save();
-			docVertex.save();
-			collVertex.save();
-			edge.save();
-			DbHelper.commitTransaction();
-		}catch (Throwable e){
-			DbHelper.rollbackTransaction();
-			throw e;
-		}
 		Logger.trace("Method End");
 		return doc;
 	}//getNewModelInstance

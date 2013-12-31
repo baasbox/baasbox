@@ -1,4 +1,7 @@
 			<div id="assets" ng-controller="AssetsController">
+				<p class="hint">
+					Assets are specific objects. They don't belong to any collection and they are publicly available, even without authentication. They could be JSON documents, or files. In this last case you may also specify and associate a JSON object
+				</p>			
 				@admin.main_.content_.assets_.assets()
 				@admin.main_.content_.assets_.newAsset()
 			</div>

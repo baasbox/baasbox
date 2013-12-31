@@ -26,7 +26,7 @@ public class AdminRolesFunctionalTest extends AbstractAdminTest
 	@Override
 	public String getRouteAddress()
 	{
-		return "/admin/roles";
+		return "/admin/role";
 	}
 
 	@Override
