@@ -1,4 +1,9 @@
 --classes
+alter database custom useLightweightEdges=true
+alter database custom useClassForEdgeLabel=true
+alter database custom useClassForVertexLabel=true
+alter database custom useVertexFieldsForEdgeLabels=true
+
 --Node
 create class _BB_NodeVertex extends V;
 

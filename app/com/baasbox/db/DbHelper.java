@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 
 public class DbHelper {
@@ -544,6 +545,10 @@ public class DbHelper {
 	@Deprecated
 	public static OGraphDatabase getOGraphDatabaseConnection(){
 		return new OGraphDatabase(getConnection());
+	}
+	
+	public static OrientGraph getOrientGraphConnection(){
+		return new OrientGraph(getODatabaseDocumentTxConnection());
 	}
 	
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){

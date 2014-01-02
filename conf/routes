@@ -115,7 +115,8 @@ PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers
 DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
 
-
+#Links between objects (documents and files)
+POST	/link/from/:sourceId/to/:destId/label/:linkName				com.baasbox.controllers.Link.createLink(sourceId: String, destId: String, linkName: String)
 
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
