@@ -57,6 +57,8 @@ public class UserCreateTest extends AbstractUserTest
 {
 	public static final String USER_TEST = "user";
 	
+	String ROUTE_USER="/user";
+	
 	@Override
 	public String getRouteAddress()
 	{
