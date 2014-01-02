@@ -24,5 +24,5 @@ package core;
 
 public abstract class AbstractUserTest extends AbstractRouteHeaderTest 
 {
-	protected static final String ROUTE_USER = "/user";
+	protected static final String ROUTE_USER = "/me";
 }

@@ -19,7 +19,7 @@ public class PeopleTest extends AbstractRouteHeaderTest{
 
 	@Override
 	public String getRouteAddress() {
-		return "/people";
+		return "/users";
 	}
 
 	@Override
