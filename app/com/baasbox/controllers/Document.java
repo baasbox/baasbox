@@ -39,6 +39,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -100,6 +101,10 @@ public class Document extends Controller {
 			count = DocumentService.getCount(collectionName,criteria);
 			Logger.trace("count: " + count);
 		} catch (InvalidCollectionException e) {
+			//create collection if in debug mode
+			if(autocreateCollection(collectionName)){
+				return notFound(collectionName + " was not a valid collection name, autocreated");	
+			};
 			Logger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
