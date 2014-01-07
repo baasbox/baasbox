@@ -139,6 +139,30 @@ public class User extends Controller {
 		  return ok(result);
 	  }
 
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})	
+	  public static Result getUsers() {
+		  Logger.trace("Method Start");
+		  Context ctx=Http.Context.current.get();
+		  QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		  String where="user.name not in ?" ;
+		  if (!StringUtils.isEmpty(criteria.getWhere())) {
+			  where += " and (" + criteria.getWhere() + ")";
+		  }
+		  Object[] params = criteria.getParams();
+		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
+		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
+		  criteria.where(where);
+		  criteria.params(veryNewParams);
+		  List<ODocument> profiles=null;;
+		  try {
+			profiles = UserService.getUsers(criteria);
+		  } catch (SqlInjectionException e) {
+			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
+		  }
+		  String result=prepareResponseToJson(profiles);
+		  Logger.trace("Method End");
+		  return ok(result);
+	  }
 	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
@@ -207,7 +231,7 @@ public class User extends Controller {
 		  JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
 		  JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 
-		  if (privateAttributes.has("email")) {
+		  if (privateAttributes!=null && privateAttributes.has("email")) {
 			  //check if email address is valid
 			  if (!Util.validateEmail((String) privateAttributes.findValuesAsText("email").get(0)))
 				  return badRequest("The email address must be valid.");

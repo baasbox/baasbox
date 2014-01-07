@@ -35,25 +35,39 @@ GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
  
 # User actions
+POST	/user								com.baasbox.controllers.User.signUp()
 POST	/login										com.baasbox.controllers.User.login()
 POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
+
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
 POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
 PUT		/social/:socialNetwork						com.baasbox.controllers.Social.linkWith(socialNetwork: String)
 DELETE  /social/:socialNetwork						com.baasbox.controllers.Social.unlink(socialNetwork: String)
 GET		/social/login/:socialNetwork/callback		com.baasbox.controllers.Social.callback(socialNetwork: String)
 
-POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
-POST	/user								com.baasbox.controllers.User.signUp()
+#logged user
+GET		/me								com.baasbox.controllers.User.getCurrentUser()
+PUT		/me								com.baasbox.controllers.User.updateProfile()
+PUT 	/me/suspend						com.baasbox.controllers.User.disable()
+PUT		/me/password					com.baasbox.controllers.User.changePassword()
+
+
+#forgotten password
+GET		/user/:username/password/reset   	com.baasbox.controllers.User.resetPasswordStep1(username: String)
+GET		/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep2(base64: String)
+POST	/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep3(base64: String)
+
+#Queries against users different by the logged one
+GET 	/users								com.baasbox.controllers.User.getUsers()
+GET		/user/:username						com.baasbox.controllers.User.getUser(username: String)
+GET		/user/:username/exists				com.baasbox.controllers.User.exists(username: String)
+
+#deprecated
 GET		/user								com.baasbox.controllers.User.getCurrentUser()
 PUT		/user								com.baasbox.controllers.User.updateProfile()
 PUT 	/user/suspend						com.baasbox.controllers.User.disable()
 PUT		/user/password						com.baasbox.controllers.User.changePassword()
-GET		/user/:username						com.baasbox.controllers.User.getUser(username: String)
-GET		/user/:username/exists				com.baasbox.controllers.User.exists(username: String)
-GET		/user/:username/password/reset   	com.baasbox.controllers.User.resetPasswordStep1(username: String)
-GET		/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep2(base64: String)
-POST	/user/password/reset/:base64     	com.baasbox.controllers.User.resetPasswordStep3(base64: String)
 
 
 #friendship
@@ -127,7 +141,7 @@ POST 	 /file							com.baasbox.controllers.File.storeFile()
 DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
 GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
 GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
-GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
+#GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
 GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
 
 #grants on Files

@@ -89,11 +89,6 @@ public class UserService {
 		return dao.get(criteria);
 	}
 
-	public static List<ODocument> getRoles() throws SqlInjectionException {
-		GenericDao dao = GenericDao.getInstance();
-		QueryParams criteria = QueryParams.getInstance().where("name not like \""+RoleDao.FRIENDS_OF_ROLE+"%\"").orderBy("name asc");
-		return dao.executeQuery("orole", criteria);
-	}
 
 
 	
@@ -637,5 +632,17 @@ return profile;
 		return UserDao.getInstance().getByUsernames(usernames);
 		
 	}
+	
+	public static boolean userCanByPassRestrictedAccess(String userName){
+		ORole role = getUserRole(userName);
+		return RoleService.roleCanByPassRestrictedAccess(role.getName());
+	}
 
+	public static ORole getUserRole(String username){
+		OUser ouser = getOUserByUsername(username);
+		for (ORole r: ouser.getRoles()){
+			if (!r.getName().startsWith(FriendShipService.FRIEND_ROLE_NAME)) return r;
+		}
+		return null;
+	}
 }

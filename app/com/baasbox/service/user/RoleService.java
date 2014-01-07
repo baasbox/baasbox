@@ -75,6 +75,12 @@ public class RoleService {
 		return dao.executeQuery("orole", criteria);
 	}
 	
+	/***
+	 * Returns a list with a single record containing the ODocument (class ORole) referring to the role specified by the parameter
+	 * @param name
+	 * @return
+	 * @throws SqlInjectionException
+	 */
 	public static List<ODocument> getRoles(String name) throws SqlInjectionException {
 		GenericDao dao = GenericDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance().where("name = ? and assignable=true").params(new String[]{name}).orderBy("name asc");
@@ -148,4 +154,16 @@ public class RoleService {
 		}
 		return result;
 	}
+	
+	/***
+	 * Returns true if the user belongs to an administrative role
+	 * @param username
+	 * @return
+	 */
+	public static boolean roleCanByPassRestrictedAccess(String roleName){
+		ORole role = getORole(roleName);
+		return role.allow(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL);
+	}
+	
+
 }

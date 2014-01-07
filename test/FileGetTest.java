@@ -124,7 +124,7 @@ public class FileGetTest extends AbstractFileTest{
 					Assert.assertEquals(sTestName + " download 1", "image/png", contentType);
 					
 					//download it
-					request = new FakeRequest(GET, getStreamFileRouteAddress() + "/download/"+uuid1);
+					request = new FakeRequest(GET, getStreamFileRouteAddress() + "/"+uuid1+"?download=true");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
