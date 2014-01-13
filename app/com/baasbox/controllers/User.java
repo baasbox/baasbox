@@ -693,7 +693,7 @@ public class User extends Controller {
 				}
 			 }
 			 if(usernames.isEmpty()){
-				 return notFound();
+				 return ok(prepareResponseToJson(new ArrayList<ODocument>()));
 			 }else{
 				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
 				 return ok(prepareResponseToJson(followers));
