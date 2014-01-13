@@ -34,7 +34,10 @@ public class TestConfig
 	
 	public static final String VALUE_APPCODE = "1234567890";
 	
-	public static final String AUTH_ADMIN = "admin:admin";
+	public static final String ADMIN_USERNAME="admin";
+	public static final String ADMIN_PASSWORD="admin";
+	
+	public static final String AUTH_ADMIN = ADMIN_USERNAME+":"+ADMIN_PASSWORD;
 	public static final String AUTH_DEFAULT = "baasbox:baasbox";
 	
 	public static final String TEST_COLLECTION_NAME = "documents";

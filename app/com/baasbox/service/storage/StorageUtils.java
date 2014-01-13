@@ -192,6 +192,7 @@ public class StorageUtils {
 		ORID nodeORID = dao.getRidByUUID(nodeId);
 		if (nodeORID==null) throw new DocumentNotFoundException(nodeId + " is not a valid Id");
 		ODocument nodeDoc = dao.get(nodeORID);
+		if (nodeDoc==null) throw new DocumentNotFoundException(nodeId + " is not a valid Id");
 		return conn.getVertex(nodeDoc.field(NodeDao.FIELD_LINK_TO_VERTEX));
 	}
 }

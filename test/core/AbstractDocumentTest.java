@@ -48,7 +48,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 	public static final String SERVICE_ROUTE = "/document/";
 	public static final String COLLECTION_NOT_EXIST = "fakeCollection";
 	
-	public String getRouteAddress(String sCollectionName)
+	public static String getRouteAddress(String sCollectionName)
 	{
 		return SERVICE_ROUTE + sCollectionName;
 	}

@@ -117,6 +117,8 @@ DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controlle
 
 #Links between objects (documents and files)
 POST	/link/:sourceId/:linkName/:destId						com.baasbox.controllers.Link.createLink(sourceId: String, destId: String, linkName: String)
+GET		/link/id/:linkId										com.baasbox.controllers.Link.getLinkByItsId(linkId: String)
+
 
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()

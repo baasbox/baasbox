@@ -527,42 +527,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);
 	}
 	
-	// @Todo activate test when remove collection is ready
-	public void beforeTest()
-	{
-		running
-		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
-				{
-					FakeRequest request = new FakeRequest(POST, new AdminCollectionFunctionalTest().getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-					Result result = routeAndCall(request);
-					Assert.assertEquals("beforeTest. Status", Status.CREATED, status(result));
-				}
-			}
-		);
-	}
 
-	// @Todo activate test when remove collection is ready
-	public void afterTest()
-	{
-		running
-		(
-			fakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
-				{
-					// remove test collection
-				}
-			}
-		);		
-	}
 
 	protected Result routeDeleteDocument(String sCollectionName, String sRid)
 	{
