@@ -644,24 +644,25 @@ public class User extends Controller {
 		  }
 	  }
 	  
+	  
 	  /***
 	   * Returns the followers of the current user
 	   * @return
 	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result followers(boolean justCountThem){
+	  public static Result followers(boolean justCountThem, String username){
+		if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		List<ODocument> listOfFollowers=new ArrayList<ODocument>();
 		long count=0;
 		try {
-			if (justCountThem) count = FriendShipService.getCountFriendsOf(DbHelper.currentUsername(), criteria);
-			else listOfFollowers = FriendShipService.getFriendsOf(DbHelper.currentUsername(), criteria);
+			if (justCountThem) count = FriendShipService.getCountFriendsOf(username, criteria);
+			else listOfFollowers = FriendShipService.getFriendsOf(username, criteria);
 		} catch (InvalidCriteriaException e) {
 			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (SqlInjectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();	
+			return badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded");
 		}
 		if (justCountThem) {
 			response().setContentType("application/json");
@@ -673,17 +674,29 @@ public class User extends Controller {
 		}
 	  }
 	  
+	  
 	  /***
-	   * Returns the user that the current user is following
+	   * Returns the people those the given user is following
+	   * @param username
 	   * @return
 	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result following(){
-		  String currentUsername = DbHelper.currentUsername();
+	  public static Result following (String username){
+		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
+		  return getFollowing(username);
+	  }
+	  
+
+/**
+ * Returns the people followed by the given user
+ * @param username
+ * @return
+ */
+	private static Result getFollowing(String username) {
 		  OUser me = null;
 		  try{
 			
-			 me = UserService.getOUserByUsername(currentUsername);
+			 me = UserService.getOUserByUsername(username);
 			 Set<ORole> roles = me.getRoles();
 			 List<String> usernames = new ArrayList<String>();
 			 for (ORole oRole : roles) {
@@ -701,8 +714,7 @@ public class User extends Controller {
 		  }catch(Exception e){
 			 return internalServerError(e.getMessage()); 
 		  }
-		  
-	  }
+	}
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result unfollow(String toUnfollowUsername){

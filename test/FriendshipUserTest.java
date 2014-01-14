@@ -54,7 +54,7 @@ public class FriendshipUserTest extends AbstractTest{
 	
 	public String routeCreateNewUser(String username)
 	{
-		String sFakeUser = username + UUID.randomUUID();
+		String sFakeUser = username + "-" + UUID.randomUUID();
 		// Prepare test user
 		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
 		
@@ -201,7 +201,24 @@ public class FriendshipUserTest extends AbstractTest{
 						String follower = followersJson.getJSONArray("data").getJSONObject(0).getJSONObject("user").getString("name");
 						assertEquals(follower,firstUser);
 						
+						//the first user get the followers of the second one
+						followers = new FakeRequest(GET, "/followers/"+secondUser);
+						followers = followers.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						followers = followers.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
+						getFollowersResult = routeAndCall(followers);
+						followersJson = (JSONObject)toJSON(contentAsString(getFollowersResult));
+						follower = followersJson.getJSONArray("data").getJSONObject(0).getJSONObject("user").getString("name");
+						assertEquals("test: GET /followers/:secondUser firstUser="+firstUser+" secondUser="+secondUser,follower,firstUser);
 
+						//the second user get the followed by the first one
+						FakeRequest followeds = new FakeRequest(GET, "/following/"+firstUser);
+						followeds = followeds.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						followeds = followeds.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(secondUser, "passw1"));
+						Result getFollowedsResult = routeAndCall(followeds);
+						JSONObject followedsJson = (JSONObject)toJSON(contentAsString(getFollowedsResult));
+						followed = followedsJson.getJSONArray("data").getJSONObject(0).getJSONObject("user").getString("name");
+						assertEquals("test: GET /following/:firstUser firstUser="+firstUser+" secondUser="+secondUser,followed,secondUser);
+						
 						routeDeleteFollowRelationship(firstUser,secondUser);
 						getDocumentResult = routeAndCall(fk);
 						assertRoute(getDocumentResult, "Get document by unknows", Status.NOT_FOUND, null, false);
