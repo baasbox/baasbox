@@ -661,11 +661,11 @@ public class User extends Controller {
 			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (SqlInjectionException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.printStackTrace();	
 		}
 		if (justCountThem) {
 			response().setContentType("application/json");
-			return ok("{\"count\":\""+ count +"\"}");
+			return ok("{\"count\": "+ count +" }");
 		}
 		else{
 		  String ret = prepareResponseToJson(listOfFollowers);
