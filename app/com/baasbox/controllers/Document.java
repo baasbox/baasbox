@@ -108,7 +108,7 @@ public class Document extends Controller {
 		}
 		Logger.trace("Method End");
 		response().setContentType("application/json");
-		return ok("{\"count\":\""+ count +"\"}");
+		return ok("{\"count\": "+ count +" }");
 	}
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
