@@ -1,6 +1,9 @@
 package com.baasbox.service.storage;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -11,7 +14,6 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
-import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.Permissions;
@@ -35,8 +37,20 @@ public class FileService {
 	public final static String CONTENT_LENGTH_FIELD_NAME=FileDao.CONTENT_LENGTH_FIELD_NAME;
 	
 		public static ODocument createFile(String fileName,String data,String contentType, byte[] content) throws Throwable{
+			InputStream is = new ByteArrayInputStream(content); 
+			ODocument doc;
+			try {
+				doc=createFile(fileName,data,contentType, content.length , is);
+			}finally {
+				if (is != null)is.close();
+			}
+			return doc;
+		}
+		public static ODocument createFile(String fileName, String data,
+				String contentType, long contentLength, InputStream is,
+				HashMap<String,?> metadata, String contentString) throws Throwable {
 			FileDao dao = FileDao.getInstance();
-			ODocument doc=dao.create(fileName,contentType,content);
+			ODocument doc=dao.create(fileName,contentType,contentLength,is,metadata,contentString); 
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -44,7 +58,28 @@ public class FileService {
 			dao.save(doc);
 			return doc;
 		}
-
+		
+		public static ODocument createFile(String fileName,String data,String contentType, long contentLength , InputStream content) throws Throwable{
+			FileDao dao = FileDao.getInstance();
+			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
+			if (data!=null && !data.trim().isEmpty()) {
+				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
+				doc.merge(metaDoc, true, false);
+			}
+			dao.save(doc);
+			return doc;
+		}	
+		
+		public static ODocument createFile(String fileName,String data,String contentType, HashMap<String,?> metadata,long contentLength , InputStream content) throws Throwable{
+			FileDao dao = FileDao.getInstance();
+			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
+			if (data!=null && !data.trim().isEmpty()) {
+				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
+				doc.merge(metaDoc, true, false);
+			}
+			dao.save(doc);
+			return doc;
+		}
 		
 		public static ODocument getById(String id) throws SqlInjectionException, InvalidModelException {
 			FileDao dao = FileDao.getInstance();
@@ -176,5 +211,7 @@ public class FileService {
 		public static String getContentType(ODocument file) {
 			return (String) file.field(CONTENT_TYPE_FIELD_NAME);
 		}
+
+
 		
 }

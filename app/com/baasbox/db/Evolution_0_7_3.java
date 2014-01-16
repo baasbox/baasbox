@@ -73,7 +73,10 @@ public class Evolution_0_7_3 implements IEvolution {
 		"alter property _BB_File.contentLength notnull=true;",
 		"create property _BB_File.file link;",
 		"alter property _BB_File.file mandatory=true;",
-		"alter property _BB_File.file notnull=true;"};
+		"alter property _BB_File.file notnull=true;",
+		"create class _BB_File_Content;",
+		"create property _BB_File_Content.content String;",
+		"create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;"};
 		for (String line:script){
 			Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments

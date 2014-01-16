@@ -1,8 +1,13 @@
 package com.baasbox.dao;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONObject;
 
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -19,6 +24,9 @@ public class FileDao extends NodeDao  {
 	public final static String CONTENT_LENGTH_FIELD_NAME="contentLength";
 	public static final String FILENAME_FIELD_NAME="fileName";
 	private static final String RESIZED_IMAGE_FIELD_NAME="resized";
+	private static final String METADATA_FIELD_NAME = "metadata";
+	private static final String FILE_CONTENT_CLASS = "_BB_FILE_CONTENT";
+	private static final String FILE_CONTENT_FIELD_NAME = "text_content";
 	
 	protected FileDao(String modelName) {
 		super(modelName);
@@ -41,6 +49,29 @@ public class FileDao extends NodeDao  {
 		file.field(FILENAME_FIELD_NAME,fileName);
 		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
 		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(content.length));
+		return file;
+	}
+
+	public ODocument create(String fileName, String contentType, long contentLength, InputStream content) throws Throwable{
+		return this.create(fileName, contentType, contentLength, content, null, null);
+	}
+	
+	public ODocument create(String fileName, String contentType,
+			long contentLength, InputStream is, HashMap<String, ?> metadata,
+			String contentString) throws Throwable {
+		ODocument file=super.create();
+		ORecordBytes record = new ORecordBytes();
+		record.fromInputStream(is, (int) contentLength);
+		file.field(BINARY_FIELD_NAME,record);
+		file.field(FILENAME_FIELD_NAME,fileName);
+		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
+		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(contentLength));
+		if (metadata!=null){
+			file.field(METADATA_FIELD_NAME,(new ODocument()).fromJSON(new JSONObject(metadata).toString()));			
+		}
+		if (!StringUtils.isEmpty(contentString)){
+			file.field(FILE_CONTENT_FIELD_NAME,(new ODocument(FILE_CONTENT_CLASS)).field("content",contentString));
+		}
 		return file;
 	}
 	
@@ -85,5 +116,7 @@ public class FileDao extends NodeDao  {
 			//just ignore it...
 		}
 	}
+
+
 
 }
