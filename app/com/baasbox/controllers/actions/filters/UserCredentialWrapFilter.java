@@ -38,6 +38,7 @@ public class UserCredentialWrapFilter extends Action.Simple {
 		Result tempResult=null;
 		Http.Context.current.set(ctx);
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
 		String authHeader = ctx.request().getHeader("authorization");
 		boolean isCredentialOk=false;
 		

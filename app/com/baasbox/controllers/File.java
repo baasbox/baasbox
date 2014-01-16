@@ -16,19 +16,25 @@
  */
 package com.baasbox.controllers;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.json.simple.JSONObject;
 
 import play.Logger;
 import play.mvc.Controller;
@@ -60,12 +66,10 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
-import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
-import com.google.common.io.Files;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -111,16 +115,56 @@ public class File extends Controller {
 					dataJson = datas[0];
 				}else dataJson="{}";
 			    java.io.File fileContent=file.getFile();
-			    byte [] fileContentAsByteArray=Files.toByteArray(fileContent);
 				String fileName = file.getFilename();
-			    String contentType = file.getContentType(); 
+			   /*String contentType = file.getContentType(); 
 			    if (contentType==null || contentType.isEmpty() || contentType.equalsIgnoreCase("application/octet-stream")){	//try to guess the content type
 			    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
 			    	contentType = URLConnection.guessContentTypeFromStream(is);
 			    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
-			    }
-		    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContentAsByteArray);
-		    	ret=prepareResponseToJson(doc);
+			    }*/
+				InputStream is = new FileInputStream(fileContent);
+		    	
+		    	try{
+		    	    BodyContentHandler contenthandler = new BodyContentHandler();
+		    		//DefaultHandler contenthandler = new DefaultHandler();
+			        Metadata metadata = new Metadata();
+			        metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
+			        Parser parser = new AutoDetectParser();
+			        parser.parse(is, contenthandler, metadata,new ParseContext());			        
+			        String contentType =  metadata.get(Metadata.CONTENT_TYPE);
+			       	if (StringUtils.isEmpty(contentType)) contentType="application/octet-stream";
+			       	
+			        HashMap<String,Object> extractedMetaData = new HashMap<String,Object>();
+			        for (String key:metadata.names()){
+			        	try{
+			        	if (metadata.isMultiValued(key)){
+			        		Logger.debug(key + ": ");
+			        		for (String value: metadata.getValues(key)){
+			        			Logger.debug("   " + value);
+			        		}
+			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), Arrays.asList(metadata.getValues(key)));
+			        	}else{
+			        		Logger.debug(key + ": " + metadata.get(key));
+			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), metadata.get(key));
+			        	}
+			        	}catch(Throwable e){
+			        		Logger.warn("Unable to extract metadata for file " + fileName + ", key " + key);
+			        	}
+			        }
+			      
+
+			        Logger.debug(".................................");
+			        Logger.debug(new JSONObject(extractedMetaData).toString());
+			    	
+			        is.close();
+			    	is=new FileInputStream(fileContent);
+			    	ODocument doc=FileService.createFile(fileName,dataJson,contentType, fileContent.length(), is,extractedMetaData,contenthandler.toString());
+			    	ret=prepareResponseToJson(doc); 
+		    	}catch (Throwable e){
+		    		throw new Exception ("Error parsing uploaded file", e);
+		    	} finally{
+		    		if (is != null) is.close();
+		    	}
 			}else{
 				return badRequest("missing the file data in the body payload");
 			}

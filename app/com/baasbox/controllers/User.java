@@ -134,6 +134,7 @@ public class User extends Controller {
 				  new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
 				  username)) return badRequest(username + " cannot be queried");
 		  ODocument profile = UserService.getUserProfilebyUsername(username);
+		  if (profile==null) return notFound(username + " not found");
 		  String result=prepareResponseToJson(profile);
 		  Logger.trace("Method End");
 		  return ok(result);
