@@ -24,9 +24,9 @@ public class FileDao extends NodeDao  {
 	public final static String CONTENT_LENGTH_FIELD_NAME="contentLength";
 	public static final String FILENAME_FIELD_NAME="fileName";
 	private static final String RESIZED_IMAGE_FIELD_NAME="resized";
-	private static final String METADATA_FIELD_NAME = "metadata";
+	public static final String METADATA_FIELD_NAME = "metadata";
 	private static final String FILE_CONTENT_CLASS = "_BB_FILE_CONTENT";
-	private static final String FILE_CONTENT_FIELD_NAME = "text_content";
+	public static final String FILE_CONTENT_FIELD_NAME = "text_content";
 	
 	protected FileDao(String modelName) {
 		super(modelName);
@@ -115,6 +115,13 @@ public class FileDao extends NodeDao  {
 		}catch (OConcurrentModificationException e){
 			//just ignore it...
 		}
+	}
+
+	public String getExtractedContent(ODocument file) { 
+		ODocument extractedContentDocument=file.field(FILE_CONTENT_FIELD_NAME);
+		if (extractedContentDocument==null) return  "";
+		String content=extractedContentDocument.field("content");
+		return  content;
 	}
 
 

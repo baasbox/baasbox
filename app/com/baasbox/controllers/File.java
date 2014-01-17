@@ -42,6 +42,7 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.With;
@@ -210,6 +211,23 @@ public class File extends Controller {
 			return badRequest("the supplied criteria appear invalid (Sql Injection Attack detected)");
 		}
 		return ok(prepareResponseToJson(listOfFiles));
+	}
+	
+	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	public static Result getFileContent(String id){
+		String theContent="";
+
+			try {
+				theContent=FileService.getExtractedContent(id);
+			} catch (SqlInjectionException e) {
+				return badRequest("The querystring is malformed or not well encoded");
+			} catch (InvalidModelException e) {
+				return badRequest("The id " + id + " is not a file");
+			} catch (FileNotFoundException e) {
+				return notFound("The file " + id + " was not found");
+			}
+		response().setHeader(Response.CONTENT_TYPE, "text/plain");
+		return ok(theContent);
 	}
 	
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
