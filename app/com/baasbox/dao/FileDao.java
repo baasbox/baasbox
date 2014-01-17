@@ -13,6 +13,7 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -114,7 +115,10 @@ public class FileDao extends NodeDao  {
 			this.save(file);
 		}catch (OConcurrentModificationException e){
 			//just ignore it...
+		}catch (OSecurityException e){ 
+			//just ignore it because it happens when someone who has read access to the file, but not the right to update it, are asking for it 
 		}
+		
 	}
 
 	public String getExtractedContent(ODocument file) { 
