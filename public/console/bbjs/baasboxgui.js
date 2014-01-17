@@ -1390,6 +1390,11 @@ function setBradCrumb(type)
 function getFileIcon(type,id){
 	var sIcon="";
 	var iconPath = "img/AssetIcons/";
+	var sContent = "content";
+	var serverUrl=BBRoutes.com.baasbox.controllers.File.streamFile("").absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
 	switch (type){
 	case "image/png":
 	case "image/jpeg":
@@ -1397,6 +1402,7 @@ function getFileIcon(type,id){
 	case "image/tiff":
 	case "image/jpg":
 		sIcon = "/file/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"&resize=<=40px"
+		sContent="image";
 		break;
 	case "application/zip":
 		sIcon = iconPath + "zip.png";
@@ -1421,7 +1427,10 @@ function getFileIcon(type,id){
 		break;
 	}
 	if (sIcon=="") return "";
-	return "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='"+ sIcon +"'/>";
+	var ret = "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='"+ sIcon +"'/><br />"
+	ret += "<a href='"+(sContent=="content"?"view-source:":"")+serverUrl+(sContent=="content"?"content/":"") + id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' title='"+(sContent=="content"?"It only works with Chrome and Firefox":"")+"' target='_blank'>View "+sContent+"</a> ";
+	ret += "<a href='/file/details/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' target='_blank' >Show details</a>"
+	return ret;
 }
 
 function getAssetIcon(type)
