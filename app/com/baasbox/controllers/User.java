@@ -211,7 +211,10 @@ public class User extends Controller {
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
 		  ObjectNode on = Json.newObject();
-		  on.put("user", Json.parse( prepareResponseToJsonUserInfo(profile)).get("user"));
+		  String result=prepareResponseToJson(profile);
+		  on.
+		  on.("user", Json.parse( prepareResponseToJsonUserInfo(profile)).get("user"));
+		  
 		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  return created(on);
 	  }
