@@ -211,6 +211,14 @@ public class FileService {
 		public static String getContentType(ODocument file) {
 			return (String) file.field(CONTENT_TYPE_FIELD_NAME);
 		}
+		
+		public static String getExtractedContent(String id) throws SqlInjectionException, InvalidModelException, FileNotFoundException {
+			ODocument file = getById(id);
+			if (file==null) throw new  FileNotFoundException();
+			FileDao dao = FileDao.getInstance();
+			String ret=dao.getExtractedContent(file);
+			return ret;
+		}
 
 
 		
