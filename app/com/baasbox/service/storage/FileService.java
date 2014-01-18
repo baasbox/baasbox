@@ -4,11 +4,17 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.baasbox.configuration.ImagesConfiguration;
+import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.dao.FileDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
@@ -24,6 +30,7 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.storage.StorageUtils.WritebleImageFormat;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -51,7 +58,6 @@ public class FileService {
 				HashMap<String,?> metadata, String contentString) throws Throwable {
 			FileDao dao = FileDao.getInstance();
 			ODocument doc=dao.create(fileName,contentType,contentLength,is,metadata,contentString);
-			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -60,10 +66,56 @@ public class FileService {
 			return doc;
 		}
 		
+		public static ODocument createFile(String fileName, String dataJson,
+				String aclJsonString, String contentType, long length,
+				InputStream is, HashMap<String, Object> extractedMetaData,
+				String extractedContent) throws Throwable {
+			ODocument doc = createFile(fileName, dataJson, contentType, length, is, extractedMetaData,
+					extractedContent);
+			//sets the permissions
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode aclJson=null;
+			try{
+				aclJson = mapper.readTree(aclJsonString);
+			}catch(JsonProcessingException e){
+				throw e;
+			}
+			Iterator<Entry<String, JsonNode>> itAction = aclJson.getFields(); //read,update,delete
+			while (itAction.hasNext()){
+				Entry<String, JsonNode> nextAction = itAction.next();
+				String action = nextAction.getKey();
+				Permissions actionPermission = null;
+				if (action.equalsIgnoreCase("read"))
+					actionPermission=Permissions.ALLOW_READ;
+				else if (action.equalsIgnoreCase("update"))
+					actionPermission=Permissions.ALLOW_UPDATE;
+				else if (action.equalsIgnoreCase("delete"))
+					actionPermission=Permissions.ALLOW_DELETE;
+				else if (action.equalsIgnoreCase("all"))
+					actionPermission=Permissions.FULL_ACCESS;
+				
+				Iterator<Entry<String, JsonNode>> itUsersRoles = nextAction.getValue().getFields();
+
+				while (itUsersRoles.hasNext()){
+					 Entry<String, JsonNode> usersOrRoles = itUsersRoles.next();
+					 JsonNode listOfElements = usersOrRoles.getValue();
+					 if (listOfElements.isArray()) {
+						    for (final JsonNode element : listOfElements) {
+						       if (usersOrRoles.getKey().equalsIgnoreCase("users"))
+						    	   grantPermissionToUser((String)doc.field("id"), actionPermission, element.asText());
+						       else 
+						    	   grantPermissionToRole((String)doc.field("id"), actionPermission, element.asText());
+						    }
+					 }
+				}
+			}//set permissions
+			return doc;
+		}//createFile with permission
+		
+		
 		public static ODocument createFile(String fileName,String data,String contentType, long contentLength , InputStream content) throws Throwable{
 			FileDao dao = FileDao.getInstance();
-			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
-			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
+			ODocument doc=dao.create(fileName,contentType,contentLength,content); 	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -75,7 +127,6 @@ public class FileService {
 		public static ODocument createFile(String fileName,String data,String contentType, HashMap<String,?> metadata,long contentLength , InputStream content) throws Throwable{
 			FileDao dao = FileDao.getInstance();
 			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
-			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -192,6 +243,7 @@ public class FileService {
 				if (resizedImage!=null) return resizedImage;
 				
 				ByteArrayOutputStream fileContent = StorageUtils.extractFileFromDoc(file);
+				if (fileContent.toByteArray().length==0) return new byte[]{};
 				String contentType = getContentType(file);
 				String ext = contentType.substring(contentType.indexOf("/")+1);
 				WritebleImageFormat format;
@@ -222,6 +274,8 @@ public class FileService {
 			String ret=dao.getExtractedContent(file);
 			return ret;
 		}
+
+
 
 
 		
