@@ -30,6 +30,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.stringtemplate.v4.ST;
 
@@ -167,7 +169,7 @@ public class User extends Controller {
 	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
-	  public static Result signUp(){
+	  public static Result signUp() throws JsonProcessingException, IOException{
 		  Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
 		  
@@ -210,13 +212,12 @@ public class User extends Controller {
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
-		  ObjectNode on = Json.newObject();
 		  String result=prepareResponseToJson(profile);
-		  on.
-		  on.("user", Json.parse( prepareResponseToJsonUserInfo(profile)).get("user"));
-		  
-		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-		  return created(on);
+		  ObjectMapper mapper = new ObjectMapper();
+		  result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+		  JsonNode jn = mapper.readTree(result);
+		 
+		  return created(jn);
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
@@ -524,10 +525,12 @@ public class User extends Controller {
 	   *    os: (android|ios)
 	   * @return
 	 * @throws SqlInjectionException 
+	 * @throws IOException 
+	 * @throws JsonProcessingException 
 	   */
 	  @With ({NoUserCredentialWrapFilter.class})
 	  @BodyParser.Of(BodyParser.FormUrlEncoded.class)
-	  public static Result login() throws SqlInjectionException {
+	  public static Result login() throws SqlInjectionException, JsonProcessingException, IOException {
 		 Map<String, String[]> body = request().body().asFormUrlEncoded();
 		 if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
 		 String username="";
@@ -555,10 +558,10 @@ public class User extends Controller {
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  ODatabaseRecordTx db=null;
-		  JsonNode user = null;
+		  String user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
-			 user = Json.parse( prepareResponseToJsonUserInfo(UserService.getCurrentUser())).get("user");
+			 user =  prepareResponseToJson(UserService.getCurrentUser());
 			  
 			 
 			 if (loginData!=null){
@@ -592,14 +595,11 @@ public class User extends Controller {
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
-		  ObjectNode on = Json.newObject();
-		  if(user!=null){
-			  on.put("user", user);
-		  }
-		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  ObjectMapper mapper = new ObjectMapper();
+		  user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+		  JsonNode jn = mapper.readTree(user);
 		  
-		  
-		  return ok(on);
+		  return ok(jn);
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
