@@ -13,6 +13,7 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -24,9 +25,9 @@ public class FileDao extends NodeDao  {
 	public final static String CONTENT_LENGTH_FIELD_NAME="contentLength";
 	public static final String FILENAME_FIELD_NAME="fileName";
 	private static final String RESIZED_IMAGE_FIELD_NAME="resized";
-	private static final String METADATA_FIELD_NAME = "metadata";
+	public static final String METADATA_FIELD_NAME = "metadata";
 	private static final String FILE_CONTENT_CLASS = "_BB_FILE_CONTENT";
-	private static final String FILE_CONTENT_FIELD_NAME = "text_content";
+	public static final String FILE_CONTENT_FIELD_NAME = "text_content";
 	
 	protected FileDao(String modelName) {
 		super(modelName);
@@ -114,7 +115,17 @@ public class FileDao extends NodeDao  {
 			this.save(file);
 		}catch (OConcurrentModificationException e){
 			//just ignore it...
+		}catch (OSecurityException e){ 
+			//just ignore it because it happens when someone who has read access to the file, but not the right to update it, are asking for it 
 		}
+		
+	}
+
+	public String getExtractedContent(ODocument file) { 
+		ODocument extractedContentDocument=file.field(FILE_CONTENT_FIELD_NAME);
+		if (extractedContentDocument==null) return  "";
+		String content=extractedContentDocument.field("content");
+		return  content;
 	}
 
 

@@ -50,7 +50,8 @@ public class FileService {
 				String contentType, long contentLength, InputStream is,
 				HashMap<String,?> metadata, String contentString) throws Throwable {
 			FileDao dao = FileDao.getInstance();
-			ODocument doc=dao.create(fileName,contentType,contentLength,is,metadata,contentString); 
+			ODocument doc=dao.create(fileName,contentType,contentLength,is,metadata,contentString);
+			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -62,6 +63,7 @@ public class FileService {
 		public static ODocument createFile(String fileName,String data,String contentType, long contentLength , InputStream content) throws Throwable{
 			FileDao dao = FileDao.getInstance();
 			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
+			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -73,6 +75,7 @@ public class FileService {
 		public static ODocument createFile(String fileName,String data,String contentType, HashMap<String,?> metadata,long contentLength , InputStream content) throws Throwable{
 			FileDao dao = FileDao.getInstance();
 			ODocument doc=dao.create(fileName,contentType,contentLength,content); 
+			PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
@@ -210,6 +213,14 @@ public class FileService {
 
 		public static String getContentType(ODocument file) {
 			return (String) file.field(CONTENT_TYPE_FIELD_NAME);
+		}
+		
+		public static String getExtractedContent(String id) throws SqlInjectionException, InvalidModelException, FileNotFoundException {
+			ODocument file = getById(id);
+			if (file==null) throw new  FileNotFoundException();
+			FileDao dao = FileDao.getInstance();
+			String ret=dao.getExtractedContent(file);
+			return ret;
 		}
 
 
