@@ -28,6 +28,9 @@ public class RoleService {
 	public static final String FIELD_DESCRIPTION="description";
 	
 	
+	public static boolean exists(String roleName){
+		return RoleDao.exists(roleName);
+	}
 	
 	/***
 	 * Creates a new role inheriting permissions from another one
