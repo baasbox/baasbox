@@ -59,8 +59,6 @@ public class DocumentService {
 
 		ODocument doc = dao.create();
 		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
-		PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 		dao.save(doc);
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}
