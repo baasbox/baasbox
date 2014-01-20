@@ -91,6 +91,24 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);		
 	}
 	
+	@Test 
+	public void testCreationDateFormat(){
+		running 		(
+			fakeApplication(), 
+			new Runnable()			{
+				public void run()				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
+					String sCreationDate = getCreationDate();
+					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\+\\d{4}")) {
+						 Assert.fail("_creationDate field is in wrong format: " + sCreationDate);
+					}
+				}
+			}
+		);
+	}
+	
 	@Test
 	public void testRouteCMDDocument()
 	{
@@ -633,6 +651,24 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		
 		return sUuid;
+	}
+	
+
+	private String getCreationDate()
+	{
+		String sRet = null;
+
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_creation_date");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get _author value: " + ex.getMessage());
+		}
+		
+		return sRet;
 	}
 	
 	private String getAuthor()
