@@ -50,7 +50,9 @@ public class Evolution_0_7_3 implements IEvolution {
 	public void evolve(ODatabaseRecordTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
-			fileClassCreation(db);	
+			changeDefaultDateTimeFormat(db);
+			fileClassCreation(db);
+			
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -58,6 +60,19 @@ public class Evolution_0_7_3 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
+	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
+		Logger.info("..creating _BB_File class..:");
+		String[] script=new String[]{
+			"alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ;"};
+		for (String line:script){
+			Logger.debug(line);
+			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
+				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
+			}
+		} 
+		Logger.info("...done...");
+	}
+		
 	private void fileClassCreation(ODatabaseRecordTx db) {
 		Logger.info("..creating _BB_File class..:");
 		String[] script=new String[]{

@@ -1,3 +1,6 @@
+--database settings
+alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ
+
 --classes
 --Node
 create class _BB_NodeVertex extends V;

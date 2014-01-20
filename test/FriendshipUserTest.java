@@ -4,6 +4,7 @@ import static org.junit.Assert.fail;
 import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.POST;
+import static play.test.Helpers.PUT;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
@@ -78,8 +79,7 @@ public class FriendshipUserTest extends AbstractTest{
 		
 		Result result = routeAndCall(request);
 		assertRoute(result, "Create friendship.", Status.CREATED, "+39334060606",true);
-
-		
+		assertRoute(result, "Create friendship. 2", Status.CREATED, "\"visibleByTheUser\":null",true);
 	}
 	
 	public void routeCreateNewUnexistentFollowRelationship(String follower,String toFollow)
@@ -178,7 +178,21 @@ public class FriendshipUserTest extends AbstractTest{
 						fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
 						Result getDocumentResult = routeAndCall(fk);
-						assertRoute(getDocumentResult, "Get document by friend", Status.OK, null, false);
+						assertRoute(getDocumentResult, "Get document by friend", Status.NOT_FOUND, null, false);
+						
+						//the owner of the doc gives grant to its friends
+						fk = new FakeRequest(PUT, "/document/testFriendship/"+uuid+"/read/role/friends_of_"+secondUser);
+						fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(secondUser, "passw1"));
+						Result res = routeAndCall(fk);
+						assertRoute(res, "Change the document permission", Status.OK, null, false);
+						
+						//now the friend reload the doc and read it
+						fk = new FakeRequest(GET, "/document/testFriendship/"+uuid);
+						fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
+						getDocumentResult = routeAndCall(fk);
+						assertRoute(getDocumentResult, "Get document by friend 2", Status.OK, null, false);
 						JSONObject createdDocument = (JSONObject)toJSON(contentAsString(getDocumentResult));
 						String author = createdDocument.getJSONObject("data").getString("_author");
 						assertEquals(secondUser,author);

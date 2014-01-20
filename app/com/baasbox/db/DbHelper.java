@@ -288,7 +288,7 @@ public class DbHelper {
 	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
 		getConnection().close();
 		try {
-			return open (appcode.get(),DbHelper.username.get(),DbHelper.password.get());
+			return open (appcode.get(),getCurrentHTTPUsername(),getCurrentHTTPPassword());
 		} catch (InvalidAppCodeException e) {
 			throw new RuntimeException(e);
 		}
