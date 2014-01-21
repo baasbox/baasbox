@@ -16,6 +16,8 @@
  */
 package com.baasbox.controllers.actions.filters;
 
+import org.apache.commons.lang.StringUtils;
+
 import play.Logger;
 import play.mvc.Http.Context;
 
@@ -31,6 +33,8 @@ public class SessionTokenAccess implements IAccessMethod  {
 		Logger.debug("SessionTokenAccess");
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
+		
 		if (token!=null) {
 			  Logger.debug("Received session token " + token);
 			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);

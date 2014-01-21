@@ -50,7 +50,9 @@ public class Evolution_0_7_3 implements IEvolution {
 	public void evolve(ODatabaseRecordTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
-			fileClassCreation(db);	
+			changeDefaultDateTimeFormat(db);
+			fileClassCreation(db);
+			
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -58,6 +60,19 @@ public class Evolution_0_7_3 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
+	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
+		Logger.info("..creating _BB_File class..:");
+		String[] script=new String[]{
+			"alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ;"};
+		for (String line:script){
+			Logger.debug(line);
+			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
+				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
+			}
+		} 
+		Logger.info("...done...");
+	}
+		
 	private void fileClassCreation(ODatabaseRecordTx db) {
 		Logger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
@@ -73,7 +88,10 @@ public class Evolution_0_7_3 implements IEvolution {
 		"alter property _BB_File.contentLength notnull=true;",
 		"create property _BB_File.file link;",
 		"alter property _BB_File.file mandatory=true;",
-		"alter property _BB_File.file notnull=true;"};
+		"alter property _BB_File.file notnull=true;",
+		"create class _BB_File_Content;",
+		"create property _BB_File_Content.content String;",
+		"create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;"};
 		for (String line:script){
 			Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments

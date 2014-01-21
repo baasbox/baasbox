@@ -71,9 +71,11 @@ PUT		/user/password						com.baasbox.controllers.User.changePassword()
 
 
 #friendship
-GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false)
-GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
-GET      /following									com.baasbox.controllers.User.following()
+GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false, username: String = "")
+GET 	 /followers/:username						com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false, username: String)
+#GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
+GET      /following									com.baasbox.controllers.User.following(username: String = "")
+GET      /following/:username						com.baasbox.controllers.User.following(username: String)
 POST     /follow/:username                  		com.baasbox.controllers.User.follow(username: String)
 DELETE   /follow/:username                  		com.baasbox.controllers.User.unfollow(username: String)
 GET      /admin/following/:username					com.baasbox.controllers.Admin.following(username:String)
@@ -141,6 +143,8 @@ POST 	 /file							com.baasbox.controllers.File.storeFile()
 DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
 GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
 GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
+GET		 /file/content/:uuid		com.baasbox.controllers.File.getFileContent(uuid: String)
+
 #GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
 GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
 

@@ -564,17 +564,17 @@ return profile;
 	}
 	
 	public static void addUserToRole(String username,String role){
-		boolean admin = false;
+		boolean admin = true;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
-			admin = true;
+			admin = false;
 		}
 		String sqlAdd="update ouser add roles = {TO_ROLE} where name = ?";
 		ORole toRole=RoleDao.getRole(role);
 		ORID toRID=toRole.getDocument().getRecord().getIdentity();
 		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString());
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
-		if(admin){
+		if(!admin){
 			DbHelper.reconnectAsAuthenticatedUser();
 		}
 		

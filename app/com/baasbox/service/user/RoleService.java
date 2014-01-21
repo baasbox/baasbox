@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
+import play.Logger;
+
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
@@ -26,6 +28,9 @@ public class RoleService {
 	public static final String FIELD_DESCRIPTION="description";
 	
 	
+	public static boolean exists(String roleName){
+		return RoleDao.exists(roleName);
+	}
 	
 	/***
 	 * Creates a new role inheriting permissions from another one
@@ -53,10 +58,12 @@ public class RoleService {
 	public static void createInternalRoles(){
 		for (DefaultRoles r : DefaultRoles.values()){
 			ORole newRole;
+			Logger.debug("creating " + r.toString() + "...");
 			if (!r.isOrientRole()){ //creates the new baasbox role
 				newRole = RoleDao.createRole(r.toString(), r.getInheritsFrom());
 			}else{	//retrieve the existing OrientDB role
 				newRole=r.getORole();
+				newRole.reload();
 			}
 			newRole.getDocument().field(FIELD_INTERNAL,true);
 			newRole.getDocument().field(FIELD_MODIFIABLE,false);

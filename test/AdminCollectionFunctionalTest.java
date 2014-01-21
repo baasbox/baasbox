@@ -93,12 +93,27 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	
 	public String routeCreateCollection()
 	{
-		String sFakeCollection = getRouteAddress();
-
-		FakeRequest request = new FakeRequest(getMethod(), sFakeCollection);
+		//tries to create an invalid collection
+		String collectionNameWithError="123";
+		FakeRequest request = new FakeRequest(getMethod(), "/admin/collection/" + collectionNameWithError);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		Result result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-Only_digits", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError="123NotValid";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-StartsWithDigits", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		String sFakeCollection = getRouteAddress();
+
+		request = new FakeRequest(getMethod(), sFakeCollection);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
 		assertRoute(result, "testRouteOK", Status.CREATED, null, false);
 
 		return sFakeCollection.substring(sFakeCollection.lastIndexOf("/") +1);

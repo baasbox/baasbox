@@ -30,6 +30,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.stringtemplate.v4.ST;
 
@@ -134,6 +136,7 @@ public class User extends Controller {
 				  new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
 				  username)) return badRequest(username + " cannot be queried");
 		  ODocument profile = UserService.getUserProfilebyUsername(username);
+		  if (profile==null) return notFound(username + " not found");
 		  String result=prepareResponseToJson(profile);
 		  Logger.trace("Method End");
 		  return ok(result);
@@ -166,7 +169,7 @@ public class User extends Controller {
 	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
-	  public static Result signUp(){
+	  public static Result signUp() throws JsonProcessingException, IOException{
 		  Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
 		  
@@ -209,10 +212,12 @@ public class User extends Controller {
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
-		  ObjectNode on = Json.newObject();
-		  on.put("user", Json.parse( prepareResponseToJsonUserInfo(profile)).get("user"));
-		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
-		  return created(on);
+		  String result=prepareResponseToJson(profile);
+		  ObjectMapper mapper = new ObjectMapper();
+		  result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+		  JsonNode jn = mapper.readTree(result);
+		 
+		  return created(jn);
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
@@ -520,10 +525,12 @@ public class User extends Controller {
 	   *    os: (android|ios)
 	   * @return
 	 * @throws SqlInjectionException 
+	 * @throws IOException 
+	 * @throws JsonProcessingException 
 	   */
 	  @With ({NoUserCredentialWrapFilter.class})
 	  @BodyParser.Of(BodyParser.FormUrlEncoded.class)
-	  public static Result login() throws SqlInjectionException {
+	  public static Result login() throws SqlInjectionException, JsonProcessingException, IOException {
 		 Map<String, String[]> body = request().body().asFormUrlEncoded();
 		 if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
 		 String username="";
@@ -551,10 +558,10 @@ public class User extends Controller {
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
 		  ODatabaseRecordTx db=null;
-		  JsonNode user = null;
+		  String user = null;
 		  try{
 			 db = DbHelper.open(appcode,username, password);
-			 user = Json.parse( prepareResponseToJsonUserInfo(UserService.getCurrentUser())).get("user");
+			 user =  prepareResponseToJson(UserService.getCurrentUser());
 			  
 			 
 			 if (loginData!=null){
@@ -588,14 +595,11 @@ public class User extends Controller {
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
-		  ObjectNode on = Json.newObject();
-		  if(user!=null){
-			  on.put("user", user);
-		  }
-		  on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		  ObjectMapper mapper = new ObjectMapper();
+		  user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+		  JsonNode jn = mapper.readTree(user);
 		  
-		  
-		  return ok(on);
+		  return ok(jn);
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
@@ -644,28 +648,29 @@ public class User extends Controller {
 		  }
 	  }
 	  
+	  
 	  /***
 	   * Returns the followers of the current user
 	   * @return
 	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result followers(boolean justCountThem){
+	  public static Result followers(boolean justCountThem, String username){
+		if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		List<ODocument> listOfFollowers=new ArrayList<ODocument>();
 		long count=0;
 		try {
-			if (justCountThem) count = FriendShipService.getCountFriendsOf(DbHelper.currentUsername(), criteria);
-			else listOfFollowers = FriendShipService.getFriendsOf(DbHelper.currentUsername(), criteria);
+			if (justCountThem) count = FriendShipService.getCountFriendsOf(username, criteria);
+			else listOfFollowers = FriendShipService.getFriendsOf(username, criteria);
 		} catch (InvalidCriteriaException e) {
 			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (SqlInjectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			return badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded");
 		}
 		if (justCountThem) {
 			response().setContentType("application/json");
-			return ok("{\"count\":\""+ count +"\"}");
+			return ok("{\"count\": "+ count +" }");
 		}
 		else{
 		  String ret = prepareResponseToJson(listOfFollowers);
@@ -673,17 +678,29 @@ public class User extends Controller {
 		}
 	  }
 	  
+	  
 	  /***
-	   * Returns the user that the current user is following
+	   * Returns the people those the given user is following
+	   * @param username
 	   * @return
 	   */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	  public static Result following(){
-		  String currentUsername = DbHelper.currentUsername();
+	  public static Result following (String username){
+		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
+		  return getFollowing(username);
+	  }
+	  
+
+/**
+ * Returns the people followed by the given user
+ * @param username
+ * @return
+ */
+	private static Result getFollowing(String username) {
 		  OUser me = null;
 		  try{
 			
-			 me = UserService.getOUserByUsername(currentUsername);
+			 me = UserService.getOUserByUsername(username);
 			 Set<ORole> roles = me.getRoles();
 			 List<String> usernames = new ArrayList<String>();
 			 for (ORole oRole : roles) {
@@ -693,7 +710,7 @@ public class User extends Controller {
 				}
 			 }
 			 if(usernames.isEmpty()){
-				 return notFound();
+				 return ok(prepareResponseToJson(new ArrayList<ODocument>()));
 			 }else{
 				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
 				 return ok(prepareResponseToJson(followers));
@@ -701,8 +718,7 @@ public class User extends Controller {
 		  }catch(Exception e){
 			 return internalServerError(e.getMessage()); 
 		  }
-		  
-	  }
+	}
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result unfollow(String toUnfollowUsername){

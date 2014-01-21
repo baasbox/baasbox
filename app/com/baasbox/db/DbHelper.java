@@ -229,10 +229,13 @@ public class DbHelper {
 				if(!dbFreeze.get()){
 					dbFreeze.set(true);
 				}
+				db.drop();
+				db.close();
+				db.create();
 				db.getLevel1Cache().clear();
 				db.getLevel2Cache().clear();
-				db.drop();
-				db.create();
+				db.reload();
+				db.getMetadata().reload();
 				if(repopulate){
 					HooksManager.registerAll(db);
 					setupDb(db);
@@ -241,8 +244,8 @@ public class DbHelper {
 
 			}
 
-		}catch(Exception e){
-			e.printStackTrace();
+		}catch(Throwable e){
+			throw new RuntimeException(e);
 		}finally{
 			synchronized(DbHelper.class)  {
 
@@ -285,7 +288,7 @@ public class DbHelper {
 	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
 		getConnection().close();
 		try {
-			return open (appcode.get(),DbHelper.username.get(),DbHelper.password.get());
+			return open (appcode.get(),getCurrentHTTPUsername(),getCurrentHTTPPassword());
 		} catch (InvalidAppCodeException e) {
 			throw new RuntimeException(e);
 		}
@@ -354,6 +357,7 @@ public class DbHelper {
 	}
 
 	public static void populateDB(ODatabaseRecordTx db) throws IOException{
+		OGraphDatabase dbg = new OGraphDatabase(db);
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -364,7 +368,7 @@ public class DbHelper {
 		for (String line:script){
 			Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
-				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
+				dbg.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
 		Internal.DB_VERSION.setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));

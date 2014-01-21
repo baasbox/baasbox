@@ -5,6 +5,12 @@ import play.mvc.Results;
 
 public enum CustomHttpCode {
 			DOCUMENT_VERSION(40001,400,"You are attempting to update a database object with older data. Versions is not the same","error"),
+			ACL_JSON_FIELD_MALFORMED(40002,400,"The 'acl' field is not a valid JSON string","error"),
+			ACL_PERMISSION_UNKNOWN(40003,400,"The specified 'permission' is unknown. Valid ones are 'read','update','delete',all'","error"),
+			ACL_USER_OR_ROLE_KEY_UNKNOWN(40004,400,"Only 'users' and 'roles' can be used","error"),
+			ACL_USER_DOES_NOT_EXIST(40005,400,"The specified user does not exist","error"),
+			ACL_ROLE_DOES_NOT_EXIST(40006,400,"The specified role does not exist","error"),
+			JSON_VALUE_MUST_BE_ARRAY(40010,400,"The expected JSON value must be an array '[.., .., ..]'","error"),
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error");

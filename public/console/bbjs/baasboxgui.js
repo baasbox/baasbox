@@ -273,6 +273,17 @@ $('.btn-newAsset').click(function(e){
 	$('#addAssetModal').modal('show');
 }); // Show Modal for New Asset
 
+$('.btn-newFile').click(function(e){
+
+	$(".error").removeClass("error");
+	$('#txtFileName').val('');
+	$('#txtFileAttachedData').val('');
+	$('#fuFsset').val('');
+	$("#errorFile").addClass("hide");	
+	$(".filename").text("no file selected")	
+	$('#addFileModal').modal('show');
+}); // Show Modal for New File
+
 $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
 	var actionType = $(this).attr("actionType");
@@ -291,6 +302,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "asset":
 			break;
+		case "file":
+			break;			
 		}
 		break;
 	case "edit":
@@ -311,6 +324,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "asset":
 			break;
+		case "file":
+			break;
 		case "role":
 			openRoleEditForm(parameters);
 			break;	
@@ -326,6 +341,11 @@ $(".btn-action").live("click", function() {
 			if(!confirm("Do you want to delete '"+ parameters +"' asset?"))
 				return;
 			deleteAsset(parameters);
+			break;
+		case "file":
+			if(!confirm("Do you want to delete '"+ parameters +"' file?"))
+				return;
+			deleteFile(parameters);
 			break;
 		case "role":
 			if(!confirm("Do you want to delete '"+ parameters +"' role? All users belonging to this role will be assigned ro the role 'registered'"))
@@ -357,6 +377,22 @@ function deleteAsset(assetName)
 				success: function(data)
 				{
 					loadAssetTable();
+				}
+			})	
+}
+
+function deleteFile(id)
+{
+	BBRoutes.com.baasbox.controllers.File.deleteFile(id).ajax(
+			{
+				data: {"id": id},
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					loadFileTable();
 				}
 			})	
 }
@@ -531,6 +567,11 @@ function reverseJSON(objJSON)
 	delete obj["_allow"];
 	delete obj["_allowRead"];
 	return JSON.stringify(obj, undefined, 2);
+}
+
+function loadFileTable()
+{
+	callMenu("#files");
 }
 
 function loadAssetTable()
@@ -1202,6 +1243,61 @@ $('#assetForm').submit(function() {
 	return false;
 })// Validate and Ajax submit for new Asset
 
+$('#fileForm').submit(function() {
+
+	var fileMeta = ($.trim($("#txtFileAttachedData").val()) == "") ? "{}": $("#txtFileAttachedData").val();
+	var fileName = ($.trim($('#fuFile').val()))
+	
+	var errorMessage = '';
+
+	if(!isValidJson(fileMeta)){
+		$("#divFileAttachedData").addClass("error");
+		errorMessage += "The attached JSON data must be a valid JSON string<br/>";
+	}else
+		$("#divFileAttachedData").removeClass("error");
+	
+	if  (!fileName.length){
+		$("#divFileUpload").addClass("error");
+		errorMessage += "You must specify a file to upload<br/>";
+	}else
+		$("#divFileUpload").removeClass("error");
+
+
+	if(errorMessage != "")
+	{
+		$("#errorFile").html(errorMessage);
+		$("#errorFile").removeClass("hide");
+		return;
+	}
+
+
+	var serverUrl=BBRoutes.com.baasbox.controllers.File.storeFile().absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
+
+	var options = {
+			url: serverUrl,
+			type: "post",
+			dataType: "json",
+			clearForm: true,
+			resetForm: true,
+			success: function(){
+				$('#addFileModal').modal('hide');
+				loadFileTable();
+			}, //success
+			error: function(data) {
+				$("#errorFile").removeClass("hide").html(JSON.parse(data.responseText)["message"])
+			}
+	};
+
+	$(this).ajaxSubmit(options);
+
+	return false;
+})// Validate and Ajax submit for new File
+
+
+
 
 function make_base_auth(user, password) {
 	var tok = user + ':' + password;
@@ -1283,9 +1379,58 @@ function setBradCrumb(type)
 	case "#assets":
 		sBradCrumb = "Assets";
 		break;
+	case "#files":
+		sBradCrumb = "Files";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
+}
+
+function getFileIcon(type,id){
+	var sIcon="";
+	var iconPath = "img/AssetIcons/";
+	var sContent = "content";
+	var serverUrl=BBRoutes.com.baasbox.controllers.File.streamFile("").absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
+	switch (type){
+	case "image/png":
+	case "image/jpeg":
+	case "image/gif":
+	case "image/tiff":
+	case "image/jpg":
+		sIcon = "/file/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"&resize=<=40px"
+		sContent="image";
+		break;
+	case "application/zip":
+		sIcon = iconPath + "zip.png";
+		break;
+	case "image/eps":
+		sIcon = iconPath + "eps.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+		sIcon = iconPath + "word.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+		sIcon = iconPath + "excel.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+		sIcon = iconPath + "ppt.png";
+		break;
+	case "application/pdf":
+		sIcon = iconPath+ "pdf.png";
+		break;
+	default :
+		sIcon = iconPath + "file.png";
+		break;
+	}
+	if (sIcon=="") return "";
+	var ret = "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='"+ sIcon +"'/><br />"
+	ret += "<a href='"+(sContent=="content"?"view-source:":"")+serverUrl+(sContent=="content"?"content/":"") + id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' title='"+(sContent=="content"?"It only works with Chrome and Firefox":"")+"' target='_blank'>View "+sContent+"</a> ";
+	ret += "<a href='/file/details/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' target='_blank' >Show details</a>"
+	return ret;
 }
 
 function getAssetIcon(type)
@@ -1293,6 +1438,9 @@ function getAssetIcon(type)
 	var sIcon="";
 
 	switch (type){
+	case "application/zip":
+		sIcon = "zip.png";
+		break;
 	case "image/png":
 		sIcon = "png.png";
 		break;
@@ -1320,9 +1468,12 @@ function getAssetIcon(type)
 	case "application/pdf":
 		sIcon = "pdf.png";
 		break;
+	default :
+		sIcon = "file.png";
+		break;
 	}
 	if (sIcon=="") return "";
-	return "<img src='img/AssetIcons/"+ sIcon +"'/>";
+	return "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='img/AssetIcons/"+ sIcon +"'/>";
 }
 
 
@@ -1555,6 +1706,51 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
+	
+	$('#fileTable').dataTable( {
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ 
+		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  return getFileIcon(obj["contentType"],obj["id"]);
+		              }},
+					   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
+			 				return "<span style='font-family:Courier'>"+data+"</span>";
+						}
+					   },
+		              {"mData": "id", "mRender": function ( data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(obj["attachedData"] != undefined)
+		            	  {
+		            		  return "<pre>" + JSON.stringify(obj["attachedData"],undefined,2) + "</pre>";
+		            	  }
+		            	  else
+		            	  {
+		            		  return "";
+		            	  }
+		              },bSortable:false},
+		              {"mData": "id", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return  bytesToSize(obj["contentLength"],'KB');
+		              }},
+		         /*     {"mData": "id", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return obj["contentType"];
+		              }},*/
+		              {"mData": "id", sWidth:"210px","mRender": function (data, type, full) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return "<a href='/file/" + obj["id"] + "?download=true&X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
+		              }},
+		              {"mData": "id", "mRender": function (data) {
+		            	  return getActionButton("delete","file",data);
+		              }}
+		              ],
+		              "bRetrieve": true,
+		              "bDestroy":true
+	} ).makeEditable();
+	
 } //setupTables()
 
 function setupSelects(){
@@ -1916,7 +2112,18 @@ function callMenu(action){
 				$('#assetTable').dataTable().fnAddData(data);
 			}
 		});
-		break;//#assets	  
+		case "#files":
+		BBRoutes.com.baasbox.controllers.File.getAllFile().ajax({
+			data: {orderBy: "_creation_date asc"},
+			success: function(data) {
+				data=data["data"];
+				applySuccessMenu(action,data);
+				$('#fileTable').dataTable().fnClearTable();
+				$('#fileTable').dataTable().fnAddData(data);
+				$.trim($('#fuFile').val(""));
+			}
+		});
+		break;//#files	  
 	}
 }//callMenu
 
@@ -1924,6 +2131,8 @@ function RolesController($scope){
 
 }
 function AssetsController($scope){
+}
+function FilesController($scope){
 }
 function UsersController($scope){
 }

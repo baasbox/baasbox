@@ -63,6 +63,9 @@ public class CollectionDao extends NodeDao {
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}
+		if (Character.isDigit(collectionName.charAt(0))){
+			throw new InvalidCollectionException("Collection names cannot start by a digit");
+		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
 		if(collectionName.toUpperCase().startsWith("_BB_")){

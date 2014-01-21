@@ -20,6 +20,7 @@
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
+import static play.test.Helpers.status;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
@@ -120,6 +121,7 @@ public class FileGetTest extends AbstractFileTest{
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result = routeAndCall(request);
+				    Assert.assertEquals(sTestName + " download 1 - status",200,status(result));
 					String contentType=play.test.Helpers.header("Content-Type", result);
 					Assert.assertEquals(sTestName + " download 1", "image/png", contentType);
 					

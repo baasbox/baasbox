@@ -1,3 +1,6 @@
+--database settings
+alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ
+
 --classes
 --Node
 create class _BB_NodeVertex extends V;
@@ -57,6 +60,11 @@ alter property _BB_File.contentLength notnull=true;
 create property _BB_File.file link;
 alter property _BB_File.file mandatory=true;
 alter property _BB_File.file notnull=true;
+
+create class _BB_File_Content;
+create property _BB_File_Content.content String;
+create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;
+
 
 --Assets
 create class _BB_Asset extends _BB_Node;
