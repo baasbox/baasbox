@@ -432,9 +432,11 @@ public class Admin extends Controller {
 	/***
 	 * Change password of a specific user
 	 * @param name of user
-	 * @return
+	 * @return 
+	 * @throws UserNotFoundException 
+	 * @throws SqlInjectionException 
 	 */
-	public static Result changePassword(String username){
+	public static Result changePassword(String username) throws SqlInjectionException, UserNotFoundException{
 		Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
@@ -445,9 +447,12 @@ public class Admin extends Controller {
 		
 		if (passwordNode==null) return badRequest("The body payload doesn't contain key password");
 		String password=passwordNode.asText();	  
-		
+		try{
 		UserService.changePassword(username, password);
-		
+		} catch (UserNotFoundException e) {
+		    Logger.error("Username not found " + username, e);
+		    return notFound("Username not found");
+		}
 		Logger.trace("Method End");
 		return ok();	
 	}

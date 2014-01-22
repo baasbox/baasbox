@@ -396,9 +396,15 @@ return profile;
 		//DbHelper.removeConnectionFromPool();
 	}
 	
-	public static void changePassword(String username, String newPassword) {
+	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException {
 		OGraphDatabase db=DbHelper.getConnection();
 		db = DbHelper.reconnectAsAdmin();
+		UserDao udao=UserDao.getInstance();
+		ODocument user = udao.getByUserName(username);
+		if(user==null){
+			Logger.debug("User " + username + " does not exist");
+			throw new UserNotFoundException("User " + username + " does not exist");
+		}
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 	}
 
