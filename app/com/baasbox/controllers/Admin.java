@@ -447,6 +447,7 @@ public class Admin extends Controller {
 		
 		if (passwordNode==null) return badRequest("The body payload doesn't contain key password");
 		String password=passwordNode.asText();	  
+		
 		try{
 		UserService.changePassword(username, password);
 		} catch (UserNotFoundException e) {
