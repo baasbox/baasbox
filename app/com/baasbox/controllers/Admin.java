@@ -428,14 +428,37 @@ public class Admin extends Controller {
 		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
-
+	
+	/***
+	 * Change password of a specific user
+	 * @param name of user
+	 * @return
+	 */
+	public static Result changePassword(String username){
+		Logger.trace("Method Start");
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
+		Logger.trace("changePassword bodyJson: " + bodyJson);
+		
+		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		JsonNode passwordNode=bodyJson.findValue("password");
+		
+		if (passwordNode==null) return badRequest("The body payload doesn't contain key password");
+		String password=passwordNode.asText();	  
+		
+		UserService.changePassword(username, password);
+		
+		Logger.trace("Method End");
+		return ok();	
+	}
+	
 	public static Result dropUser(){
 		return status(NOT_IMPLEMENTED);
 	}
 
 	/***
 	 * Drop an entire collection
-	 * Data are lost... forevere
+	 * Data are lost... forever
 	 * @param name the Collection to drop
 	 * @return
 	 */

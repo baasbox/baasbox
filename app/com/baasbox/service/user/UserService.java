@@ -387,13 +387,19 @@ return profile;
 			throw e;
 		}
 	}//updateProfile with role
-
+	
 	public static void changePasswordCurrentUser(String newPassword) {
 		OGraphDatabase db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 		//DbHelper.removeConnectionFromPool();
+	}
+	
+	public static void changePassword(String username, String newPassword) {
+		OGraphDatabase db=DbHelper.getConnection();
+		db = DbHelper.reconnectAsAdmin();
+		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 	}
 
 	public static boolean exists(String username) {
@@ -597,5 +603,7 @@ return profile;
 	public static void enableUser(String username) throws UserNotFoundException{
 		UserDao.getInstance().enableUser(username);
 	}
+
+	
 
 }
