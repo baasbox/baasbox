@@ -1,5 +1,5 @@
 --database settings
-alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ
+alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ
 
 --classes
 --Node
