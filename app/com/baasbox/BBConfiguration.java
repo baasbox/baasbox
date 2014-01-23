@@ -83,5 +83,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
 	}
 	
-	
+	public static String getDebugOptions() {
+		return configuration.getString(DEBUG_OPTIONS);
+	}
 }
