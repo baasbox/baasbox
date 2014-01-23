@@ -67,6 +67,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.FileTooBigException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.service.storage.FileService;
@@ -369,6 +370,8 @@ public class File extends Controller {
 				throw e;
 			} catch(DocumentNotFoundException e) {
 				return notFound("The requested file does not exists: " + id);
+			} catch(FileTooBigException e) {
+				return status(503,"The requested image is too big to be processed now. Try later. File: " + id);
 			}
 	  }//streamFile
 	  
