@@ -25,6 +25,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.FileTooBigException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -201,13 +202,14 @@ public class FileService {
 		 * @throws DocumentIsNotAFileException
 		 * @throws DocumentNotFoundException
 		 * @throws IOException
+		 * @throws FileTooBigException 
 		 */
-		public static byte[] getResizedPicture(String id, String width, String height) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
+		public static byte[] getResizedPicture(String id, String width, String height) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException, FileTooBigException{
 			String sizePattern = width + "-" + height;
 			return getResizedPicture (id,sizePattern);
 		}
 		
-		public static byte[] getResizedPicture(String id, int sizeId) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException{
+		public static byte[] getResizedPicture(String id, int sizeId) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException, FileTooBigException{
 			String sizePattern = "";
 			try{
 				sizePattern=ImagesConfiguration.IMAGE_ALLOWED_AUTOMATIC_RESIZE_FORMATS.getValueAsString().split(" ")[sizeId];
@@ -217,13 +219,13 @@ public class FileService {
 			return getResizedPicture (id,sizePattern);
 		}
 		
-		public static byte[] getResizedPicture(String id, String sizePattern) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException {
+		public static byte[] getResizedPicture(String id, String sizePattern) throws InvalidSizePatternException, SqlInjectionException, DocumentIsNotAnImageException, DocumentIsNotAFileException, DocumentNotFoundException, IOException, FileTooBigException {
 			ImageDimensions dimensions = StorageUtils.convertPatternToDimensions(sizePattern);
 			return getResizedPicture (id,dimensions);
 		}
 
 
-		public static byte[] getResizedPicture(String id, ImageDimensions dimensions) throws SqlInjectionException, DocumentIsNotAnImageException, DocumentNotFoundException, DocumentIsNotAFileException, IOException {
+		public static byte[] getResizedPicture(String id, ImageDimensions dimensions) throws SqlInjectionException, DocumentIsNotAnImageException, DocumentNotFoundException, DocumentIsNotAFileException, IOException, FileTooBigException {
 			//get the file
 			ODocument file;
 			try {
@@ -259,6 +261,8 @@ public class FileService {
 				return resizedImage;
 			}catch ( InvalidModelException e) {
 				throw new RuntimeException("A very strange error occurred! ",e);
+			}catch (OutOfMemoryError e){
+				throw new FileTooBigException();
 			}
 
 		}
