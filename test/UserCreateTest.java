@@ -37,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -106,6 +107,30 @@ public class UserCreateTest extends AbstractUserTest
 		);		
 	}
 
+	@Test
+	public void testPasswordEmpty()
+	{
+		running
+		(
+			fakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sFakeUser = USER_TEST + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					((ObjectNode)node).put("password", "");
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					assertRoute(result, "routeCreateUser", 422, null, false);
+				}
+			}
+		);
+	}
 	
 	@Test
 	public void routeCreateUser()
@@ -257,7 +282,7 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					
+					((ObjectNode)node).put("password", "passw1");
 					// Create user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
