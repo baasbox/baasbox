@@ -63,7 +63,7 @@ public class Evolution_0_7_3 implements IEvolution {
 	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
 		Logger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
-			"alter database DATETIMEFORMAT yyyy-MM-dd HH:mm:ssZ;"};
+			"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ;"};
 		for (String line:script){
 			Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments

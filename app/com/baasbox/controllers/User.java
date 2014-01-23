@@ -195,6 +195,7 @@ public class User extends Controller {
 			  if (!Util.validateEmail((String) privateAttributes.findValuesAsText("email").get(0)))
 				  return badRequest("The email address must be valid.");
 		  }
+		  if (StringUtils.isEmpty(password)) return status(422,"The password field cannot be empty");
 		  
 		  //try to signup new user
 		  ODocument profile = null;

@@ -217,7 +217,6 @@ public class Global extends GlobalSettings {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
 			result.put("result", "error");
-			result.put("bb_code", "");
 			result.put("message", error);
 			result.put("resource", request.path());
 			result.put("method", request.method());
