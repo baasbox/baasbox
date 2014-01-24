@@ -504,7 +504,7 @@ public class User extends Controller {
 			  UserService.logout(deviceId);
 			  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  }		
-		  return ok("deviceId:" + deviceId + "logged out");
+		  return ok("deviceId: " + deviceId + " logged out");
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
