@@ -454,7 +454,7 @@ public class Admin extends Controller {
 		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		JsonNode passwordNode=bodyJson.findValue("password");
 		
-		if (passwordNode==null) return badRequest("The body payload doesn't contain key password");
+		if (passwordNode==null) return badRequest("The body payload doesn't contain password field");
 		String password=passwordNode.asText();	  
 		
 		try{
