@@ -13,6 +13,7 @@ import static play.test.Helpers.running;
 import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.node.ObjectNode;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,7 +59,7 @@ public class FriendshipUserTest extends AbstractTest{
 		String sFakeUser = username + "-" + UUID.randomUUID();
 		// Prepare test user
 		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-		
+
 		// Create user
 		FakeRequest request = new FakeRequest(POST, "/user");
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);

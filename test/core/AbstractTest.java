@@ -364,8 +364,8 @@ public abstract class AbstractTest extends FluentTest
 		InputStream is = null;
 		JsonNode node = null;
 
-		if ((node = mPayloadsCache.get(sName)) == null)
-		{
+		//if ((node = mPayloadsCache.get(sName)) == null)
+		//{
 			try
 			{
 				is = Play.application().resourceAsStream(sName);
@@ -387,8 +387,8 @@ public abstract class AbstractTest extends FluentTest
 					catch (Exception ex) {}
 				}
 			}
-			mPayloadsCache.put(sName, node);
-		}
+		//	mPayloadsCache.put(sName, node);
+		//}
 		
 		return node;
 	}
@@ -403,7 +403,7 @@ public abstract class AbstractTest extends FluentTest
 	{
 		JsonNode node = getPayload(sPayload);
 		((ObjectNode)node).put(sFieldName, sValue);
-		
+
 		return node;
 	}
 	
