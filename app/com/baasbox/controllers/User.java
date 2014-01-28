@@ -504,16 +504,15 @@ public class User extends Controller {
 			  UserService.logout(deviceId);
 			  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  }		
-		  return noContent();
+		  return ok("deviceId: " + deviceId + " logged out");
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result logoutWithoutDevice() throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
 		  if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
-		  return noContent();
-	  }
-	  
+		  return ok("user logged out");
+	  } 
 
 	  /***
 	   * Login the user.

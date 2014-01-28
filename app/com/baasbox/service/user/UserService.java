@@ -389,6 +389,18 @@ return profile;
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 		//DbHelper.removeConnectionFromPool();
 	}
+	
+	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException {
+		ODatabaseRecordTx db=DbHelper.getConnection();
+		db = DbHelper.reconnectAsAdmin();
+		UserDao udao=UserDao.getInstance();
+		ODocument user = udao.getByUserName(username);
+		if(user==null){
+			Logger.debug("User " + username + " does not exist");
+			throw new UserNotFoundException("User " + username + " does not exist");
+		}
+		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
+	}
 
 	public static boolean exists(String username) {
 		UserDao udao=UserDao.getInstance();

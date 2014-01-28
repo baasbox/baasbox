@@ -438,6 +438,37 @@ public class Admin extends Controller {
 		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
+	/***
+	 * Change password of a specific user
+	 * @param name of user
+	 * @return 
+	 * @throws UserNotFoundException 
+	 * @throws SqlInjectionException 
+	 */
+	public static Result changePassword(String username) throws SqlInjectionException, UserNotFoundException{
+		Logger.trace("Method Start");
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
+		Logger.trace("changePassword bodyJson: " + bodyJson);
+		
+		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		JsonNode passwordNode=bodyJson.findValue("password");
+		
+		if (passwordNode==null) return badRequest("The body payload doesn't contain password field");
+		String password=passwordNode.asText();	  
+		
+		try{
+		UserService.changePassword(username, password);
+		} catch (UserNotFoundException e) {
+		    Logger.error("Username not found " + username, e);
+		    return notFound("Username not found");
+		}
+		Logger.trace("Method End");
+		return ok();	
+	}
+
+	
+	
 
 	public static Result dropUser(){
 		return status(NOT_IMPLEMENTED);
