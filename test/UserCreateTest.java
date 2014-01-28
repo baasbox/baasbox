@@ -145,7 +145,7 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					((ObjectNode)node).put("password", "passw1");
+
 					// Create user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -179,7 +179,7 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					((ObjectNode)node).put("password", "passw1");
+
 					// Create user
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
@@ -282,7 +282,7 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					((ObjectNode)node).put("password", "passw1");
+
 					// Create user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
