@@ -1,0 +1,53 @@
+<!-- Change password User starts -->
+	<div class="modal hide fade" id="changePwdUserModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">×</button>
+			<h3 id="changepwdUserTitle">Change password</h3>
+		</div>
+		<div class="modal-body">
+			<div class="row-fluid">
+			<div class="box span12" id="ChangePwdUserForm">
+					<div class="box-content">
+						<form class="form-horizontal" id="changePwdUserForm">
+						<div class="alert alert-info">
+							Please enter the new password
+						</div>
+						<div class="center">
+							<div id="errorNewPwd" class="control-group error hide" >
+					 			<span class="help-inline">Enter the New Password</span>
+							</div>
+							<div id="errorPasswordNotMatch" class="control-group error hide" >
+					 			<span class="help-inline">New Password and retype Password don't match</span>
+							</div>
+						</div>
+							<fieldset>
+							<div class="control-group">
+								<label class="control-label" for="txtUserName">Username</label>
+								<div class="controls">
+								  <input class="input-xlarge focused" id="txtUserName" type="text" value="" >
+								</div>
+							</div>						
+							  <div class="control-group groupUserPwd">
+								<label class="control-label" for="txtPwd">Password*</label>
+								<div class="controls">
+								  <input class="input-xlarge" id="txtPwd" type="password" value="" required>
+								</div>
+							  </div>
+							  <div class="control-group groupUserPwd">
+								<label class="control-label" for="txtRetypePwd">Retype Password*</label>
+								<div class="controls">
+								  <input class="input-xlarge" id="txtRetypePwd" type="password" value="" required>
+								</div>
+							  </div>
+							</fieldset>
+						  </form>
+					</div>
+				</div><!--/span-->
+		</div><!--/row-->
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<a href="#" class="btn btn-primary btn-ChangePwdUserCommit">Save changes</a>
+		</div>
+	</div>
+	<!-- Change password User ends -->
