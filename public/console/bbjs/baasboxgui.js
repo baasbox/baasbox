@@ -429,7 +429,6 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
-	console.debug(editUserName);
     var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
