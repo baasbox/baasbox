@@ -25,3 +25,6 @@ server.pid
 /script
 /bin
 conf/generated.keystore
+/.target
+
+hs_err_pid*.log

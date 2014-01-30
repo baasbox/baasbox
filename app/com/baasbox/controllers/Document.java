@@ -34,11 +34,13 @@ import play.mvc.Result;
 import play.mvc.Results;
 import play.mvc.With;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -100,6 +102,10 @@ public class Document extends Controller {
 			count = DocumentService.getCount(collectionName,criteria);
 			Logger.trace("count: " + count);
 		} catch (InvalidCollectionException e) {
+			//create collection if in debug mode
+			if(autocreateCollection(collectionName)){
+				return notFound(collectionName + " was not a valid collection name, autocreated");	
+			};
 			Logger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
@@ -124,6 +130,10 @@ public class Document extends Controller {
 			result = DocumentService.getDocuments(collectionName,criteria);
 			Logger.trace("count: " + result.size());
 		} catch (InvalidCollectionException e) {
+			//create collection if in debug mode
+			if(autocreateCollection(collectionName)){
+				return notFound(collectionName + " was not a valid collection name, autocreated");	
+			};
 			Logger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
@@ -139,6 +149,22 @@ public class Document extends Controller {
 
 		Logger.trace("Method End");
 		return ok(ret);
+	}
+
+	private static boolean autocreateCollection(String collectionName) {
+		String debugOptions = BBConfiguration.getDebugOptions();
+		if(debugOptions!=null &&debugOptions.contains("autocreateCollection")){
+			try {
+				CollectionDao.getInstance().create(collectionName);
+			} catch (Throwable e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Logger.debug (collectionName + " was not a valid collection name, autocreated");
+			return true;
+		}else{
+			return false;
+		}
 	}		
 
 	private static String getRidByString(String id , boolean isUUID) throws RidNotFoundException {
