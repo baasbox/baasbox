@@ -1411,9 +1411,9 @@ function getActionButton(action, actionType,parameters){
 		labelName = "Edit";
 		break;
 	case "changePwdUser":
-		iconType = "icon-edit";
-		classType = "btn-info";
-		labelName = "Change password";
+		iconType = "icon-lock";
+		classType = "btn-warning";
+		labelName = "Change PWD";
 		break;	
 	case "delete":
 		iconType = "icon-trash";
@@ -1421,7 +1421,7 @@ function getActionButton(action, actionType,parameters){
 		labelName = "Delete...";
 		break;
 	}
-	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
+	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
