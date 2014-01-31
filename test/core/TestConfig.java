@@ -50,6 +50,7 @@ public class TestConfig
 	public static final String MSG_BAD_RID = "is not a RecordId in form of string.";
 	public static final String MSG_BAD_RID_MODIFY = "is not a document";
 	public static final String MSG_CHANGE_PWD = "The old password does not match with the current one";
+	public static final String MSG_CHANGE_ADMIN_PWD = "The body payload doesn't contain password field";
 	public static final String MSG_ASSET_ALREADY_EXISTS = "An asset with the same name already exists";
 	public static final String MSG_NO_APP_CODE_NO_AUTH = "Missing Session Token, Authorization info and even the AppCode";
 

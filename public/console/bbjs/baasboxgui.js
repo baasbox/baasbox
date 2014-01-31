@@ -240,8 +240,9 @@ function downloadExportHref(name){
 
 
 $('.btn-changepwd').click(function(e){
-	$('#changePwdModal').modal('show');
-}); // Show Modal for Change Password
+    resetChangePasswordForm();
+    $('#changePwdModal').modal('show');
+}); // Show Modal for Change Password Admin
 
 $('.btn-adduser').click(function(e){
 	loadUserRole();
@@ -331,6 +332,9 @@ $(".btn-action").live("click", function() {
 			break;	
 		}
 		break;
+	case "changePwdUser":
+		openChangePasswordUserForm(parameters);
+			break;
 	case "delete":
 		switch (actionType)	{
 		case "user":
@@ -425,7 +429,7 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
-	var userObject;
+    var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
@@ -437,12 +441,28 @@ function openUserEditForm(editUserName){
 			userObject = userDataArray[i];
 	}
 	$("#txtUsername").val(userObject.user.name);
-	loadUserRole(userObject.user.roles[0].name);
+    loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
 	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
 	$('#addUserModal').modal('show');
+}
+
+function openChangePasswordUserForm(changePassword){
+    resetChangePasswordUserForm()
+    var userObject;
+    $("#userTitle").text("Change password");
+    $("#txtUserName").addClass("disabled");
+    $("#txtUserName").prop('disabled', true);
+    //$(".groupUserPwd").removeClass("hide");
+    for(i=0;i<userDataArray.length;i++)
+    {
+        if(userDataArray[i].user.name == changePassword)
+            userObject = userDataArray[i];
+    }
+    $("#txtUserName").val(userObject.user.name);
+    $('#changePwdUserModal').modal('show');
 }
 
 function openRoleEditForm(editRoleName){
@@ -609,6 +629,18 @@ function resetAddUserForm()
 	$(".error").removeClass("error");
 }
 
+function resetChangePasswordForm(){
+    $("#changePwdForm")[0].reset();
+    $("#errorCPwd").addClass("hide");
+    $("#errorNewPassword").addClass("hide");
+    $("#errorPwdNotMatch").addClass("hide");
+}
+
+function resetChangePasswordUserForm(){
+    $("#changePwdUserForm")[0].reset();
+    $("#errorNewPwd").addClass("hide");
+    $("#errorPasswordNotMatch").addClass("hide");
+}
 function resetAddRoleForm(){
 	//console.debug("resetAddRoleForm");
 	$("#roleForm")[0].reset();
@@ -926,7 +958,7 @@ $('.btn-DocumentReload').click(function(e){
 }); // Validate and Ajax submit for reload document
 
 $('.btn-UserCommit').click(function(e){
-	var action;
+    var action;
 
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
@@ -1080,7 +1112,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if($("#password").val() != oldPassword)
 	{
-		$("#errorCPwd").removeClass("hide");
+        $("#errorCPwd").removeClass("hide");
 		return;
 	}
 	else
@@ -1088,7 +1120,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if(newPassword != $("#retypenewpassword").val())
 	{
-		$("#errorPwdNotMatch").removeClass("hide");
+        $("#errorPwdNotMatch").removeClass("hide");
 		return;
 	}		
 	else
@@ -1096,7 +1128,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if($.trim(newPassword) == '')
 	{
-		$("#errorNewPassword").removeClass("hide");
+        $("#errorNewPassword").removeClass("hide");
 		return;
 	}		
 	else
@@ -1118,6 +1150,45 @@ $('.btn-ChangePwdCommit').click(function(e){
 				}
 			})	
 }); // Validate and Ajax submit for Change Password
+
+
+$('.btn-ChangePwdUserCommit').click(function(e){
+    var userName = $("#txtUserName").val();
+    var txtPwd=$("#txtPwd").val();
+    if(txtPwd != $("#txtRetypePwd").val())
+    {
+        $("#errorPasswordNotMatch").removeClass("hide");
+        return;
+    }
+    else
+        $("#errorPasswordNotMatch").addClass("hide");
+
+    if($.trim(txtPwd) == '')
+    {
+        $("#errorNewPwd").removeClass("hide");
+        return;
+    }
+    else
+        $("#errorNewPwd").addClass("hide");
+
+    BBRoutes.com.baasbox.controllers.Admin.changePassword(userName).ajax(
+        {
+            data: JSON.stringify({"password": txtPwd}),
+            contentType: "application/json",
+            processData: false,
+            error: function(data)
+            {
+                alert(JSON.parse(data.responseText)["message"]);
+            },
+            success: function(data)
+            {
+                sessionStorage.password = txtPwd;
+                $('#changePwdUserModal').modal('hide');
+            }
+        })
+
+});
+
 
 $('#importBtn').on('click',function(e){
 	e.preventDefault();
@@ -1339,13 +1410,18 @@ function getActionButton(action, actionType,parameters){
 		classType = "btn-info";
 		labelName = "Edit";
 		break;
+	case "changePwdUser":
+		iconType = "icon-lock";
+		classType = "btn-warning";
+		labelName = "Change PWD";
+		break;	
 	case "delete":
 		iconType = "icon-trash";
 		classType = "btn-danger";
 		labelName = "Delete...";
 		break;
 	}
-	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
+	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
@@ -1509,7 +1585,7 @@ function setupTables(){
 		               },
 		               {"mData": "user.name", "mRender": function ( data, type, full ) {
 		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
-		            		   return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
+		            		   return getActionButton("edit","user",data)+"&nbsp;"+getActionButton("changePwdUser","user",data);// +" "+ getActionButton("delete","user",data);
 		            	   return "No action available";
 		               }
 		               }],
