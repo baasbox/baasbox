@@ -32,6 +32,7 @@ import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.Play;
@@ -128,10 +129,13 @@ public class DbHelper {
 	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
 		String ret;
 		if (count) ret = "select count(*) from ";
-		else ret = "select from ";
+		else ret = "select " + criteria.getFields() + " from ";
 		ret += from;
 		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
 			ret += " where ( " + criteria.getWhere() + " )";
+		}
+		if (!StringUtils.isEmpty(criteria.getGroupBy())){
+			ret += " group by ( " + criteria.getGroupBy() + " )";
 		}
 		if (!count && criteria.getOrderBy()!=null && !criteria.getOrderBy().equals("")){
 			ret += " order by " + criteria.getOrderBy();
