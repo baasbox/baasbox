@@ -59,6 +59,7 @@
 			element: ".navbar-inner a:contains('Version')", 
 			placement: "bottom",
 			title: "That's all", 
-			content: "This quick tour is over. You are now encouraged to explore each item on the menu, see the related tours, read the online documentation and build your first BAASBOX powered App.<br />"
+			content: "Now what would you like to do?<br />" +
+                "Check the <a href='http://www.baasbox.com/tutorial' target='_blank'>tutorial</a> section"
 		});
 	
