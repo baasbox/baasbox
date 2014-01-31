@@ -39,4 +39,6 @@ public interface IBBConfigurationKeys {
 	
 	public static final String WRITE_ACCESS_LOG = "baasbox.server.accesslog";
 	
+	public static final String DUMP_DB_CONFIGURATION_ON_STARTUP = "baasbox.startup.dumpdb";
+	
 }
