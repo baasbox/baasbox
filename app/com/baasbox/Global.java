@@ -46,12 +46,14 @@ import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.storage.StatisticsService;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.typesafe.config.ConfigException;
 
 public class Global extends GlobalSettings {
 	
@@ -61,6 +63,12 @@ public class Global extends GlobalSettings {
 	@Override
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
+		  info("System details:");
+		  info(StatisticsService.os().toString());
+		  info(StatisticsService.memory().toString());
+		  info(StatisticsService.java().toString());
+		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString());
+		 
 		  info("...Loading plugin...");
 	  }
 	  
