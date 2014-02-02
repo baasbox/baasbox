@@ -396,7 +396,7 @@ return profile;
 		UserDao udao=UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
 		if(user==null){
-			Logger.debug("User " + username + " does not exist");
+			if (Logger.isDebugEnabled()) Logger.debug("User " + username + " does not exist");
 			throw new UserNotFoundException("User " + username + " does not exist");
 		}
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
@@ -521,7 +521,7 @@ return profile;
 				user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 				systemProps.save();
 				user.save();
-				Logger.debug("saved tokens for user ");
+				if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
 				DbHelper.commitTransaction();
 			}
 		}catch(Exception e){
@@ -547,7 +547,7 @@ return profile;
 			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();
 			user.save();
-			Logger.debug("saved tokens for user ");
+			if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
 			DbHelper.commitTransaction();
 
 		}catch(Exception e){

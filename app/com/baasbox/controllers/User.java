@@ -122,29 +122,29 @@ public class User extends Controller {
 	  */
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	  public static Result getCurrentUser() throws SqlInjectionException{
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  ODocument profile = UserService.getCurrentUser();
 		  String result=prepareResponseToJson(profile);
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok(result);
 	  }
 
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	  public static Result getUser(String username) throws SqlInjectionException{
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  if (ArrayUtils.contains(
 				  new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
 				  username)) return badRequest(username + " cannot be queried");
 		  ODocument profile = UserService.getUserProfilebyUsername(username);
 		  if (profile==null) return notFound(username + " not found");
 		  String result=prepareResponseToJson(profile);
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok(result);
 	  }
 
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})	
 	  public static Result getUsers() {
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Context ctx=Http.Context.current.get();
 		  QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		  String where="user.name not in ?" ;
@@ -163,18 +163,18 @@ public class User extends Controller {
 			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
 		  }
 		  String result=prepareResponseToJson(profiles);
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok(result);
 	  }
 	  
 	  @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result signUp() throws JsonProcessingException, IOException{
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.trace("signUp bodyJson: " + bodyJson);
+		  if (Logger.isTraceEnabled()) Logger.trace("signUp bodyJson: " + bodyJson);
 		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  //check and validate input
 		  if (!bodyJson.has("username"))
@@ -202,14 +202,14 @@ public class User extends Controller {
 		  try {
 			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		  } catch (UserAlreadyExistsException e){
-			  Logger.debug("signUp", e);
+			  if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");
 		  } catch (Throwable e){
 			  Logger.warn("signUp", e);
 			  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			  else return internalServerError(e.getMessage());
 		  }
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		  response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 		  
@@ -224,11 +224,11 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.trace("updateProfile bodyJson: " + bodyJson);
+		  if (Logger.isTraceEnabled()) Logger.trace("updateProfile bodyJson: " + bodyJson);
 		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  
 		  //extract the profile	 fields
@@ -251,7 +251,7 @@ public class User extends Controller {
 			  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			  else return internalServerError(e.getMessage());
 		  }
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  
 		  return ok(prepareResponseToJson(profile)); 
 	  }//updateProfile
@@ -272,7 +272,7 @@ public class User extends Controller {
 
     @With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	  public static Result resetPasswordStep1(String username){
-	  	  Logger.trace("Method Start");
+	  	  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 	  	  
 	  	  //check and validate input
 	  	  if (username == null)
@@ -301,7 +301,7 @@ public class User extends Controller {
 	  		  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 	  		  else return internalServerError(e.getMessage());
 	  }
-	  	  Logger.trace("Method End");
+	  	  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	  	  return ok();
 	  }
 	  
@@ -319,7 +319,7 @@ public class User extends Controller {
         
 		  try{
 		  	  tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-		  	  Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
+		  	  if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
 		  	  
 		  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
 		  	  String[] tokens = tokenReceived.split("%%%%");
@@ -380,7 +380,7 @@ public class User extends Controller {
 			  //loads the received token and extracts data by the hashcode in the url
 			  
 		  	  tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-		  	  Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
+		  	  if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
 		  	  
 		  	  //token format should be APP_Code%%%%Username%%%%ResetTokenId
 		  	  String[] tokens = tokenReceived.split("%%%%");
@@ -456,7 +456,7 @@ public class User extends Controller {
 			  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			  else return internalServerError(e.getMessage());
 		  } 
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	  	  
 		  String ok_message = "Password changed";
 		  ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
@@ -471,11 +471,11 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result changePassword(){
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Http.RequestBody body = request().body();
 		  
 		  JsonNode bodyJson= body.asJson();
-		  Logger.trace("changePassword bodyJson: " + bodyJson);
+		  if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
 		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		  
 		  //check and validate input
@@ -493,7 +493,7 @@ public class User extends Controller {
 		  }	  
 
 		  UserService.changePasswordCurrentUser(newPassword);
-		  Logger.trace("Method End");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok();
 	  }	  
 	  
@@ -543,9 +543,9 @@ public class User extends Controller {
 			 else password=body.get("password")[0];
 			 if(body.get("appcode")==null) return badRequest("The 'appcode' field is missing");
 			 else appcode=body.get("appcode")[0];
-			 Logger.debug("Username " + username);
-			 Logger.debug("Password " + password);
-			 Logger.debug("Appcode " + appcode);		
+			 if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
+			 if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
+			 if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
 			 if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					 ||
 				 username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
@@ -553,7 +553,7 @@ public class User extends Controller {
 			 
 			 if (body.get("login_data")!=null)
 				 loginData=body.get("login_data")[0];
-			 Logger.debug("LoginData" + loginData);
+			 if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
 
 		  /* other useful parameter to receive and to store...*/		  	  
 		  //validate user credentials
@@ -569,8 +569,8 @@ public class User extends Controller {
 				 try{
 					 loginInfo = Json.parse(loginData);
 				 }catch(Exception e){
-					 Logger.debug ("Error parsong login_data field");
-					 Logger.debug (ExceptionUtils.getFullStackTrace(e));
+					 if (Logger.isDebugEnabled()) Logger.debug ("Error parsong login_data field");
+					 if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
 					 return badRequest("login_data field is not a valid json string");
 				 }
 				 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
@@ -584,10 +584,10 @@ public class User extends Controller {
 				 UserService.registerDevice(data);
 			 }
 		  }catch (OSecurityAccessException e){
-			  Logger.debug("UserLogin: " +  e.getMessage());
+			  if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " +  e.getMessage());
 			  return unauthorized("user " + username + " unauthorized");
 		  } catch (InvalidAppCodeException e) {
-			  Logger.debug("UserLogin: " + e.getMessage());
+			  if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " + e.getMessage());
 			  return badRequest("user " + username + " unauthorized");
 		  }finally{
 			  if (db!=null && !db.isClosed()) db.close();

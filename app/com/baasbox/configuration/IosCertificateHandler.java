@@ -43,7 +43,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				try {
 					currentValue =new ObjectMapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
 				} catch (Exception e) {
-					Logger.debug("unable to convert value to ConfigurationFileContainer");
+					if (Logger.isDebugEnabled()) Logger.debug("unable to convert value to ConfigurationFileContainer");
 				}
 			}else if (iCurrentValue instanceof ConfigurationFileContainer){
 				currentValue = (ConfigurationFileContainer)iCurrentValue;
@@ -95,7 +95,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			ConfigurationFileContainer prod = Push.PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
 			ConfigurationFileContainer sandbox = Push.SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 			if(prod!=null){
-				Logger.debug("Creating production certificate:"+prod.getName());
+				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate:"+prod.getName());
 				File prodCertificate =  new File(Play.application().path().getAbsolutePath()+sep+folder+sep+prod.getName());
 				if(!prodCertificate.exists()){
 					try{
@@ -110,7 +110,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 			}
 			if(sandbox!=null){
-				Logger.debug("Creating sandbox certificate:"+sandbox.getName());
+				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate:"+sandbox.getName());
 				File sandboxCertificate =  new File(Play.application().path().getAbsolutePath()+sep+folder+sep+sandbox.getName());
 				if(!sandboxCertificate.exists()){
 					try{

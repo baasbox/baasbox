@@ -58,7 +58,7 @@ public class RoleService {
 	public static void createInternalRoles(){
 		for (DefaultRoles r : DefaultRoles.values()){
 			ORole newRole;
-			Logger.debug("creating " + r.toString() + "...");
+			if (Logger.isDebugEnabled()) Logger.debug("creating " + r.toString() + "...");
 			if (!r.isOrientRole()){ //creates the new baasbox role
 				newRole = RoleDao.createRole(r.toString(), r.getInheritsFrom());
 			}else{	//retrieve the existing OrientDB role

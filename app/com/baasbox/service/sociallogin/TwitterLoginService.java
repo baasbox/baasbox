@@ -55,7 +55,7 @@ public class TwitterLoginService extends SocialLoginService {
 
 	@Override
 	public Token getAccessTokenFromRequest(Request r,Session s) {
-		Logger.debug(Json.stringify(Json.toJson(s.keySet())));
+		if (Logger.isDebugEnabled()) Logger.debug(Json.stringify(Json.toJson(s.keySet())));
 		if(s.get("twitter.token")!=null && s.get("twitter.secret")!=null){
 			String token = s.get("twitter.token");
 			String secret = s.get("twitter.secret");

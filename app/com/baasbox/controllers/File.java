@@ -204,13 +204,13 @@ public class File extends Controller {
 			        for (String key:metadata.names()){
 			        	try{
 			        	if (metadata.isMultiValued(key)){
-			        		Logger.debug(key + ": ");
+			        		if (Logger.isDebugEnabled()) Logger.debug(key + ": ");
 			        		for (String value: metadata.getValues(key)){
-			        			Logger.debug("   " + value);
+			        			if (Logger.isDebugEnabled()) Logger.debug("   " + value);
 			        		}
 			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), Arrays.asList(metadata.getValues(key)));
 			        	}else{
-			        		Logger.debug(key + ": " + metadata.get(key));
+			        		if (Logger.isDebugEnabled()) Logger.debug(key + ": " + metadata.get(key));
 			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), metadata.get(key));
 			        	}
 			        	}catch(Throwable e){
@@ -219,8 +219,8 @@ public class File extends Controller {
 			        }
 			      
 
-			        Logger.debug(".................................");
-			        Logger.debug(new JSONObject(extractedMetaData).toString());
+			        if (Logger.isDebugEnabled()) Logger.debug(".................................");
+			        if (Logger.isDebugEnabled()) Logger.debug(new JSONObject(extractedMetaData).toString());
 			    	
 			        is.close();
 			    	is=new FileInputStream(fileContent);

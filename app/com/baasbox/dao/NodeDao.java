@@ -123,7 +123,7 @@ public abstract class NodeDao  {
 	}
 	
 	public ODocument create() throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
@@ -132,24 +132,24 @@ public abstract class NodeDao  {
 				doc.field(FIELD_CREATION_DATE,new Date());
 				vertex.field(FIELD_TO_DOCUMENT_FIELD,doc);
 				UUID token = UUID.randomUUID();
-				Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
+				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getUser().getName());
 			return doc;
 		}catch (Throwable e){
 			throw e;
 		}finally{
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		}
 	}
 	
 
 
 	protected  void save(ODocument document) throws InvalidModelException {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		checkModelDocument(document);
 		document.save();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
 
@@ -167,7 +167,7 @@ public abstract class NodeDao  {
 
 
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
 		try{
@@ -184,13 +184,13 @@ public abstract class NodeDao  {
 		}catch (IndexOutOfBoundsException e){
 			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return result;
 	}
 
 
 	public ODocument get(ORID rid) throws InvalidModelException, DocumentNotFoundException {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Object doc=db.load(rid);
 		if (doc==null) throw new DocumentNotFoundException();
 		if (!(doc instanceof ODocument)) throw new IllegalArgumentException(rid +" is a rid not referencing a valid Document");
@@ -200,18 +200,18 @@ public abstract class NodeDao  {
 			//the rid may reference a ORecordBytes which is not a ODocument
 			throw new InvalidModelException("the rid " + rid + " is not valid belong to the collection " + this.MODEL_NAME);
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return (ODocument)doc;
 	}
 
 
 	public ODocument get(String rid) throws InvalidModelException, ODatabaseException, DocumentNotFoundException {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Object orid=OSQLHelper.parseValue(rid, null);
 		if ((orid==null) || !(orid instanceof ORecordId) || (orid.toString().equals(OSQLHelper.VALUE_NOT_PARSED))) throw new IllegalArgumentException(rid +" is not a valid rid");
 		Object odoc=get((ORecordId)orid);
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return (ODocument)odoc;
 	}
  
@@ -262,7 +262,7 @@ public abstract class NodeDao  {
 	}
 	
 	public long getCount(QueryParams criteria) throws SqlInjectionException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		List<ODocument> result = null;
 		OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, true, criteria);
 		try{
@@ -275,20 +275,20 @@ public abstract class NodeDao  {
 		}catch (OCommandSQLParsingException e){
 			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();
 	}
 	
 	
 	public void delete(String rid) throws Throwable{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODocument doc = get(rid);
 		delete(doc.getIdentity());
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
 	public void delete(ORID rid) throws Throwable{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
 		//retrieve the vertex associated to this node
 		try{
@@ -301,7 +301,7 @@ public abstract class NodeDao  {
 			DbHelper.rollbackTransaction();
 			throw e;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
 	

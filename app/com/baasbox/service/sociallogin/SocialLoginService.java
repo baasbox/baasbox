@@ -77,7 +77,7 @@ public abstract class SocialLoginService {
 		if(this.needToken()){
 			t = this.service.getRequestToken();
 			if(this.socialNetwork.equals("twitter")){
-				Logger.debug("setting token");
+				if (Logger.isDebugEnabled()) Logger.debug("setting token");
 				s.put("twitter.token",t.getToken());
 				s.put("twitter.secret",t.getSecret());
 			}

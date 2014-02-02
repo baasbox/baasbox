@@ -43,7 +43,7 @@ public enum Application implements IProperties{
 	public void setValue(Object newValue) {
 	    Object parsedValue=null;
 
-	    Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
@@ -71,7 +71,7 @@ public enum Application implements IProperties{
 		IndexApplicationConfiguration idx;
 		try {
 			idx = new IndexApplicationConfiguration();
-			Logger.debug("getting "+key+" from index");
+			if (Logger.isDebugEnabled()) Logger.debug("getting "+key+" from index");
 			return idx.get(key);
 		} catch (Exception e) {
 			Logger.error("Could not retrieve key " + key, e);
