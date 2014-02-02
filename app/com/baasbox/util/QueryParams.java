@@ -42,20 +42,20 @@ public class QueryParams implements IQueryParametersKeys{
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String[] params) {
 		super();
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
 		if (orderBy!=null) this.orderBy = orderBy;
 		if (depth!=null) this.depth = depth;
 		if (params!=null) this.params=params;
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String param) {
 		super();
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
@@ -65,7 +65,7 @@ public class QueryParams implements IQueryParametersKeys{
 			String[] params = {param};
 			this.params= params ;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
 	public QueryParams(String fields, String where, Integer page,
@@ -225,7 +225,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String groupByFromQS=null;
 		String depthFromQS=null;
 		
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Map <String,String[]> queryString = header.queryString();
 		if (queryString.get(IQueryParametersKeys.FIELDS)!=null)
 			fieldsFromQS=queryString.get(IQueryParametersKeys.FIELDS)[0];
@@ -267,7 +267,7 @@ public class QueryParams implements IQueryParametersKeys{
 		
 		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params);
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return qryp;
 		
 	}

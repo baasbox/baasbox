@@ -30,10 +30,10 @@ public class NoUserCredentialWrapFilter extends Action.Simple {
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("NoUserCredentialWrapFilter  for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("NoUserCredentialWrapFilter  for resource " + Http.Context.current().request());
 		
 		//executes the request
 		Result tempResult = delegate.call(ctx);
@@ -41,7 +41,7 @@ public class NoUserCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		Result result=wr.wrap(ctx, tempResult);
 				
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;
 	}
 

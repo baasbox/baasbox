@@ -29,10 +29,10 @@ public class AnonymousLogin extends Action.Simple {
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
 		
 		String user=BBConfiguration.getBaasBoxUsername();
@@ -41,7 +41,7 @@ public class AnonymousLogin extends Action.Simple {
 		ctx.args.put("username", user);
 		ctx.args.put("password", password);
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return delegate.call(ctx);
 	}
 

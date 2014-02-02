@@ -31,45 +31,45 @@ import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager { 
 	public static void registerAll(ODatabaseRecordTx db){
-		Logger.trace("Method Start");
-		Logger.debug("Registering hooks...");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
 		Set<ORecordHook> hooks = db.getHooks();
 		Iterator<ORecordHook> it =hooks.iterator();
 		boolean register=true;
 		while (it.hasNext()){		
 			if (it.next() instanceof BaasBoxHook) {
-				Logger.debug("BaasBox hooks already registerd for this connection");
+				if (Logger.isDebugEnabled()) Logger.debug("BaasBox hooks already registerd for this connection");
 				register=false;
 				break;
 			}
 		}
 		if (register){
-			Logger.debug("Registering BaasBox hooks... start");
+			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... start");
 			db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
-			Logger.debug("Registering BaasBox hooks... done");
+			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... done");
 		}
-		Logger.debug("Hooks: "+ db.getHooks());
-		Logger.trace("Method End");
+		if (Logger.isDebugEnabled()) Logger.debug("Hooks: "+ db.getHooks());
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
 	public static void unregisteredAll(ODatabaseRecordTx db){
 
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
-		Logger.debug("unregistering hooks...");
+		if (Logger.isDebugEnabled()) Logger.debug("unregistering hooks...");
 		Set<ORecordHook> hooks = db.getHooks();
 		List hs = IteratorUtils.toList(hooks.iterator());
 		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
 			if (h instanceof BaasBoxHook) {
-				Logger.debug("Removing "+ ((BaasBoxHook) h).getHookName() + " hook");
+				if (Logger.isDebugEnabled()) Logger.debug("Removing "+ ((BaasBoxHook) h).getHookName() + " hook");
 				db.unregisterHook(h);
 			}
 		}
 				
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
 	}
 }

@@ -110,7 +110,7 @@ public class Admin extends Controller {
 	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	public static Result getUsers(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		List<ODocument> users=null;
@@ -125,13 +125,13 @@ public class Admin extends Controller {
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok(ret);
 	}
 
 	public static Result getUser(String username){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 
 		ODocument user=null;
@@ -147,13 +147,13 @@ public class Admin extends Controller {
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok(ret);
 	}
 
 	public static Result getCollections(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 
 		List<ODocument> result;
 		String ret="{[]}";
@@ -172,13 +172,13 @@ public class Admin extends Controller {
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok(ret);
 	}
 
 	public static Result createCollection(String name) throws Throwable{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try{
 			CollectionService.create(name);
 		}catch (CollectionAlreadyExistsException e) {
@@ -191,7 +191,7 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			throw e;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return created();
 	}
 
@@ -317,11 +317,11 @@ public class Admin extends Controller {
 	/* create user in any role */
 
 	public static Result createUser(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		Logger.debug("signUp bodyJson: " + bodyJson);
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
 		//check and validate input
 		if (!bodyJson.has("username"))
@@ -362,17 +362,17 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e) ;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return created();
 	}//createUser
 
 
 	public static Result updateUser(String username){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		Logger.debug("signUp bodyJson: " + bodyJson);
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
 		if (!bodyJson.has("role"))
 			return badRequest("The 'role' field is missing");	
@@ -434,7 +434,7 @@ public class Admin extends Controller {
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
@@ -446,10 +446,10 @@ public class Admin extends Controller {
 	 * @throws SqlInjectionException 
 	 */
 	public static Result changePassword(String username) throws SqlInjectionException, UserNotFoundException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
-		Logger.trace("changePassword bodyJson: " + bodyJson);
+		if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
 		
 		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		JsonNode passwordNode=bodyJson.findValue("password");
@@ -463,7 +463,7 @@ public class Admin extends Controller {
 		    Logger.error("Username not found " + username, e);
 		    return notFound("Username not found");
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok();	
 	}
 
@@ -481,7 +481,7 @@ public class Admin extends Controller {
 	 * @return
 	 */
 	public static Result dropCollection(String name){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try {
 			CollectionService.drop(name);
 		}catch (SqlInjectionException e){
@@ -492,7 +492,7 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok();
 	}
@@ -551,7 +551,7 @@ public class Admin extends Controller {
 
 	public static Result getLatestVersion() {
 		String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
-		Logger.debug("Calling " + urlToCall);
+		if (Logger.isDebugEnabled()) Logger.debug("Calling " + urlToCall);
 		final Promise<Response> promise = WS.url(urlToCall).get();
 		return status(promise.get().getStatus(),promise.get().getBody());
 	}//getLatestVersion
@@ -754,7 +754,7 @@ public class Admin extends Controller {
 						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
 							return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
 						}else{
-							Logger.debug("Version : "+version+" is valid");
+							if (Logger.isDebugEnabled()) Logger.debug("Version : "+version+" is valid");
 						}
 					}else{
 						return badRequest("The manifest file does not contain a version number");
@@ -762,7 +762,7 @@ public class Admin extends Controller {
 				}else{
 					return badRequest("Looks like zip file does not contain a manifest file");
 				}
-				Logger.debug("Importing: "+fileContent);
+				if (Logger.isDebugEnabled()) Logger.debug("Importing: "+fileContent);
 				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
 					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();

@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class StatisticsService {
 
 		public static ImmutableMap data() throws SqlInjectionException, InvalidCollectionException{
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
@@ -89,13 +89,13 @@ public class StatisticsService {
 					"collections_details", collMap,
 					"assets",assetsCount
 					);
-			Logger.debug(response.toString());
-			Logger.trace("Method End");
+			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}
 		
 		public static String dbConfiguration() {
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
 			OGlobalConfiguration.dumpConfiguration(ps);
@@ -105,12 +105,12 @@ public class StatisticsService {
 			} catch (UnsupportedEncodingException e) {
 				content=baos.toString();
 			}
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return content;
 		}
 		
 		public static ImmutableMap db() {
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			ODatabaseRecordTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
@@ -127,12 +127,12 @@ public class StatisticsService {
 					"configuration", dbConfiguration(),
 					"physical_size",FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()))
 					);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap os() {
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			ImmutableMap response=null;
 			if (BBConfiguration.getStatisticsSystemOS()){
 				response = ImmutableMap.of(
@@ -149,24 +149,24 @@ public class StatisticsService {
 						"processors",  0
 						);				
 			}
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap java() {
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			ImmutableMap response = ImmutableMap.of(
 					"java_class_version", System.getProperty("java.class.version"),
 					"java_vendor",  System.getProperty("java.vendor"),
 					"java_vendor_url",  System.getProperty("java.vendor.url"),
 					"java_version",  System.getProperty("java.version")
 					);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}	
 		
 		public static ImmutableMap memory() {
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			ImmutableMap response=null;
 
 			if (BBConfiguration.getStatisticsSystemMemory()){
@@ -189,7 +189,7 @@ public class StatisticsService {
 						);
 			}
 			
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}	
 		

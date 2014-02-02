@@ -51,10 +51,10 @@ public class DocumentDao extends NodeDao {
 	
 	@Override
 	public ODocument create() throws Throwable{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		DbHelper.requestTransaction();
 		ODocument doc = super.create();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return doc;
 	}//getNewModelInstance
 	

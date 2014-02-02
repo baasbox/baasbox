@@ -33,11 +33,11 @@ public class BasicAuthAccess  implements IAccessMethod {
   
     @Override
 	public boolean setCredential (Context ctx)  {
-		Logger.trace("Method Start");
-		Logger.debug("BasicAuthHeader for resource " + Http.Context.current().request());
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (Logger.isDebugEnabled()) Logger.debug("BasicAuthHeader for resource " + Http.Context.current().request());
 		//retrieve AppCode
 		String appcode=RequestHeaderHelper.getAppCode(ctx);
-		Logger.debug(SessionKeys.APP_CODE + ": " + appcode);
+		if (Logger.isDebugEnabled()) Logger.debug(SessionKeys.APP_CODE + ": " + appcode);
 		ctx.args.put("appcode", appcode);
 		
 		String username = ""; 
@@ -48,12 +48,12 @@ public class BasicAuthAccess  implements IAccessMethod {
 		//--------------------------------------------------------------
 		String authHeader = ctx.request().getHeader(AUTHORIZATION);
         if (authHeader == null) { 
-        	Logger.debug(AUTHORIZATION + " header is null or missing");
+        	if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + " header is null or missing");
         	return false;
         }
 
         String auth = authHeader.substring(6);
-        Logger.debug(AUTHORIZATION + ": " + auth);
+        if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + ": " + auth);
         byte[] decodedAuth;
 		try {
 			decodedAuth = new sun.misc.BASE64Decoder().decodeBuffer(auth);
@@ -61,7 +61,7 @@ public class BasicAuthAccess  implements IAccessMethod {
 			Logger.error("Cannot decode " + AUTHORIZATION + " header. ",e1);
 			return false;
 		}
-        Logger.debug ("Decoded header: " + decodedAuth);
+        if (Logger.isDebugEnabled()) Logger.debug ("Decoded header: " + decodedAuth);
     	String[] credString;
 		try {
 			credString = new String(decodedAuth, "UTF-8").split(":");
@@ -71,20 +71,20 @@ public class BasicAuthAccess  implements IAccessMethod {
 		}
 
         if (credString == null || credString.length != 2) {
-        	Logger.debug(AUTHORIZATION + " header is not valid (has not user:password pair)");
+        	if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + " header is not valid (has not user:password pair)");
         	return false;
         }
         username = credString[0];
         password = credString[1];
        
-        Logger.debug("username: " + username);
-        Logger.debug("password: <hidden>");
+        if (Logger.isDebugEnabled()) Logger.debug("username: " + username);
+        if (Logger.isDebugEnabled()) Logger.debug("password: <hidden>");
 
         ctx.args.put("username", username);
 		ctx.args.put("password", password);
 
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return true;
 	}
 

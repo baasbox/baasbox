@@ -37,10 +37,10 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 	@Override
 	public Result call(Context ctx) throws Throwable {
 		Result tempResult=null;
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled())  Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
 		//try to retrieve from querystring
@@ -54,13 +54,13 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		ctx.args.put("password", adminPassword);
 		ctx.args.put("appcode", appCode);
 		
-		Logger.debug("admin username (defined in conf file): " + adminUser);
-		Logger.debug("admin password (defined in conf file): " + adminPassword);
-		Logger.debug("appcode (from header): " + appCode);
-		Logger.debug("token: N/A"); 
+		if (Logger.isDebugEnabled()) Logger.debug("admin username (defined in conf file): " + adminUser);
+		if (Logger.isDebugEnabled()) Logger.debug("admin password (defined in conf file): " + adminPassword);
+		if (Logger.isDebugEnabled()) Logger.debug("appcode (from header): " + appCode);
+		if (Logger.isDebugEnabled()) Logger.debug("token: N/A"); 
 		
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
-	    	Logger.debug("Invalid App Code, AppCode is empty!");
+	    	if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= badRequest("Invalid App Code. AppCode is empty or not set");
 		}
 		
@@ -73,7 +73,7 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		Result result=wr.wrap(ctx, tempResult);
 		
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;
 	}
 
