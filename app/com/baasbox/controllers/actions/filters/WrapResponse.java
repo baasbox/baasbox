@@ -141,6 +141,7 @@ public class WrapResponse {
 		String username=(String) ctx.args.get("username");
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
 		
+	    byte[] resultContent=null;
 		if (BBConfiguration.getWrapResponse()){
 			Logger.debug("Wrapping the response");
 			final int statusCode = JavaResultExtractor.getStatus(result);
@@ -159,7 +160,7 @@ public class WrapResponse {
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
 		    String stringBody = new String(body, "UTF-8");
-		    Logger.trace ("stringBody: " +stringBody);
+		    if (Logger.isTraceEnabled()) Logger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
 			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
@@ -180,13 +181,16 @@ public class WrapResponse {
 		    	result=onOk(statusCode,ctx.request(),stringBody);
 		    } //if (statusCode>399)
 			if (statusCode==204) result = Results.noContent();
-			//We was expecting that this would be done by the framework, apparently this is false 
-			ctx.response().setHeader("Content-Length",String.valueOf(JavaResultExtractor.getBody(result).length));
+			try {
+				if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+			}catch (Throwable e){}
 		}else{ //if (BBConfiguration.getWrapResponse())
 			Logger.debug("The response will not be wrapped due configuration parameter");
+			try {
+				if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+			}catch (Throwable e){}
+			if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		}
-
-	    Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		Logger.trace("Method End");
 		
 	    return result;
