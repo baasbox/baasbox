@@ -443,7 +443,7 @@ function openUserEditForm(editUserName){
 	$("#txtUsername").val(userObject.user.name);
     loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
-	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend)).trigger("change");
+	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
 	$('#addUserModal').modal('show');
@@ -790,7 +790,7 @@ function addUser()
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -800,7 +800,7 @@ function addUser()
 					"password": password,
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
 					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
 					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
 				}),
@@ -823,7 +823,8 @@ function updateUser()
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends
+        = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -832,7 +833,7 @@ function updateUser()
 				data: JSON.stringify({
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
 					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
 					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
 				}),	
@@ -965,7 +966,8 @@ $('.btn-UserCommit').click(function(e){
 	var retypePassword = $("#txtRetypePassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends" +
+        "").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -1005,7 +1007,7 @@ $('.btn-UserCommit').click(function(e){
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
-	if(!isValidJson(visibleByFriend)){
+	if(!isValidJson(visibleByFriends)){
 		$("#auVisibleByFriend").addClass("error");
 		errorMessage += "The 'Visible By Friend' field  must be a valid JSON string<br/>"
 	}
