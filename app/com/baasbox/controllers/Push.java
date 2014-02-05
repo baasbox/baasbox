@@ -40,10 +40,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
 	 public static Result send(String username)  {
-		 Logger.trace("Method Start");
+		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		 Http.RequestBody body = request().body();
 		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
-		 Logger.trace("send bodyJson: " + bodyJson);
+		 if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");
@@ -75,20 +75,20 @@ public class Push extends Controller {
 		}
 		 
 		
-		 Logger.trace("Method End");
+		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 return ok();
 	  }
 	
 	 public static Result enablePush(String os, String deviceId) throws SqlInjectionException{
-		 Logger.trace("Method Start");
+		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		 if(os==null) return badRequest("Os value doesn't not null");
 		 if(deviceId==null) return badRequest("DeviceId value doesn't not null");
-		 Logger.debug("Trying to enable push to os: "+os+" deviceId: "+ deviceId); 
+		 if (Logger.isDebugEnabled()) Logger.debug("Trying to enable push to os: "+os+" deviceId: "+ deviceId); 
 		 HashMap<String, Object> data = new HashMap<String, Object>();
          data.put("os",os);
          data.put("deviceId", deviceId);
 		 UserService.registerDevice(data);
-		 Logger.trace("Method End");
+		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 return ok();
 		 
 	  }

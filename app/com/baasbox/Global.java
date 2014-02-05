@@ -240,11 +240,10 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 400);
 		  Result resultToReturn =  badRequest(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  }finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	  }  
 
 	// 404
@@ -255,11 +254,10 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 404);
 		  Result resultToReturn= notFound(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  }finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	    }
 
 	  // 500 - internal server error
@@ -272,11 +270,10 @@ public class Global extends GlobalSettings {
 		  error(ExceptionUtils.getFullStackTrace(throwable));
 		  Result resultToReturn= internalServerError(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  } finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	  }
 
 

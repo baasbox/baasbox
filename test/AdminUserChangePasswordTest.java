@@ -74,8 +74,8 @@ public class AdminUserChangePasswordTest extends AbstractUserTest {
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withJsonBody(getPayload("/adminUserChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
-					Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
-					Logger.debug("testRouteChangePassword result: " + contentAsString(result));
+					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
+					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword result: " + contentAsString(result));
 					assertRoute(result, "testRouteChangePassword 1", Status.OK, null, false);
 					
 					continueOnFail(true);

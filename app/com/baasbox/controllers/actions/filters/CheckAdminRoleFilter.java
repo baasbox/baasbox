@@ -35,11 +35,11 @@ public class CheckAdminRoleFilter extends Action.Simple{
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
-		Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
+		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
 		
 		OUser user=DbHelper.getConnection().getUser();
 		Set<ORole> roles=user.getRoles();
@@ -48,7 +48,7 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
 			result = delegate.call(ctx);
 		}else result=forbidden("User " + ctx.args.get("username") + " is not an administrator");
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return result;
 	}
 

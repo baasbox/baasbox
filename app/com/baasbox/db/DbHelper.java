@@ -16,7 +16,7 @@
  */
 package com.baasbox.db;
 
-import static play.Logger.debug;
+
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -105,7 +105,7 @@ public class DbHelper {
 	public static void requestTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
-			Logger.trace("Begin transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
 			//db.begin();
 		}
 	}
@@ -113,7 +113,7 @@ public class DbHelper {
 	public static void commitTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			Logger.trace("Commit transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Commit transaction");
 			//db.commit();
 		}
 	}
@@ -121,7 +121,7 @@ public class DbHelper {
 	public static void rollbackTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			Logger.trace("Rollback transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Rollback transaction");
 			//db.rollback();
 		}		
 	}
@@ -145,7 +145,7 @@ public class DbHelper {
 					" limit " + 	criteria.getRecordPerPage();
 		}
 
-		Logger.debug("queryBuilder: " + ret);
+		if (Logger.isDebugEnabled()) Logger.debug("queryBuilder: " + ret);
 		return ret;
 	}
 
@@ -163,9 +163,9 @@ public class DbHelper {
 				selectQueryBuilder(from, count, criteria)
 				));
 		if (!command.isIdempotent()) throw new SqlInjectionException();
-		Logger.debug("commandBuilder: ");
-		Logger.debug("  " + criteria.toString());
-		Logger.debug("  " + command.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("commandBuilder: ");
+		if (Logger.isDebugEnabled()) Logger.debug("  " + criteria.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("  " + command.toString());
 		return command;
 	}
 
@@ -268,7 +268,7 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 		String databaseName=BBConfiguration.getDBDir();
-		Logger.debug("opening connection on db: " + databaseName + " for " + username);
+		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
 		new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(getConnection());
@@ -299,11 +299,11 @@ public class DbHelper {
 	}
 	
 	public static void close(ODatabaseRecordTx db) {
-		Logger.debug("closing connection");
+		if (Logger.isDebugEnabled()) Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
 			//HooksManager.unregisteredAll(db);
 			db.close();
-		}else Logger.debug("connection already close or null");
+		}else if (Logger.isDebugEnabled()) Logger.debug("connection already close or null");
 	}
 
 	public static ODatabaseRecordTx getConnection(){
@@ -327,20 +327,20 @@ public class DbHelper {
 	}
 
 	public static void createDefaultRoles() throws RoleNotFoundException, RoleAlreadyExistsException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		RoleService.createInternalRoles();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	public static void createDefaultUsers() throws Exception{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		UserService.createDefaultUsers();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	
 	public static void updateDefaultUsers() throws Exception{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
 		user.setPassword(BBConfiguration.getBaasBoxPassword());
@@ -350,14 +350,14 @@ public class DbHelper {
 		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
 		user.save();
 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	@Deprecated
 	public static void dropOrientDefault(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		//nothing to do here
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	public static void populateDB(ODatabaseRecordTx db) throws IOException{
@@ -370,7 +370,7 @@ public class DbHelper {
 		is.close();
 
 		for (String line:script){
-			Logger.debug(line);
+			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				dbg.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
@@ -428,9 +428,9 @@ public class DbHelper {
 
 
 	public static void setupDb(ODatabaseRecordTx db) throws Exception{
-		debug("Creating default roles...");
+		Logger.info("Creating default roles...");
 		DbHelper.createDefaultRoles();
-		debug("Creating default users...");
+		Logger.info("Creating default users...");
 		DbHelper.dropOrientDefault();
 		populateDB(db);
 		createDefaultUsers();

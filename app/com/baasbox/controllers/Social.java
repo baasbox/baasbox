@@ -125,7 +125,7 @@ public class Social extends Controller{
 			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			return ok(on);
 		}else{
-			Logger.debug("User does not exists with tokens...trying to create");
+			if (Logger.isDebugEnabled()) Logger.debug("User does not exists with tokens...trying to create");
 			String username = UUID.randomUUID().toString();
 			Date signupDate = new Date();
 			try{

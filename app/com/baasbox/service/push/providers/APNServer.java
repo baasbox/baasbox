@@ -39,7 +39,7 @@ public class APNServer  implements IPushServer {
 	
 	@Override
 	public  void send(String message, String deviceid) throws PushNotInitializedException{	
-		Logger.debug("APN Push message: "+message+" to the device "+deviceid);
+		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
 		ApnsService service = null;
 		try{

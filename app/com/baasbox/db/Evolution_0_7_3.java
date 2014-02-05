@@ -65,7 +65,7 @@ public class Evolution_0_7_3 implements IEvolution {
 		String[] script=new String[]{
 			"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ;"};
 		for (String line:script){
-			Logger.debug(line);
+			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
@@ -93,7 +93,7 @@ public class Evolution_0_7_3 implements IEvolution {
 		"create property _BB_File_Content.content String;",
 		"create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;"};
 		for (String line:script){
-			Logger.debug(line);
+			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}

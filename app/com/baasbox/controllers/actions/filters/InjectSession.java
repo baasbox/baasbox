@@ -32,7 +32,7 @@ public class InjectSession extends Action.Simple {
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
@@ -51,7 +51,7 @@ public class InjectSession extends Action.Simple {
 		//executes the request
 		Result result = delegate.call(ctx);
 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;
 	}
 

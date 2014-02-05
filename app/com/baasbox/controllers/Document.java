@@ -90,31 +90,31 @@ public class Document extends Controller {
 	 */
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getCount(String collectionName){
-		Logger.trace("Method Start");
-		Logger.trace("collectionName: " + collectionName);
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
 
 		long count;
 		try {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 			count = DocumentService.getCount(collectionName,criteria);
-			Logger.trace("count: " + count);
+			if (Logger.isTraceEnabled()) Logger.trace("count: " + count);
 		} catch (InvalidCollectionException e) {
-			Logger.debug (collectionName + " is not a valid collection name");
+			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok("{\"count\": "+ count +" }");
 	}
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getDocuments(String collectionName){
-		Logger.trace("Method Start");
-		Logger.trace("collectionName: " + collectionName);
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
 
 		List<ODocument> result;
 		String ret="{[]}";
@@ -122,9 +122,9 @@ public class Document extends Controller {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 			result = DocumentService.getDocuments(collectionName,criteria);
-			Logger.trace("count: " + result.size());
+			if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
 		} catch (InvalidCollectionException e) {
-			Logger.debug (collectionName + " is not a valid collection name");
+			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
@@ -137,18 +137,18 @@ public class Document extends Controller {
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok(ret);
 	}		
 
 	private static String getRidByString(String id , boolean isUUID) throws RidNotFoundException {
 		String rid=null;
 		if (isUUID) {
-			Logger.debug("id is an UUID, try to get a valid RID");
+			if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
 			ORID orid=GenericDao.getInstance().getRidByUUID(id);
 			if (orid==null) throw new RidNotFoundException(id);
 			rid = orid.toString();
-			Logger.debug("Retrieved RID: " + rid);
+			if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: " + rid);
 		}else rid="#"+id;
 		return rid;
 	}
@@ -159,9 +159,9 @@ public class Document extends Controller {
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
 		} else{
-			Logger.trace("Method Start");
-			Logger.trace("collectionName: " + collectionName);
-			Logger.trace("rid: " + id);
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 			ODocument doc;
 			try {
 				String[] tokens = parts.split("/");
@@ -196,7 +196,7 @@ public class Document extends Controller {
 			} catch (InvalidCriteriaException e) {
 				return badRequest(e.getMessage()!=null?e.getMessage():"");
 			}
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
 			return ok(prepareResponseToObjectJson(doc));
 		}
@@ -204,9 +204,9 @@ public class Document extends Controller {
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocument(String collectionName, String id, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("collectionName: " + collectionName);
-			Logger.trace("rid: " + id);
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 			ODocument doc;
 			try {
 				String rid = getRidByString(id, isUUID);
@@ -225,16 +225,16 @@ public class Document extends Controller {
 			} catch (RidNotFoundException e) {
 				return notFound(e.getMessage()); 
 			} 
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
 			return ok(prepareResponseToJson(doc));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocumentByRid(String rid){
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			rid="#"+rid;
-			Logger.trace("rid: " + rid);
+			if (Logger.isTraceEnabled()) Logger.trace("rid: " + rid);
 			ODocument doc;
 			try {
 				doc=DocumentService.get(rid);
@@ -244,7 +244,7 @@ public class Document extends Controller {
 			}catch (ODatabaseException e){
 				return notFound(rid + " unknown");  
 			} 
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
 			return ok(prepareResponseToJson(doc));
 		}
@@ -252,37 +252,37 @@ public class Document extends Controller {
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result createDocument(String collection){
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 
 			JsonNode bodyJson= body.asJson();
-			Logger.trace("creating document in collection: " + collection);
-			Logger.trace("bodyJson: " + bodyJson);
+			if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
+			if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			ODocument document;
 			try{
 				document=DocumentService.create(collection, bodyJson); 
-				Logger.trace("Document created: " + document.getRecord().getIdentity());
+				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
 				return notFound(e.getMessage());
 			}catch (Throwable e){
 				Logger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocument(String collectionName, String id, boolean isUUID){
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
-			Logger.trace("updateDocument collectionName: " + collectionName);
-			Logger.trace("updateDocument id: " + id);
+			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 			ODocument document=null;
 			try{
 				String rid=getRidByString(id,isUUID);
@@ -308,18 +308,18 @@ public class Document extends Controller {
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
 			if (document==null) return notFound("Document " + id + " was not found in the collection " + collectionName);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocumentWithParts(String collectionName, String id, boolean isUUID,String parts){
-			Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
-			Logger.trace("updateDocument collectionName: " + collectionName);
-			Logger.trace("updateDocument id: " + id);
+			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
 			ODocument document=null;
@@ -358,15 +358,15 @@ public class Document extends Controller {
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
 			if (document==null) return notFound("Document " + id + " was not found in the collection " + collectionName);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result deleteDocument(String collectionName, String id, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("deleteDocument collectionName: " + collectionName);
-			Logger.trace("deleteDocument rid: " + id);
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument rid: " + id);
 			try {
 				String rid=getRidByString(id,isUUID);
 				DocumentService.delete(collectionName,rid);
@@ -379,55 +379,55 @@ public class Document extends Controller {
 			} catch (Throwable e ){
 				internalServerError(e.getMessage());
 			}
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok("");
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToUser(String collectionName, String rid, String username, String action, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("grant collectionName: " + collectionName);
-			Logger.trace("grant rid: " + rid);
-			Logger.trace("grant username: " + username);
-			Logger.trace("grant action: " + action);
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
+			if (Logger.isTraceEnabled()) Logger.trace("grant username: " + username);
+			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);
 			Result res=grantOrRevokeToUser(collectionName,rid,username,action,true, isUUID);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToUser(String collectionName, String rid, String username, String action, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("grant collectionName: " + collectionName);
-			Logger.trace("grant rid: " + rid);
-			Logger.trace("grant username: " + username);
-			Logger.trace("grant action: " + action);	  
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
+			if (Logger.isTraceEnabled()) Logger.trace("grant username: " + username);
+			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);	  
 			Result res=grantOrRevokeToUser(collectionName,rid,username,action,false, isUUID);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("grant collectionName: " + collectionName);
-			Logger.trace("grant rid: " + rid);
-			Logger.trace("grant rolename: " + rolename);
-			Logger.trace("grant action: " + action);
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rolename: " + rolename);
+			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);
 			Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,true, isUUID);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
-			Logger.trace("Method Start");
-			Logger.trace("grant collectionName: " + collectionName);
-			Logger.trace("grant rid: " + rid);
-			Logger.trace("grant rolename: " + rolename);
-			Logger.trace("grant action: " + action);	  
+			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
+			if (Logger.isTraceEnabled()) Logger.trace("grant rolename: " + rolename);
+			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);	  
 			Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,false, isUUID);
-			Logger.trace("Method End");
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return res;
 		}
 

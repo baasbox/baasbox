@@ -90,7 +90,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
+					if (Logger.isDebugEnabled()) Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();

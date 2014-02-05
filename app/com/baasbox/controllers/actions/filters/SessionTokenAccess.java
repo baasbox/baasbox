@@ -30,31 +30,31 @@ public class SessionTokenAccess implements IAccessMethod  {
 
 	@Override
 	public boolean setCredential(Context ctx)  {
-		Logger.debug("SessionTokenAccess");
+		if (Logger.isDebugEnabled()) Logger.debug("SessionTokenAccess");
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
 		
 		if (token!=null) {
-			  Logger.debug("Received session token " + token);
+			  if (Logger.isDebugEnabled()) Logger.debug("Received session token " + token);
 			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
 			  if (sessionData!=null){
-				  	Logger.debug("Token identified: ");
+				  	if (Logger.isDebugEnabled()) Logger.debug("Token identified: ");
 					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
 					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
 					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
 					ctx.args.put("token", token);
-					Logger.debug("username: " + (String)sessionData.get(SessionKeys.USERNAME));
-					Logger.debug("password: <hidden>" );
-					Logger.debug("appcode: " + (String)sessionData.get(SessionKeys.APP_CODE));
-					Logger.debug("token: " + token);
+					if (Logger.isDebugEnabled()) Logger.debug("username: " + (String)sessionData.get(SessionKeys.USERNAME));
+					if (Logger.isDebugEnabled()) Logger.debug("password: <hidden>" );
+					if (Logger.isDebugEnabled()) Logger.debug("appcode: " + (String)sessionData.get(SessionKeys.APP_CODE));
+					if (Logger.isDebugEnabled()) Logger.debug("token: " + token);
 					return true;
 			  }else{
-				  Logger.debug("Session Token unknown");
+				  if (Logger.isDebugEnabled()) Logger.debug("Session Token unknown");
 				  return false;
 			  }
 		}else{
-			Logger.debug("Session Token header is null");
+			if (Logger.isDebugEnabled()) Logger.debug("Session Token header is null");
 			return false;
 		}
 	}
