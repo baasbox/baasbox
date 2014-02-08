@@ -25,6 +25,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
+import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
@@ -79,14 +80,14 @@ public class Push extends Controller {
 		 return ok();
 	  }
 	
-	 public static Result enablePush(String os, String deviceId) throws SqlInjectionException{
+	 public static Result enablePush(String os, String pushToken) throws SqlInjectionException{
 		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		 if(os==null) return badRequest("Os value doesn't not null");
-		 if(deviceId==null) return badRequest("DeviceId value doesn't not null");
-		 if (Logger.isDebugEnabled()) Logger.debug("Trying to enable push to os: "+os+" deviceId: "+ deviceId); 
+		 if(pushToken==null) return badRequest("pushToken value doesn't not null");
+		 if (Logger.isDebugEnabled()) Logger.debug("Trying to enable push to os: "+os+" pushToken: "+ pushToken); 
 		 HashMap<String, Object> data = new HashMap<String, Object>();
          data.put("os",os);
-         data.put("deviceId", deviceId);
+         data.put(UserDao.USER_PUSH_TOKEN, pushToken);
 		 UserService.registerDevice(data);
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 return ok();

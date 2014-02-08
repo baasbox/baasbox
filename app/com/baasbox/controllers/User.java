@@ -498,13 +498,13 @@ public class User extends Controller {
 	  }	  
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	  public static Result logoutWithDevice(String deviceId) throws SqlInjectionException { 
+	  public static Result logoutWithDevice(String pushToken) throws SqlInjectionException { 
 		  String token=(String) Http.Context.current().args.get("token");
 		  if (!StringUtils.isEmpty(token)) {
-			  UserService.logout(deviceId);
+			  UserService.logout(pushToken);
 			  SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		  }		
-		  return ok("deviceId: " + deviceId + " logged out");
+		  return ok("pushToken: " + pushToken + " logged out");
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
