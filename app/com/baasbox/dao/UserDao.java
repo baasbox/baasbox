@@ -49,7 +49,7 @@ public class UserDao extends NodeDao  {
 	public final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
 
-	public final static String USER_DEVICE_ID="deviceId";
+	public final static String USER_DEVICE_ID="pushToken";
 	public final static String USER_DEVICE_OS="os";
 	public final static String USER_LOGIN_INFO="login_info";
 	public final static String SOCIAL_LOGIN_INFO="sso_tokens";
