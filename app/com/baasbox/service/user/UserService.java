@@ -201,10 +201,13 @@ try{
        *    Friends
        *    User
        */
-            if (nonAppUserAttributes!=null)  {
+      
+      //anonymous
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(nonAppUserAttributes.toString());
+                    	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
+                    	  else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
                     }
@@ -219,10 +222,11 @@ try{
               /*    these attributes are visible by:
                *    User
                */                                
-            if (privateAttributes!=null) {
+            {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(privateAttributes.toString());
+                    	if (privateAttributes!=null) attrObj.fromJSON(privateAttributes.toString());
+                    	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
                     }
@@ -235,10 +239,11 @@ try{
                *    Friends
                *    User
                */                                
-            if (friendsAttributes!=null) {
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{        
-                            attrObj.fromJSON(friendsAttributes.toString());
+                    	 if (friendsAttributes!=null) attrObj.fromJSON(friendsAttributes.toString());
+                     	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
                     }
@@ -253,15 +258,15 @@ try{
                *    Friends
                *    User
                */                                
-            if (appUsersAttributes!=null) {
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(appUsersAttributes.toString());
+                    	if (appUsersAttributes!=null) attrObj.fromJSON(appUsersAttributes.toString());
+                     	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
                     }
-                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-                    PermissionsHelper.grantRead(attrObj, friendRole);        
+                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
                     PermissionsHelper.changeOwner(attrObj, userRid);
                     profile.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
                     attrObj.save();

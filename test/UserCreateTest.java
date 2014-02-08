@@ -189,7 +189,7 @@ public class UserCreateTest extends AbstractUserTest
 						getMethod(),
 						node
 					);
-					assertServer("serverCreateUser", Status.CREATED, null, false);
+					assertServer("serverCreateUser", Status.CREATED, "visibleByAnonymousUsers\":{}", true);
 				}
 	        }
 		);

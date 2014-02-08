@@ -9,6 +9,7 @@ import play.Logger;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.dao.IndexDao;
+import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -55,6 +56,7 @@ public class Evolution_0_7_4 implements IEvolution {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			changePushTokenFieldName(db);
+			addProfileSections(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -62,7 +64,7 @@ public class Evolution_0_7_4 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
-	private void changePushTokenFieldName(ODatabaseRecordTx db) {
+	private void changePushTokenFieldName(ODatabaseRecordTx db)  {
 		Logger.info("..changing 'deviceId' to 'pushToken' field name..:");
 		UserDao dao = UserDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance();
@@ -82,39 +84,64 @@ public class Evolution_0_7_4 implements IEvolution {
 				user.save();
 			}
 		} catch (SqlInjectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-
-		
 		Logger.info("...done...");
 	}
 		
-	private void fileClassCreation(ODatabaseRecordTx db) {
-		Logger.info("..creating _BB_File class..:");
-		String[] script=new String[]{
-		"create class _BB_File extends _BB_Node;",
-		"create property _BB_File.fileName String;",
-		"alter property _BB_File.fileName mandatory=true;",
-		"alter property _BB_File.fileName notnull=true;",
-		"create property _BB_File.contentType String;",
-		"alter property _BB_File.contentType mandatory=true;",
-		"alter property _BB_File.contentType notnull=true;",
-		"create property _BB_File.contentLength long;",
-		"alter property _BB_File.contentLength mandatory=true;",
-		"alter property _BB_File.contentLength notnull=true;",
-		"create property _BB_File.file link;",
-		"alter property _BB_File.file mandatory=true;",
-		"alter property _BB_File.file notnull=true;",
-		"create class _BB_File_Content;",
-		"create property _BB_File_Content.content String;",
-		"create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;"};
-		for (String line:script){
-			if (Logger.isDebugEnabled()) Logger.debug(line);
-			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
-				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
+	private void addProfileSections(ODatabaseRecordTx db) {
+		Logger.info("...adding missing profile section..:");
+		UserDao dao = UserDao.getInstance();
+		QueryParams criteria = QueryParams.getInstance();
+		try {
+			List<ODocument> users = UserService.getUsers(criteria);
+			Logger.info(" found " + users.size() + " users");
+			for (ODocument user:users){
+			    ORID userRid = ((ODocument)user.field("user")).getIdentity();
+				ODocument anonymousSection = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+				ODocument registeredSection = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+				ODocument privateSection = user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+				ODocument friendsSection = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+				
+				if (anonymousSection==null){
+					ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+					attrObj.fromJSON("{}");
+                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));        
+                    PermissionsHelper.changeOwner(attrObj,userRid );
+                    user.field(dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER,attrObj);
+                    attrObj.save();
+				}
+				
+				if (registeredSection==null){
+					ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+					attrObj.fromJSON("{}");
+					PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
+	                PermissionsHelper.changeOwner(attrObj, userRid);
+	                user.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
+                    attrObj.save();
+				}
+
+				if (privateSection==null){
+					ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+					attrObj.fromJSON("{}");
+                    user.field(dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER, attrObj);
+                    PermissionsHelper.changeOwner(attrObj, userRid);                                        
+                    attrObj.save();
+				}				
+				
+				if (friendsSection==null){
+					ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+					attrObj.fromJSON("{}");
+					PermissionsHelper.grantRead(attrObj, RoleDao.getFriendRole(user));                                
+				    PermissionsHelper.changeOwner(attrObj, userRid);
+				    user.field(dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER, attrObj);
+				    attrObj.save();
+				}
+				
 			}
-		} 
+		}catch (SqlInjectionException e) {
+			throw new RuntimeException(e);
+		}
 		Logger.info("...done...");
 	}
 
