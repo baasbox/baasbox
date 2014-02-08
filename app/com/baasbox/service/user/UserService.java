@@ -138,11 +138,11 @@ public class UserService {
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-		String deviceId=(String) data.get(UserDao.USER_DEVICE_ID);
+		String deviceId=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		boolean found=false;
 		for (ODocument loginInfo : loginInfos){
 
-			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(deviceId)){
 				found=true;
 				break;
 			}
@@ -158,7 +158,7 @@ public class UserService {
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
 		for (ODocument loginInfo : loginInfos){
-			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(deviceId)){
 				loginInfos.remove(loginInfo);
 				break;
 			}
