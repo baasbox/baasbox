@@ -1700,7 +1700,7 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-    	    			var datetime = data.split(" "); 
+    	    			var datetime = data.split("T"); 
     	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
 						}
 					   },
