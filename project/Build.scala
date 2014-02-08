@@ -10,7 +10,7 @@ object ApplicationBuild extends Build {
     val appVersion      = conf.getString("api.version")
 
     val appDependencies = Seq(
-    			javaCore,filters,
+    			javaCore,filters,cache,
     			"commons-io" % "commons-io" % "2.4",
     			"commons-lang" % "commons-lang" % "2.6",
     			"commons-collections" % "commons-collections" % "3.2",
