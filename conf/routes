@@ -36,8 +36,8 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
  
 # User actions
 POST	/user								com.baasbox.controllers.User.signUp()
-POST	/login										com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+POST	/login								com.baasbox.controllers.User.login()
+POST	/logout/:pushToken	    			com.baasbox.controllers.User.logoutWithDevice(pushToken: String)
 POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
@@ -84,6 +84,8 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
+PUT 	/push/enable/:os/:pushToken     com.baasbox.controllers.Push.enablePush(os: String, pushToken: String)
+#deprecated
 PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 
 #Storage Actions

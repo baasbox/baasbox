@@ -58,7 +58,7 @@ public class PushService {
 		List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
 		if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
 		for(ODocument loginInfo : loginInfos){
-			String deviceId=loginInfo.field(UserDao.USER_DEVICE_ID);
+			String deviceId=loginInfo.field(UserDao.USER_PUSH_TOKEN);
 			String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
 			if (Logger.isDebugEnabled()) Logger.debug ("deviceId: "  + deviceId);
 			if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);			
