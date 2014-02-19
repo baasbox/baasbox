@@ -85,6 +85,7 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
 PUT 	/push/enable/:os/:pushToken     com.baasbox.controllers.Push.enablePush(os: String, pushToken: String)
+PUT 	/push/disable/:pushToken        com.baasbox.controllers.Push.disablePush(pushToken: String)
 #deprecated
 PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 

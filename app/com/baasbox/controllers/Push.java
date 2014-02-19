@@ -93,6 +93,16 @@ public class Push extends Controller {
 		 return ok();
 		 
 	  }
+	 
+	 public static Result disablePush(String pushToken) throws SqlInjectionException{
+		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		 if(pushToken==null) return badRequest("pushToken value doesn't not null");
+		 if (Logger.isDebugEnabled()) Logger.debug("Trying to disable push to pushToken: "+ pushToken); 
+		 UserService.unregisterDevice(pushToken);
+		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		 return ok();
+		 
+	  }
 	   
 	 
 	/*
