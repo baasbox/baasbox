@@ -1,18 +1,20 @@
 package com.baasbox.security;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import play.Logger;
 import play.libs.Akka;
 import scala.concurrent.duration.FiniteDuration;
-
 import akka.actor.Cancellable;
 
 import com.google.common.collect.ImmutableMap;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 
 public class SessionTokenProvider implements ISessionTokenProvider {
 	
@@ -31,13 +33,14 @@ public class SessionTokenProvider implements ISessionTokenProvider {
         	Logger.info("Session cleaner: finished");
         }
     }
-
-	protected final static ConcurrentHashMap<String,ImmutableMap<SessionKeys,? extends Object>> sessions=new ConcurrentHashMap<String, ImmutableMap<SessionKeys,? extends Object>>();
+	
+	private IMap<String,ImmutableMap<SessionKeys,? extends Object>> sessions;
 	protected long expiresInMilliseconds=0; //default expiration of session tokens
 	protected long  sessionClenanerLaunchInMinutes=60; //the session cleaner will be launch each x minutes.
 	
 	private Cancellable sessionCleaner=null;
-	private static SessionTokenProvider me; 
+	private static SessionTokenProvider me;
+	private HazelcastInstance hazelcastInstance;
 	
 	private static ISessionTokenProvider initialize(){
 		if (me==null) me=new SessionTokenProvider();
@@ -50,12 +53,15 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	public static void destroySessionTokenProvider(){
 		if (me!=null && me.sessionCleaner!=null) {
 			me.sessionCleaner.cancel();
+			me.destroy();
 			Logger.info("Session Cleaner: cancelled");
 		}
 		me=null;
 	}
 	
 	public SessionTokenProvider(){
+		hazelcastInstance = Hazelcast.newHazelcastInstance();
+		sessions = hazelcastInstance.getMap("sessionTokens");
 		setTimeout(expiresInMilliseconds);
 		startSessionCleaner(sessionClenanerLaunchInMinutes*60000); //converts minutes in milliseconds
 	};	
@@ -103,7 +109,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 
 	@Override
 	public Enumeration<String> getTokens() {
-		return sessions.keys();
+		return Collections.enumeration(sessions.keySet());
 	}
 	
 	private boolean isExpired(String token){
@@ -122,5 +128,11 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 			    new FiniteDuration(timeoutInMilliseconds, TimeUnit.MILLISECONDS), 
 			    new SessionCleaner() , 
 			    Akka.system().dispatcher()); 
+	}
+	
+	private void destroy() {
+		if(hazelcastInstance != null) {
+			hazelcastInstance.shutdown();
+		}
 	}
 }
