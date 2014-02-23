@@ -36,7 +36,7 @@ public class QueryParams implements IQueryParametersKeys{
 	private Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
 	private Object[] params={};
 
-	
+
 	protected QueryParams(){};
 	
 	protected QueryParams(String where, Integer page, Integer recordPerPage,

@@ -592,9 +592,9 @@ public class Admin extends Controller {
 			unauthorized("appcode can not be null");
 		}
 
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
+		java.io.File dir = new java.io.File(backupDir);
 		if(!dir.exists()){
-			boolean createdDir = dir.mkdir();
+			boolean createdDir = dir.mkdirs();
 			if(!createdDir){
 				return internalServerError("unable to create backup dir");
 			}
@@ -621,7 +621,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and the stream of the file
 	 */
 	public static Result getExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
+		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -641,7 +641,7 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
+		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -674,9 +674,9 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
+		java.io.File dir = new java.io.File(backupDir);
 		if(!dir.exists()){
-			dir.mkdir();
+			dir.mkdirs();
 		}
 		Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
 		File[] fileArr = files.toArray(new File[files.size()]);
