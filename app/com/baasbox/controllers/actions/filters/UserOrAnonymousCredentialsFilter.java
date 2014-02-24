@@ -19,6 +19,7 @@ package com.baasbox.controllers.actions.filters;
 import org.apache.commons.lang.StringUtils;
 
 import play.Logger;
+import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -27,7 +28,8 @@ import play.mvc.Result;
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.security.SessionKeys;
-
+import play.mvc.SimpleResult;
+import play.libs.F;
 /**
  * This Filter checks if user credentials are present in the request and injects
  * them into the context. Otherwise, injects the internal user for anonymous
@@ -39,9 +41,9 @@ import com.baasbox.security.SessionKeys;
 public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 
 	@Override
-	public Result call(Context ctx) throws Throwable {
+	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		Result tempResult = null;
+		F.Promise<SimpleResult> tempResult = null;
 		Http.Context.current.set(ctx);
 		String token = ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
@@ -61,7 +63,7 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 				isCredentialOk = true;
 				anonymousInjected = true;
 			} else {
-				tempResult = badRequest("Missing Session Token, Authorization info and even the AppCode");
+				tempResult = F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
 			}
 		}
 
@@ -71,7 +73,7 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 					&& StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
 				if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
 				if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
-				tempResult = badRequest("Invalid App Code. AppCode is empty or not set");
+				tempResult = F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 			}
 		}
 
@@ -88,7 +90,7 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 
 			if (!isCredentialOk) { // no way.... no anoymous access, but the
 									// supplied credentials aren't valid
-				tempResult = CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
+				tempResult = F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
 			} else // valid credentials have been found
 			// internal administrator is not allowed to access via REST
 			if (((String) ctx.args.get("username"))
@@ -96,8 +98,8 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 					|| (((String) ctx.args.get("username"))
 							.equalsIgnoreCase(BBConfiguration
 									.getBaasBoxUsername()) && !anonymousInjected))
-				tempResult = forbidden("The user " + ctx.args.get("username")
-						+ " cannot access via REST");
+				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username")
+						+ " cannot access via REST"));
 
 			// if everything is ok.....
 			// executes the request
@@ -106,11 +108,11 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 		}
 
 		WrapResponse wr = new WrapResponse();
-		Result result = wr.wrap(ctx, tempResult);
+		SimpleResult result = wr.wrap(ctx, tempResult);
 
 		if (Logger.isDebugEnabled()) Logger.debug(result.toString());
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		return result;
+		return F.Promise.<SimpleResult>pure(result);
 	}
 
 }

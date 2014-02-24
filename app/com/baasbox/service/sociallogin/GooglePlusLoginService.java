@@ -1,7 +1,7 @@
 package com.baasbox.service.sociallogin;
 
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.GoogleApi;
 import org.scribe.model.OAuthRequest;
@@ -68,7 +68,7 @@ public class GooglePlusLoginService extends SocialLoginService{
 	public UserInfo extractUserInfo(Response r) {
 		UserInfo i = new UserInfo();
 		JsonNode ji = Json.parse(r.getBody());
-		i.setId(ji.get("id").getTextValue());
+		i.setId(ji.get("id").textValue());
 		if(ji.get("email")!=null){
 			i.addData("email", ji.get("email").asText());
 		}
@@ -79,8 +79,8 @@ public class GooglePlusLoginService extends SocialLoginService{
 			i.addData("avatarUrl", ji.get("picture").asText());
 		}
 		if(ji.get("email")!=null){
-			i.addData("name",ji.get("name").getTextValue());
-			String name = ji.get("name").getTextValue();
+			i.addData("name",ji.get("name").textValue());
+			String name = ji.get("name").textValue();
 			String username = StringUtils.deleteWhitespace(name.toLowerCase());
 			i.setUsername(username);
 		}

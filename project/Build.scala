@@ -2,8 +2,13 @@ import sbt._
 import Keys._
 import play.Project._
 import com.typesafe.config._
+import com.typesafe.sbteclipse.core._
 
 object ApplicationBuild extends Build {
+	override def settings = super.settings ++ Seq(
+      EclipsePlugin.EclipseKeys.preTasks := Seq()
+    )
+  
 	val conf = ConfigFactory.parseFile(new File("conf/application.conf")).resolve()
     
 	val appName         = "BaasBox"

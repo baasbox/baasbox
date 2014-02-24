@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import play.libs.Json;

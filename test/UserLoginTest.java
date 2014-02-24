@@ -6,7 +6,7 @@ import static play.test.Helpers.running;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -73,7 +73,7 @@ public class UserLoginTest extends AbstractTest
 					String body = play.test.Helpers.contentAsString(result);
 					
 					JsonNode jsonRes = Json.parse(body);
-					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).getTextValue();
+					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 					Assert.assertNotNull(token);
 					JsonNode user = jsonRes.get("data").get("user");
 					Assert.assertNotNull(user);

@@ -24,6 +24,7 @@ import com.baasbox.security.SessionKeys;
 import play.Logger;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import static org.apache.commons.codec.binary.Base64.decodeBase64;
 
 /**
  * Inject the admin credentials into the args argument
@@ -55,12 +56,10 @@ public class BasicAuthAccess  implements IAccessMethod {
         String auth = authHeader.substring(6);
         if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + ": " + auth);
         byte[] decodedAuth;
-		try {
-			decodedAuth = new sun.misc.BASE64Decoder().decodeBuffer(auth);
-		} catch (IOException e1) {
-			Logger.error("Cannot decode " + AUTHORIZATION + " header. ",e1);
-			return false;
-		}
+		
+			decodedAuth = decodeBase64(auth);
+	
+			
         if (Logger.isDebugEnabled()) Logger.debug ("Decoded header: " + decodedAuth);
     	String[] credString;
 		try {

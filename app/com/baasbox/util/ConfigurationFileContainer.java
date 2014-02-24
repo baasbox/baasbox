@@ -1,7 +1,7 @@
 package com.baasbox.util;
 
-import org.codehaus.jackson.annotate.JsonCreator;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ConfigurationFileContainer {
 	public final static String BINARY_FIELD_NAME = "file";

@@ -1,6 +1,6 @@
 package com.baasbox.configuration;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
 

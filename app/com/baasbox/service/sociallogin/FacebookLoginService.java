@@ -1,6 +1,6 @@
 package com.baasbox.service.sociallogin;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.FacebookApi;
 import org.scribe.model.OAuthRequest;
@@ -66,19 +66,19 @@ public class FacebookLoginService extends SocialLoginService{
 	public UserInfo extractUserInfo(Response r) {
 		UserInfo ui = new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
-		ui.setUsername(user.get("username").getTextValue());
-		ui.setId(user.get("id").getTextValue());
+		ui.setUsername(user.get("username").textValue());
+		ui.setId(user.get("id").textValue());
 		if(user.get("email")!=null){
-			ui.addData("email",user.get("email").getTextValue());
+			ui.addData("email",user.get("email").textValue());
 		}
 		if(user.get("gender")!=null){
-			ui.addData("gender",user.get("gender").getTextValue());
+			ui.addData("gender",user.get("gender").textValue());
 		}
 		if(user.get("link")!=null){
-			ui.addData("personalUrl",user.get("link").getTextValue());
+			ui.addData("personalUrl",user.get("link").textValue());
 		}
 		if(user.get("name")!=null){
-			ui.addData("name",user.get("name").getTextValue());
+			ui.addData("name",user.get("name").textValue());
 		}
 		return ui;
 	}

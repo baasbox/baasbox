@@ -19,9 +19,9 @@ package com.baasbox.service.storage;
 import java.security.InvalidParameterException;
 import java.util.List;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
@@ -119,7 +119,7 @@ public class DocumentService {
 				if(an.size()<af.arrayIndex){
 					throw new InvalidModelException("The index requested does not exists in model");
 				}else{
-					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).getTextValue());
+					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).textValue());
 					result = new ODocument().fromJSON(json);
 					System.out.println("JSON:"+result.toJSON());
 				}
