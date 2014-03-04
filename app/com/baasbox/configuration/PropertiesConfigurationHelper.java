@@ -79,7 +79,7 @@ public class PropertiesConfigurationHelper {
 			        gen.writeStartArray();																				//				[
 			        lastSection = subsection;
 			      }	
-			      boolean isOverridden = (Boolean)(en.getMethod("isEditable")).invoke(v);
+			      boolean isOverridden = (Boolean)(en.getMethod("isOverridden")).invoke(v);
 			      gen.writeStartObject();																				//					{
 			      gen.writeStringField(key,valueAsString);															//							"key": "value"	
 			      gen.writeStringField("description", valueDescription);												//						,"description":"description"
@@ -193,7 +193,7 @@ public class PropertiesConfigurationHelper {
 				  if (isVisible) valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
 				  else valueAsString = "--HIDDEN--";
 				  boolean isEditable=(Boolean)(en.getMethod("isEditable")).invoke(v);
-			      boolean isOverridden = (Boolean)(en.getMethod("isEditable")).invoke(v);
+			      boolean isOverridden = (Boolean)(en.getMethod("isOverridden")).invoke(v);
 				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
 				  Class type = (Class) en.getMethod("getType").invoke(v);
 				  

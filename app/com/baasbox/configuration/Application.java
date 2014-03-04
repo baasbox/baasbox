@@ -166,6 +166,7 @@ public enum Application implements IProperties{
 	    	  parsedValue = newValue;
 	    this.overriddenValue=parsedValue;
 	    this.overridden=true;
+	    this.editable=false;
 	}
 
 	@Override
