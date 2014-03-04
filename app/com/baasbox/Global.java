@@ -23,7 +23,8 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -41,19 +42,22 @@ import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
+import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.ConfigurationException;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.util.ConfigurationFileContainer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.typesafe.config.ConfigException;
 
 public class Global extends GlobalSettings {
 	
@@ -180,6 +184,57 @@ public class Global extends GlobalSettings {
     		if (db!=null && !db.isClosed()) db.close();
     	}
     	info ("...done");
+    	
+    	info ("Override settings...");
+    	//takes only the settings that begin with baasbox.settings
+    	Configuration bbSettingsToOverride=BBConfiguration.configuration.getConfig("baasbox.settings");
+    	//if there is at least one of them
+    	if (bbSettingsToOverride!=null) {
+    		//takes the part after the "baasbox.settings" of the key names
+    		Set<String> keys = bbSettingsToOverride.keys();
+    		Iterator<String> keysIt = keys.iterator();
+    		//for each setting to override
+    		while (keysIt.hasNext()){
+    			String key = keysIt.next();
+    			//is it a value to override?
+    			if (key.endsWith(".value")){
+    				//sets the overridden value
+    				String value = "";
+    				try {
+     					value = bbSettingsToOverride.getString(key);
+    					key = key.substring(0, key.lastIndexOf(".value"));
+						PropertiesConfigurationHelper.override(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the setting " + key + " with the value " + value.toString() + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
+    				//sets the visibility
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".visible"));
+						PropertiesConfigurationHelper.setVisible(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".editable")){ //or maybe we have to 
+    				//sets the possibility to edit the value via REST API by the admin
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".editable"));
+						PropertiesConfigurationHelper.setEditable(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+					}
+    			}else { 
+    				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
+    			}
+    			key.subSequence(0, key.lastIndexOf("."));
+    		}
+    	}else info ("...No setting to override...");
+    	info ("...done");
+    	
 	    info("BaasBox is Ready.");
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
@@ -277,67 +332,9 @@ public class Global extends GlobalSettings {
 	  }
 
 
-	@Override
+	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		
 		return new Class[]{com.baasbox.filters.LoggingFilter.class};
 	}
-
-	  
-	  
-	  
-	
-	    
-	  //these are needed to override the standard action calls and to centralized the errors response
-	   //TODO: we must implement the Play! 2.1 Filters
-	    /*
-	   @Override
-	  public Action onRequest(Request request, Method actionMethod) {
-		  return new ActionWrapper(super.onRequest(request, actionMethod));
-	  }
-	  
-	  private class ActionWrapper extends Action.Simple {
-		    public ActionWrapper(Action action) {
-		      this.delegate = action;
-		    }
-
-			@Override
-			public Result call(Context ctx) throws Throwable {
-				Http.Context.current.set(ctx);
-				//injects the CORS  header 
-				ctx.response().setHeader("Access-Control-Allow-Origin", "*");
-				//injects the user data & credential into the context
-				String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
-				if (token!=null) {
-					  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
-					  if (sessionData!=null){
-							ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
-							ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
-							ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
-					  }
-				}
-			    
-				//executes the request
-				Result result = this.delegate.call(ctx);
-			    
-				//checks the result of the request
-			    final int statusCode = JavaResultExtractor.getStatus(result);
-			    if (statusCode>399){	//an error occured
-				      final byte[] body = JavaResultExtractor.getBody(result);
-				      String stringBody = new String(body, "UTF-8");
-				      switch (statusCode) {
-				      	case 400: return onBadRequest(ctx.request(),stringBody);
-				      	case 401: return onUnauthorized(ctx.request(),stringBody);
-				      	case 403: return onForbidden(ctx.request(),stringBody);
-				      	case 404: return onResourceNotFound(ctx.request(),stringBody);
-				      	default:  return onDefaultError(statusCode,ctx.request(),stringBody);
-				      }
-			    }
-			    return result;
-			      //play.api.mvc.SimpleResult wrappedResult = (play.api.mvc.SimpleResult) result.getWrappedResult();
-			      //Response response = ctx.response();
-			}//call
-		  }//class ActionWrapper
-	  */
-	
 }

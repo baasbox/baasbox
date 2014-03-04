@@ -1,5 +1,7 @@
 package com.baasbox.configuration;
 
+import com.baasbox.configuration.index.IndexInternalConfiguration;
+
 import play.Logger;
 
 
@@ -18,6 +20,12 @@ public enum Internal implements IProperties{
 	private String                       description;
 	private IPropertyChangeCallback 	 changeCallback = null;
   
+	//override 
+	private boolean 					 editable=false;
+	private boolean						 visible=true;
+	private Object 						 overriddenValue=null;
+	private boolean						 overridden=false;
+  
   
 	Internal(final String iKey, final String iDescription, final Class<?> iType, 
 		    final IPropertyChangeCallback iChangeAction) {
@@ -33,8 +41,13 @@ public enum Internal implements IProperties{
 
 	@Override
 	public void setValue(Object newValue) {
-	    Object parsedValue=null;
+		if (!editable) throw new IllegalStateException("The value cannot be changed");
+		_setValue(newValue);
+	}
 
+	@Override
+	public void _setValue(Object newValue) {
+	    Object parsedValue=null;
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
@@ -54,11 +67,18 @@ public enum Internal implements IProperties{
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
 			Logger.error("Could not store key " + key, e);
+			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
 
 	@Override
 	public Object getValue() {
+		if (overridden) return overriddenValue;
+		return _getValue();
+	}
+
+	@Override
+	public Object _getValue() {
 		IndexInternalConfiguration idx;
 		try {
 			idx = new IndexInternalConfiguration();
@@ -119,5 +139,37 @@ public enum Internal implements IProperties{
 	public static String getEnumDescription() {
 		return "Internal <key/value>, intended for internal usage only"; 
 	}
+	
+	@Override
+	public void override(Object newValue) {
+	    throw new IllegalStateException ("Cannot override this value");
+	}
+
+	@Override
+	public boolean isVisible() {
+		return visible;
+	}
+
+	@Override
+	public boolean isEditable() {
+		return editable;
+	}
+	
+	@Override
+	public boolean isOverridden() {
+		return overridden;
+	}
+	
+	@Override
+	public void setEditable(boolean editable) {
+		 throw new IllegalStateException ("Cannot override this value");
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+	}
+	
+	
 
 }
