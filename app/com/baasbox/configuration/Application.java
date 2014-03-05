@@ -2,6 +2,7 @@ package com.baasbox.configuration;
 
 import play.Logger;
 
+import com.baasbox.configuration.index.IndexApplicationConfiguration;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 
@@ -25,9 +26,14 @@ public enum Application implements IProperties{
 	private final Class<?>               type;
 	private String                       description;
 	private IPropertyChangeCallback 	 changeCallback = null;
+	
+	//override 
+	private  boolean 					 	 editable=true;
+	private  boolean						 visible=true;
+	private  Object 						 overriddenValue=null;
+	private  boolean						 overridden=false;
   
-  
-	Application(final String iKey, final String iDescription, final Class<?> iType, 
+  Application(final String iKey, final String iDescription, final Class<?> iType, 
 		    final IPropertyChangeCallback iChangeAction) {
 		    this(iKey, iDescription, iType);
 		    changeCallback = iChangeAction;
@@ -40,9 +46,14 @@ public enum Application implements IProperties{
 	}
 
 	@Override
-	public void setValue(Object newValue) {
-	    Object parsedValue=null;
+	public void setValue(Object newValue) throws IllegalStateException{
+		if (!editable) throw new IllegalStateException("The value cannot be changed");
+		_setValue(newValue);
+	}
 
+	@Override
+	public void _setValue(Object newValue) {
+	    Object parsedValue=null;
 	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (newValue != null)
 	      if (type == Boolean.class)
@@ -63,11 +74,18 @@ public enum Application implements IProperties{
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
 			Logger.error("Could not store key " + key, e);
+			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
 
 	@Override
 	public Object getValue() {
+		if (overridden) return overriddenValue;
+		return _getValue();
+	}
+
+	@Override
+	public Object _getValue() {
 		IndexApplicationConfiguration idx;
 		try {
 			idx = new IndexApplicationConfiguration();
@@ -128,6 +146,52 @@ public enum Application implements IProperties{
 
 	public static String getEnumDescription() {
 		return "Configurations for general App(lication) related properties"; 
+	}
+
+	@Override
+	public void override(Object newValue) {
+	    Object parsedValue=null;
+
+	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (newValue != null)
+	      if (type == Boolean.class)
+	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
+	      else if (type == Integer.class)
+	    	  parsedValue = Integer.parseInt(newValue.toString());
+	      else if (type == Float.class)
+	    	  parsedValue = Float.parseFloat(newValue.toString());
+	      else if (type == String.class)
+	    	  parsedValue = newValue.toString();
+	      else
+	    	  parsedValue = newValue;
+	    this.overriddenValue=parsedValue;
+	    this.overridden=true;
+	    this.editable=false;
+	}
+
+	@Override
+	public void setEditable(boolean editable) {
+		this.editable = editable;
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+	}
+
+	@Override
+	public boolean isOverridden() {
+		return overridden;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return visible;
+	}
+
+	@Override
+	public boolean isEditable() {
+		return editable;
 	}
 
 }
