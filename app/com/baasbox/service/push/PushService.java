@@ -58,17 +58,17 @@ public class PushService {
 		List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
 		if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
 		for(ODocument loginInfo : loginInfos){
-			String deviceId=loginInfo.field(UserDao.USER_PUSH_TOKEN);
+			String pushToken=loginInfo.field(UserDao.USER_PUSH_TOKEN);
 			String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
-			if (Logger.isDebugEnabled()) Logger.debug ("deviceId: "  + deviceId);
-			if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);			
-			if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)){
+			if (Logger.isDebugEnabled()) Logger.debug ("push token: "  + pushToken);
+			if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);
+			if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(pushToken)){
 				VendorOS vos = VendorOS.getVendorOs(vendor);
 				if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
 				if (vos!=null){
 					IPushServer pushServer = Factory.getIstance(vos);
 					pushServer.setConfiguration(getPushParameters());
-					pushServer.send(message, deviceId);
+					pushServer.send(message, pushToken);
 				} //vos!=null
 			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
 
