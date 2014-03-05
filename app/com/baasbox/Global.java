@@ -185,7 +185,23 @@ public class Global extends GlobalSettings {
     	}
     	info ("...done");
     	
-    	info ("Override settings...");
+    	overrideSettings();
+    	
+	    info("BaasBox is Ready.");
+	    String port=Play.application().configuration().getString("http.port");
+	    if (port==null) port="9000";
+	    String address=Play.application().configuration().getString("http.address");
+	    if (address==null) address="localhost";
+	    
+	    info("");
+	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
+	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
+	    info("Documentation is available at http://www.baasbox.com/documentation");
+		debug("Global.onStart() ended"); 
+	  }
+
+	private void overrideSettings() {
+		info ("Override settings...");
     	//takes only the settings that begin with baasbox.settings
     	Configuration bbSettingsToOverride=BBConfiguration.configuration.getConfig("baasbox.settings");
     	//if there is at least one of them
@@ -234,19 +250,7 @@ public class Global extends GlobalSettings {
     		}
     	}else info ("...No setting to override...");
     	info ("...done");
-    	
-	    info("BaasBox is Ready.");
-	    String port=Play.application().configuration().getString("http.port");
-	    if (port==null) port="9000";
-	    String address=Play.application().configuration().getString("http.address");
-	    if (address==null) address="localhost";
-	    
-	    info("");
-	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
-	    info("Documentation is available at http://www.baasbox.com/documentation");
-		debug("Global.onStart() ended"); 
-	  }
+	}
 	  
 	  
 	  
