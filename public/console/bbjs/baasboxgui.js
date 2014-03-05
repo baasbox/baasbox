@@ -1607,7 +1607,8 @@ function setupTables(){
 		               },
 
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1626,7 +1627,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1645,7 +1647,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1664,8 +1667,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
-		               }
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";		               }
 		               }],
 
 		               "bRetrieve": true,

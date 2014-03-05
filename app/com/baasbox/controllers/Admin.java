@@ -540,6 +540,8 @@ public class Admin extends Controller {
 			}
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
+		}catch (IllegalStateException e) {
+			return badRequest("This configuration value is not editable");
 		}
 		return ok();
 	}
