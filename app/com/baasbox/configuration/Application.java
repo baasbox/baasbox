@@ -153,6 +153,7 @@ public enum Application implements IProperties{
 	    Object parsedValue=null;
 
 	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
@@ -167,6 +168,7 @@ public enum Application implements IProperties{
 	    this.overriddenValue=parsedValue;
 	    this.overridden=true;
 	    this.editable=false;
+	    	
 	}
 
 	@Override
