@@ -180,6 +180,7 @@ public enum Push implements IProperties{
 	    Object parsedValue=null;
 
 	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
