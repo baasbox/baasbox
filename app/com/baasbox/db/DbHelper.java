@@ -375,7 +375,7 @@ public class DbHelper {
 				dbg.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
-		Internal.DB_VERSION.setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+		Internal.DB_VERSION._setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
 		String uniqueId="";
 		try{
 			UUID u = new UUID();
@@ -384,7 +384,7 @@ public class DbHelper {
 			java.util.UUID u = java.util.UUID.randomUUID();
 			uniqueId=new String(Base64.encodeBase64(u.toString().getBytes()));
 		}
-		Internal.INSTALLATION_ID.setValue(uniqueId);
+		Internal.INSTALLATION_ID._setValue(uniqueId);
 		Logger.info("Unique installation id is: " + uniqueId);
 		Logger.info("...done");
 	}
@@ -544,7 +544,7 @@ public class DbHelper {
 		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
 			 Logger.info("...imported DB needs evolutions!...");
 			 Evolutions.performEvolutions(db, fromVersion);
-			 Internal.DB_VERSION.setValue(BBConfiguration.getApiVersion());
+			 Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
 			 Logger.info("DB version is now " + BBConfiguration.getApiVersion());
 		 }//end of evolutions
 	}
