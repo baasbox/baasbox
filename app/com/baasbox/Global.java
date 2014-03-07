@@ -22,12 +22,16 @@ import static play.Logger.info;
 import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
+
 import play.api.libs.concurrent.Promise;
 import java.io.UnsupportedEncodingException;
 import play.mvc.Results.*;
 import play.libs.F;
 import play.mvc.*;
 import play.mvc.Http.*;
+
+import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -45,19 +49,22 @@ import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
+import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.ConfigurationException;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.util.ConfigurationFileContainer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.typesafe.config.ConfigException;
 
 public class Global extends GlobalSettings {
 	
@@ -184,6 +191,9 @@ public class Global extends GlobalSettings {
     		if (db!=null && !db.isClosed()) db.close();
     	}
     	info ("...done");
+    	
+    	overrideSettings();
+    	
 	    info("BaasBox is Ready.");
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
@@ -196,6 +206,58 @@ public class Global extends GlobalSettings {
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended"); 
 	  }
+
+	private void overrideSettings() {
+		info ("Override settings...");
+    	//takes only the settings that begin with baasbox.settings
+    	Configuration bbSettingsToOverride=BBConfiguration.configuration.getConfig("baasbox.settings");
+    	//if there is at least one of them
+    	if (bbSettingsToOverride!=null) {
+    		//takes the part after the "baasbox.settings" of the key names
+    		Set<String> keys = bbSettingsToOverride.keys();
+    		Iterator<String> keysIt = keys.iterator();
+    		//for each setting to override
+    		while (keysIt.hasNext()){
+    			String key = keysIt.next();
+    			//is it a value to override?
+    			if (key.endsWith(".value")){
+    				//sets the overridden value
+    				String value = "";
+    				try {
+     					value = bbSettingsToOverride.getString(key);
+    					key = key.substring(0, key.lastIndexOf(".value"));
+						PropertiesConfigurationHelper.override(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the setting " + key + " with the value " + value.toString() + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
+    				//sets the visibility
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".visible"));
+						PropertiesConfigurationHelper.setVisible(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".editable")){ //or maybe we have to 
+    				//sets the possibility to edit the value via REST API by the admin
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".editable"));
+						PropertiesConfigurationHelper.setEditable(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+					}
+    			}else { 
+    				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
+    			}
+    			key.subSequence(0, key.lastIndexOf("."));
+    		}
+    	}else info ("...No setting to override...");
+    	info ("...done");
+	}
 	  
 	  
 	  
@@ -281,13 +343,17 @@ public class Global extends GlobalSettings {
 	  }
 
 
-	@Override
+	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		
 		return new Class[]{com.baasbox.filters.LoggingFilter.class};
 	}
+<<<<<<< HEAD
 
 	  
 
 	
 }
+=======
+}
+>>>>>>> master

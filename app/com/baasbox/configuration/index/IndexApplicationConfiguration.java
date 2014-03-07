@@ -1,4 +1,4 @@
-	package com.baasbox.configuration;
+	package com.baasbox.configuration.index;
 
 	import com.baasbox.dao.IndexDao;
 	import com.baasbox.exception.IndexNotFoundException;
