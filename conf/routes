@@ -161,7 +161,7 @@ DELETE	/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrR
 
 #deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
-
+#--------------------
 
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
@@ -178,6 +178,9 @@ DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.delete
 GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
+
+# ROOT access
+POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
 
 
 

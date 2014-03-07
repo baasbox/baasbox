@@ -21,6 +21,7 @@ import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
 
+
 	public static Configuration configuration = Play.application().configuration();
 	
 	@Deprecated
@@ -81,6 +82,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	public static String getPushCertificateFolder(){
 		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
+	}
+
+	public static Object getRootPassword() {
+		return configuration.getString(ROOT_PASSWORD);
 	}
 	
 	
