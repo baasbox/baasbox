@@ -48,6 +48,7 @@ import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
@@ -187,17 +188,19 @@ public class Global extends GlobalSettings {
     	
     	overrideSettings();
     	
-	    info("BaasBox is Ready.");
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
 	    
+	    BaasBoxMetric.Track.startUptime();
+	    
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
 	    info("Documentation is available at http://www.baasbox.com/documentation");
-		debug("Global.onStart() ended"); 
+		debug("Global.onStart() ended");
+	    info("BaasBox is Ready.");
 	  }
 
 	private void overrideSettings() {
@@ -271,6 +274,7 @@ public class Global extends GlobalSettings {
 	    }
 	    info("Destroying session manager...");
 	    SessionTokenProvider.destroySessionTokenProvider();
+	    BaasBoxMetric.Track.stopUptime();
 	    info("...BaasBox has stopped");
 		debug("Global.onStop() ended");
 	  }  
