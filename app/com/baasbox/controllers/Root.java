@@ -1,5 +1,7 @@
 package com.baasbox.controllers;
 
+import java.util.concurrent.TimeUnit;
+
 import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
@@ -12,7 +14,11 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.RootCredentialWrapFilter;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.service.user.UserService;
+import com.codahale.metrics.json.MetricsModule;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public class Root extends Controller {
@@ -41,4 +47,34 @@ public class Root extends Controller {
 		return ok("Admin password reset");
 	}
 	
+   	
+		@With(RootCredentialWrapFilter.class)
+		public static Result timers() throws JsonProcessingException {
+			ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
+			return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getTimers()));
+	    }
+
+		@With(RootCredentialWrapFilter.class)
+	    public static Result counters() throws JsonProcessingException {
+	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
+	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getCounters()));
+	    }
+
+		@With(RootCredentialWrapFilter.class)
+	    public static Result meters() throws JsonProcessingException {
+	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
+	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getMeters()));
+	    }
+		
+		@With(RootCredentialWrapFilter.class)
+	    public static Result gauges() throws JsonProcessingException {
+	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
+	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getGauges()));
+	    }
+		
+		@With(RootCredentialWrapFilter.class)
+	    public static Result histograms() throws JsonProcessingException {
+	    	ObjectMapper mapper = new ObjectMapper();
+	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getHistograms()));
+	    }
 }

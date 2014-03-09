@@ -181,6 +181,11 @@ POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb(
 
 # ROOT access
 POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
+GET		/root/metrics/meters									com.baasbox.controllers.Root.meters()
+GET		/root/metrics/counters									com.baasbox.controllers.Root.counters()
+GET		/root/metrics/gauges									com.baasbox.controllers.Root.gauges()
+GET		/root/metrics/timers									com.baasbox.controllers.Root.timers()
+GET		/root/metrics/histograms								com.baasbox.controllers.Root.histograms()
 
 
 

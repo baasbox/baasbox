@@ -19,7 +19,7 @@ public class BaasBoxMetric {
 	private static final String GAUGE_MEMORY_USED = "memory.used";
 	
 	
-	private static MetricRegistry 	registry = new MetricRegistry();
+	public final static MetricRegistry 	registry = new MetricRegistry();
 
 	static {
 		//memory gauges
