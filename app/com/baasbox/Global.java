@@ -348,12 +348,9 @@ public class Global extends GlobalSettings {
 		
 		return new Class[]{com.baasbox.filters.LoggingFilter.class};
 	}
-<<<<<<< HEAD
+
 
 	  
 
 	
 }
-=======
-}
->>>>>>> master
