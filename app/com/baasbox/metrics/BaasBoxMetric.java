@@ -57,14 +57,15 @@ public class BaasBoxMetric {
 
 	public static class Track {
 		
-		private static Timer.Context uptime;
+		private static final long startTime = System.currentTimeMillis();
 		
-		public static void startUptime(){
-				uptime=registry.timer(name(TIMER_UPTIME)).time();
+		
+		public static long getUpTimeinMillis(){
+			return System.currentTimeMillis()-startTime;
 		}
 		
-		public static void stopUptime(){
-			uptime.stop();
+		public static long getStartTime(){
+			return startTime;
 		}
 		
 		public static Timer.Context[] startRequest(String method,String uri){

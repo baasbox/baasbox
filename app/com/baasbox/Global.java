@@ -193,7 +193,6 @@ public class Global extends GlobalSettings {
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
 	    
-	    BaasBoxMetric.Track.startUptime();
 	    
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
@@ -274,7 +273,6 @@ public class Global extends GlobalSettings {
 	    }
 	    info("Destroying session manager...");
 	    SessionTokenProvider.destroySessionTokenProvider();
-	    BaasBoxMetric.Track.stopUptime();
 	    info("...BaasBox has stopped");
 		debug("Global.onStop() ended");
 	  }  
