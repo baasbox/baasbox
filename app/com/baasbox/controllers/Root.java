@@ -74,7 +74,7 @@ public class Root extends Controller {
 		
 		@With(RootCredentialWrapFilter.class)
 	    public static Result histograms() throws JsonProcessingException {
-	    	ObjectMapper mapper = new ObjectMapper();
+	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
 	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getHistograms()));
 	    }
 }
