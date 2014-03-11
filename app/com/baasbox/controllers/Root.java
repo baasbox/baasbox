@@ -1,5 +1,6 @@
 package com.baasbox.controllers;
 
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.codehaus.jackson.JsonNode;
@@ -50,31 +51,59 @@ public class Root extends Controller {
    	
 		@With(RootCredentialWrapFilter.class)
 		public static Result timers() throws JsonProcessingException {
+			if (!BaasBoxMetric.isActivate()) return status(SERVICE_UNAVAILABLE,"The metrics service are disabled");
 			ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.MILLISECONDS, false));
 			return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getTimers()));
 	    }
 
 		@With(RootCredentialWrapFilter.class)
 	    public static Result counters() throws JsonProcessingException {
+			if (!BaasBoxMetric.isActivate()) return status(SERVICE_UNAVAILABLE,"The metrics service are disabled");
 	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
 	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getCounters()));
 	    }
 
 		@With(RootCredentialWrapFilter.class)
 	    public static Result meters() throws JsonProcessingException {
+			if (!BaasBoxMetric.isActivate()) return status(SERVICE_UNAVAILABLE,"The metrics service are disabled");
 	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
 	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getMeters()));
 	    }
 		
 		@With(RootCredentialWrapFilter.class)
 	    public static Result gauges() throws JsonProcessingException {
+			if (!BaasBoxMetric.isActivate()) return status(SERVICE_UNAVAILABLE,"The metrics service are disabled");
 	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
 	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getGauges()));
 	    }
 		
 		@With(RootCredentialWrapFilter.class)
 	    public static Result histograms() throws JsonProcessingException {
+			if (!BaasBoxMetric.isActivate()) return status(SERVICE_UNAVAILABLE,"The metrics service is disabled");
 	    	ObjectMapper mapper = new ObjectMapper().registerModule(new MetricsModule(TimeUnit.SECONDS, TimeUnit.SECONDS, false));
 	        return ok(mapper.writeValueAsString(BaasBoxMetric.registry.getHistograms()));
+	    }
+		
+		@With(RootCredentialWrapFilter.class)
+	    public static Result uptime() throws JsonProcessingException {
+	    	ObjectMapper mapper = new ObjectMapper();
+	    	HashMap <String,Object> ret = new HashMap<String, Object>();
+	    	ret.put("start_time", BaasBoxMetric.Track.getStartTime());
+	    	ret.put("time_zone", "UTC");
+	    	ret.put("uptime", BaasBoxMetric.Track.getUpTimeinMillis());
+	    	ret.put("time_unit", "ms");
+	        return ok(mapper.writeValueAsString(ret));
+	    }
+		
+		@With(RootCredentialWrapFilter.class)
+	    public static Result startMetrics() throws JsonProcessingException {
+			BaasBoxMetric.start();
+	        return ok("Metrics service started");
+	    }
+		
+		@With(RootCredentialWrapFilter.class)
+	    public static Result stopMetrics() throws JsonProcessingException {
+			BaasBoxMetric.stop();
+	        return ok("Metrics service stopped");
 	    }
 }
