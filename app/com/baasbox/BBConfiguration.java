@@ -16,6 +16,9 @@
  */
 package com.baasbox;
 
+import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import play.Configuration;
 import play.Play;
 
@@ -23,6 +26,8 @@ public class BBConfiguration implements IBBConfigurationKeys {
 
 
 	public static Configuration configuration = Play.application().configuration();
+	private static Boolean computeMetrics;
+	
 	
 	@Deprecated
 	public static String getRealm(){
@@ -84,8 +89,19 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
 	}
 
-	public static Object getRootPassword() {
+	public static String getRootPassword() {
 		return configuration.getString(ROOT_PASSWORD);
+	}
+
+	public static boolean getComputeMetrics() {
+		if (computeMetrics==null) 
+			computeMetrics=(!StringUtils.isEmpty(configuration.getString(ROOT_PASSWORD)) 
+				&& 	BooleanUtils.isTrue(configuration.getBoolean(CAPTURE_METRICS)));
+		return computeMetrics;
+	}
+
+	public static void overrideConfigurationComputeMetrics(boolean computeMetrics) {
+		BBConfiguration.computeMetrics = computeMetrics;
 	}
 	
 	
