@@ -188,12 +188,16 @@ public class Global extends GlobalSettings {
     	
     	overrideSettings();
     	
+    	//activate metrics
+    	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
+    	
+    	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
 	    
-	    
+	    //write the Welcome Message
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
