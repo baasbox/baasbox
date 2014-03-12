@@ -34,12 +34,16 @@ public class TestConfig
 	
 	public static final String VALUE_APPCODE = "1234567890";
 	
-	public static final String AUTH_ADMIN = "admin:admin";
+	public static final String AUTH_ADMIN_PASS = "admin";
+	public static final String AUTH_ADMIN = "admin:" + AUTH_ADMIN_PASS;
+	public static final String AUTH_ROOT_PASSWORD = "root";
+	public static final String AUTH_ROOT = "root:"+ AUTH_ROOT_PASSWORD;
 	public static final String AUTH_DEFAULT = "baasbox:baasbox";
 	
 	public static final String TEST_COLLECTION_NAME = "documents";
 	
 	public static final String AUTH_ADMIN_ENC;
+	public static final String AUTH_ROOT_ENC;
 	public static final String AUTH_DEFAULT_ENC;
 	 
 	public static final String MSG_INVALID_APP_CODE = "Invalid App Code";
@@ -57,6 +61,7 @@ public class TestConfig
 	static
 	{
 		AUTH_ADMIN_ENC = encodeAuth(AUTH_ADMIN);
+		AUTH_ROOT_ENC = encodeAuth(AUTH_ROOT);
 		AUTH_DEFAULT_ENC = encodeAuth(AUTH_DEFAULT);
 	}
 	
