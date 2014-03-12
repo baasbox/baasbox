@@ -6,6 +6,7 @@ package com.baasbox.filters {
 	import org.slf4j._
 	import play.api.Logger
 	import java.util.Date
+	import java.text.SimpleDateFormat
 	import com.baasbox.BBConfiguration
 	import com.baasbox.metrics.BaasBoxMetric
 	import com.codahale.metrics.Timer
@@ -23,6 +24,8 @@ package com.baasbox.filters {
 		  			    val filterLogger = LoggerFactory.getLogger("com.baasbox.accesslog")
 		      			val time = System.currentTimeMillis - start
 		      			val dateFormatted = new Date(start)
+		      			val dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
+
 		      			val userAgent = rh.headers.get("User-Agent").getOrElse("")
 		      			contentLength = result.header.headers.get("Content-Length").getOrElse("-")
 		      			if(BBConfiguration.getWriteAccessLog()){
@@ -32,7 +35,9 @@ package com.baasbox.filters {
 			      			*/
 			      			val username = result.header.headers.get("BB-USERNAME").getOrElse("-")
 			      			result.withHeaders("BB-USERNAME"->"")
-			      			filterLogger.info(s"""${rh.remoteAddress}\t-\t${username}\t[${dateFormatted}]\t${"\""}${rh.method} ${rh.uri} ${rh.version}${"\""}\t${result.header.status}\t${contentLength}\t${"\""}${"\""}\t${"\""}${userAgent}${"\""}\t${time}""")
+			      			//for the format used below, please see http://www.quickiwiki.com/en/Common_Log_Format
+			      			//remote-address username [request-datetime] "HTTP-method URI HTTP-version" HTTP_STATUS_CODE content-length  "user agent" process-time
+			      			filterLogger.info(s"""${rh.remoteAddress} \t${username} \t[${dateFormat.format(dateFormatted)}] \t${"\""}${rh.method} ${rh.uri} ${rh.version}${"\""} \t${result.header.status} \t${contentLength} \t${"\""}${userAgent}${"\""} \t${time}ms""")
 			  			}
 			  		}finally{
 			  			BaasBoxMetric.Track.endRequest(timers,result.header.status,contentLength)
