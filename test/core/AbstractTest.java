@@ -23,6 +23,7 @@ package core;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.status;
+import static play.test.Helpers.testServer;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -66,6 +67,7 @@ import play.Logger;
 import play.Play;
 import play.mvc.Result;
 import play.test.FakeApplication;
+import play.test.TestServer;
 
 public abstract class AbstractTest extends FluentTest
 {
@@ -89,6 +91,9 @@ public abstract class AbstractTest extends FluentTest
 		return fakeApplication(additionalConfigurations.asMap());
 	}
 	
+	protected static TestServer getTestServer(){
+		return testServer(TestConfig.SERVER_PORT,getFakeApplication());
+	}
 	protected  static Configuration additionalConfigurations=null;
 	static{
 	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf"));

@@ -149,7 +149,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -185,7 +185,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

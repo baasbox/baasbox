@@ -84,7 +84,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -107,7 +107,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

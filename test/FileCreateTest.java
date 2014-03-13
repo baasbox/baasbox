@@ -114,7 +114,7 @@ public class FileCreateTest extends AbstractFileTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -140,7 +140,7 @@ public class FileCreateTest extends AbstractFileTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

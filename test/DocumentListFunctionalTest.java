@@ -120,7 +120,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -154,7 +154,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

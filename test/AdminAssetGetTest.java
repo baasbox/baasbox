@@ -84,7 +84,7 @@ public class AdminAssetGetTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
