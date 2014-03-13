@@ -58,7 +58,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

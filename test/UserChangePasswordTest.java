@@ -70,7 +70,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

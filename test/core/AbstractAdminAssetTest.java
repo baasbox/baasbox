@@ -44,7 +44,7 @@ public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

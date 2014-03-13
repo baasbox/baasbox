@@ -96,7 +96,7 @@ public class FileCreateTest extends AbstractFileTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

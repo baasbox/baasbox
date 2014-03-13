@@ -82,7 +82,7 @@ public class RoleFunctionalTest extends AbstractTest{
     public void testRoleCreate() throws Exception
     {
 
-            running (fakeApplication(),     
+            running (getFakeApplication(),     
             		new Runnable()  {
                             public void run()       {
                                     try {

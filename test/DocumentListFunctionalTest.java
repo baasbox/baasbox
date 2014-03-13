@@ -64,7 +64,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -99,7 +99,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

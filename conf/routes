@@ -180,6 +180,7 @@ GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
 
 # ROOT access
+# ROOT RESET ADMIN PASSWORD
 POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
 # ROOT + METRICS 
 POST	/root/metrics											com.baasbox.controllers.Root.startMetrics()

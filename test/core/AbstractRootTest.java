@@ -19,39 +19,40 @@
 
 package core;
 
-import static play.mvc.Http.Status.FORBIDDEN;
 import static play.mvc.Http.Status.UNAUTHORIZED;
-import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import play.Configuration;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
-import views.html.defaultpages.unauthorized;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 {
-	protected Map<String, String> confRootMap = new HashMap();
-	{
-		confRootMap.put("baasbox.root.password", TestConfig.AUTH_ROOT_PASSWORD);
-	}
+	
+	
 
 	@Test 
 	public void testRouteDefaultUser()
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -72,7 +73,7 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

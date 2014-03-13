@@ -63,7 +63,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

@@ -21,6 +21,7 @@
 package core;
 
 import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.status;
 
 import java.io.BufferedReader;
@@ -51,14 +52,20 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ErrorCollector;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
+import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.mvc.Result;
+import play.test.FakeApplication;
 
 public abstract class AbstractTest extends FluentTest
 {
@@ -76,6 +83,18 @@ public abstract class AbstractTest extends FluentTest
 	private String sResponse = null;
 	private int nStatusCode = -1;
 	private boolean fUseCollector = false;
+
+	
+	protected static FakeApplication getFakeApplication(){
+		return fakeApplication(additionalConfigurations.asMap());
+	}
+	
+	protected  static Configuration additionalConfigurations=null;
+	static{
+	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf"));
+	    additionalConfigurations = new Configuration(additionalConfig);
+	}
+
 
 	// Abstract methods
 	public abstract String getRouteAddress();

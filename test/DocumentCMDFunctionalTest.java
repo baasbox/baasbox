@@ -79,7 +79,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -94,7 +94,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	@Test 
 	public void testCreationDateFormat(){
 		running 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable()			{
 				public void run()				{
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
@@ -114,7 +114,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -298,7 +298,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	public void testAccessDocumentsWithoutAuth() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -550,7 +550,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -571,7 +571,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

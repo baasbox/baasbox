@@ -26,7 +26,7 @@ public class RootResetAdminPasswordTest extends AbstractRootTest{
 	{
 		running
 		(
-			fakeApplication(confRootMap), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

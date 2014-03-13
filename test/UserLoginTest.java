@@ -51,7 +51,7 @@ public class UserLoginTest extends AbstractTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

@@ -132,8 +132,10 @@ public class BaasBoxMetric {
 
 	public static class Track {
 		
-		private static final long startTime = System.currentTimeMillis();
-		
+		private static  Long startTime =null;
+		static{
+			startTime = System.currentTimeMillis();
+		}
 		
 		public static long getUpTimeinMillis(){
 			return System.currentTimeMillis()-startTime;

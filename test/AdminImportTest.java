@@ -47,7 +47,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	
 	@BeforeClass
 	public static void createCorrectFile() throws Exception{
-		running(fakeApplication(), new Runnable() {
+		running(getFakeApplication(), new Runnable() {
 			
 			@Override
 			public void run() {

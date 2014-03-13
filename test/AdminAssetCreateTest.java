@@ -89,7 +89,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -110,7 +110,7 @@ public class AdminAssetCreateTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

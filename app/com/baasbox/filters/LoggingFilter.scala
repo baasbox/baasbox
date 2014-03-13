@@ -35,7 +35,6 @@ package com.baasbox.filters {
 			      			*/
 			      			val username = result.header.headers.get("BB-USERNAME").getOrElse("-")
 			      			result.withHeaders("BB-USERNAME"->"")
-			      			//for the format used below, please see http://www.quickiwiki.com/en/Common_Log_Format
 			      			//remote-address username [request-datetime] "HTTP-method URI HTTP-version" HTTP_STATUS_CODE content-length  "user agent" process-time
 			      			filterLogger.info(s"""${rh.remoteAddress} \t${username} \t[${dateFormat.format(dateFormatted)}] \t${"\""}${rh.method} ${rh.uri} ${rh.version}${"\""} \t${result.header.status} \t${contentLength} \t${"\""}${userAgent}${"\""} \t${time}ms""")
 			  			}

@@ -63,7 +63,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

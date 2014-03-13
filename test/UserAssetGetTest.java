@@ -68,7 +68,7 @@ public class UserAssetGetTest extends AbstractTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -86,7 +86,7 @@ public class UserAssetGetTest extends AbstractTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -112,7 +112,7 @@ public class UserAssetGetTest extends AbstractTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
