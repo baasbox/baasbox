@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -260,6 +261,12 @@ public class DbHelper {
 
 	}
 
+	public static ODatabaseRecordTx getOrOpenConnection(String appcode, String username,String password) throws InvalidAppCodeException {
+		ODatabaseRecordTx db= getConnection();
+		if (db==null || db.isClosed()) db = open ( appcode,  username, password) ;
+		return db;
+	}
+	
 	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
@@ -307,9 +314,16 @@ public class DbHelper {
 	}
 
 	public static ODatabaseRecordTx getConnection(){
-		return (ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+		ODatabaseRecordTx db = null;
+		try {
+			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+		}catch (ODatabaseException e){
+			//swallow...
+		}
+		return db;
 	}
 
+	
 	public static String getCurrentHTTPPassword(){
 		return (String) Http.Context.current().args.get("password");
 	}

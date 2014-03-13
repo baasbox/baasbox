@@ -63,7 +63,7 @@ public class AdminAssetGetTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

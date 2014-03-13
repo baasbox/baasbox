@@ -41,7 +41,7 @@ public abstract class AbstractAdminTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -61,7 +61,7 @@ public abstract class AbstractAdminTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

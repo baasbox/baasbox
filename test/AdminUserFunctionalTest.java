@@ -82,7 +82,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -103,7 +103,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

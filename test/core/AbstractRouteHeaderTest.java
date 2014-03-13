@@ -27,7 +27,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 	public void testRouteNotValid() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

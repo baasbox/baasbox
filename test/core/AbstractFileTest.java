@@ -46,7 +46,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -88,7 +88,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	public void testRouteNotValid() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
