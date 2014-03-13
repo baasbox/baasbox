@@ -135,6 +135,7 @@ public class WrapResponse {
 
 	public SimpleResult wrap(Context ctx, F.Promise<SimpleResult> simpleResult) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		
 		SimpleResult result=simpleResult.get();
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		ctx.response().setHeader("Access-Control-Allow-Headers", "X-Requested-With");
@@ -160,7 +161,7 @@ public class WrapResponse {
 		    }
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
-		    String stringBody = new String(body, "UTF-8");
+			String stringBody = new String(body, "UTF-8");
 		    if (Logger.isTraceEnabled()) if (Logger.isTraceEnabled()) Logger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
@@ -192,9 +193,9 @@ public class WrapResponse {
 			}catch (Throwable e){}
 			if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		}
+		ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		
-	    return result;
+		return result;
 	}//wrap
 
 

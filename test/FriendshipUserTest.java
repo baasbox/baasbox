@@ -157,7 +157,7 @@ public class FriendshipUserTest extends AbstractTest{
 	public void createUsersAndFollow(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -250,7 +250,7 @@ public class FriendshipUserTest extends AbstractTest{
 	public void unexistentUserFollow(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -272,7 +272,7 @@ public class FriendshipUserTest extends AbstractTest{
 	public void unexistentFollow(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

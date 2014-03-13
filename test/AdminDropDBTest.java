@@ -17,7 +17,7 @@ public class AdminDropDBTest extends AbstractTest{
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

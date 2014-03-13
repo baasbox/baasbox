@@ -458,7 +458,7 @@ public class Admin extends Controller {
 		String password=passwordNode.asText();	  
 		
 		try{
-		UserService.changePassword(username, password);
+			UserService.changePassword(username, password);
 		} catch (UserNotFoundException e) {
 		    Logger.error("Username not found " + username, e);
 		    return notFound("Username not found");
@@ -476,7 +476,7 @@ public class Admin extends Controller {
 
 	/***
 	 * Drop an entire collection
-	 * Data are lost... forevere
+	 * Data are lost... forever
 	 * @param name the Collection to drop
 	 * @return
 	 */

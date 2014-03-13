@@ -46,7 +46,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -67,7 +67,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -88,7 +88,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	public void testRouteNotValid() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -128,7 +128,7 @@ public abstract class AbstractFileTest extends AbstractRouteHeaderTest
 	public void testServerNotValid() {
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

@@ -132,7 +132,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 	public void testRouteNotValid() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -172,7 +172,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 	public void testServerNotValid() {
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

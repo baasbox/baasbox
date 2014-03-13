@@ -80,7 +80,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
     public void testDropCollectionCreate() throws Exception
     {
 
-            running (fakeApplication(),     
+            running (getFakeApplication(),     
             		new Runnable()  {
                             public void run()       {
                                     try {
@@ -166,7 +166,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionPopulate()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}
@@ -191,7 +191,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionDrop()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}
@@ -202,7 +202,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionCheck()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}

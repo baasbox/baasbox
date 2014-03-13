@@ -27,7 +27,9 @@ object ApplicationBuild extends Build {
                 "org.scribe" % "scribe" % "1.3.2",
 				"com.eaio.uuid" % "uuid" % "3.4",
 				"org.apache.tika" % "tika-core" % "1.4",
-				"org.apache.tika" % "tika-parsers" % "1.4"
+				"org.apache.tika" % "tika-parsers" % "1.4",
+                  "com.codahale.metrics" % "metrics-json" % "3.0.1",
+    "com.codahale.metrics" % "metrics-annotation" % "3.0.1"
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
 
