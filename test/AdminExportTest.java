@@ -54,7 +54,7 @@ public class AdminExportTest extends AbstractTest {
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -113,7 +113,7 @@ public class AdminExportTest extends AbstractTest {
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

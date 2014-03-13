@@ -63,7 +63,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -79,7 +79,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

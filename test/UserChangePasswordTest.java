@@ -70,7 +70,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -119,7 +119,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

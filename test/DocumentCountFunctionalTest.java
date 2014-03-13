@@ -63,7 +63,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -86,7 +86,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

@@ -87,7 +87,7 @@ public class UserUpdateTest extends AbstractUserTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -114,7 +114,7 @@ public class UserUpdateTest extends AbstractUserTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -145,7 +145,7 @@ public class UserUpdateTest extends AbstractUserTest
 	public void testUserChangeRole(){
 		running
 		(
-			fakeApplication(), 	new Runnable() 	{
+			getFakeApplication(), 	new Runnable() 	{
 				public void run() 	{
 					try {
 						//create a user

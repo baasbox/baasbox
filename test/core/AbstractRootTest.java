@@ -19,26 +19,34 @@
 
 package core;
 
-import static play.mvc.Http.Status.FORBIDDEN;
+import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
-import org.apache.http.protocol.HTTP;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Before;
 import org.junit.Test;
 
+import play.Configuration;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
-public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
+public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 {
-	public static final String PARAM_NAME = "name";
-	public static final String PARAM_META = "meta";
 	
+	
+
 	@Test 
 	public void testRouteDefaultUser()
 	{
@@ -54,12 +62,34 @@ public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testRouteDefaultUser", FORBIDDEN, null, false);
+					assertRoute(result, "testRouteDefaultUser", UNAUTHORIZED, null, false);
 				}
 			}
 		);		
 	}
 	
+	@Test 
+	public void testRouteAdminUser()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					// Default user credentials
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					assertRoute(result, "testRouteAdminUser", UNAUTHORIZED, null, false);
+				}
+			}
+		);		
+	}
+	
+
 	@Test 
 	public void testServerDefaultUser()
 	{
@@ -73,9 +103,8 @@ public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
 				{
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
-					removeHeader(HTTP.CONTENT_TYPE);
 					httpRequest(getURLAddress(), getMethod());
-					assertServer("testServerDefaultUser", FORBIDDEN, null, false);
+					assertServer("testServerDefaultUser", UNAUTHORIZED, null, false);
 	            }
 	        }
 		);

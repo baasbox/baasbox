@@ -47,7 +47,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	
 	@BeforeClass
 	public static void createCorrectFile() throws Exception{
-		running(fakeApplication(), new Runnable() {
+		running(getFakeApplication(), new Runnable() {
 			
 			@Override
 			public void run() {
@@ -84,7 +84,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -107,7 +107,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
