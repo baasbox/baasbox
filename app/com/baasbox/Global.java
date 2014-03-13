@@ -200,7 +200,7 @@ public class Global extends GlobalSettings {
 	    //write the Welcome Message
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
+	    info("Default credentials are: user:admin pass:admin AppCode: " + BBConfiguration.getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
