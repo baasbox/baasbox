@@ -51,6 +51,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
@@ -431,23 +432,23 @@ return profile;
 		final String errorString ="Cannot send mail to reset the password: ";
 
 		//check method input
-		if (!user.getSchemaClass().getName().equalsIgnoreCase(UserDao.MODEL_NAME)) throw new Exception (errorString + " invalid user object");
+		if (!user.getSchemaClass().getName().equalsIgnoreCase(UserDao.MODEL_NAME)) throw new PasswordRecoveryException (errorString + " invalid user object");
 
 		//initialization
 		String siteUrl = Application.NETWORK_HTTP_URL.getValueAsString();
 		int sitePort = Application.NETWORK_HTTP_PORT.getValueAsInteger();
-		if (StringUtils.isEmpty(siteUrl)) throw  new Exception (errorString + " invalid site url (is empty)");
+		if (StringUtils.isEmpty(siteUrl)) throw  new PasswordRecoveryException (errorString + " invalid site url (is empty)");
 
 		String textEmail = PasswordRecovery.EMAIL_TEMPLATE_TEXT.getValueAsString();
 		String htmlEmail = PasswordRecovery.EMAIL_TEMPLATE_HTML.getValueAsString();
 		if (StringUtils.isEmpty(htmlEmail)) htmlEmail=textEmail;
-		if (StringUtils.isEmpty(htmlEmail)) throw  new Exception (errorString + " text to send is not configured");
+		if (StringUtils.isEmpty(htmlEmail)) throw  new PasswordRecoveryException (errorString + " text to send is not configured");
 
 		boolean useSSL = PasswordRecovery.NETWORK_SMTP_SSL.getValueAsBoolean();
 		boolean useTLS = PasswordRecovery.NETWORK_SMTP_TLS.getValueAsBoolean();
 		String smtpHost = PasswordRecovery.NETWORK_SMTP_HOST.getValueAsString();
 		int smtpPort = PasswordRecovery.NETWORK_SMTP_PORT.getValueAsInteger();
-		if (StringUtils.isEmpty(smtpHost)) throw  new Exception (errorString + " SMTP host is not configured");
+		if (StringUtils.isEmpty(smtpHost)) throw  new PasswordRecoveryException (errorString + " SMTP host is not configured");
 
 
 		String username_smtp = null;
@@ -455,11 +456,11 @@ return profile;
 		if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
 			username_smtp = PasswordRecovery.NETWORK_SMTP_USER.getValueAsString();
 			password_smtp = PasswordRecovery.NETWORK_SMTP_PASSWORD.getValueAsString();
-			if (StringUtils.isEmpty(username_smtp)) throw  new Exception (errorString + " SMTP username is not configured");
+			if (StringUtils.isEmpty(username_smtp)) throw  new PasswordRecoveryException (errorString + " SMTP username is not configured");
 		}
 		String emailFrom = PasswordRecovery.EMAIL_FROM.getValueAsString();
 		String emailSubject = PasswordRecovery.EMAIL_SUBJECT.getValueAsString();
-		if (StringUtils.isEmpty(emailFrom)) throw  new Exception (errorString + " sender email is not configured");
+		if (StringUtils.isEmpty(emailFrom)) throw  new PasswordRecoveryException (errorString + " sender email is not configured");
 
 		try {
 			String userEmail=((ODocument) user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER)).field("email").toString();
@@ -509,9 +510,8 @@ return profile;
 			ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
 
 		}  catch (EmailException authEx){
-			throw new Exception (errorString + " Could not reach the mail server. Please contact the server administrator");
-		}
-		catch (Exception e) {
+			throw new PasswordRecoveryException (errorString + " Could not reach the mail server. Please contact the server administrator");
+		}  catch (Exception e) {
 			throw new Exception (errorString,e);
 		}
 
