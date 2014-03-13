@@ -67,13 +67,12 @@ public class RootCredentialWrapFilter extends Action.Simple {
 			if (!isCredentialOk){
 				//tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
 				tempResult= CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
-			} else	
-				//internal administrator is not allowed to access via REST
-				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+			} else	if //internal administrator is not allowed to access via REST
+						(((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 						||
 						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-					tempResult=forbidden("The user " +ctx.args.get("username")+ " cannot access via REST");
-			
+								tempResult=forbidden("The user " +ctx.args.get("username")+ " cannot access via REST");
+			else if (tempResult==null){
 				//if everything is ok.....
 				//let's check the root credentials
 				String username=(String)ctx.args.get("username");
@@ -91,6 +90,7 @@ public class RootCredentialWrapFilter extends Action.Simple {
 				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
 				//executes the request
 				if (tempResult==null) tempResult = delegate.call(ctx);
+			}
 		}
 			
 

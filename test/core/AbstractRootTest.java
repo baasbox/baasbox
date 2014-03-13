@@ -19,33 +19,42 @@
 
 package core;
 
+import static play.mvc.Http.Status.FORBIDDEN;
 import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.Before;
 import org.junit.Test;
 
-import play.Configuration;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
 public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 {
 	
-	
+	@Test
+	public void testMalformedBasicAuthHeader()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					// Default user credentials
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, "BASIC");
+					Result result = routeAndCall(request);
+					assertRoute(result, "testMalformedBasicAuthHeader", UNAUTHORIZED, null, false);
+				}
+			}
+		);
+	}
 
 	@Test 
 	public void testRouteDefaultUser()
@@ -62,7 +71,7 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testRouteDefaultUser", UNAUTHORIZED, null, false);
+					assertRoute(result, "testRouteDefaultUser", FORBIDDEN, null, false);
 				}
 			}
 		);		
@@ -104,7 +113,7 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					httpRequest(getURLAddress(), getMethod());
-					assertServer("testServerDefaultUser", UNAUTHORIZED, null, false);
+					assertServer("testServerDefaultUser", FORBIDDEN, null, false);
 	            }
 	        }
 		);
