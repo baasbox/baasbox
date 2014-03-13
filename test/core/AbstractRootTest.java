@@ -95,7 +95,7 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

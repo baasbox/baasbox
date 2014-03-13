@@ -86,7 +86,7 @@ public class AdminApiVersionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

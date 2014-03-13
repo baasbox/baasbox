@@ -147,7 +147,7 @@ public class AdminUserChangePasswordTest extends AbstractUserTest {
 	public void testServerNotValid() {
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

@@ -280,7 +280,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -381,7 +381,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
