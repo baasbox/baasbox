@@ -3,6 +3,7 @@ package com.baasbox.metrics;
 import static com.codahale.metrics.MetricRegistry.name;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.baasbox.BBConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.codahale.metrics.CachedGauge;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -52,10 +54,9 @@ public class BaasBoxMetric {
 	private static void setGauges() {
 		//memory gauges
 		registry.register(name(GAUGE_MEMORY_MAX_ALLOCABLE),
-				//TODO: since the max available memory does not change, we should use the cached gauge
-                new Gauge<Long>() {
+                new CachedGauge<Long>(10, TimeUnit.MINUTES) {
                     @Override
-                    public Long getValue() {
+                    public Long loadValue() {
                     	Runtime rt = Runtime.getRuntime(); 
                 		long maxMemory=rt.maxMemory();
                 		return maxMemory;
@@ -98,11 +99,10 @@ public class BaasBoxMetric {
         			}				
 				});
 		
-		//TODO: we should use the cached gauge
 		registry.register(name(GAUGE_DB_DATA_SIZE),
-				new Gauge<Long>() {
+				new CachedGauge<Long>(1, TimeUnit.MINUTES) {
 					@Override
-                    public Long getValue() {
+                    public Long loadValue() {
 						boolean opened=false;
 						try{
 							if (DbHelper.getConnection()==null || DbHelper.getConnection().isClosed()) {
@@ -118,11 +118,11 @@ public class BaasBoxMetric {
         			}				
 				});
 		
-		//TODO: we should use the cached gauge
+
 		registry.register(name(GAUGE_DB_DATA_DIRECTORY_SIZE),
-				new Gauge<Long>() {
+				new CachedGauge<Long>(1, TimeUnit.MINUTES) {
 					@Override
-                    public Long getValue() {
+                    public Long loadValue() {
 							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()));
         			}				
 				});
