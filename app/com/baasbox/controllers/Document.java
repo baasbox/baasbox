@@ -344,13 +344,13 @@ public class Document extends Controller {
 			}catch (InvalidModelException e){
 				return notFound(id + " is not a valid belongs to " + collectionName);
 			}catch (InvalidParameterException e){
-				return badRequest(id + " is not a document");
+				return notFound("Cannot find the document " + id + " HINT: have you the permission to access this document?");
 			}catch (IllegalArgumentException e){
 				return badRequest(id + " is not a document");  
 			}catch (ODatabaseException e){
 				return notFound(id + " unknown");  
 			}catch (OSecurityException e){
-				return forbidden("You have not the right to modify " + id);
+				return forbidden("You have not the right to modify the document " + id);
 			}catch (RidNotFoundException rnfe){
 					return notFound(rnfe.getMessage());	
 			}catch (Throwable e){
