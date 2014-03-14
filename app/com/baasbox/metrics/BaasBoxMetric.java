@@ -34,7 +34,12 @@ public class BaasBoxMetric {
 	public static MetricRegistry registry=null;
 
 	private static boolean activate=false;
-
+	private static String excludeURIStartsWith = "";
+	
+	public static void setExcludeURIStartsWith(String excludeURIs){
+		excludeURIStartsWith=excludeURIs;
+	}
+	
 	public static boolean isActivate() {
 		return activate;
 	}
@@ -143,10 +148,10 @@ public class BaasBoxMetric {
 		
 		public static long getStartTime(){
 			return startTime;
-		}
+		} 
 		
 		public static Timer.Context[] startRequest(String method,String uri){
-			if (activate){
+			if (activate && !uri.startsWith(excludeURIStartsWith)){
 //				registry.meter(name(METER_REQUESTS)).mark();
 				Timer.Context timer1=  registry.timer(name(TIMER_REQUESTS)).time();
 				Timer.Context timer2=  registry.timer(name(TIMER_REQUESTS,method,uri)).time();

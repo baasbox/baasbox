@@ -189,6 +189,7 @@ public class Global extends GlobalSettings {
     	overrideSettings();
     	
     	//activate metrics
+    	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
     	
     	//prepare the Welcome Message
