@@ -554,8 +554,13 @@ public class Admin extends Controller {
 	public static Result getLatestVersion() {
 		String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
 		if (Logger.isDebugEnabled()) Logger.debug("Calling " + urlToCall);
-		final Promise<Response> promise = WS.url(urlToCall).get();
-		return status(promise.get().getStatus(),promise.get().getBody());
+		try{
+			final Promise<Response> promise = WS.url(urlToCall).get();
+			return status(promise.get().getStatus(),promise.get().getBody());
+		}catch(Exception e){
+			Logger.warn("Could not reach BAASBOX site to check for new versions");
+		}
+		return status(503,"Could not reach BAASBOX site to check for new versions");
 	}//getLatestVersion
 
 
