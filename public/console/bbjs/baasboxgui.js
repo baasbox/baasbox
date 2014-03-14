@@ -1965,7 +1965,7 @@ function callMenu(action){
 				}
 			}, //success
 			error: function(data){
-				$('#latestVersion').addClass("red").text("Unable to contact the BaasBox site");
+				$('#latestVersion').addClass("red").text("Unable to reach BaasBox site");
 				$('#notificationLatestVersion').text("?");
 				$('#notificationLatestVersion').addClass("notification yellow");
 			}
