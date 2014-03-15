@@ -19,6 +19,7 @@ package com.baasbox.db.hook;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.IteratorUtils;
@@ -31,11 +32,12 @@ import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager { 
 	public static void registerAll(ODatabaseRecordTx db){
+		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
-		Set<ORecordHook> hooks = db.getHooks();
-		Iterator<ORecordHook> it =hooks.iterator();
+		 Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		Iterator<ORecordHook> it =hooks.keySet().iterator();
 		boolean register=true;
 		while (it.hasNext()){		
 			if (it.next() instanceof BaasBoxHook) {
@@ -51,6 +53,7 @@ public class HooksManager {
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("Hooks: "+ db.getHooks());
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		
 	}
 	
 	public static void unregisteredAll(ODatabaseRecordTx db){
@@ -58,8 +61,8 @@ public class HooksManager {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
 		if (Logger.isDebugEnabled()) Logger.debug("unregistering hooks...");
-		Set<ORecordHook> hooks = db.getHooks();
-		List hs = IteratorUtils.toList(hooks.iterator());
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		List hs = IteratorUtils.toList(hooks.keySet().iterator());
 		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();

@@ -136,7 +136,7 @@ public class Global extends GlobalSettings {
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
-		    		DbHelper.setupDb(db);
+		    		DbHelper.setupDb();
 			    	info("Initializing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);

@@ -243,7 +243,7 @@ public class DbHelper {
 				db.getMetadata().reload();
 				if(repopulate){
 					HooksManager.registerAll(db);
-					setupDb(db);
+					setupDb();
 				}
 
 
@@ -317,6 +317,7 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 		try {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
 			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
 		}
@@ -367,15 +368,10 @@ public class DbHelper {
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
-	@Deprecated
-	public static void dropOrientDefault(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		//nothing to do here
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	}
 
-	public static void populateDB(ODatabaseRecordTx db) throws IOException{
-		OrientGraphNoTx dbg =  new OrientGraphNoTx(new ODatabaseDocumentTx(db));
+	public static void populateDB() throws IOException{
+		ODatabaseRecordTx db = getConnection();
+		OrientGraphNoTx dbg =  getOrientGraphConnection();
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -403,7 +399,7 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
-	public static void populateConfiguration (ODatabaseRecordTx db) throws IOException, ConfigurationException{
+	public static void populateConfiguration () throws IOException, ConfigurationException{
 		Logger.info("Load initial configuration...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(CONFIGURATION_FILE_NAME);
@@ -441,14 +437,14 @@ public class DbHelper {
 
 
 
-	public static void setupDb(ODatabaseRecordTx db) throws Exception{
+	public static void setupDb() throws Exception{
 		Logger.info("Creating default roles...");
 		DbHelper.createDefaultRoles();
+		populateDB();
+		getConnection().getMetadata().getIndexManager().reload();
 		Logger.info("Creating default users...");
-		DbHelper.dropOrientDefault();
-		populateDB(db);
 		createDefaultUsers();
-		populateConfiguration(db);
+		populateConfiguration();
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
