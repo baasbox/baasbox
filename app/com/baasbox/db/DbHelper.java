@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -69,6 +68,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
 public class DbHelper {
@@ -318,7 +318,7 @@ public class DbHelper {
 		try {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
 		}catch (ODatabaseException e){
-			//swallow...
+			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
 		}
 		return db;
 	}
@@ -375,7 +375,7 @@ public class DbHelper {
 	}
 
 	public static void populateDB(ODatabaseRecordTx db) throws IOException{
-		OGraphDatabase dbg = new OGraphDatabase(db);
+		OrientGraphNoTx dbg =  new OrientGraphNoTx(new ODatabaseDocumentTx(db));
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -386,7 +386,7 @@ public class DbHelper {
 		for (String line:script){
 			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
-				dbg.command(new OCommandSQL(line.replace(';', ' '))).execute();
+				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
 		Internal.DB_VERSION._setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
@@ -563,11 +563,12 @@ public class DbHelper {
 		 }//end of evolutions
 	}
 	
-	@Deprecated
-	public static OGraphDatabase getOGraphDatabaseConnection(){
-		return new OGraphDatabase(getConnection());
-	}
+
 	
+	public static OrientGraphNoTx getOrientGraphConnection(){
+		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
+	}
+
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());
 	}

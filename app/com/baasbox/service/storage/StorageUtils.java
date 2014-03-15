@@ -12,7 +12,6 @@ import org.imgscalr.Scalr;
 import com.baasbox.dao.FileAssetDao;
 import com.baasbox.dao.FileDao;
 import com.baasbox.exception.DocumentIsNotAFileException;
-import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.google.common.collect.ImmutableSet;
 import com.orientechnologies.orient.core.record.impl.ODocument;
