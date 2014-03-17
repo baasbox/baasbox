@@ -17,6 +17,7 @@ import play.libs.Crypto;
 import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -37,7 +38,10 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Social extends Controller{
-
+	
+	private static final String OAUTH_TOKEN="oauth_token";
+	private static final String OAUTH_SECRET="oauth_secret";
+	
 
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
@@ -49,9 +53,7 @@ public class Social extends Controller{
 		}else{
 			SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
 			return ok("{\"url\":\""+sc.getAuthorizationURL(session())+"\"}");
-
 		}
-
 	}
 
 	/**
@@ -65,7 +67,7 @@ public class Social extends Controller{
 	public static Result callback(String socialNetwork){
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
 		Token t = sc.requestAccessToken(request(),session());
-		return ok("{\"oauth_token\":\""+t.getToken()+"\",\"oauth_secret\":\""+t.getSecret()+"\"}");
+		return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
 	}
 
 	/**
@@ -78,12 +80,23 @@ public class Social extends Controller{
 	 */
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result loginWith(String socialNetwork){
+		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson();
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
-		String authToken = request().getQueryString("oauth_token");
-		String authSecret = request().getQueryString("oauth_secret");
+		String authToken = null;
+		String authSecret = null;
+		
+		if (bodyJson.has(OAUTH_TOKEN)) authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
+		if (bodyJson.has(OAUTH_SECRET)) authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
+			
+		//NOTE: to maintain compatibility with previous versions, we leave the option to use QueryStrings
+		if (StringUtils.isEmpty(authToken)) authToken = request().getQueryString(OAUTH_TOKEN);		
+		if (StringUtils.isEmpty(authSecret))  authSecret = request().getQueryString(OAUTH_SECRET);	
 
 		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
-			return badRequest("Both oauth_token and oauth_secret should be specified in the query string");
+			return badRequest("Both '"+OAUTH_TOKEN+"' and '"+OAUTH_SECRET+"' should be specified.");
 		}
 
 		String appcode = (String)ctx().args.get("appcode");
@@ -98,7 +111,6 @@ public class Social extends Controller{
 		ODocument existingUser =  null;
 		try{
 			existingUser = userDao.getBySocialUserId(result);
-			
 		}catch(SqlInjectionException sie){
 			return internalServerError(sie.getMessage());
 		}
@@ -228,11 +240,23 @@ public class Social extends Controller{
 	 */
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result linkWith(String socialNetwork){
-		String authToken = request().getQueryString("oauth_token");
-		String authSecret = request().getQueryString("oauth_secret");
+		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson();
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
+
+		String authToken = null;
+		String authSecret = null;
+		
+		if (bodyJson.has(OAUTH_TOKEN)) authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
+		if (bodyJson.has(OAUTH_SECRET)) authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
+			
+		//NOTE: to maintain compatibility with previous versions, we leave the possibility to use QueryStrings
+		if (StringUtils.isEmpty(authToken)) authToken = request().getQueryString(OAUTH_TOKEN);		
+		if (StringUtils.isEmpty(authSecret))  authSecret = request().getQueryString(OAUTH_SECRET);	
 
 		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
-			return badRequest("Both oauth_token and oauth_secret should be specified in the query string");
+			return badRequest("Both '"+OAUTH_TOKEN+"' and '"+OAUTH_SECRET+"' should be specified.");
 		}
 
 		String appcode = (String)ctx().args.get("appcode");
