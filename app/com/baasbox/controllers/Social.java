@@ -32,6 +32,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.sociallogin.SocialLoginService;
+import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.user.UserService;
 import com.google.common.collect.ImmutableMap;
@@ -65,9 +66,13 @@ public class Social extends Controller{
 	 * @return
 	 */
 	public static Result callback(String socialNetwork){
-		SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
-		Token t = sc.requestAccessToken(request(),session());
-		return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
+		try{
+			SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
+			Token t = sc.requestAccessToken(request(),session());
+			return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
+		}catch (UnsupportedSocialNetworkException e){
+			return badRequest(e.getMessage());
+		}
 	}
 
 	/**
