@@ -17,8 +17,12 @@ import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.SocialLoginConfiguration;
+import com.baasbox.db.DbHelper;
+import com.baasbox.exception.InvalidAppCodeException;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
 
@@ -47,22 +51,32 @@ public abstract class SocialLoginService {
 	
 	public void build(){
 		StringBuilder serverUrl = new StringBuilder();
-		Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
-		if(isSSL){
-			serverUrl.append(SECURE_PROTOCOL);
-		}else{
-			serverUrl.append(PROTOCOL);
+		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
+		ODatabaseRecordTx db=null;
+		try {
+			db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());		
+			Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
+			if(isSSL){
+				serverUrl.append(SECURE_PROTOCOL);
+			}else{
+				serverUrl.append(PROTOCOL);
+			}
+			String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+			serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
+			String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
+			serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
+			this.service = new ServiceBuilder().
+					provider(provider())
+					.apiKey(this.token.getToken())
+					.apiSecret(this.token.getSecret())
+					.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
+					.build();
+		} catch (InvalidAppCodeException e) {
+			//a very strange thing happened here!
+			throw new RuntimeException(e);
+		}finally{
+			if (db!=null && !db.isClosed()) db.close();
 		}
-		String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
-		serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
-		String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
-		serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
-		this.service = new ServiceBuilder().
-				provider(provider())
-				.apiKey(this.token.getToken())
-				.apiSecret(this.token.getSecret())
-				.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
-				.build();
 	}
 	
 	public SocialLoginService(String socialNetwork,String appcode){
@@ -108,22 +122,32 @@ public abstract class SocialLoginService {
 	}
 
 	public  Tokens getTokens() throws UnsupportedSocialNetworkException{
-		String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";
-		String token = (String)Cache.get(keyFormat);
-		if(token ==null){
-			token = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
-			Cache.set(keyFormat,token,0);
+		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
+		ODatabaseRecordTx db=null;
+		try {
+			db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());		
+			String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";
+			String token = (String)Cache.get(keyFormat);
+			if(token ==null){
+				token = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
+				Cache.set(keyFormat,token,0);
+			}
+			keyFormat =  socialNetwork.toUpperCase()+"_SECRET";
+			String secret =  (String)Cache.get(keyFormat);;
+			if(secret ==null){
+				secret = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
+				Cache.set(keyFormat,secret,0);
+			}
+			if(secret==null || token == null){
+				throw new UnsupportedSocialNetworkException("Social login for "+socialNetwork+" is not enabled.Please add app token and secret to configuration");
+			}
+			return new Tokens(token,secret);
+		} catch (InvalidAppCodeException e) {
+			//a very strange thing happened here!
+			throw new RuntimeException(e);
+		}finally{
+			if (db!=null && !db.isClosed()) db.close();
 		}
-		keyFormat =  socialNetwork.toUpperCase()+"_SECRET";
-		String secret =  (String)Cache.get(keyFormat);;
-		if(secret ==null){
-			secret = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
-			Cache.set(keyFormat,secret,0);
-		}
-		if(secret==null || token == null){
-			throw new UnsupportedSocialNetworkException("Social login for "+socialNetwork+" is not enabled.Please add app token and secret to configuration");
-		}
-		return new Tokens(token,secret);
 	}
 
 	public static class Tokens implements Serializable{
