@@ -105,7 +105,7 @@ public abstract class SocialLoginService {
 		return this.service.getAccessToken(t, v);
 	}
 	
-	public UserInfo getUserInfo(Token accessToken){
+	public UserInfo getUserInfo(Token accessToken) throws BaasBoxSocialException{
 		
 		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
 		
@@ -175,7 +175,7 @@ public abstract class SocialLoginService {
 
 	}
 
-	public abstract  UserInfo extractUserInfo(Response r);
+	public abstract  UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
 	
 	public static SocialLoginService by(String socialNetwork,String appcode) {
 		if(socialNetwork.equals("facebook")){

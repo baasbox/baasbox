@@ -31,6 +31,7 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.sociallogin.BaasBoxSocialException;
 import com.baasbox.service.sociallogin.SocialLoginService;
 import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
@@ -72,6 +73,8 @@ public class Social extends Controller{
 			return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
 		}catch (UnsupportedSocialNetworkException e){
 			return badRequest(e.getMessage());
+		}catch (java.lang.IllegalArgumentException e){
+			return badRequest(e.getMessage());
 		}
 	}
 
@@ -105,9 +108,16 @@ public class Social extends Controller{
 		}
 
 		String appcode = (String)ctx().args.get("appcode");
+		//after this call, db connection is lost!
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
 		Token t = new Token(authToken,authSecret);
-		UserInfo result = sc.getUserInfo(t);
+		UserInfo result=null;
+		try {
+			result = sc.getUserInfo(t);
+		} catch (BaasBoxSocialException e1) {
+			return badRequest(e1.getError());
+		}
+		if (Logger.isDebugEnabled()) Logger.debug("UserInfo received: " + result.toString());
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		//Setting token as secret for one-token only social networks
@@ -267,7 +277,12 @@ public class Social extends Controller{
 		String appcode = (String)ctx().args.get("appcode");
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
 		Token t = new Token(authToken,authSecret);
-		UserInfo result = sc.getUserInfo(t);
+		UserInfo result=null;
+		try {
+			result = sc.getUserInfo(t);
+		} catch (BaasBoxSocialException e1) {
+			return badRequest(e1.getError());
+		}
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		
