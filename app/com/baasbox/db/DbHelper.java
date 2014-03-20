@@ -266,6 +266,15 @@ public class DbHelper {
 		if (db==null || db.isClosed()) db = open ( appcode,  username, password) ;
 		return db;
 	}
+
+	public static ODatabaseRecordTx getOrOpenConnectionWIthHTTPUsername() throws InvalidAppCodeException {
+		ODatabaseRecordTx db= getConnection();
+		if (db==null || db.isClosed()) db = open (  
+				(String) Http.Context.current().args.get("appcode"),  
+				getCurrentHTTPUsername(), 
+				getCurrentHTTPPassword()) ;
+		return db;
+	}
 	
 	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
