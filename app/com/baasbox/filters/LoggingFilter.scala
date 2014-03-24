@@ -15,14 +15,15 @@ package com.baasbox.filters {
 	class LoggingFilter extends Filter {
 
 	  		def apply(next: (RequestHeader) => Result)(rh: RequestHeader) = {
-	  		    val start = System.currentTimeMillis
-				
+	  		    val start = System.currentTimeMillis()
+				var timers = BaasBoxMetric.Track.startRequest(rh.method,rh.uri)
+
 	    		def logTime(result: PlainResult): Result = {
-	    				var timers = BaasBoxMetric.Track.startRequest(rh.method,rh.uri)
+	    				
 	    				var contentLength = ""
 	  				try{
 		  			    val filterLogger = LoggerFactory.getLogger("com.baasbox.accesslog")
-		      			val time = System.currentTimeMillis - start
+		      			val time = System.currentTimeMillis() - start
 		      			val dateFormatted = new Date(start)
 		      			val dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
 
