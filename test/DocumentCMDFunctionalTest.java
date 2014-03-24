@@ -177,7 +177,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Retrieve document in a collection
 						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + "> using call_id", Status.OK, null, true);
+						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -187,9 +187,9 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					
 					try
 					{
-						// Retrieve document in a collection using a call_id
+						// Test the call_id feature
 						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1")+"?call_id=123");
-						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
+						assertRoute(result, "testRouteCMDDocument.call_id", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 						assertJSONString(json, "\"call_id\":\"123\"");
 					}
