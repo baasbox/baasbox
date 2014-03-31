@@ -14,11 +14,11 @@ import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
 public class GooglePlusLoginService extends SocialLoginService{
-	
+	public static String SOCIAL = "google";
 	public static String PREFIX = "gp_";
 	
 	public GooglePlusLoginService(String appcode){
-		super("google",appcode);
+		super(SOCIAL,appcode);
 	}
 
 	
@@ -84,9 +84,29 @@ public class GooglePlusLoginService extends SocialLoginService{
 			String username = StringUtils.deleteWhitespace(name.toLowerCase());
 			i.setUsername(username);
 		}
-		i.setFrom("google");
+		i.setFrom(SOCIAL);
 		return i;
 	}
+
+
+	@Override
+	protected String getValidationURL(String token) {
+		String template = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s";
+		return String.format(template,token);
+	}
+
+
+	@Override
+	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
+		if(response instanceof JsonNode){
+			JsonNode jn = (JsonNode)response;
+			return StringUtils.isNotEmpty(jn.get("user_id").getTextValue());
+		}else{
+			throw new BaasBoxSocialTokenValidationException();
+		}
+	}
+	
+	
 
 	
 	

@@ -112,23 +112,6 @@ public class DocumentService {
 		q.append(" where @rid=").append(rid);
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
-		//TODO:
-		/*if(parser.isArray()){
-			try {
-				ArrayNode an = (ArrayNode)mp.readTree(result.toJSON()).get(parser.last().getName());
-				PartsLexer.ArrayField af =  (PartsLexer.ArrayField)parser.last();
-				if(an.size()<af.arrayIndex){
-					throw new InvalidModelException("The index requested does not exists in model");
-				}else{
-					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).getTextValue());
-					result = new ODocument().fromJSON(json);
-					System.out.println("JSON:"+result.toJSON());
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
 		return result;
 	}
 

@@ -14,6 +14,8 @@ import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
+import com.baasbox.configuration.SocialLoginConfiguration;
+
 
 
 public class FacebookLoginService extends SocialLoginService{
@@ -62,6 +64,7 @@ public class FacebookLoginService extends SocialLoginService{
 
 	@Override
 	public Token getAccessTokenFromRequest(Request r,Session s) {
+		System.out.println(r.body().asText());
 		return null;
 	}
 
@@ -91,6 +94,33 @@ public class FacebookLoginService extends SocialLoginService{
 		return ui;
 	}
 
+
+
+	@Override
+	public String getValidationURL(String token) {
+		String url = "https://graph.facebook.com/debug_token?input_token=%s&access_token=%s%%7C%s";
+		String finalUrl = String.format(url,token,SocialLoginConfiguration.FACEBOOK_TOKEN.getValueAsString(),SocialLoginConfiguration.FACEBOOK_SECRET.getValueAsString());
+		return finalUrl;
+	}
+
+
+
+	@Override
+	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
+		if(response instanceof JsonNode){
+			JsonNode jn = (JsonNode)response;
+			return jn.get("data").get("is_valid").asBoolean();
+		}else{
+			throw new BaasBoxSocialTokenValidationException();
+		}
+	}
+
+
+
+	
+
+	
+	
 	
 	
 	

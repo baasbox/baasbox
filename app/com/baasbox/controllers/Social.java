@@ -32,6 +32,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
+import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
 import com.baasbox.service.sociallogin.SocialLoginService;
 import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
@@ -113,9 +114,15 @@ public class Social extends Controller{
 		Token t = new Token(authToken,authSecret);
 		UserInfo result=null;
 		try {
-			result = sc.getUserInfo(t);
+			if(sc.validationRequest(authToken)){
+				result = sc.getUserInfo(t);
+			}else{
+				return badRequest("Provided token is not valid");
+			}
 		} catch (BaasBoxSocialException e1) {
 			return badRequest(e1.getError());
+		}catch (BaasBoxSocialTokenValidationException e2) {
+			return badRequest("Unable to validate provided token");
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("UserInfo received: " + result.toString());
 		result.setFrom(socialNetwork);
@@ -279,10 +286,17 @@ public class Social extends Controller{
 		Token t = new Token(authToken,authSecret);
 		UserInfo result=null;
 		try {
-			result = sc.getUserInfo(t);
+			if(sc.validationRequest(authToken)){
+				result = sc.getUserInfo(t);
+			}else{
+				return badRequest("Provided token is not valid.");
+			}
 		} catch (BaasBoxSocialException e1) {
 			return badRequest(e1.getError());
 		}
+		 catch (BaasBoxSocialTokenValidationException e2) {
+				return badRequest("Unable to validate provided token.");
+			}
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		

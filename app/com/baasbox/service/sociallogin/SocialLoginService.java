@@ -3,12 +3,19 @@ package com.baasbox.service.sociallogin;
 import java.io.Serializable;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
-import org.scribe.model.Verb;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
@@ -30,10 +37,10 @@ public abstract class SocialLoginService {
 	private static final String SECURE_PROTOCOL = "https://";
 	private static final String DEFAULT_HOST = "localhost";
 	private static final String DEFAULT_PORT = "9000";
-	
+
 	protected OAuthService service;
-	
-	
+
+
 	public OAuthService getService() {
 		return service;
 	}
@@ -44,48 +51,45 @@ public abstract class SocialLoginService {
 	public abstract Class<? extends Api> provider();
 	public abstract Boolean needToken();
 	public abstract String userInfoUrl();
-	
+
 	public abstract String getVerifierFromRequest(Request r);
 	public abstract Token getAccessTokenFromRequest(Request r,Session s);
-	
-	
+
+
 	public void build(){
 		StringBuilder serverUrl = new StringBuilder();
 		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
-		ODatabaseRecordTx db=null;
-		try {
-			db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());		
-			Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
-			if(isSSL){
-				serverUrl.append(SECURE_PROTOCOL);
-			}else{
-				serverUrl.append(PROTOCOL);
-			}
-			String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
-			serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
-			String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
-			serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
-			this.service = new ServiceBuilder().
-					provider(provider())
-					.apiKey(this.token.getToken())
-					.apiSecret(this.token.getSecret())
-					.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
-					.build();
-		} catch (InvalidAppCodeException e) {
-			//a very strange thing happened here!
-			throw new RuntimeException(e);
-		}finally{
-			if (db!=null && !db.isClosed()) db.close();
+		try{
+		DbHelper.getOrOpenConnectionWIthHTTPUsername();		
+		Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
+		if(isSSL){
+			serverUrl.append(SECURE_PROTOCOL);
+		}else{
+			serverUrl.append(PROTOCOL);
 		}
+		String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+		serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
+		String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
+		serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
+		this.service = new ServiceBuilder().
+				provider(provider())
+				.apiKey(this.token.getToken())
+				.apiSecret(this.token.getSecret())
+				.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
+				.build();
+		}catch(InvalidAppCodeException iace){
+			throw new RuntimeException(iace);
+		}
+
 	}
-	
+
 	public SocialLoginService(String socialNetwork,String appcode){
 		this.socialNetwork = socialNetwork;
 		this.appcode = appcode;
 		this.token = getTokens();
 		build();
 	}
-	
+
 	public String getAuthorizationURL(Session s){
 		Token t = null;
 		if(this.needToken()){
@@ -98,23 +102,24 @@ public abstract class SocialLoginService {
 		}
 		return this.service.getAuthorizationUrl(t);
 	}
-	
+
 	public Token requestAccessToken(Request r,Session s){
 		Token t = getAccessTokenFromRequest(r,s);
 		Verifier v = new Verifier(getVerifierFromRequest(r));
 		return this.service.getAccessToken(t, v);
 	}
-	
+
 	public UserInfo getUserInfo(Token accessToken) throws BaasBoxSocialException{
-		
+
 		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
-		
+
 		this.service.signRequest(accessToken, request);
 		Response response = request.send();
 		return extractUserInfo(response);
 	}
-	
+
 	protected abstract OAuthRequest buildOauthRequestForUserInfo(Token accessToken);
+
 	public boolean isClientEnabled(){
 		String keyFormat = socialNetwork.toUpperCase()+"_ENABLED";
 		Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
@@ -176,7 +181,7 @@ public abstract class SocialLoginService {
 	}
 
 	public abstract  UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
-	
+
 	public static SocialLoginService by(String socialNetwork,String appcode) {
 		if(socialNetwork.equals("facebook")){
 			return new FacebookLoginService(appcode);
@@ -187,8 +192,41 @@ public abstract class SocialLoginService {
 		}
 		return null;
 	}
+
 	public abstract String getPrefix();
-	
+	protected abstract String getValidationURL(String token);
+
+	public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException{
+		String url = getValidationURL(token);
+		HttpClient client = new DefaultHttpClient();
+		HttpGet method = new HttpGet(url);
+		try{
+			
+			BasicResponseHandler brh = new BasicResponseHandler();
+			
+			String body = client.execute(method,brh);
+			if(StringUtils.isEmpty(body)){
+				return false;
+			}else{
+				ObjectMapper mapper = new ObjectMapper();
+				JsonFactory factory = mapper.getJsonFactory(); // since 2.1 use mapper.getFactory() instead
+				JsonParser jp = factory.createJsonParser(body);
+				JsonNode jn = mapper.readTree(jp);
+				return validate(jn);
+			}
+		}catch(Exception e){
+			return false;
+			
+		}finally{
+			
+		}
+		
+
+	}
+
+	protected abstract boolean validate(Object response);
+
+
 	public  String getPrefixByName(String from) {
 		if(from.equals("facebook")){
 			return FacebookLoginService.PREFIX;
@@ -201,5 +239,5 @@ public abstract class SocialLoginService {
 	}
 
 
-	
+
 }
