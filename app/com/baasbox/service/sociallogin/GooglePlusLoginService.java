@@ -9,6 +9,8 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
+import com.baasbox.configuration.SocialLoginConfiguration;
+
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -48,7 +50,6 @@ public class GooglePlusLoginService extends SocialLoginService{
 	
 	@Override
 	public String userInfoUrl() {
-		
 		return "https://www.googleapis.com/oauth2/v1/userinfo";
 	}
 
@@ -100,7 +101,10 @@ public class GooglePlusLoginService extends SocialLoginService{
 	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
 		if(response instanceof JsonNode){
 			JsonNode jn = (JsonNode)response;
-			return StringUtils.isNotEmpty(jn.get("user_id").getTextValue());
+			System.out.println("RESPONSE:"+jn);
+			String clientId = jn.get("issued_to").getTextValue();
+			
+			return clientId!=null && clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString());
 		}else{
 			throw new BaasBoxSocialTokenValidationException();
 		}
