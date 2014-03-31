@@ -16,14 +16,13 @@ import play.mvc.Http.Session;
 
 import com.baasbox.configuration.SocialLoginConfiguration;
 
-
-
 public class FacebookLoginService extends SocialLoginService{
 
-	public static String PREFIX = "fb_";
+	public static final String PREFIX = "fb_";
+	public static final String SOCIAL = "facebook";
 	
 	public FacebookLoginService(String appcode) {
-		super("facebook",appcode);
+		super(SOCIAL,appcode);
 	}
 
 	
@@ -64,7 +63,6 @@ public class FacebookLoginService extends SocialLoginService{
 
 	@Override
 	public Token getAccessTokenFromRequest(Request r,Session s) {
-		System.out.println(r.body().asText());
 		return null;
 	}
 
@@ -91,11 +89,15 @@ public class FacebookLoginService extends SocialLoginService{
 		if(user.get("name")!=null){
 			ui.addData("name",user.get("name").getTextValue());
 		}
+		ui.setFrom(SOCIAL);
 		return ui;
 	}
 
 
 
+	/**
+	 * The validation URL that 
+	 */
 	@Override
 	public String getValidationURL(String token) {
 		String url = "https://graph.facebook.com/debug_token?input_token=%s&access_token=%s%%7C%s";

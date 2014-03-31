@@ -18,6 +18,7 @@ import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
+import play.mvc.Http.Request;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -79,16 +80,8 @@ public class Social extends Controller{
 		}
 	}
 
-	/**
-	 * Login the user through socialnetwork specified
-	 * 
-	 * An oauth_token and oauth_secret provided by oauth steps
-	 * are mandatory 
-	 * @param socialNetwork the social network name (facebook,google)
-	 * @return 200 status code with the X-BB-SESSION token for further calls
-	 */
-	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
-	public static Result loginWith(String socialNetwork){
+	
+	private static Token extractOAuthTokensFromRequest(Request r){
 		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson();
@@ -103,18 +96,37 @@ public class Social extends Controller{
 		//NOTE: to maintain compatibility with previous versions, we leave the option to use QueryStrings
 		if (StringUtils.isEmpty(authToken)) authToken = request().getQueryString(OAUTH_TOKEN);		
 		if (StringUtils.isEmpty(authSecret))  authSecret = request().getQueryString(OAUTH_SECRET);	
-
+	
 		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
-			return badRequest("Both '"+OAUTH_TOKEN+"' and '"+OAUTH_SECRET+"' should be specified.");
+			return null;
+		}else{
+			
 		}
+		return new Token(authToken,authSecret); 
+	}
+	
+	/**
+	 * Login the user through socialnetwork specified
+	 * 
+	 * An oauth_token and oauth_secret provided by oauth steps
+	 * are mandatory 
+	 * @param socialNetwork the social network name (facebook,google)
+	 * @return 200 status code with the X-BB-SESSION token for further calls
+	 */
+	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
+	public static Result loginWith(String socialNetwork){
+		
 
 		String appcode = (String)ctx().args.get("appcode");
 		//after this call, db connection is lost!
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
-		Token t = new Token(authToken,authSecret);
+		Token t =extractOAuthTokensFromRequest(request());
+		if(t==null){
+			return badRequest(String.format("Both %s and %s should be specified as query parameters or in the json body",OAUTH_TOKEN,OAUTH_SECRET));
+		}
 		UserInfo result=null;
 		try {
-			if(sc.validationRequest(authToken)){
+			if(sc.validationRequest(t.getToken())){
 				result = sc.getUserInfo(t);
 			}else{
 				return badRequest("Provided token is not valid");
@@ -263,30 +275,17 @@ public class Social extends Controller{
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result linkWith(String socialNetwork){
 		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
-		Http.RequestBody body = request().body();
-		JsonNode bodyJson= body.asJson();
-		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
-
-		String authToken = null;
-		String authSecret = null;
-		
-		if (bodyJson.has(OAUTH_TOKEN)) authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
-		if (bodyJson.has(OAUTH_SECRET)) authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
-			
-		//NOTE: to maintain compatibility with previous versions, we leave the possibility to use QueryStrings
-		if (StringUtils.isEmpty(authToken)) authToken = request().getQueryString(OAUTH_TOKEN);		
-		if (StringUtils.isEmpty(authSecret))  authSecret = request().getQueryString(OAUTH_SECRET);	
-
-		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
+		Token t = extractOAuthTokensFromRequest(request());
+		if(t==null){
 			return badRequest("Both '"+OAUTH_TOKEN+"' and '"+OAUTH_SECRET+"' should be specified.");
 		}
 
 		String appcode = (String)ctx().args.get("appcode");
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
-		Token t = new Token(authToken,authSecret);
+		
 		UserInfo result=null;
 		try {
-			if(sc.validationRequest(authToken)){
+			if(sc.validationRequest(t.getToken())){
 				result = sc.getUserInfo(t);
 			}else{
 				return badRequest("Provided token is not valid.");
