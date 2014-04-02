@@ -1,40 +1,100 @@
+import static org.junit.Assert.*;
 import static play.mvc.Http.Status.OK;
-import static play.test.Helpers.GET;
-import static play.test.Helpers.routeAndCall;
-import static play.test.Helpers.running;
+import static play.test.Helpers.*;
 
+import java.util.Iterator;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import play.mvc.Result;
 import play.test.FakeRequest;
-
-import com.baasbox.configuration.Application;
-import com.baasbox.db.DbHelper;
-
+import play.test.Helpers;
 import core.AbstractAdminTest;
 import core.TestConfig;
 
 
 public class AdminSettingsModificationTest extends AbstractAdminTest{
 
+	String originalValue;
+	
 	@Override
 	public String getRouteAddress() {
 		return "/admin/configuration/Application/application.name/fromquerystring";
 	}
 	
 	public String getRouteAddressWithoutQS() {
-		return "/admin/configuration/Application?subsection=dummy";
+		return "/admin/configuration/Application";
 	}
 
 	@Override
 	public String getMethod() {
-		return "PUT";
+		return PUT;
 	}
 
+	@Before
+	public void getOriginalValue(){
+		if(StringUtils.isEmpty(originalValue)){
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					JsonFactory factory = new JsonFactory();
+					ObjectMapper mp = new ObjectMapper(factory);
+					
+					//Verify value has changed
+					FakeRequest request = new FakeRequest("GET", "/admin/configuration/dump.json");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					assertRoute(result, "LoadConfigurationAsJSON", OK, 
+							"application.name\":\"fromquerystring\"", true);
+				
+					String configurationSettings = Helpers.contentAsString(result);
+					
+					JsonNode configurationAsJson = null;
+					try{
+						configurationAsJson = mp.readTree(configurationSettings);
+					}catch(Exception e){
+						fail(e.getMessage());
+					}
+					 originalValue = findInConfigurationDump(configurationAsJson,"Application","application","application.name");
+				}});
+		}
+	}
+	
+	/*@After
+	public void setOriginalValue(){
+		if(!StringUtils.isEmpty(originalValue)){
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					setHeader("Content-Type", "application/json");
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					int status = httpRequest(getURLAddress(), PUT,"{\"key\":\"application.name\",\"value\":\""+originalValue+"\"}");
+					Assert.assertEquals(status,200);
+				}});
+		}
+	}*/
+	
 	
 	@Test 
 	public void test()
@@ -46,65 +106,59 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 			{
 				public void run() 
 				{
+					Assert.assertNotNull("Original application.name value not found", originalValue);
 					
-					String original = Application.APPLICATION_NAME.getValueAsString(); 
-					//load settings
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					FakeRequest request = new FakeRequest(PUT, getRouteAddressWithoutQS());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					//Commenting next line invokes the controller
+					request = request.withJsonBody(getPayload("/keyValueSettingsUpdate.json"));
+					
 					Result result = routeAndCall(request);
-					assertRoute(result, "Set configuration with QS", OK, "data\":\"You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.\"", true);
-					
-					//Verify value has changed
-					request = new FakeRequest("GET", "/admin/configuration/dump.json");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, 
-							"application.name\":\"fromquerystring\"", true);
-				
-					
-					//Write value with body
-					request = new FakeRequest(getMethod(), getRouteAddressWithoutQS());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					JsonFactory factory = new JsonFactory();
-					ObjectMapper mp = new ObjectMapper(factory);
-					JsonNode node = null;
-					try{
-						node = mp.readTree("{\"key\":\"application.name\",\"value\":\"frombodyparams\"}");
-					}catch(Exception e){
-						fail();
-					}
-					request = request.withJsonBody(node);
-					result = routeAndCall(request);
-					assertRoute(result, "Set configuration with Request Body", OK, "", false);
+					assertRoute(result,"Test update settings via json body",OK,null,false);
 					
 					request = new FakeRequest("GET", "/admin/configuration/dump.json");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
 					assertRoute(result, "LoadConfigurationAsJSON", OK, 
-							"application.name\":\"frombodyparams\"", true);
+							"application.name\":\"frombody\"", true);
 				
-					//Write value with body
-					request = new FakeRequest(getMethod(), getRouteAddressWithoutQS());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					try{
-						node = mp.readTree("{\"key\":\"application.name\",\"value\":\""+original+"\"}");
-					}catch(Exception e){
-						fail();
-					}
-					request = request.withJsonBody(node);
-					result = routeAndCall(request);
-					assertRoute(result, "Set configuration with Request Body", OK, "", false);
+					
 					
 				}
+
+				
 			}
 		);		
 	}
 	
+	private String findInConfigurationDump(JsonNode data,
+			String section,String subsection, String key) {
+		Iterator<JsonNode> values = data.get("data").getElements();
+		String result = null;
+		while(values.hasNext()){
+			JsonNode n = values.next();
+			
+			if(n.has("section") && n.get("section").getTextValue().equalsIgnoreCase(section)){
+				JsonNode subValues = n.get("sub sections").get(subsection);
+				
+				if(subValues!= null){
+					Iterator<JsonNode> keys = subValues.getElements();
+					while(keys.hasNext()){
+						JsonNode keyNode = keys.next();
+						if(keyNode.has(key)){
+							result = keyNode.get(key).getTextValue();
+							break;
+						}
+					}
+				}
+			}
+			
+		}
+		return result;
+		
+	}
 	
 	@Override
 	protected void assertContent(String s) {

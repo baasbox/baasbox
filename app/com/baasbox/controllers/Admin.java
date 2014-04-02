@@ -520,20 +520,25 @@ public class Admin extends Controller {
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		boolean inQueryString =false;
-		System.out.println("REQUEST:"+request().body().asRaw());
+		
+		Http.RequestBody b = request().body();
+		JsonNode bodyJson= b.asJson();
+		
+		
 		try {
-			if(key==null){
-				key = request().body().asJson().get("key").asText();
+			if(StringUtils.isEmpty(key)){
+				key = bodyJson.get("key").getTextValue();
 			}else{
 				inQueryString = true;
 			}
-			if(value==null){
-				value = request().body().asJson().get("value").asText();
+			if(StringUtils.isEmpty(value)){
+				value = bodyJson.get("value").getTextValue();
 			}else{
 				inQueryString = true;
 			}
+			System.out.println(String.format("key %s, value %s",key,value));
 			if(StringUtils.isEmpty(key) || StringUtils.isEmpty(value)){
-				return badRequest("Key and/or Value for %s has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'key':'...','value':'...'}");
+				return badRequest(String.format("Key and/or Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'key':'...','value':'...'}",section));
 			}
 			
 			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
