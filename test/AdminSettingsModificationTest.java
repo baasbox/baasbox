@@ -1,10 +1,10 @@
 import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.OK;
-import static play.test.Helpers.PUT;
 import static play.test.Helpers.GET;
-import static play.test.Helpers.running;
-import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.PUT;
 import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
 
 import java.util.Iterator;
 
@@ -39,7 +39,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 	
 	
 	public String getRouteAddressWithoutQS() {
-		return getRouteAddress("Application");
+		return getRouteAddress("Application/application.name");
 	}
 
 	@Override
@@ -82,6 +82,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 					 
 					//load settings
 					 request = new FakeRequest(PUT, getRouteAddress("Application/application.name/fromquerystring"));
+					 request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					 result = routeAndCall(request);
@@ -103,7 +104,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					JsonNode node = null;
 					try{
-						node = mp.readTree("{\"key\":\"application.name\",\"value\":\"frombodyparams\"}");
+						node = mp.readTree("{\"value\":\"frombodyparams\"}");
 					}catch(Exception e){
 						fail("Unable to parse");
 					}
@@ -126,7 +127,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					 node = null;
 					try{
-						node = mp.readTree("{\"key\":\"application.name\",\"value\":\""+originalValue+"\"}");
+						node = mp.readTree("{\"value\":\""+originalValue+"\"}");
 					}catch(Exception e){
 						fail("Unable to parse");
 					}

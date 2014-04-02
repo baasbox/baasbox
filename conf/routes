@@ -169,7 +169,9 @@ GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfi
 GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfiguration(section: String)
 		
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
+#DEPRECATED
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+PUT     /admin/configuration/:section/:key                      com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String ?= "")
 PUT     /admin/configuration/:section                        	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String ?= "", value: String ?= "")
 
 GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersion()

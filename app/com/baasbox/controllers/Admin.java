@@ -520,45 +520,45 @@ public class Admin extends Controller {
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		boolean inQueryString =false;
-		
-		Http.RequestBody b = request().body();
-		JsonNode bodyJson= b.asJson();
-		
-		
+		String contentType = request().getHeader(CONTENT_TYPE);
+		if(StringUtils.isEmpty(contentType)){
+			return badRequest("The content-type request header should be present in order to successfully update a setting.");
+		}
+		if(StringUtils.isEmpty(key)){
+			return badRequest("The key parameter should be specified in the url.");
+		}
 		try {
-			if(StringUtils.isEmpty(key)){
-				key = bodyJson.get("key").getTextValue();
-			}else{
-				inQueryString = true;
-			}
-			if(StringUtils.isEmpty(value)){
-				value = bodyJson.get("value").getTextValue();
-			}else{
-				inQueryString = true;
-			}
-			System.out.println(String.format("key %s, value %s",key,value));
-			if(StringUtils.isEmpty(key) || StringUtils.isEmpty(value)){
-				return badRequest(String.format("Key and/or Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'key':'...','value':'...'}",section));
-			}
-			
-			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
-			if(i.getType().equals(ConfigurationFileContainer.class)){
-				MultipartFormData  body = request().body().asMultipartFormData();
-				if (body==null) return badRequest("missing data: is the body multipart/form-data?");
-				FilePart file = body.getFile("file");
-				if(file==null) return badRequest("missing file");
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				try{
-					FileUtils.copyFile(file.getFile(),baos);
-					Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
-					baos.close();
-					conf.getMethod("setValue",Object.class).invoke(i,fileValue);
-				}catch(Exception e){
-					internalServerError(e.getMessage());
+			if(contentType.indexOf("application/json")>-1){
+				Http.RequestBody b = request().body();
+				JsonNode bodyJson= b.asJson();
+				if(StringUtils.isEmpty(value)){
+					value = bodyJson.has("value")?bodyJson.get("value").getTextValue():null;
+				}else{
+					inQueryString = true;
 				}
-			}else{
+				if(StringUtils.isEmpty(value)){
+					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
+				}
 				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			}else{
+				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
+				if(i.getType().equals(ConfigurationFileContainer.class)){
+					MultipartFormData  body = request().body().asMultipartFormData();
+					if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+					FilePart file = body.getFile("file");
+					if(file==null) return badRequest("missing file");
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					try{
+						FileUtils.copyFile(file.getFile(),baos);
+						Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
+						baos.close();
+						conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+					}catch(Exception e){
+						internalServerError(e.getMessage());
+					}
+				}
 			}
+		
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}catch (IllegalStateException e) {
