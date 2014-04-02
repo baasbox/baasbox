@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -50,7 +51,6 @@ import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
 import play.libs.WS.Response;
-import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -93,7 +93,6 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -511,6 +510,8 @@ public class Admin extends Controller {
 	}
 
 	public static Result setConfiguration(String section, String subSection, String key, String value){
+		
+		System.out.println(String.format("DEBUG: key %s value %s",key,value));
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		boolean inQueryString =false;
@@ -522,11 +523,23 @@ public class Admin extends Controller {
 			return badRequest("The key parameter should be specified in the url.");
 		}
 		try {
+			Http.RequestBody b = request().body();
 			if(contentType.indexOf("application/json")>-1){
-				Http.RequestBody b = request().body();
 				JsonNode bodyJson= b.asJson();
 				if(StringUtils.isEmpty(value)){
 					value = bodyJson.has("value")?bodyJson.get("value").getTextValue():null;
+				}else{
+					inQueryString = true;
+				}
+				if(StringUtils.isEmpty(value)){
+					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
+				}
+				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			}else if(contentType.indexOf("application/x-www-form-urlencoded")>-1){
+			
+				Map<String,String[]> form = b.asFormUrlEncoded();
+				if(StringUtils.isEmpty(value)){
+					value = form.containsKey("value")?form.get("value")[0]:null;
 				}else{
 					inQueryString = true;
 				}
