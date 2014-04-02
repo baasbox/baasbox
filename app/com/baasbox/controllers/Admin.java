@@ -92,6 +92,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -155,26 +156,19 @@ public class Admin extends Controller {
 	public static Result getCollections(){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 
-		List<ODocument> result;
-		String ret="{[]}";
+		List<ImmutableMap> result=null;
 		try {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			result = CollectionService.getCollections(criteria);
+			List<ODocument> collections = CollectionService.getCollections(criteria);
+			result = StatisticsService.collectionsDetails(collections);
 		} catch (Exception e){
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-
-		try{
-			ret=JSONFormats.prepareResponseToJson(result,JSONFormats.Formats.DOCUMENT);
-		}catch (IOException e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
-		return ok(ret);
+		return ok(toJson(result));
 	}
 
 	public static Result createCollection(String name) throws Throwable{
