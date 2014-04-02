@@ -99,8 +99,6 @@ public class Social extends Controller{
 	
 		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
 			return null;
-		}else{
-			
 		}
 		return new Token(authToken,authSecret); 
 	}
