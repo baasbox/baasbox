@@ -167,8 +167,10 @@ GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
 GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
 GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfiguration(section: String)
+		
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+PUT     /admin/configuration/:section                        	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String ?= "", value: String ?= "")
 
 GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersion()
 DELETE	/admin/db/:timeout										com.baasbox.controllers.Admin.dropDb(timeout:Long)

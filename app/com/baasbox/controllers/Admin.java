@@ -50,6 +50,7 @@ import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
 import play.libs.WS.Response;
+import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -515,11 +516,26 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 
-
 	public static Result setConfiguration(String section, String subSection, String key, String value){
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
+		boolean inQueryString =false;
+		System.out.println("REQUEST:"+request().body().asRaw());
 		try {
+			if(key==null){
+				key = request().body().asJson().get("key").asText();
+			}else{
+				inQueryString = true;
+			}
+			if(value==null){
+				value = request().body().asJson().get("value").asText();
+			}else{
+				inQueryString = true;
+			}
+			if(StringUtils.isEmpty(key) || StringUtils.isEmpty(value)){
+				return badRequest("Key and/or Value for %s has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'key':'...','value':'...'}");
+			}
+			
 			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
 			if(i.getType().equals(ConfigurationFileContainer.class)){
 				MultipartFormData  body = request().body().asMultipartFormData();
@@ -543,7 +559,11 @@ public class Admin extends Controller {
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
 		}
-		return ok();
+		String message = "";
+		if(inQueryString){
+			message = "You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.";
+		}
+		return ok(message);
 	}
 
 	public static Result getConfiguration(String section) throws  Throwable{

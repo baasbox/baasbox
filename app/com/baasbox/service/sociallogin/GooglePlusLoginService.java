@@ -101,12 +101,14 @@ public class GooglePlusLoginService extends SocialLoginService{
 	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
 		if(response instanceof JsonNode){
 			JsonNode jn = (JsonNode)response;
-			System.out.println("RESPONSE:"+jn);
 			String clientId = jn.get("issued_to").getTextValue();
-			
-			return clientId!=null && clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString());
+			boolean isValid = clientId!=null && clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString());
+			if(!isValid){
+				throw new BaasBoxSocialTokenValidationException("The provided g+ token is not valid");
+			}
+			return isValid;
 		}else{
-			throw new BaasBoxSocialTokenValidationException();
+			throw new RuntimeException("G+ validation token failed");
 		}
 	}
 	

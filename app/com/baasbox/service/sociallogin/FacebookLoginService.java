@@ -111,9 +111,13 @@ public class FacebookLoginService extends SocialLoginService{
 	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
 		if(response instanceof JsonNode){
 			JsonNode jn = (JsonNode)response;
-			return jn.get("data").get("is_valid").asBoolean();
+			boolean isValid = jn.get("data").get("is_valid").asBoolean();
+			if(!isValid){
+				throw new BaasBoxSocialTokenValidationException("Provided Facebook auth token is not valid");
+			}
+			return isValid;
 		}else{
-			throw new BaasBoxSocialTokenValidationException();
+			throw new RuntimeException("There was an error invoking validation on facebook token");
 		}
 	}
 

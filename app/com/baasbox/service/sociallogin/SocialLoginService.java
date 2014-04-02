@@ -1,5 +1,6 @@
 package com.baasbox.service.sociallogin;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.lang.StringUtils;
@@ -60,23 +61,23 @@ public abstract class SocialLoginService {
 		StringBuilder serverUrl = new StringBuilder();
 		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
 		try{
-		DbHelper.getOrOpenConnectionWIthHTTPUsername();		
-		Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
-		if(isSSL){
-			serverUrl.append(SECURE_PROTOCOL);
-		}else{
-			serverUrl.append(PROTOCOL);
-		}
-		String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
-		serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
-		String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
-		serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
-		this.service = new ServiceBuilder().
-				provider(provider())
-				.apiKey(this.token.getToken())
-				.apiSecret(this.token.getSecret())
-				.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
-				.build();
+			DbHelper.getOrOpenConnectionWIthHTTPUsername();		
+			Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
+			if(isSSL){
+				serverUrl.append(SECURE_PROTOCOL);
+			}else{
+				serverUrl.append(PROTOCOL);
+			}
+			String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+			serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
+			String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
+			serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
+			this.service = new ServiceBuilder().
+					provider(provider())
+					.apiKey(this.token.getToken())
+					.apiSecret(this.token.getSecret())
+					.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
+					.build();
 		}catch(InvalidAppCodeException iace){
 			throw new RuntimeException(iace);
 		}
@@ -200,11 +201,13 @@ public abstract class SocialLoginService {
 		String url = getValidationURL(token);
 		HttpClient client = new DefaultHttpClient();
 		HttpGet method = new HttpGet(url);
-		try{
-			
-			BasicResponseHandler brh = new BasicResponseHandler();
-			
-			String body = client.execute(method,brh);
+
+		BasicResponseHandler brh = new BasicResponseHandler();
+
+		String body;
+		try {
+			body = client.execute(method,brh);
+
 			if(StringUtils.isEmpty(body)){
 				return false;
 			}else{
@@ -214,13 +217,9 @@ public abstract class SocialLoginService {
 				JsonNode jn = mapper.readTree(jp);
 				return validate(jn);
 			}
-		}catch(Exception e){
-			return false;
-			
-		}finally{
-			
+		} catch (IOException e) {
+			throw new BaasBoxSocialTokenValidationException("There was an error in the token validation process:"+e.getMessage());
 		}
-		
 
 	}
 
