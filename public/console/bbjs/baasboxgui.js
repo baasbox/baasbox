@@ -860,10 +860,15 @@ function updateSetting()
 {
 	var key = $("#txtKey").val();
 	var value = $("#txtValue").val();
-
-	BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key, value).ajax(
+	var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key,'');
+	var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/');
+	$.ajax(
 			{
-
+				method:'PUT',
+				type:'PUT',
+				url: url,
+				contentType:'application/json',
+				data:JSON.stringify({value:value}),
 				error: function(data)
 				{
 					////console.debug(data);
@@ -2295,9 +2300,15 @@ function SettingsController($scope){
 	
 	
 	function updateSettings(key,value,onSuccess){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, value).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, '');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+					method:'PUT',
+					type:'PUT',
+					url:url,
+					contentType : 'application/json',
+					data: JSON.stringify({value:value}),
 					error: function(data)
 					{
 						//console.log(data)
@@ -2333,7 +2344,7 @@ function SettingsController($scope){
 				updateSettings(key2,value2,function(){
 					console.log("saving secret")
 					var key3 = "social."+name+".enabled"
-					var value3 = true;
+					var value3 = "true";
 					updateSettings(key3,value3,function(){
 						console.log("enabling")
 						$scope.sociallogins[name].saved = true;
@@ -2401,9 +2412,16 @@ function PushSettingsController($scope){
 	}
 	
 	$scope.sandboxMode = function(enable){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key, enable).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key,'');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+		
+					method:'PUT',
+					type:'PUT',
+					contentType:'application/json',
+					url: url,
+					data:JSON.stringify({value:"true"}),
 					error: function(data)
 					{
 						////console.debug(data)
@@ -2428,9 +2446,16 @@ function PushSettingsController($scope){
 			s.error = "Value can't be empty";
 			return;
 		}
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, s.value).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, '');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+					method:'PUT',
+					type:'PUT',
+					url:url,
+					contentType:'application/json',
+					url:url,
+					data:JSON.stringify({value:s.value}),
 					error: function(data)
 					{
 						////console.debug(data)

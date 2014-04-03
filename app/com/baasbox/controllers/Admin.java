@@ -85,6 +85,7 @@ import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
+
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
@@ -535,18 +536,7 @@ public class Admin extends Controller {
 					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
 				}
 				PropertiesConfigurationHelper.setByKey(conf, key, value);
-			}else if(contentType.indexOf("application/x-www-form-urlencoded")>-1){
 			
-				Map<String,String[]> form = b.asFormUrlEncoded();
-				if(StringUtils.isEmpty(value)){
-					value = form.containsKey("value")?form.get("value")[0]:null;
-				}else{
-					inQueryString = true;
-				}
-				if(StringUtils.isEmpty(value)){
-					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
-				}
-				PropertiesConfigurationHelper.setByKey(conf, key, value);
 			}else{
 				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
 				if(i.getType().equals(ConfigurationFileContainer.class)){
