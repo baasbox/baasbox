@@ -39,7 +39,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 
 
 	public String getRouteAddressWithoutQS() {
-		return getRouteAddress("Application/application.name");
+		return getRouteAddress("Push/sandbox.ios.certificate.password");
 	}
 
 	@Override
@@ -76,12 +76,12 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 
 						}
 
-						originalValue = findInConfigurationDump(configuration,"Application","application","application.name");
-						Assert.assertNotNull("Original application.name value not found", originalValue);
+						originalValue = findInConfigurationDump(configuration,"Push","push","sandbox.ios.certificate.password");
+						
 
 
 						//load settings
-						request = new FakeRequest(PUT, getRouteAddress("Application/application.name/fromquerystring"));
+						request = new FakeRequest(PUT, getRouteAddress("Push/sandbox.ios.certificate.password/fromquerystring"));
 						request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
@@ -94,7 +94,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 						request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 						result = routeAndCall(request);
 						assertRoute(result, "LoadConfigurationAsJSON", OK, 
-								"application.name\":\"fromquerystring\"", true);
+								"sandbox.ios.certificate.password\":\"fromquerystring\"", true);
 
 
 						//Write value with body
@@ -118,7 +118,7 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 						request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 						result = routeAndCall(request);
 						assertRoute(result, "LoadConfigurationAsJSON", OK, 
-								"application.name\":\"frombodyparams\"", true);
+								"sandbox.ios.certificate.password\":\"frombodyparams\"", true);
 
 
 						request = new FakeRequest(PUT, getRouteAddressWithoutQS());
