@@ -11,10 +11,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
  * @author Claudio Tesoriero
  *
  */
-public class Evolution_0_7_5 implements IEvolution {
-	private String version="0.7.5";
+public class Evolution_0_8_0 implements IEvolution {
+	private String version="0.8.0";
 	
-	public Evolution_0_7_5() {}
+	public Evolution_0_8_0() {}
 
 	@Override
 	public String getFinalVersion() {
