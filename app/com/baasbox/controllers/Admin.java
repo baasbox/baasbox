@@ -92,6 +92,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -155,26 +156,19 @@ public class Admin extends Controller {
 	public static Result getCollections(){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 
-		List<ODocument> result;
-		String ret="{[]}";
+		List<ImmutableMap> result=null;
 		try {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			result = CollectionService.getCollections(criteria);
+			List<ODocument> collections = CollectionService.getCollections(criteria);
+			result = StatisticsService.collectionsDetails(collections);
 		} catch (Exception e){
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-
-		try{
-			ret=JSONFormats.prepareResponseToJson(result,JSONFormats.Formats.DOCUMENT);
-		}catch (IOException e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
-		return ok(ret);
+		return ok(toJson(result));
 	}
 
 	public static Result createCollection(String name) throws Throwable{
@@ -554,8 +548,13 @@ public class Admin extends Controller {
 	public static Result getLatestVersion() {
 		String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
 		if (Logger.isDebugEnabled()) Logger.debug("Calling " + urlToCall);
-		final Promise<Response> promise = WS.url(urlToCall).get();
-		return status(promise.get().getStatus(),promise.get().getBody());
+		try{
+			final Promise<Response> promise = WS.url(urlToCall).get();
+			return status(promise.get().getStatus(),promise.get().getBody());
+		}catch(Exception e){
+			Logger.warn("Could not reach BAASBOX site to check for new versions");
+		}
+		return status(503,"Could not reach BAASBOX site to check for new versions");
 	}//getLatestVersion
 
 
@@ -627,6 +626,7 @@ public class Admin extends Controller {
 		if(!file.exists()){
 			return notFound();
 		}else{
+			response().setContentType("application/zip"); //added in Play 2.2.1. it is very strange because the content type should be set by the framework
 			return ok(file);
 		}
 

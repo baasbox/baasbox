@@ -16,6 +16,7 @@ package com.baasbox.filters {
 	  def apply(nextFilter: (RequestHeader) => Future[SimpleResult])
 	           (requestHeader: RequestHeader): Future[SimpleResult] = {
 
+
 	    val start = System.currentTimeMillis
 	    var timers = BaasBoxMetric.Track.startRequest(requestHeader.method,requestHeader.uri)
 	    var contentLength = ""
@@ -41,7 +42,7 @@ package com.baasbox.filters {
 		    }finally{
 	  			BaasBoxMetric.Track.endRequest(timers,result.header.status,contentLength)
 			}
-		  result
+		    result
 
 	    }
 	  }

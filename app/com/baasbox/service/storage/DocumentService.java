@@ -43,6 +43,7 @@ import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -227,8 +228,10 @@ public class DocumentService {
 		q.append(" where @rid = ").append(rid);
 		try{
 			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
-		}catch(Exception e){
-			e.printStackTrace();
+		}catch(OSecurityException  e){
+			throw e;
+		} catch (InvalidCriteriaException e) {
+			throw new RuntimeException (e);
 		}
 		od = get(collectionName,rid);
 		return od;

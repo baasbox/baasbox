@@ -62,6 +62,25 @@ public class StatisticsService {
 			long assetsCount = assetDao.getCount();
 			long collectionsCount = collDao.getCount();
 			List<ODocument> collections = collDao.get(QueryParams.getInstance());
+			ArrayList<ImmutableMap> collMap = collectionsDetails(collections);
+			ImmutableMap response = ImmutableMap.of(
+					"users", usersCount,
+					"collections", collectionsCount,
+					"collections_details", collMap,
+					"assets",assetsCount
+					);
+			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			return response;
+		}
+
+		/**
+		 * @param collections list of ODocuments representing the defined collections
+		 * @return for each collection: its name, the number of documents, and the total size that the collection takes up
+		 * @throws InvalidCollectionException
+		 */
+		public static ArrayList<ImmutableMap> collectionsDetails(List<ODocument> collections)	throws InvalidCollectionException {
+			ODatabaseRecordTx db = DbHelper.getConnection();
 			ArrayList<ImmutableMap> collMap = new ArrayList<ImmutableMap>();
 			for(ODocument doc:collections){
 				String collectionName = doc.field(CollectionDao.NAME);
@@ -83,15 +102,7 @@ public class StatisticsService {
 					Logger.error(ExceptionUtils.getFullStackTrace(e));
 				}
 			}
-			ImmutableMap response = ImmutableMap.of(
-					"users", usersCount,
-					"collections", collectionsCount,
-					"collections_details", collMap,
-					"assets",assetsCount
-					);
-			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
-			return response;
+			return collMap;
 		}
 		
 		public static String dbConfiguration() {

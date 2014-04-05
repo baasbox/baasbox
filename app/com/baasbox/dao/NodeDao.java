@@ -33,7 +33,6 @@ import com.baasbox.enumerations.Permissions;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -47,6 +46,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
 public abstract class NodeDao  {
@@ -124,17 +126,16 @@ public abstract class NodeDao  {
 	
 	public ODocument create() throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
+		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
-				ODocument vertex = db.createVertex(CLASS_VERTEX_NAME);
+				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
 				doc.field(FIELD_CREATION_DATE,new Date());
-				vertex.field(FIELD_TO_DOCUMENT_FIELD,doc);
 				UUID token = UUID.randomUUID();
 				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
-				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getUser().getName());
+				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
 			return doc;
 		}catch (Throwable e){
 			throw e;
@@ -289,13 +290,14 @@ public abstract class NodeDao  {
 	
 	public void delete(ORID rid) throws Throwable{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
+		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
 		//retrieve the vertex associated to this node
 		try{
 			DbHelper.requestTransaction();
-			ODocument vertex = (ODocument)((ODocument)db.load(rid)).field(FIELD_LINK_TO_VERTEX);
+			OrientVertex vertex = db.getVertex(((ODocument)db.getRawGraph().load(rid))
+														.field(FIELD_LINK_TO_VERTEX));
 			db.removeVertex(vertex);
-			db.delete(rid);
+			db.getRawGraph().delete(rid);
 			DbHelper.commitTransaction();
 		}catch (Throwable e){
 			DbHelper.rollbackTransaction();

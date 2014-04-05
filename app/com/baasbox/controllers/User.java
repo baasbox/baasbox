@@ -63,6 +63,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
@@ -296,11 +297,13 @@ public class User extends Controller {
 	  		  
 	  		  String appCode = (String) Http.Context.current.get().args.get("appcode");
 	  		  UserService.sendResetPwdMail(appCode,user);
+	  	  } catch (PasswordRecoveryException e) {
+	  		  Logger.warn("resetPasswordStep1", e);
+	  		  return badRequest(e.getMessage());
 	  	  } catch (Exception e) {
 	  		  Logger.warn("resetPasswordStep1", e);
-	  		  if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-	  		  else return internalServerError(e.getMessage());
-	  }
+	  		  return internalServerError(e.getMessage());
+	  	  }
 	  	  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	  	  return ok();
 	  }

@@ -53,13 +53,21 @@ public class BasicAuthAccess  implements IAccessMethod {
         	return false;
         }
 
-        String auth = authHeader.substring(6);
-        if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + ": " + auth);
         byte[] decodedAuth;
+
+		try {
+			String auth = authHeader.substring(6);
+			if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + ": " + auth);
+			decodedAuth = new sun.misc.BASE64Decoder().decodeBuffer(auth);
+		} catch (IOException e1) {
+			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e1.getMessage());
+			return false;
+		} catch (StringIndexOutOfBoundsException e){
+			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
+			return false;
+		}
 		
-			decodedAuth = decodeBase64(auth);
-	
-			
+
         if (Logger.isDebugEnabled()) Logger.debug ("Decoded header: " + decodedAuth);
     	String[] credString;
 		try {
