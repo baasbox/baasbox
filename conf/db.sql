@@ -90,8 +90,8 @@ alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
 --indices
---deprecated since OrientDB 1.7
---create index ouser.name unique;
+--deprecated since OrientDB 1.7:
+create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
