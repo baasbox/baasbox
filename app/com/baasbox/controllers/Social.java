@@ -17,6 +17,8 @@ import play.libs.Crypto;
 import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Request;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -30,14 +32,20 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.sociallogin.BaasBoxSocialException;
+import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
 import com.baasbox.service.sociallogin.SocialLoginService;
+import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.user.UserService;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Social extends Controller{
-
+	
+	private static final String OAUTH_TOKEN="oauth_token";
+	private static final String OAUTH_SECRET="oauth_secret";
+	
 
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
@@ -49,9 +57,7 @@ public class Social extends Controller{
 		}else{
 			SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
 			return ok("{\"url\":\""+sc.getAuthorizationURL(session())+"\"}");
-
 		}
-
 	}
 
 	/**
@@ -63,11 +69,40 @@ public class Social extends Controller{
 	 * @return
 	 */
 	public static Result callback(String socialNetwork){
-		SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
-		Token t = sc.requestAccessToken(request(),session());
-		return ok("{\"oauth_token\":\""+t.getToken()+"\",\"oauth_secret\":\""+t.getSecret()+"\"}");
+		try{
+			SocialLoginService sc = SocialLoginService.by(socialNetwork,(String)ctx().args.get("appcode"));
+			Token t = sc.requestAccessToken(request(),session());
+			return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
+		}catch (UnsupportedSocialNetworkException e){
+			return badRequest(e.getMessage());
+		}catch (java.lang.IllegalArgumentException e){
+			return badRequest(e.getMessage());
+		}
 	}
 
+	
+	private static Token extractOAuthTokensFromRequest(Request r){
+		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson();
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
+
+		String authToken = null;
+		String authSecret = null;
+		
+		if (bodyJson.has(OAUTH_TOKEN)) authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
+		if (bodyJson.has(OAUTH_SECRET)) authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
+			
+		//NOTE: to maintain compatibility with previous versions, we leave the option to use QueryStrings
+		if (StringUtils.isEmpty(authToken)) authToken = request().getQueryString(OAUTH_TOKEN);		
+		if (StringUtils.isEmpty(authSecret))  authSecret = request().getQueryString(OAUTH_SECRET);	
+	
+		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
+			return null;
+		}
+		return new Token(authToken,authSecret); 
+	}
+	
 	/**
 	 * Login the user through socialnetwork specified
 	 * 
@@ -78,18 +113,28 @@ public class Social extends Controller{
 	 */
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result loginWith(String socialNetwork){
-
-		String authToken = request().getQueryString("oauth_token");
-		String authSecret = request().getQueryString("oauth_secret");
-
-		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
-			return badRequest("Both oauth_token and oauth_secret should be specified in the query string");
-		}
+		
 
 		String appcode = (String)ctx().args.get("appcode");
+		//after this call, db connection is lost!
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
-		Token t = new Token(authToken,authSecret);
-		UserInfo result = sc.getUserInfo(t);
+		Token t =extractOAuthTokensFromRequest(request());
+		if(t==null){
+			return badRequest(String.format("Both %s and %s should be specified as query parameters or in the json body",OAUTH_TOKEN,OAUTH_SECRET));
+		}
+		UserInfo result=null;
+		try {
+			if(sc.validationRequest(t.getToken())){
+				result = sc.getUserInfo(t);
+			}else{
+				return badRequest("Provided token is not valid");
+			}
+		} catch (BaasBoxSocialException e1) {
+			return badRequest(e1.getError());
+		}catch (BaasBoxSocialTokenValidationException e2) {
+			return badRequest("Unable to validate provided token");
+		}
+		if (Logger.isDebugEnabled()) Logger.debug("UserInfo received: " + result.toString());
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		//Setting token as secret for one-token only social networks
@@ -98,7 +143,6 @@ public class Social extends Controller{
 		ODocument existingUser =  null;
 		try{
 			existingUser = userDao.getBySocialUserId(result);
-			
 		}catch(SqlInjectionException sie){
 			return internalServerError(sie.getMessage());
 		}
@@ -228,17 +272,28 @@ public class Social extends Controller{
 	 */
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result linkWith(String socialNetwork){
-		String authToken = request().getQueryString("oauth_token");
-		String authSecret = request().getQueryString("oauth_secret");
-
-		if(StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)){
-			return badRequest("Both oauth_token and oauth_secret should be specified in the query string");
+		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+		Token t = extractOAuthTokensFromRequest(request());
+		if(t==null){
+			return badRequest("Both '"+OAUTH_TOKEN+"' and '"+OAUTH_SECRET+"' should be specified.");
 		}
 
 		String appcode = (String)ctx().args.get("appcode");
 		SocialLoginService sc = SocialLoginService.by(socialNetwork,appcode);
-		Token t = new Token(authToken,authSecret);
-		UserInfo result = sc.getUserInfo(t);
+		
+		UserInfo result=null;
+		try {
+			if(sc.validationRequest(t.getToken())){
+				result = sc.getUserInfo(t);
+			}else{
+				return badRequest("Provided token is not valid.");
+			}
+		} catch (BaasBoxSocialException e1) {
+			return badRequest(e1.getError());
+		}
+		 catch (BaasBoxSocialTokenValidationException e2) {
+				return badRequest("Unable to validate provided token.");
+			}
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		

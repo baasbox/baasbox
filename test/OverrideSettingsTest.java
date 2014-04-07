@@ -17,23 +17,20 @@
 
 // @author: Marco Tibuzzi
 
-import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.GET;
-import static play.test.Helpers.contentAsString;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.status;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.mvc.Result;
+import play.test.FakeRequest;
+
 import com.baasbox.configuration.Application;
 import com.baasbox.db.DbHelper;
 
-import play.mvc.Result;
-import play.test.FakeRequest;
 import core.AbstractAdminTest;
 import core.TestConfig;
 
@@ -115,6 +112,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 						DbHelper.open("1234567890", "admin", "admin");
 						String hiddenValue=(String)Application.APPLICATION_NAME._getValue();
 						Assert.assertTrue("application.name: expected 'BaasBox', it is " + hiddenValue, hiddenValue.equals("BaasBox"));
+						
 					}catch (Exception e){
 						Assert.fail(e.getMessage());
 					}finally{
