@@ -512,7 +512,6 @@ public class Admin extends Controller {
 
 	public static Result setConfiguration(String section, String subSection, String key, String value){
 		
-		System.out.println(String.format("DEBUG: key %s value %s",key,value));
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
 		boolean inQueryString =false;
