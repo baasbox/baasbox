@@ -50,7 +50,7 @@ public class ConnectToDBFilter extends Action.Simple {
 		ODatabaseRecordTx database = null;
 		Result result=null;
 		try{
-			//close an eventually  'ghost'  connection leaved open in this thread
+			//close an eventually  'ghost'  connection left open in this thread
 			//(this may happen in case of Promise usage)
 			DbHelper.close(DbHelper.getConnection());
 	        try{
