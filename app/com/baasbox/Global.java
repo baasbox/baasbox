@@ -42,21 +42,18 @@ import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 
-import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.ConfigurationException;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
-import com.baasbox.util.ConfigurationFileContainer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
@@ -103,9 +100,9 @@ public class Global extends GlobalSettings {
 			  
 			  
 			  Orient.instance().startup();
-			  OGraphDatabase db = null;
+			  ODatabaseDocumentTx db = null;
 			  try{
-				db = new OGraphDatabase( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -139,7 +136,7 @@ public class Global extends GlobalSettings {
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
-		    		DbHelper.setupDb(db);
+		    		DbHelper.setupDb();
 			    	info("Initializing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);

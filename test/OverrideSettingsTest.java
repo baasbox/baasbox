@@ -65,7 +65,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
+					assertRoute(result, "LoadConfigurationAsJSON 1", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
 					
 					//override setting
 					Application.APPLICATION_NAME.override("blablabla");
@@ -75,7 +75,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, 
+					assertRoute(result, "LoadConfigurationAsJSON 2", OK, 
 							"application.name\":\"blablabla\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":false,\"visible\":true,\"overridden\":true", true);
 				
 					//tries to edit the value
@@ -93,7 +93,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, 
+					assertRoute(result, "LoadConfigurationAsJSON 3", OK, 
 							"application.name\":\"--HIDDEN--\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":false,\"visible\":false,\"overridden\":true", true);
 				
 					//get the hidden value

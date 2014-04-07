@@ -58,7 +58,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -69,6 +68,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
 public class DbHelper {
@@ -243,7 +243,7 @@ public class DbHelper {
 				db.getMetadata().reload();
 				if(repopulate){
 					HooksManager.registerAll(db);
-					setupDb(db);
+					setupDb();
 				}
 
 
@@ -326,8 +326,9 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 		try {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
-			//swallow...
+			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
 		}
 		return db;
 	}
@@ -376,15 +377,10 @@ public class DbHelper {
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
-	@Deprecated
-	public static void dropOrientDefault(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		//nothing to do here
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	}
 
-	public static void populateDB(ODatabaseRecordTx db) throws IOException{
-		OGraphDatabase dbg = new OGraphDatabase(db);
+	public static void populateDB() throws IOException{
+		ODatabaseRecordTx db = getConnection();
+		OrientGraphNoTx dbg =  getOrientGraphConnection();
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -395,7 +391,7 @@ public class DbHelper {
 		for (String line:script){
 			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
-				dbg.command(new OCommandSQL(line.replace(';', ' '))).execute();
+				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
 		Internal.DB_VERSION._setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
@@ -412,7 +408,7 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
-	public static void populateConfiguration (ODatabaseRecordTx db) throws IOException, ConfigurationException{
+	public static void populateConfiguration () throws IOException, ConfigurationException{
 		Logger.info("Load initial configuration...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(CONFIGURATION_FILE_NAME);
@@ -450,14 +446,14 @@ public class DbHelper {
 
 
 
-	public static void setupDb(ODatabaseRecordTx db) throws Exception{
+	public static void setupDb() throws Exception{
 		Logger.info("Creating default roles...");
 		DbHelper.createDefaultRoles();
+		populateDB();
+		getConnection().getMetadata().getIndexManager().reload();
 		Logger.info("Creating default users...");
-		DbHelper.dropOrientDefault();
-		populateDB(db);
 		createDefaultUsers();
-		populateConfiguration(db);
+		populateConfiguration();
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
@@ -572,11 +568,12 @@ public class DbHelper {
 		 }//end of evolutions
 	}
 	
-	@Deprecated
-	public static OGraphDatabase getOGraphDatabaseConnection(){
-		return new OGraphDatabase(getConnection());
-	}
+
 	
+	public static OrientGraphNoTx getOrientGraphConnection(){
+		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
+	}
+
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());
 	}
