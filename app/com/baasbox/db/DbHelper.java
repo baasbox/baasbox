@@ -26,7 +26,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.baasbox.dao.RoleDao;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.permissions.PermissionTagService;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -296,6 +299,13 @@ public class DbHelper {
 		
 		return getConnection();
 	}
+
+    public static boolean isConnectedAsAdmin(boolean excludeInternal){
+        OUser user = getConnection().getUser();
+        Set<ORole> roles = user.getRoles();
+        boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
+        return excludeInternal ? isAdminRole && !BBConfiguration.getBaasBoxAdminUsername().equals(user.getName()) : isAdminRole;
+    }
 
 	public static ODatabaseRecordTx reconnectAsAdmin (){
 		getConnection().close();

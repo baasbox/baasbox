@@ -91,21 +91,40 @@ PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os:
 
 #Storage Actions
 
-
+# @tag(baasbox.storage)
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
+
+# @tag(baasbox.storage)
 POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
+
+# @tag(baasbox.storage)
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
+
+# @tag(baabox.storage)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
+
+# @tag(baasbox.storage)
 PUT 	 /document/:collection/%23:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String, isUUID: Boolean ?= false)
+
+# @tag(baasbox.storage)
 GET		 /document/:collection/%23:rid					com.baasbox.controllers.Document.getDocument(collection: String, rid: String, isUUID: Boolean ?= false)
+
+# @tag(baasbox.storage)
 DELETE	 /document/:collection/%23:rid					com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String, isUUID: Boolean ?= false)
 
+# @tag(baasbox.storage)
 PUT 	 /document/:collection/:uuid					com.baasbox.controllers.Document.updateDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+
+# @tag(baasbox.storage)
 GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
+
+# @tag(baasbox.storage)
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
-
+# @tag(baasbox.storage)
 GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+
+# @tag(baasbox.storage)
 PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 
