@@ -94,7 +94,6 @@ PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os:
 
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
 POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
-
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
 PUT 	 /document/:collection/%23:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String, isUUID: Boolean ?= false)
@@ -185,6 +184,13 @@ DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.delete
 GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
+
+# endpoints switches
+
+GET     /admin/endpoints                                        com.baasbox.controllers.Admin.getPermissionTags
+GET     /admin/endpoints/:tag                                   com.baasbox.controllers.Admin.getPermissionTag(tag :String)
+PUT     /admin/endpoints/:tag/enabled                           com.baasbox.controllers.Admin.setPermissionTagEnabled(tag:String,enable:Boolean ?=true)
+DELETE  /admin/endpoints/:tag/enabled                           com.baasbox.controllers.Admin.setPermissionTagEnabled(tag:String,enable:Boolean ?=false)
 
 # ROOT access
 # ROOT RESET ADMIN PASSWORD

@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.baasbox.dao.exception.*;
 import com.baasbox.service.permissions.PermissionTagService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
@@ -72,10 +73,6 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
-import com.baasbox.dao.exception.CollectionAlreadyExistsException;
-import com.baasbox.dao.exception.InvalidCollectionException;
-import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
 import com.baasbox.enumerations.DefaultRoles;
@@ -910,7 +907,7 @@ public class Admin extends Controller {
 	 * DELETE /admin/follow/:follower/to/:tofollow
 	 * Delete a follow relationship beetwen user follower and user to follow
 	 * @param follower
-	 * @param toFollow
+	 * @param theFollowed
 	 * @return
 	 */
 	public static Result removeFollowRelationship(String follower,String theFollowed){
@@ -978,6 +975,37 @@ public class Admin extends Controller {
 	}
 
     /// permissions
+    public static Result getPermissionTag(String name){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        Result res;
+        try {
+            ODocument doc = PermissionTagService.getPermissionTag(name);
+            if (doc==null){
+                res = notFound("tag permission "+name+" does not exists");
+            } else {
+                res = ok(toJson(doc));
+            }
+        } catch (SqlInjectionException e) {
+            res = badRequest(e.getMessage());
+        }
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        return res;
+    }
+
+    public static Result setPermissionTagEnabled(String name,boolean enable){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        Result res;
+        try {
+            PermissionTagService.setTagEnabled(name,enable);
+            res = ok("success");
+        } catch (InvalidPermissionTagException e) {
+            res = notFound("tag permission "+name+" does not exists");
+        } catch (SqlInjectionException e) {
+            res = badRequest(e.getMessage());
+        }
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        return res;
+    }
 
     public static Result getPermissionTags(){
         if (Logger.isTraceEnabled())Logger.trace("Method Start");
