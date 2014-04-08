@@ -42,9 +42,9 @@ public class PermissionTagService {
         return dao.isEnabled(tag);
     }
 
-    public static void setTagEnabled(String tag,boolean enabled) throws InvalidPermissionTagException, SqlInjectionException {
+    public static boolean setTagEnabled(String tag,boolean enabled) throws InvalidPermissionTagException, SqlInjectionException {
         PermissionTagDao dao = PermissionTagDao.getInstance();
-        dao.setEnabled(tag,enabled);
+        return dao.setEnabled(tag,enabled);
     }
 
     public static List<ODocument> getPermissionTags(){
@@ -72,5 +72,10 @@ public class PermissionTagService {
                 if (Logger.isDebugEnabled()) Logger.error("Error while creating defaults tags");
             }
         }
+    }
+
+    public static ODocument getPermissionTag(String name) throws SqlInjectionException {
+        PermissionTagDao dao = PermissionTagDao.getInstance();
+        return dao.getByName(name);
     }
 }
