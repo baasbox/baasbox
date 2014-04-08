@@ -66,7 +66,7 @@ public class Evolution_0_8_0 implements IEvolution {
             "alter property _BB_Permissions.enabled mandatory=true;",
             "alter property _BB_Permissions.enabled notnull=true;",
 
-            "create index _BB_Permissions.name unique;"
+            "create index _BB_Permissions.tag unique;"
         );
         Logger.info("...done...");
     }

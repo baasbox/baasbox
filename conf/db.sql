@@ -104,7 +104,7 @@ create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
-create index _BB_Permissions.name unique;
+create index _BB_Permissions.tag unique;
 
 --configuration class
 create class _BB_Index;
