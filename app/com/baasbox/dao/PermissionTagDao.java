@@ -1,9 +1,13 @@
 package com.baasbox.dao;
 
+import com.baasbox.controllers.Generic;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.PermissionTagAlreadyExistsException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -15,28 +19,19 @@ import java.util.List;
  *
  * Created by Andrea Tortorella on 08/04/14.
  */
-public class PermissionTagDao extends NodeDao {
+public class PermissionTagDao  {
     private static final String MODEL_NAME ="_BB_Permissions";
     public static final String TAG = "tag";
     public static final String ENABLED = "enabled";
     private static final String INDEX = MODEL_NAME+'.'+TAG;
 
+    private final ODatabaseRecordTx db;
     public static PermissionTagDao getInstance(){
         return new PermissionTagDao();
     }
 
     protected PermissionTagDao() {
-        super(MODEL_NAME);
-    }
-
-    /**
-     * UNSUPPORTED! tags must have a name
-     * @return
-     * @throws Throwable
-     */
-    @Override
-    public ODocument create() throws Throwable {
-        throw new UnsupportedOperationException("tags must have a name");
+        db = DbHelper.getConnection();
     }
 
 
@@ -80,10 +75,10 @@ public class PermissionTagDao extends NodeDao {
         } catch (SqlInjectionException e){
             throw new InvalidPermissionTagException(e);
         }
-        ODocument document = super.create();
+        ODocument document = new ODocument(MODEL_NAME);
         document.field(TAG,name);
         document.field(ENABLED,enabled);
-        save(document);
+        document.save();
         if (Logger.isTraceEnabled()) Logger.trace("Method End");
         return document;
     }
@@ -166,11 +161,15 @@ public class PermissionTagDao extends NodeDao {
     }
 
     public List<ODocument> getAll(){
+        List<ODocument> docs = null;
+        QueryParams criteria = QueryParams.getInstance();
         try {
-            return super.get(QueryParams.getInstance());
+            OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME, false, criteria);
+            docs =DbHelper.commandExecute(command,criteria.getParams());
         } catch (SqlInjectionException e) {
-            throw new RuntimeException("Unexpected sql injection",e);
+            //swallow no injection possible
         }
+        return docs;
     }
 
     //todo implement delete
