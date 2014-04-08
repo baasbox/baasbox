@@ -68,6 +68,7 @@ public class Evolution_0_8_0 implements IEvolution {
 
             "create index _BB_Permissions.tag unique;"
         );
+        DbHelper.createDefaultPermissionTags();
         Logger.info("...done...");
     }
 }

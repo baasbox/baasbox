@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.baasbox.service.permissions.PermissionTagService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
@@ -976,4 +977,19 @@ public class Admin extends Controller {
 		 }
 	}
 
+    /// permissions
+
+    public static Result getPermissionTags(){
+        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        Result res;
+        try{
+            ImmutableMap<String, Boolean> tags = PermissionTagService.getPermissionTagsMap();
+            res = ok(toJson(tags));
+        } catch (Throwable e){
+            Logger.error(e.getMessage());
+            res = internalServerError(e.getMessage());
+        }
+        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        return res;
+    }
 }

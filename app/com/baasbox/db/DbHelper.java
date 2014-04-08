@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.baasbox.service.permissions.PermissionTagService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -444,7 +445,11 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
-
+    static void createDefaultPermissionTags(){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        PermissionTagService.createDefaultPermissions();
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+    }
 
 	public static void setupDb() throws Exception{
 		Logger.info("Creating default roles...");
@@ -454,6 +459,7 @@ public class DbHelper {
 		Logger.info("Creating default users...");
 		createDefaultUsers();
 		populateConfiguration();
+        createDefaultPermissionTags();
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
