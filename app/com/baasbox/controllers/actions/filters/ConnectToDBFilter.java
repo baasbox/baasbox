@@ -17,6 +17,7 @@
 package com.baasbox.controllers.actions.filters;
 
 
+import com.baasbox.service.permissions.RouteTagger;
 import play.Logger;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -41,7 +42,9 @@ public class ConnectToDBFilter extends Action.Simple {
 	public Result call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
-		Http.Context.current.set(ctx);
+        RouteTagger.attachAnnotations(ctx);
+
+        Http.Context.current.set(ctx);
 		
 		if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");

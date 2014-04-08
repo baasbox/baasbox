@@ -20,7 +20,8 @@ import java.util.regex.Pattern;
 public final class RouteTagger {
     private RouteTagger(){throw new AssertionError("uninstantiable");}
 
-    public static final boolean CHECK_PARSING = true;
+    // change to true to check route parse logging
+    private static final boolean CHECK_PARSING = false;
 
     private static final Pattern COMMENT_ANNOTATION_PATTERN =
             Pattern.compile("@([a-zA-Z_$][a-zA-Z\\d_$]*)(\\((([a-zA-Z_$][a-zA-Z\\d_$]*\\.)*[a-zA-Z_$][a-zA-Z\\d_$]*)?\\))?");

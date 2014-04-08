@@ -1,6 +1,6 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
-# ~~~~ 
+# ~~~~
 
 # Swagger - Root Resources Listing
 # GET     /api-docs.json               controllers.ApiHelpController.getResources
@@ -33,7 +33,7 @@ GET		/asset/:name/resize/:w/:h			com.baasbox.controllers.Asset.downloadResizedWH
 GET		/asset/:name/resize/:perc			com.baasbox.controllers.Asset.downloadResizedInPerc(name: String, download: Boolean ?= false, perc: String)
 GET		/asset/:name/resizeId/:sizeId		com.baasbox.controllers.Asset.downloadSizeId(name: String, download: Boolean ?= false, sizeId: Integer)
 GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, download: Boolean ?= false)
- 
+
 # User actions
 POST	/user								com.baasbox.controllers.User.signUp()
 POST	/login								com.baasbox.controllers.User.login()
@@ -90,8 +90,12 @@ PUT 	/push/disable/:pushToken        com.baasbox.controllers.Push.disablePush(pu
 PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 
 #Storage Actions
+
+
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
 POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
+
+# @tag(baasbox.storage) @tag(baasbox.data) @tag(ping) @tag()
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
 PUT 	 /document/:collection/%23:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String, isUUID: Boolean ?= false)
@@ -134,7 +138,7 @@ POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(na
 GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
 GET 	/admin/apiVersion				com.baasbox.controllers.Application.apiVersion()
-GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()	
+GET 	/admin/dbStatistics				com.baasbox.controllers.Admin.getDBStatistics()
 GET		/admin/role						com.baasbox.controllers.Admin.getRoles()
 GET		/admin/role/:name				com.baasbox.controllers.Admin.getRole(name: String)
 POST	/admin/role/:name				com.baasbox.controllers.Admin.createRole(name: String)
@@ -167,7 +171,7 @@ GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
 GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
 GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfiguration(section: String)
-		
+
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
 #DEPRECATED
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
@@ -186,7 +190,7 @@ POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb(
 # ROOT access
 # ROOT RESET ADMIN PASSWORD
 POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
-# ROOT + METRICS 
+# ROOT + METRICS
 POST	/root/metrics											com.baasbox.controllers.Root.startMetrics()
 DELETE 	/root/metrics											com.baasbox.controllers.Root.stopMetrics()
 GET		/root/metrics/meters									com.baasbox.controllers.Root.meters()
