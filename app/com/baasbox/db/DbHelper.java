@@ -155,7 +155,7 @@ public class DbHelper {
 	 * @param from the class to query
 	 * @param count if true, perform a count instead of to retrieve the records
 	 * @param criteria the criteria to apply in the 'where' clause of the select
-	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(OCommandRequest, String[])} method
+	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(com.orientechnologies.orient.core.command.OCommandRequest, Object[])} (OCommandRequest, String[])} method
 	 * @throws SqlInjectionException If the query is not a select statement
 	 */
 	public static OCommandRequest selectCommandBuilder(String from, boolean count, QueryParams criteria) throws SqlInjectionException{
@@ -577,5 +577,21 @@ public class DbHelper {
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());
 	}
-	
+
+    /**
+     * Executes a sequence of orient sql commands
+     */
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+        if (commands==null) return;
+        for (String command:commands){
+            if (command==null){
+                Logger.warn("null command found!! skipping");
+                continue;
+            }
+            if (log)Logger.debug("sql:> "+command);
+            if (!command.startsWith("--")&&!command.trim().isEmpty()){
+                db.command(new OCommandSQL(command.replace(';',' '))).execute();
+            }
+        }
+    }
 }
