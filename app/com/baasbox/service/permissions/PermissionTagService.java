@@ -69,9 +69,18 @@ public class PermissionTagService {
             try {
                 dao.createReserved(tag.name);
             } catch (Throwable throwable) {
-                if (Logger.isDebugEnabled()) Logger.error("Error while creating defaults tags");
+                if (Logger.isErrorEnabled()) Logger.error("Error while creating defaults tags");
+                throw new RuntimeException(throwable);
             }
         }
+    }
+
+    public static ImmutableMap<String,Object> getPermissionTagMap(String name) throws SqlInjectionException{
+        ODocument doc = getPermissionTag(name);
+        if (doc == null) return null;
+        String tag = doc.field(PermissionTagDao.TAG);
+        boolean enabled = doc.field(PermissionTagDao.ENABLED);
+        return ImmutableMap.<String,Object>of(PermissionTagDao.TAG,tag,PermissionTagDao.ENABLED,enabled);
     }
 
     public static ODocument getPermissionTag(String name) throws SqlInjectionException {

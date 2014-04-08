@@ -16,6 +16,7 @@
  */
 package com.baasbox.controllers;
 
+import static play.libs.Json.parse;
 import static play.libs.Json.toJson;
 
 import java.io.ByteArrayOutputStream;
@@ -433,7 +434,7 @@ public class Admin extends Controller {
 
 	/***
 	 * Change password of a specific user
-	 * @param name of user
+	 * @param username of user
 	 * @return 
 	 * @throws UserNotFoundException 
 	 * @throws SqlInjectionException 
@@ -979,11 +980,11 @@ public class Admin extends Controller {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         Result res;
         try {
-            ODocument doc = PermissionTagService.getPermissionTag(name);
-            if (doc==null){
+            final ImmutableMap<String, Object> tag = PermissionTagService.getPermissionTagMap(name);
+            if (tag==null){
                 res = notFound("tag permission "+name+" does not exists");
             } else {
-                res = ok(toJson(doc));
+                res = ok(toJson(tag));
             }
         } catch (SqlInjectionException e) {
             res = badRequest(e.getMessage());
