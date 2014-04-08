@@ -17,8 +17,8 @@ import java.util.List;
  */
 public class PermissionTagDao extends NodeDao {
     private static final String MODEL_NAME ="_BB_Permissions";
-    private static final String TAG = "tag";
-    private static final String ENABLED = "enabled";
+    public static final String TAG = "tag";
+    public static final String ENABLED = "enabled";
     private static final String INDEX = MODEL_NAME+'.'+TAG;
 
     public static PermissionTagDao getInstance(){
