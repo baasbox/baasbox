@@ -1,7 +1,7 @@
 package com.baasbox.dao.exception;
 
 /**
- * 
+ *
  * Created by Andrea Tortorella on 08/04/14.
  */
 public class InvalidPermissionTagException extends Exception {
