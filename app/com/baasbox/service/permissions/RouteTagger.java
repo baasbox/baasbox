@@ -1,5 +1,6 @@
 package com.baasbox.service.permissions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -50,9 +51,13 @@ public final class RouteTagger {
         return annotations;
     }
 
-    private static Map<String,Set<String>> parse(final String comment){
+    @VisibleForTesting
+    public static Map<String,Set<String>> parse(final String comment){
         try {
             if (Logger.isDebugEnabled()) Logger.debug("Parsing tags for current route with comment: "+comment);
+            if (comment==null){
+                return Collections.emptyMap();
+            }
             return PARSER_CACHE.get(comment);
         } catch (ExecutionException e){
             if (Logger.isErrorEnabled())Logger.error("Error reading tags for current route with comment: "+comment);
@@ -73,6 +78,9 @@ public final class RouteTagger {
             }
             String name = m.group(1);
             String value = groups>2?m.group(3):name;
+            if (value==null){
+                value=name;
+            }
             Set<String> vals = tags.get(name);
             if (vals == null){
                 vals = new HashSet<String>();
@@ -85,7 +93,6 @@ public final class RouteTagger {
 
     private static String getComment(Http.Context context){
         Option<String> opt = context._requestHeader().tags().get(Routes.ROUTE_COMMENTS());
-        String comment = opt.get();
-        return comment==null?"":comment;
+        return opt.isDefined()?opt.get():"";
     }
 }
