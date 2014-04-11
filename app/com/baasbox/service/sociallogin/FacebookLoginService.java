@@ -1,5 +1,6 @@
 package com.baasbox.service.sociallogin;
 
+
 import org.codehaus.jackson.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.FacebookApi;
@@ -8,16 +9,20 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
+import com.baasbox.configuration.SocialLoginConfiguration;
+
 public class FacebookLoginService extends SocialLoginService{
 
-	public static String PREFIX = "fb_";
+	public static final String PREFIX = "fb_";
+	public static final String SOCIAL = "facebook";
 	
 	public FacebookLoginService(String appcode) {
-		super("facebook",appcode);
+		super(SOCIAL,appcode);
 	}
 
 	
@@ -63,9 +68,13 @@ public class FacebookLoginService extends SocialLoginService{
 
 	
 	@Override
-	public UserInfo extractUserInfo(Response r) {
+	public UserInfo extractUserInfo(Response r) throws BaasBoxFacebookException {
+		if (Logger.isDebugEnabled()) Logger.debug("FacebookLoginService.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
+		if (user.has("error")){
+			throw new BaasBoxFacebookException(user.get("error"));
+		}
 		ui.setUsername(user.get("username").getTextValue());
 		ui.setId(user.get("id").getTextValue());
 		if(user.get("email")!=null){
@@ -80,9 +89,44 @@ public class FacebookLoginService extends SocialLoginService{
 		if(user.get("name")!=null){
 			ui.addData("name",user.get("name").getTextValue());
 		}
+		ui.setFrom(SOCIAL);
 		return ui;
 	}
 
+
+
+	/**
+	 * The validation URL that 
+	 */
+	@Override
+	public String getValidationURL(String token) {
+		String url = "https://graph.facebook.com/debug_token?input_token=%s&access_token=%s%%7C%s";
+		String finalUrl = String.format(url,token,SocialLoginConfiguration.FACEBOOK_TOKEN.getValueAsString(),SocialLoginConfiguration.FACEBOOK_SECRET.getValueAsString());
+		return finalUrl;
+	}
+
+
+
+	@Override
+	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
+		if(response instanceof JsonNode){
+			JsonNode jn = (JsonNode)response;
+			boolean isValid = jn.get("data").get("is_valid").asBoolean();
+			if(!isValid){
+				throw new BaasBoxSocialTokenValidationException("Provided Facebook auth token is not valid");
+			}
+			return isValid;
+		}else{
+			throw new RuntimeException("There was an error invoking validation on facebook token");
+		}
+	}
+
+
+
+	
+
+	
+	
 	
 	
 	

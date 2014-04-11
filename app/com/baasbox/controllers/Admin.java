@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -84,6 +85,7 @@ import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
+
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
@@ -92,7 +94,6 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -509,35 +510,61 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 
-
 	public static Result setConfiguration(String section, String subSection, String key, String value){
+		
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
+		boolean inQueryString =false;
+		String contentType = request().getHeader(CONTENT_TYPE);
+		if(StringUtils.isEmpty(contentType)){
+			return badRequest("The content-type request header should be present in order to successfully update a setting.");
+		}
+		if(StringUtils.isEmpty(key)){
+			return badRequest("The key parameter should be specified in the url.");
+		}
 		try {
-			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
-			if(i.getType().equals(ConfigurationFileContainer.class)){
-				MultipartFormData  body = request().body().asMultipartFormData();
-				if (body==null) return badRequest("missing data: is the body multipart/form-data?");
-				FilePart file = body.getFile("file");
-				if(file==null) return badRequest("missing file");
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				try{
-					FileUtils.copyFile(file.getFile(),baos);
-					Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
-					baos.close();
-					conf.getMethod("setValue",Object.class).invoke(i,fileValue);
-				}catch(Exception e){
-					internalServerError(e.getMessage());
+			Http.RequestBody b = request().body();
+			if(contentType.indexOf("application/json")>-1){
+				JsonNode bodyJson= b.asJson();
+				if(StringUtils.isEmpty(value)){
+					value = bodyJson.has("value")?bodyJson.get("value").getTextValue():null;
+				}else{
+					inQueryString = true;
 				}
-			}else{
+				if(StringUtils.isEmpty(value)){
+					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
+				}
 				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			
+			}else{
+				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
+				if(i.getType().equals(ConfigurationFileContainer.class)){
+					MultipartFormData  body = request().body().asMultipartFormData();
+					if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+					FilePart file = body.getFile("file");
+					if(file==null) return badRequest("missing file");
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					try{
+						FileUtils.copyFile(file.getFile(),baos);
+						Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
+						baos.close();
+						conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+					}catch(Exception e){
+						internalServerError(e.getMessage());
+					}
+				}
 			}
+		
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
 		}
-		return ok();
+		String message = "";
+		if(inQueryString){
+			message = "You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.";
+		}
+		return ok(message);
 	}
 
 	public static Result getConfiguration(String section) throws  Throwable{

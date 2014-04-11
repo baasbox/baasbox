@@ -17,23 +17,20 @@
 
 // @author: Marco Tibuzzi
 
-import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.GET;
-import static play.test.Helpers.contentAsString;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.status;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.mvc.Result;
+import play.test.FakeRequest;
+
 import com.baasbox.configuration.Application;
 import com.baasbox.db.DbHelper;
 
-import play.mvc.Result;
-import play.test.FakeRequest;
 import core.AbstractAdminTest;
 import core.TestConfig;
 
@@ -68,7 +65,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
+					assertRoute(result, "LoadConfigurationAsJSON 1", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
 					
 					//override setting
 					Application.APPLICATION_NAME.override("blablabla");
@@ -78,7 +75,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, 
+					assertRoute(result, "LoadConfigurationAsJSON 2", OK, 
 							"application.name\":\"blablabla\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":false,\"visible\":true,\"overridden\":true", true);
 				
 					//tries to edit the value
@@ -96,7 +93,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "LoadConfigurationAsJSON", OK, 
+					assertRoute(result, "LoadConfigurationAsJSON 3", OK, 
 							"application.name\":\"--HIDDEN--\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":false,\"visible\":false,\"overridden\":true", true);
 				
 					//get the hidden value
@@ -115,6 +112,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 						DbHelper.open("1234567890", "admin", "admin");
 						String hiddenValue=(String)Application.APPLICATION_NAME._getValue();
 						Assert.assertTrue("application.name: expected 'BaasBox', it is " + hiddenValue, hiddenValue.equals("BaasBox"));
+						
 					}catch (Exception e){
 						Assert.fail(e.getMessage());
 					}finally{
