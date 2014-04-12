@@ -9,4 +9,4 @@ BASEDIR=$(dirname $0)
 $BASEDIR/stop
 rm $OPENSHIFT_REPO_DIR/bin/RUNNING_PID
 
-nohup java -Dorient.baasbox.path=$OPENSHIFT_DATA_DIR/baasbox -Dorient.baasbox.admin_password=admin -Dapplication.code=1234567890 -Dhttp.port=$OPENSHIFT_DIY_PORT -Dhttp.address=$OPENSHIFT_DIY_IP $* -cp "$OPENSHIFT_REPO_DIR/bin/lib/*" play.core.server.NettyServer $OPENSHIFT_REPO_DIR/bin $OPENSHIFT_DIY_LOG_DIR/baasbox.log  > $OPENSHIFT_DIY_LOG_DIR/nohup.log 2>&1 & 
+nohup java -Dorient.baasbox.path=$OPENSHIFT_DATA_DIR/baasbox -Dorient.baasbox.admin_password=admin -Dapplication.code=1234567890 -Dhttp.port=$OPENSHIFT_DIY_PORT -Dhttp.address=$OPENSHIFT_DIY_IP $* -cp "$OPENSHIFT_REPO_DIR/bin/lib/*" play.core.server.NettyServer $OPENSHIFT_REPO_DIR/bin $OPENSHIFT_DIY_LOG_DIR/baasbox.log   & 
