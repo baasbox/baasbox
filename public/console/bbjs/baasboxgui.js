@@ -335,6 +335,14 @@ $(".btn-action").live("click", function() {
 	case "changePwdUser":
 		openChangePasswordUserForm(parameters);
 			break;
+    case "suspend":
+        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(true,parameters);
+            break;
+    case "activate":
+        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(false,parameters);
+            break;
 	case "delete":
 		switch (actionType)	{
 		case "user":
@@ -369,6 +377,22 @@ $(".btn-action").live("click", function() {
 		}
 	});
 
+function suspendOrActivateUser(suspend,userName)
+{
+    var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
+                        BBRoutes.com.baasbox.controllers.Admin.enable(userName);
+    route.ajax(
+        {
+            data: {"username": userName},
+            error: function(data){
+                alert(JSON.parse(data.responseText)["message"]);
+            },
+            success: function(data){
+                loadUserTable();
+            }
+        }
+    );
+}
 function deleteAsset(assetName)
 {
 	BBRoutes.com.baasbox.controllers.Asset.delete(assetName).ajax(
@@ -1427,6 +1451,16 @@ function getActionButton(action, actionType,parameters){
 		classType = "btn-danger";
 		labelName = "Delete...";
 		break;
+    case "suspend":
+       iconType = "icon-off";
+       classType = "btn-danger";
+       labelName = "suspend";
+       break;
+    case "activate":
+       iconType = "icon-off";
+       classType="btn-success";
+       labelName="activate";
+       break;
 	}
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
@@ -1590,9 +1624,12 @@ function setupTables(){
 		            	   return htmlReturn;
 		               }
 		               },
-		               {"mData": "user.name", "mRender": function ( data, type, full ) {
-		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
-		            		   return getActionButton("edit","user",data)+"&nbsp;"+getActionButton("changePwdUser","user",data);// +" "+ getActionButton("delete","user",data);
+		               {"mData": "user", "mRender": function ( data, type, full ) {
+		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
+                               var _active = data.status == "ACTIVE";
+                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);// +" "+ getActionButton("delete","user",data);
+                           }
 		            	   return "No action available";
 		               }
 		               }],
