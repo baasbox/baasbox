@@ -335,6 +335,9 @@ $(".btn-action").live("click", function() {
 	case "changePwdUser":
 		openChangePasswordUserForm(parameters);
 			break;
+    case "followers":
+        openFollowersModal(parameters);
+            break;
     case "suspend":
         if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
             suspendOrActivateUser(true,parameters);
@@ -473,6 +476,11 @@ function openUserEditForm(editUserName){
 	$('#addUserModal').modal('show');
 }
 
+function openFollowersModal(user){
+    $("#followedUser").text(user);
+    reloadFollowing(user);
+    $("#followersModal").modal('show');
+}
 function openChangePasswordUserForm(changePassword){
     resetChangePasswordUserForm()
     var userObject;
@@ -1436,6 +1444,11 @@ function getActionButton(action, actionType,parameters){
 	var labelName;
 
 	switch (action)	{
+    case "followers":
+        iconType="icon-user";
+        classType="btn-info";
+        labelName="";
+        break;
 	case "edit":
 		iconType = "icon-edit";
 		classType = "btn-info";
@@ -1610,11 +1623,32 @@ function setupTables(){
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
+    $('#followersTable').dataTable({
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "sPaginationType": "bootstrap",
+        "oLanguage": {"sLengthMenu": "_MENU_ records per page",
+                      "sEmptyTable": "No users are followed"},
+        "aoColumns": [{"mData": "user.name"},
+                      {"mData": "user.status","mRender": function ( data, type, full ) {
+                          var classStyle="label-success"
+                          if (data!="ACTIVE") classStyle="label-important";
+                          var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
+                          return htmlReturn;
+                      }}],
+        "bRetrieve": true,
+        "bDestroy": true,
+});
 	$('#userTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "user.name"},
+		"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
+            var html = data;
+            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
+               html = getActionButton("followers","user",data)+"&nbsp;"+html;
+            }
+            return html;
+        }},
 		               {"mData": "user.roles.0.name"},
 		               {"mData": "signUpDate","sDefaultContent":""},
 		               {"mData": "user.status","mRender": function ( data, type, full ) {
@@ -1955,6 +1989,21 @@ function applySuccessMenu(action,data){
 
 }//applySuccessMenu 
 
+function reloadFollowing(user){
+    BBRoutes.com.baasbox.controllers.Admin.following(user).ajax({
+
+        success: function(data){
+            var foll = data["data"];
+            $("#followersTable").dataTable().fnClearTable();
+            $("#followersTable").dataTable().fnAddData(foll);
+        },
+        error: function(data){
+            if(data.status==404){
+                $("#followersTable").dataTable().fnClearTable();
+            }
+        }
+    });
+}
 
 function callMenu(action){
 	var scope=$("#loggedIn").scope();
