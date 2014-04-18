@@ -62,20 +62,23 @@
 			<a href="http://www.baasbox.com/documentation/" target="_new">Documentation</a>
 			<a href="/console">Administration Login</a>
 		</div>
-		<script type="text/javascript" src="//assets.zendesk.com/external/zenbox/v2.6/zenbox.js"></script>
-<link href='http://assets.zendesk.com/external/zenbox/v2.6/zenbox.css' rel='stylesheet'  media='screen'>
-<link href='http://assets.zendesk.com/external/zenbox/v2.6/zenbox.css' rel='stylesheet'  media='projection'>
-<script type="text/javascript">
-  if (typeof(Zenbox) !== "undefined") {
-    Zenbox.init({
-      dropboxID:   "20232907",
-      url:         "https://baasbox.zendesk.com",
-      tabTooltip:  "Feedback",
-      tabImageURL: "https://assets.zendesk.com/external/zenbox/images/tab_feedback_right.png",
-      tabColor:    "#3986AC",
-      tabPosition: "Right"
-    });
-  }
-</script>	
+<!-- UserVoice JavaScript SDK (only needed once on a page) -->
+<script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/LufycuEwCsSZ768w7Mmmw.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
+
+<!-- A tab to launch the Classic Widget -->
+<script>
+UserVoice = window.UserVoice || [];
+UserVoice.push(['showTab', 'classic_widget', {
+  mode: 'full',
+  primary_color: '#538378',
+  link_color: '#538378',
+  default_mode: 'support',
+  forum_id: 249063,
+  tab_label: 'Feedback & Support',
+  tab_color: '#538378',
+  tab_position: 'middle-right',
+  tab_inverted: false
+}]);
+</script>
 	</body>
 </html>
