@@ -497,6 +497,7 @@ return profile;
 
 			//Email Configuration
 			email.setSSL(useSSL);
+			email.setSSLOnConnect(useSSL);
 			email.setTLS(useTLS);
 			email.setStartTLSEnabled(useTLS);
 			email.setStartTLSRequired(useTLS);
