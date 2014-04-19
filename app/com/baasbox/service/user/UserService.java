@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
@@ -471,6 +472,9 @@ return profile;
 			String sRandom = appCode + "%%%%" + username + "%%%%" + UUID.randomUUID();
 			String sBase64Random = new String(Base64.encodeBase64(sRandom.getBytes()));
 
+			//Save on DB
+			ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
+
 			//Send mail
 			HtmlEmail email = null;
 
@@ -492,26 +496,59 @@ return profile;
 			email.setTextMsg(textMailTemplate.render());
 
 			//Email Configuration
-			email.setSSLOnConnect(useSSL);
+			email.setSSL(useSSL);
+			email.setTLS(useTLS);
 			email.setStartTLSEnabled(useTLS);
+			email.setStartTLSRequired(useTLS);
+			email.setSSLCheckServerIdentity(false);
+			email.setSslSmtpPort(String.valueOf(smtpPort));   
 			email.setHostName(smtpHost);
 			email.setSmtpPort(smtpPort);
 
+
 			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
-				email.setAuthenticator(new DefaultAuthenticator(username_smtp, password_smtp));
+				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
 			}
 			email.setFrom(emailFrom);			
 			email.addTo(userEmail);
 
 			email.setSubject(emailSubject);
+				
+			if (Logger.isDebugEnabled()) {
+				StringBuilder logEmail = new StringBuilder()
+						.append("HostName: ").append(email.getHostName()).append("\n")
+						.append("SmtpPort: ").append(email.getSmtpPort()).append("\n")
+						.append("SslSmtpPort: ").append(email.getSslSmtpPort()).append("\n")
+						
+						.append("SSL: ").append(email.isSSL()).append("\n")
+						.append("TLS: ").append(email.isTLS()).append("\n")						
+						.append("SSLCheckServerIdentity: ").append(email.isSSLCheckServerIdentity()).append("\n")
+						.append("SSLOnConnect: ").append(email.isSSLOnConnect()).append("\n")
+						.append("StartTLSEnabled: ").append(email.isStartTLSEnabled()).append("\n")
+						.append("StartTLSRequired: ").append(email.isStartTLSRequired()).append("\n")
+						
+						.append("SubType: ").append(email.getSubType()).append("\n")
+						.append("SocketConnectionTimeout: ").append(email.getSocketConnectionTimeout()).append("\n")
+						.append("SocketTimeout: ").append(email.getSocketTimeout()).append("\n")
+						
+						.append("FromAddress: ").append(email.getFromAddress()).append("\n")
+						.append("ReplyTo: ").append(email.getReplyToAddresses()).append("\n")
+						.append("BCC: ").append(email.getBccAddresses()).append("\n")
+						.append("CC: ").append(email.getCcAddresses()).append("\n")
+						
+						.append("Subject: ").append(email.getSubject()).append("\n")
+						.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+						
+						.append("SentDate: ").append(email.getSentDate()).append("\n");
+				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
+			}
 			email.send();
 
-			//Save on DB
-			ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
-
 		}  catch (EmailException authEx){
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(authEx));
 			throw new PasswordRecoveryException (errorString + " Could not reach the mail server. Please contact the server administrator");
 		}  catch (Exception e) {
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(e));
 			throw new Exception (errorString,e);
 		}
 
