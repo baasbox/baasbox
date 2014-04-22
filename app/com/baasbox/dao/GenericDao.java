@@ -52,9 +52,9 @@ public class GenericDao {
 	
 	public ODocument get(ORID rid) {
 		ODatabaseRecordTx db =DbHelper.getConnection();
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODocument doc=db.load(rid);
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return doc;
 	}
 	

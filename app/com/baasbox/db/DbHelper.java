@@ -16,7 +16,7 @@
  */
 package com.baasbox.db;
 
-import static play.Logger.debug;
+
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,6 +32,7 @@ import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.Play;
@@ -57,17 +58,18 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
 
 
 public class DbHelper {
@@ -105,7 +107,7 @@ public class DbHelper {
 	public static void requestTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
-			Logger.trace("Begin transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
 			//db.begin();
 		}
 	}
@@ -113,7 +115,7 @@ public class DbHelper {
 	public static void commitTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			Logger.trace("Commit transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Commit transaction");
 			//db.commit();
 		}
 	}
@@ -121,7 +123,7 @@ public class DbHelper {
 	public static void rollbackTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			Logger.trace("Rollback transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Rollback transaction");
 			//db.rollback();
 		}		
 	}
@@ -129,10 +131,13 @@ public class DbHelper {
 	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
 		String ret;
 		if (count) ret = "select count(*) from ";
-		else ret = "select from ";
+		else ret = "select " + criteria.getFields() + " from ";
 		ret += from;
 		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
 			ret += " where ( " + criteria.getWhere() + " )";
+		}
+		if (!StringUtils.isEmpty(criteria.getGroupBy())){
+			ret += " group by ( " + criteria.getGroupBy() + " )";
 		}
 		if (!count && criteria.getOrderBy()!=null && !criteria.getOrderBy().equals("")){
 			ret += " order by " + criteria.getOrderBy();
@@ -142,7 +147,7 @@ public class DbHelper {
 					" limit " + 	criteria.getRecordPerPage();
 		}
 
-		Logger.debug("queryBuilder: " + ret);
+		if (Logger.isDebugEnabled()) Logger.debug("queryBuilder: " + ret);
 		return ret;
 	}
 
@@ -160,9 +165,9 @@ public class DbHelper {
 				selectQueryBuilder(from, count, criteria)
 				));
 		if (!command.isIdempotent()) throw new SqlInjectionException();
-		Logger.debug("commandBuilder: ");
-		Logger.debug("  " + criteria.toString());
-		Logger.debug("  " + command.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("commandBuilder: ");
+		if (Logger.isDebugEnabled()) Logger.debug("  " + criteria.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("  " + command.toString());
 		return command;
 	}
 
@@ -230,20 +235,23 @@ public class DbHelper {
 				if(!dbFreeze.get()){
 					dbFreeze.set(true);
 				}
+				db.drop();
+				db.close();
+				db.create();
 				db.getLevel1Cache().clear();
 				db.getLevel2Cache().clear();
-				db.drop();
-				db.create();
+				db.reload();
+				db.getMetadata().reload();
 				if(repopulate){
 					HooksManager.registerAll(db);
-					setupDb(db);
+					setupDb();
 				}
 
 
 			}
 
-		}catch(Exception e){
-			e.printStackTrace();
+		}catch(Throwable e){
+			throw new RuntimeException(e);
 		}finally{
 			synchronized(DbHelper.class)  {
 
@@ -254,6 +262,21 @@ public class DbHelper {
 
 	}
 
+	public static ODatabaseRecordTx getOrOpenConnection(String appcode, String username,String password) throws InvalidAppCodeException {
+		ODatabaseRecordTx db= getConnection();
+		if (db==null || db.isClosed()) db = open ( appcode,  username, password) ;
+		return db;
+	}
+
+	public static ODatabaseRecordTx getOrOpenConnectionWIthHTTPUsername() throws InvalidAppCodeException {
+		ODatabaseRecordTx db= getConnection();
+		if (db==null || db.isClosed()) db = open (  
+				(String) Http.Context.current().args.get("appcode"),  
+				getCurrentHTTPUsername(), 
+				getCurrentHTTPPassword()) ;
+		return db;
+	}
+	
 	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
@@ -262,7 +285,7 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 		String databaseName=BBConfiguration.getDBDir();
-		Logger.debug("opening connection on db: " + databaseName + " for " + username);
+		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
 		new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir()).open(username,password);
 		HooksManager.registerAll(getConnection());
@@ -286,24 +309,32 @@ public class DbHelper {
 	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
 		getConnection().close();
 		try {
-			return open (appcode.get(),DbHelper.username.get(),DbHelper.password.get());
+			return open (appcode.get(),getCurrentHTTPUsername(),getCurrentHTTPPassword());
 		} catch (InvalidAppCodeException e) {
 			throw new RuntimeException(e);
 		}
 	}
 	
 	public static void close(ODatabaseRecordTx db) {
-		Logger.debug("closing connection");
+		if (Logger.isDebugEnabled()) Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
 			//HooksManager.unregisteredAll(db);
 			db.close();
-		}else Logger.debug("connection already close or null");
+		}else if (Logger.isDebugEnabled()) Logger.debug("connection already close or null");
 	}
 
 	public static ODatabaseRecordTx getConnection(){
-		return (ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+		ODatabaseRecordTx db = null;
+		try {
+			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
+		}catch (ODatabaseException e){
+			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
+		}
+		return db;
 	}
 
+	
 	public static String getCurrentHTTPPassword(){
 		return (String) Http.Context.current().args.get("password");
 	}
@@ -321,20 +352,20 @@ public class DbHelper {
 	}
 
 	public static void createDefaultRoles() throws RoleNotFoundException, RoleAlreadyExistsException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		RoleService.createInternalRoles();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	public static void createDefaultUsers() throws Exception{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		UserService.createDefaultUsers();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	
 	public static void updateDefaultUsers() throws Exception{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
 		user.setPassword(BBConfiguration.getBaasBoxPassword());
@@ -344,17 +375,13 @@ public class DbHelper {
 		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
 		user.save();
 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
-	@Deprecated
-	public static void dropOrientDefault(){
-		Logger.trace("Method Start");
-		//nothing to do here
-		Logger.trace("Method End");
-	}
 
-	public static void populateDB(ODatabaseRecordTx db) throws IOException{
+	public static void populateDB() throws IOException{
+		ODatabaseRecordTx db = getConnection();
+		OrientGraphNoTx dbg =  getOrientGraphConnection();
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -363,12 +390,12 @@ public class DbHelper {
 		is.close();
 
 		for (String line:script){
-			Logger.debug(line);
+			if (Logger.isDebugEnabled()) Logger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
-		Internal.DB_VERSION.setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+		Internal.DB_VERSION._setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
 		String uniqueId="";
 		try{
 			UUID u = new UUID();
@@ -377,12 +404,12 @@ public class DbHelper {
 			java.util.UUID u = java.util.UUID.randomUUID();
 			uniqueId=new String(Base64.encodeBase64(u.toString().getBytes()));
 		}
-		Internal.INSTALLATION_ID.setValue(uniqueId);
+		Internal.INSTALLATION_ID._setValue(uniqueId);
 		Logger.info("Unique installation id is: " + uniqueId);
 		Logger.info("...done");
 	}
 
-	public static void populateConfiguration (ODatabaseRecordTx db) throws IOException, ConfigurationException{
+	public static void populateConfiguration () throws IOException, ConfigurationException{
 		Logger.info("Load initial configuration...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(CONFIGURATION_FILE_NAME);
@@ -420,14 +447,14 @@ public class DbHelper {
 
 
 
-	public static void setupDb(ODatabaseRecordTx db) throws Exception{
-		debug("Creating default roles...");
+	public static void setupDb() throws Exception{
+		Logger.info("Creating default roles...");
 		DbHelper.createDefaultRoles();
-		debug("Creating default users...");
-		DbHelper.dropOrientDefault();
-		populateDB(db);
+		populateDB();
+		getConnection().getMetadata().getIndexManager().reload();
+		Logger.info("Creating default users...");
 		createDefaultUsers();
-		populateConfiguration(db);
+		populateConfiguration();
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
@@ -537,20 +564,18 @@ public class DbHelper {
 		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
 			 Logger.info("...imported DB needs evolutions!...");
 			 Evolutions.performEvolutions(db, fromVersion);
-			 Internal.DB_VERSION.setValue(BBConfiguration.getApiVersion());
+			 Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
 			 Logger.info("DB version is now " + BBConfiguration.getApiVersion());
 		 }//end of evolutions
 	}
 	
-	@Deprecated
-	public static OGraphDatabase getOGraphDatabaseConnection(){
-		return new OGraphDatabase(getConnection());
+
+
+	public static OrientGraphNoTx getOrientGraphConnection(){
+		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
 	}
-	
-	public static OrientGraph getOrientGraphConnection(){
-		return new OrientGraph(getODatabaseDocumentTxConnection());
-	}
-	
+
+
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());
 	}

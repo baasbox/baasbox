@@ -240,8 +240,9 @@ function downloadExportHref(name){
 
 
 $('.btn-changepwd').click(function(e){
-	$('#changePwdModal').modal('show');
-}); // Show Modal for Change Password
+    resetChangePasswordForm();
+    $('#changePwdModal').modal('show');
+}); // Show Modal for Change Password Admin
 
 $('.btn-adduser').click(function(e){
 	loadUserRole();
@@ -273,6 +274,17 @@ $('.btn-newAsset').click(function(e){
 	$('#addAssetModal').modal('show');
 }); // Show Modal for New Asset
 
+$('.btn-newFile').click(function(e){
+
+	$(".error").removeClass("error");
+	$('#txtFileName').val('');
+	$('#txtFileAttachedData').val('');
+	$('#fuFsset').val('');
+	$("#errorFile").addClass("hide");	
+	$(".filename").text("no file selected")	
+	$('#addFileModal').modal('show');
+}); // Show Modal for New File
+
 $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
 	var actionType = $(this).attr("actionType");
@@ -291,6 +303,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "asset":
 			break;
+		case "file":
+			break;			
 		}
 		break;
 	case "edit":
@@ -311,11 +325,16 @@ $(".btn-action").live("click", function() {
 			break;
 		case "asset":
 			break;
+		case "file":
+			break;
 		case "role":
 			openRoleEditForm(parameters);
 			break;	
 		}
 		break;
+	case "changePwdUser":
+		openChangePasswordUserForm(parameters);
+			break;
 	case "delete":
 		switch (actionType)	{
 		case "user":
@@ -326,6 +345,11 @@ $(".btn-action").live("click", function() {
 			if(!confirm("Do you want to delete '"+ parameters +"' asset?"))
 				return;
 			deleteAsset(parameters);
+			break;
+		case "file":
+			if(!confirm("Do you want to delete '"+ parameters +"' file?"))
+				return;
+			deleteFile(parameters);
 			break;
 		case "role":
 			if(!confirm("Do you want to delete '"+ parameters +"' role? All users belonging to this role will be assigned ro the role 'registered'"))
@@ -361,6 +385,22 @@ function deleteAsset(assetName)
 			})	
 }
 
+function deleteFile(id)
+{
+	BBRoutes.com.baasbox.controllers.File.deleteFile(id).ajax(
+			{
+				data: {"id": id},
+				error: function(data)
+				{
+					alert(JSON.parse(data.responseText)["message"]);
+				},
+				success: function(data)
+				{
+					loadFileTable();
+				}
+			})	
+}
+
 function deleteDocument(collection,id){
 	BBRoutes.com.baasbox.controllers.Document.deleteDocument(collection,id,true).ajax(
 			{
@@ -389,7 +429,7 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
-	var userObject;
+    var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
@@ -401,12 +441,28 @@ function openUserEditForm(editUserName){
 			userObject = userDataArray[i];
 	}
 	$("#txtUsername").val(userObject.user.name);
-	loadUserRole(userObject.user.roles[0].name);
+    loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
-	$("#txtVisibleByFriend").val(reverseJSON(userObject.visibleByFriend)).trigger("change");
+	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
 	$('#addUserModal').modal('show');
+}
+
+function openChangePasswordUserForm(changePassword){
+    resetChangePasswordUserForm()
+    var userObject;
+    $("#userTitle").text("Change password");
+    $("#txtUserName").addClass("disabled");
+    $("#txtUserName").prop('disabled', true);
+    //$(".groupUserPwd").removeClass("hide");
+    for(i=0;i<userDataArray.length;i++)
+    {
+        if(userDataArray[i].user.name == changePassword)
+            userObject = userDataArray[i];
+    }
+    $("#txtUserName").val(userObject.user.name);
+    $('#changePwdUserModal').modal('show');
 }
 
 function openRoleEditForm(editRoleName){
@@ -533,6 +589,11 @@ function reverseJSON(objJSON)
 	return JSON.stringify(obj, undefined, 2);
 }
 
+function loadFileTable()
+{
+	callMenu("#files");
+}
+
 function loadAssetTable()
 {
 	callMenu("#assets");
@@ -568,6 +629,18 @@ function resetAddUserForm()
 	$(".error").removeClass("error");
 }
 
+function resetChangePasswordForm(){
+    $("#changePwdForm")[0].reset();
+    $("#errorCPwd").addClass("hide");
+    $("#errorNewPassword").addClass("hide");
+    $("#errorPwdNotMatch").addClass("hide");
+}
+
+function resetChangePasswordUserForm(){
+    $("#changePwdUserForm")[0].reset();
+    $("#errorNewPwd").addClass("hide");
+    $("#errorPasswordNotMatch").addClass("hide");
+}
 function resetAddRoleForm(){
 	//console.debug("resetAddRoleForm");
 	$("#roleForm")[0].reset();
@@ -717,7 +790,7 @@ function addUser()
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -727,7 +800,7 @@ function addUser()
 					"password": password,
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
 					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
 					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
 				}),
@@ -750,7 +823,8 @@ function updateUser()
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends
+        = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -759,7 +833,7 @@ function updateUser()
 				data: JSON.stringify({
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
-					"visibleByFriend": jQuery.parseJSON(visibleByFriend),
+					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
 					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
 					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
 				}),	
@@ -786,10 +860,15 @@ function updateSetting()
 {
 	var key = $("#txtKey").val();
 	var value = $("#txtValue").val();
-
-	BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key, value).ajax(
+	var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration(settingSectionChanged,"dummy",key,'');
+	var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/');
+	$.ajax(
 			{
-
+				method:'PUT',
+				type:'PUT',
+				url: url,
+				contentType:'application/json',
+				data:JSON.stringify({value:value}),
 				error: function(data)
 				{
 					////console.debug(data);
@@ -885,14 +964,15 @@ $('.btn-DocumentReload').click(function(e){
 }); // Validate and Ajax submit for reload document
 
 $('.btn-UserCommit').click(function(e){
-	var action;
+    var action;
 
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
 	var retypePassword = $("#txtRetypePassword").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
-	var visibleByFriend = ($("#txtVisibleByFriend").val() == "") ? "{}": $("#txtVisibleByFriend").val();
+	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends" +
+        "").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
 
@@ -932,7 +1012,7 @@ $('.btn-UserCommit').click(function(e){
 			else
 				$("#auVisibleByTheUser").removeClass("error");
 
-	if(!isValidJson(visibleByFriend)){
+	if(!isValidJson(visibleByFriends)){
 		$("#auVisibleByFriend").addClass("error");
 		errorMessage += "The 'Visible By Friend' field  must be a valid JSON string<br/>"
 	}
@@ -1039,7 +1119,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if($("#password").val() != oldPassword)
 	{
-		$("#errorCPwd").removeClass("hide");
+        $("#errorCPwd").removeClass("hide");
 		return;
 	}
 	else
@@ -1047,7 +1127,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if(newPassword != $("#retypenewpassword").val())
 	{
-		$("#errorPwdNotMatch").removeClass("hide");
+        $("#errorPwdNotMatch").removeClass("hide");
 		return;
 	}		
 	else
@@ -1055,7 +1135,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	if($.trim(newPassword) == '')
 	{
-		$("#errorNewPassword").removeClass("hide");
+        $("#errorNewPassword").removeClass("hide");
 		return;
 	}		
 	else
@@ -1077,6 +1157,45 @@ $('.btn-ChangePwdCommit').click(function(e){
 				}
 			})	
 }); // Validate and Ajax submit for Change Password
+
+
+$('.btn-ChangePwdUserCommit').click(function(e){
+    var userName = $("#txtUserName").val();
+    var txtPwd=$("#txtPwd").val();
+    if(txtPwd != $("#txtRetypePwd").val())
+    {
+        $("#errorPasswordNotMatch").removeClass("hide");
+        return;
+    }
+    else
+        $("#errorPasswordNotMatch").addClass("hide");
+
+    if($.trim(txtPwd) == '')
+    {
+        $("#errorNewPwd").removeClass("hide");
+        return;
+    }
+    else
+        $("#errorNewPwd").addClass("hide");
+
+    BBRoutes.com.baasbox.controllers.Admin.changePassword(userName).ajax(
+        {
+            data: JSON.stringify({"password": txtPwd}),
+            contentType: "application/json",
+            processData: false,
+            error: function(data)
+            {
+                alert(JSON.parse(data.responseText)["message"]);
+            },
+            success: function(data)
+            {
+                sessionStorage.password = txtPwd;
+                $('#changePwdUserModal').modal('hide');
+            }
+        })
+
+});
+
 
 $('#importBtn').on('click',function(e){
 	e.preventDefault();
@@ -1202,6 +1321,61 @@ $('#assetForm').submit(function() {
 	return false;
 })// Validate and Ajax submit for new Asset
 
+$('#fileForm').submit(function() {
+
+	var fileMeta = ($.trim($("#txtFileAttachedData").val()) == "") ? "{}": $("#txtFileAttachedData").val();
+	var fileName = ($.trim($('#fuFile').val()))
+	
+	var errorMessage = '';
+
+	if(!isValidJson(fileMeta)){
+		$("#divFileAttachedData").addClass("error");
+		errorMessage += "The attached JSON data must be a valid JSON string<br/>";
+	}else
+		$("#divFileAttachedData").removeClass("error");
+	
+	if  (!fileName.length){
+		$("#divFileUpload").addClass("error");
+		errorMessage += "You must specify a file to upload<br/>";
+	}else
+		$("#divFileUpload").removeClass("error");
+
+
+	if(errorMessage != "")
+	{
+		$("#errorFile").html(errorMessage);
+		$("#errorFile").removeClass("hide");
+		return;
+	}
+
+
+	var serverUrl=BBRoutes.com.baasbox.controllers.File.storeFile().absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
+
+	var options = {
+			url: serverUrl,
+			type: "post",
+			dataType: "json",
+			clearForm: true,
+			resetForm: true,
+			success: function(){
+				$('#addFileModal').modal('hide');
+				loadFileTable();
+			}, //success
+			error: function(data) {
+				$("#errorFile").removeClass("hide").html(JSON.parse(data.responseText)["message"])
+			}
+	};
+
+	$(this).ajaxSubmit(options);
+
+	return false;
+})// Validate and Ajax submit for new File
+
+
+
 
 function make_base_auth(user, password) {
 	var tok = user + ':' + password;
@@ -1243,13 +1417,18 @@ function getActionButton(action, actionType,parameters){
 		classType = "btn-info";
 		labelName = "Edit";
 		break;
+	case "changePwdUser":
+		iconType = "icon-lock";
+		classType = "btn-warning";
+		labelName = "Change PWD";
+		break;	
 	case "delete":
 		iconType = "icon-trash";
 		classType = "btn-danger";
 		labelName = "Delete...";
 		break;
 	}
-	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"' icon-white'></i> "+ labelName +"</a>";
+	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
@@ -1283,9 +1462,58 @@ function setBradCrumb(type)
 	case "#assets":
 		sBradCrumb = "Assets";
 		break;
+	case "#files":
+		sBradCrumb = "Files";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
+}
+
+function getFileIcon(type,id){
+	var sIcon="";
+	var iconPath = "img/AssetIcons/";
+	var sContent = "content";
+	var serverUrl=BBRoutes.com.baasbox.controllers.File.streamFile("").absoluteURL();
+	if (window.location.protocol == "https:"){
+		serverUrl=serverUrl.replace("http:","https:");
+	}
+	switch (type){
+	case "image/png":
+	case "image/jpeg":
+	case "image/gif":
+	case "image/tiff":
+	case "image/jpg":
+		sIcon = "/file/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"&resize=<=40px"
+		sContent="image";
+		break;
+	case "application/zip":
+		sIcon = iconPath + "zip.png";
+		break;
+	case "image/eps":
+		sIcon = iconPath + "eps.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+		sIcon = iconPath + "word.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+		sIcon = iconPath + "excel.png";
+		break;
+	case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+		sIcon = iconPath + "ppt.png";
+		break;
+	case "application/pdf":
+		sIcon = iconPath+ "pdf.png";
+		break;
+	default :
+		sIcon = iconPath + "file.png";
+		break;
+	}
+	if (sIcon=="") return "";
+	var ret = "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='"+ sIcon +"'/><br />"
+	ret += "<a href='"+(sContent=="content"?"view-source:":"")+serverUrl+(sContent=="content"?"content/":"") + id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' title='"+(sContent=="content"?"It only works with Chrome and Firefox":"")+"' target='_blank'>View "+sContent+"</a> ";
+	ret += "<a href='/file/details/"+id+"?X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+escape($("#login").scope().appcode)+"' target='_blank' >Show details</a>"
+	return ret;
 }
 
 function getAssetIcon(type)
@@ -1293,6 +1521,9 @@ function getAssetIcon(type)
 	var sIcon="";
 
 	switch (type){
+	case "application/zip":
+		sIcon = "zip.png";
+		break;
 	case "image/png":
 		sIcon = "png.png";
 		break;
@@ -1320,9 +1551,12 @@ function getAssetIcon(type)
 	case "application/pdf":
 		sIcon = "pdf.png";
 		break;
+	default :
+		sIcon = "file.png";
+		break;
 	}
 	if (sIcon=="") return "";
-	return "<img src='img/AssetIcons/"+ sIcon +"'/>";
+	return "<img style='width:40px; height:45px' title='"+type+"' alt='"+type+"' src='img/AssetIcons/"+ sIcon +"'/>";
 }
 
 
@@ -1358,7 +1592,7 @@ function setupTables(){
 		               },
 		               {"mData": "user.name", "mRender": function ( data, type, full ) {
 		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
-		            		   return getActionButton("edit","user",data);// +" "+ getActionButton("delete","user",data);
+		            		   return getActionButton("edit","user",data)+"&nbsp;"+getActionButton("changePwdUser","user",data);// +" "+ getActionButton("delete","user",data);
 		            	   return "No action available";
 		               }
 		               }],
@@ -1378,7 +1612,8 @@ function setupTables(){
 		               },
 
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1397,7 +1632,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1416,7 +1652,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";
 		               }
 		               }],
 
@@ -1435,8 +1672,8 @@ function setupTables(){
 		               }
 		               },
 		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   return getActionButton("edit","setting",data);
-		               }
+		            	   if (full.editable) return getActionButton("edit","setting",data);
+		            	   else return "";		               }
 		               }],
 
 		               "bRetrieve": true,
@@ -1471,7 +1708,7 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-    	    			var datetime = data.split(" "); 
+    	    			var datetime = data.split("T"); 
     	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
 						}
 					   },
@@ -1555,6 +1792,51 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
+	
+	$('#fileTable').dataTable( {
+		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+		"sPaginationType": "bootstrap",
+		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+		"aoColumns": [ 
+		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  return getFileIcon(obj["contentType"],obj["id"]);
+		              }},
+					   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
+			 				return "<span style='font-family:Courier'>"+data+"</span>";
+						}
+					   },
+		              {"mData": "id", "mRender": function ( data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+		            	  if(obj["attachedData"] != undefined)
+		            	  {
+		            		  return "<pre>" + JSON.stringify(obj["attachedData"],undefined,2) + "</pre>";
+		            	  }
+		            	  else
+		            	  {
+		            		  return "";
+		            	  }
+		              },bSortable:false},
+		              {"mData": "id", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return  bytesToSize(obj["contentLength"],'KB');
+		              }},
+		         /*     {"mData": "id", "mRender": function (data, type, full ) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return obj["contentType"];
+		              }},*/
+		              {"mData": "id", sWidth:"210px","mRender": function (data, type, full) {
+		            	  var obj=JSON.parse(JSON.stringify(full));
+	            		  return "<a href='/file/" + obj["id"] + "?download=true&X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
+		              }},
+		              {"mData": "id", "mRender": function (data) {
+		            	  return getActionButton("delete","file",data);
+		              }}
+		              ],
+		              "bRetrieve": true,
+		              "bDestroy":true
+	} ).makeEditable();
+	
 } //setupTables()
 
 function setupSelects(){
@@ -1688,7 +1970,7 @@ function callMenu(action){
 				}
 			}, //success
 			error: function(data){
-				$('#latestVersion').addClass("red").text("Unable to contact the BaasBox site");
+				$('#latestVersion').addClass("red").text("Unable to reach BaasBox site");
 				$('#notificationLatestVersion').text("?");
 				$('#notificationLatestVersion').addClass("notification yellow");
 			}
@@ -1916,7 +2198,18 @@ function callMenu(action){
 				$('#assetTable').dataTable().fnAddData(data);
 			}
 		});
-		break;//#assets	  
+		case "#files":
+		BBRoutes.com.baasbox.controllers.File.getAllFile().ajax({
+			data: {orderBy: "_creation_date asc"},
+			success: function(data) {
+				data=data["data"];
+				applySuccessMenu(action,data);
+				$('#fileTable').dataTable().fnClearTable();
+				$('#fileTable').dataTable().fnAddData(data);
+				$.trim($('#fuFile').val(""));
+			}
+		});
+		break;//#files	  
 	}
 }//callMenu
 
@@ -1924,6 +2217,8 @@ function RolesController($scope){
 
 }
 function AssetsController($scope){
+}
+function FilesController($scope){
 }
 function UsersController($scope){
 }
@@ -2005,9 +2300,15 @@ function SettingsController($scope){
 	
 	
 	function updateSettings(key,value,onSuccess){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, value).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, '');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+					method:'PUT',
+					type:'PUT',
+					url:url,
+					contentType : 'application/json',
+					data: JSON.stringify({value:value}),
 					error: function(data)
 					{
 						//console.log(data)
@@ -2043,7 +2344,7 @@ function SettingsController($scope){
 				updateSettings(key2,value2,function(){
 					console.log("saving secret")
 					var key3 = "social."+name+".enabled"
-					var value3 = true;
+					var value3 = "true";
 					updateSettings(key3,value3,function(){
 						console.log("enabling")
 						$scope.sociallogins[name].saved = true;
@@ -2111,9 +2412,16 @@ function PushSettingsController($scope){
 	}
 	
 	$scope.sandboxMode = function(enable){
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key, enable).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key,'');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+		
+					method:'PUT',
+					type:'PUT',
+					contentType:'application/json',
+					url: url,
+					data:JSON.stringify({value:"true"}),
 					error: function(data)
 					{
 						////console.debug(data)
@@ -2138,9 +2446,16 @@ function PushSettingsController($scope){
 			s.error = "Value can't be empty";
 			return;
 		}
-		BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, s.value).ajax(
+		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, '');
+		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
+		$.ajax(
 				{
-
+					method:'PUT',
+					type:'PUT',
+					url:url,
+					contentType:'application/json',
+					url:url,
+					data:JSON.stringify({value:s.value}),
 					error: function(data)
 					{
 						////console.debug(data)

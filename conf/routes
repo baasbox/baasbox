@@ -36,8 +36,8 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
  
 # User actions
 POST	/user								com.baasbox.controllers.User.signUp()
-POST	/login										com.baasbox.controllers.User.login()
-POST	/logout/:deviceid		    				com.baasbox.controllers.User.logoutWithDevice(deviceid: String)
+POST	/login								com.baasbox.controllers.User.login()
+POST	/logout/:pushToken	    			com.baasbox.controllers.User.logoutWithDevice(pushToken: String)
 POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
@@ -71,9 +71,11 @@ PUT		/user/password						com.baasbox.controllers.User.changePassword()
 
 
 #friendship
-GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false)
-GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
-GET      /following									com.baasbox.controllers.User.following()
+GET 	 /followers									com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false, username: String = "")
+GET 	 /followers/:username						com.baasbox.controllers.User.followers(justCountThem: Boolean ?= false, username: String)
+#GET 	 /followers/count							com.baasbox.controllers.User.followers(justCountThem: Boolean ?= true)
+GET      /following									com.baasbox.controllers.User.following(username: String = "")
+GET      /following/:username						com.baasbox.controllers.User.following(username: String)
 POST     /follow/:username                  		com.baasbox.controllers.User.follow(username: String)
 DELETE   /follow/:username                  		com.baasbox.controllers.User.unfollow(username: String)
 GET      /admin/following/:username					com.baasbox.controllers.Admin.following(username:String)
@@ -82,6 +84,9 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 
 # Push
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
+PUT 	/push/enable/:os/:pushToken     com.baasbox.controllers.Push.enablePush(os: String, pushToken: String)
+PUT 	/push/disable/:pushToken        com.baasbox.controllers.Push.disablePush(pushToken: String)
+#deprecated
 PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 
 #Storage Actions
@@ -127,6 +132,7 @@ POST	/admin/user						com.baasbox.controllers.Admin.createUser()
 PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
 PUT 	/admin/user/suspend/:username	com.baasbox.controllers.Admin.disable(username: String)
 PUT 	/admin/user/activate/:username	com.baasbox.controllers.Admin.enable(username: String)
+PUT		/admin/user/:username/password  com.baasbox.controllers.Admin.changePassword(username: String)
 POST	/admin/collection/:name			com.baasbox.controllers.Admin.createCollection(name: String)
 GET		/admin/collection				com.baasbox.controllers.Admin.getCollections()
 DELETE  /admin/collection/:name			com.baasbox.controllers.Admin.dropCollection(name: String)
@@ -144,6 +150,8 @@ POST 	 /file							com.baasbox.controllers.File.storeFile()
 DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
 GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
 GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
+GET		 /file/content/:uuid		com.baasbox.controllers.File.getFileContent(uuid: String)
+
 #GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
 GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
 
@@ -156,14 +164,18 @@ DELETE	/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrR
 
 #deprecated
 GET		/admin/roles					com.baasbox.controllers.Admin.getRoles()
-
+#--------------------
 
 
 GET		/admin/configuration/dump.json							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "json")
 GET		/admin/configuration/dump.txt							com.baasbox.controllers.Admin.dumpConfiguration(String ?= "txt")
 GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfiguration(section: String)
+		
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
+#DEPRECATED
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+PUT     /admin/configuration/:section/:key                      com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String ?= "")
+PUT     /admin/configuration/:section                        	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String ?= "", value: String ?= "")
 
 GET		/admin/version/latest									com.baasbox.controllers.Admin.getLatestVersion()
 DELETE	/admin/db/:timeout										com.baasbox.controllers.Admin.dropDb(timeout:Long)
@@ -173,6 +185,20 @@ DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.delete
 GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
+
+# ROOT access
+# ROOT RESET ADMIN PASSWORD
+POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
+# ROOT + METRICS 
+POST	/root/metrics											com.baasbox.controllers.Root.startMetrics()
+DELETE 	/root/metrics											com.baasbox.controllers.Root.stopMetrics()
+GET		/root/metrics/meters									com.baasbox.controllers.Root.meters()
+GET		/root/metrics/counters									com.baasbox.controllers.Root.counters()
+GET		/root/metrics/gauges									com.baasbox.controllers.Root.gauges()
+GET		/root/metrics/timers									com.baasbox.controllers.Root.timers()
+GET		/root/metrics/histograms								com.baasbox.controllers.Root.histograms()
+GET		/root/metrics/uptime									com.baasbox.controllers.Root.uptime()
+
 
 
 

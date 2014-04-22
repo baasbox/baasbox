@@ -46,29 +46,29 @@ public class PushService {
 	}
 	
 	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
-		Logger.debug("Try to send a message (" + message + ") to " + username);
+		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
 		if (user==null) {
-			Logger.debug("User " + username + " does not exist");
+			if (Logger.isDebugEnabled()) Logger.debug("User " + username + " does not exist");
 			throw new UserNotFoundException("User " + username + " does not exist");
 		}
 		ODocument userSystemProperties = user.field(UserDao.ATTRIBUTES_SYSTEM);
-		Logger.debug("userSystemProperties: " + userSystemProperties);
+		if (Logger.isDebugEnabled()) Logger.debug("userSystemProperties: " + userSystemProperties);
 		List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
-		Logger.debug("Sending to " + loginInfos.size() + " devices");
+		if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
 		for(ODocument loginInfo : loginInfos){
-			String deviceId=loginInfo.field(UserDao.USER_DEVICE_ID);
+			String pushToken=loginInfo.field(UserDao.USER_PUSH_TOKEN);
 			String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
-			Logger.debug ("deviceId: "  + deviceId);
-			Logger.debug ("vendor: "  + vendor);			
-			if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)){
+			if (Logger.isDebugEnabled()) Logger.debug ("push token: "  + pushToken);
+			if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);
+			if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(pushToken)){
 				VendorOS vos = VendorOS.getVendorOs(vendor);
-				Logger.debug("vos: " + vos);
+				if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
 				if (vos!=null){
 					IPushServer pushServer = Factory.getIstance(vos);
 					pushServer.setConfiguration(getPushParameters());
-					pushServer.send(message, deviceId);
+					pushServer.send(message, pushToken);
 				} //vos!=null
 			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
 

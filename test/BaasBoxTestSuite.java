@@ -31,9 +31,9 @@ import org.junit.runners.Suite;
 		AdminCollectionFunctionalTest.class,
 		AdminDBStatisticsFunctionalTest.class,
 		AdminRolesFunctionalTest.class,
-		AdminUserFunctionalTest.class,*/
+		AdminUserFunctionalTest.class,
 		DocumentCMDFunctionalTest.class
-		/*,DocumentCountFunctionalTest.class,
+		,DocumentCountFunctionalTest.class,
 		DocumentListFunctionalTest.class,
 		UserAssetGetTest.class,
 		UserChangePasswordTest.class,

@@ -93,7 +93,7 @@ public class Evolution_0_7_0 implements IEvolution {
 
 	private void updateDBVersion(){
 		Logger.info("changing db level version to " + version);
-		Internal.DB_VERSION.setValue(version);
+		Internal.DB_VERSION._setValue(version);
 	}
 	
 	

@@ -43,6 +43,7 @@ import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,8 +60,6 @@ public class DocumentService {
 
 		ODocument doc = dao.create();
 		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
-		PermissionsHelper.grantRead(doc, RoleDao.getFriendRole());	
 		dao.save(doc);
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}
@@ -113,23 +112,6 @@ public class DocumentService {
 		q.append(" where @rid=").append(rid);
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
-		//TODO:
-		/*if(parser.isArray()){
-			try {
-				ArrayNode an = (ArrayNode)mp.readTree(result.toJSON()).get(parser.last().getName());
-				PartsLexer.ArrayField af =  (PartsLexer.ArrayField)parser.last();
-				if(an.size()<af.arrayIndex){
-					throw new InvalidModelException("The index requested does not exists in model");
-				}else{
-					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).getTextValue());
-					result = new ODocument().fromJSON(json);
-					System.out.println("JSON:"+result.toJSON());
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
 		return result;
 	}
 
@@ -229,8 +211,10 @@ public class DocumentService {
 		q.append(" where @rid = ").append(rid);
 		try{
 			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
-		}catch(Exception e){
-			e.printStackTrace();
+		}catch(OSecurityException  e){
+			throw e;
+		} catch (InvalidCriteriaException e) {
+			throw new RuntimeException (e);
 		}
 		od = get(collectionName,rid);
 		return od;

@@ -62,7 +62,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	
 	public void setTimeout(long timeoutInMilliseconds){
 		this.expiresInMilliseconds=timeoutInMilliseconds;
-		Logger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
+		if (Logger.isDebugEnabled()) Logger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
 	}	//setTimeout
 	
 	@Override
@@ -96,7 +96,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 
 	@Override
 	public void removeSession(String token) {
-		Logger.debug("SessionTokenProvider: " + token + " removed");
+		if (Logger.isDebugEnabled()) Logger.debug("SessionTokenProvider: " + token + " removed");
 		sessions.remove(token);
 
 	}

@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -84,6 +85,7 @@ import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
+
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
@@ -110,7 +112,7 @@ public class Admin extends Controller {
 	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	public static Result getUsers(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		List<ODocument> users=null;
@@ -125,13 +127,13 @@ public class Admin extends Controller {
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok(ret);
 	}
 
 	public static Result getUser(String username){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 
 		ODocument user=null;
@@ -147,38 +149,31 @@ public class Admin extends Controller {
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok(ret);
 	}
 
 	public static Result getCollections(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 
-		List<ODocument> result;
-		String ret="{[]}";
+		List<ImmutableMap> result=null;
 		try {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			result = CollectionService.getCollections(criteria);
+			List<ODocument> collections = CollectionService.getCollections(criteria);
+			result = StatisticsService.collectionsDetails(collections);
 		} catch (Exception e){
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-
-		try{
-			ret=JSONFormats.prepareResponseToJson(result,JSONFormats.Formats.DOCUMENT);
-		}catch (IOException e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
-		return ok(ret);
+		return ok(toJson(result));
 	}
 
 	public static Result createCollection(String name) throws Throwable{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try{
 			CollectionService.create(name);
 		}catch (CollectionAlreadyExistsException e) {
@@ -191,7 +186,7 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			throw e;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return created();
 	}
 
@@ -317,11 +312,11 @@ public class Admin extends Controller {
 	/* create user in any role */
 
 	public static Result createUser(){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		Logger.debug("signUp bodyJson: " + bodyJson);
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
 		//check and validate input
 		if (!bodyJson.has("username"))
@@ -362,17 +357,17 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e) ;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return created();
 	}//createUser
 
 
 	public static Result updateUser(String username){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		Logger.debug("signUp bodyJson: " + bodyJson);
+		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
 		if (!bodyJson.has("role"))
 			return badRequest("The 'role' field is missing");	
@@ -434,10 +429,41 @@ public class Admin extends Controller {
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok(user.toJSON(Formats.USER.toString()));
 	}//updateUser
 
+	/***
+	 * Change password of a specific user
+	 * @param name of user
+	 * @return 
+	 * @throws UserNotFoundException 
+	 * @throws SqlInjectionException 
+	 */
+	public static Result changePassword(String username) throws SqlInjectionException, UserNotFoundException{
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
+		if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
+		
+		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		JsonNode passwordNode=bodyJson.findValue("password");
+		
+		if (passwordNode==null) return badRequest("The body payload doesn't contain password field");
+		String password=passwordNode.asText();	  
+		
+		try{
+			UserService.changePassword(username, password);
+		} catch (UserNotFoundException e) {
+		    Logger.error("Username not found " + username, e);
+		    return notFound("Username not found");
+		}
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		return ok();	
+	}
+
+	
+	
 
 	public static Result dropUser(){
 		return status(NOT_IMPLEMENTED);
@@ -445,12 +471,12 @@ public class Admin extends Controller {
 
 	/***
 	 * Drop an entire collection
-	 * Data are lost... forevere
+	 * Data are lost... forever
 	 * @param name the Collection to drop
 	 * @return
 	 */
 	public static Result dropCollection(String name){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try {
 			CollectionService.drop(name);
 		}catch (SqlInjectionException e){
@@ -461,7 +487,7 @@ public class Admin extends Controller {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			return internalServerError(e.getMessage());
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		response().setContentType("application/json");
 		return ok();
 	}
@@ -484,33 +510,61 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 
-
 	public static Result setConfiguration(String section, String subSection, String key, String value){
+		
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
+		boolean inQueryString =false;
+		String contentType = request().getHeader(CONTENT_TYPE);
+		if(StringUtils.isEmpty(contentType)){
+			return badRequest("The content-type request header should be present in order to successfully update a setting.");
+		}
+		if(StringUtils.isEmpty(key)){
+			return badRequest("The key parameter should be specified in the url.");
+		}
 		try {
-			IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
-			if(i.getType().equals(ConfigurationFileContainer.class)){
-				MultipartFormData  body = request().body().asMultipartFormData();
-				if (body==null) return badRequest("missing data: is the body multipart/form-data?");
-				FilePart file = body.getFile("file");
-				if(file==null) return badRequest("missing file");
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				try{
-					FileUtils.copyFile(file.getFile(),baos);
-					Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
-					baos.close();
-					conf.getMethod("setValue",Object.class).invoke(i,fileValue);
-				}catch(Exception e){
-					internalServerError(e.getMessage());
+			Http.RequestBody b = request().body();
+			if(contentType.indexOf("application/json")>-1){
+				JsonNode bodyJson= b.asJson();
+				if(StringUtils.isEmpty(value)){
+					value = bodyJson.has("value")?bodyJson.get("value").getTextValue():null;
+				}else{
+					inQueryString = true;
 				}
-			}else{
+				if(StringUtils.isEmpty(value)){
+					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
+				}
 				PropertiesConfigurationHelper.setByKey(conf, key, value);
+			
+			}else{
+				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
+				if(i.getType().equals(ConfigurationFileContainer.class)){
+					MultipartFormData  body = request().body().asMultipartFormData();
+					if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+					FilePart file = body.getFile("file");
+					if(file==null) return badRequest("missing file");
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					try{
+						FileUtils.copyFile(file.getFile(),baos);
+						Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
+						baos.close();
+						conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+					}catch(Exception e){
+						internalServerError(e.getMessage());
+					}
+				}
 			}
+		
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
+		}catch (IllegalStateException e) {
+			return badRequest("This configuration value is not editable");
 		}
-		return ok();
+		String message = "";
+		if(inQueryString){
+			message = "You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.";
+		}
+		return ok(message);
 	}
 
 	public static Result getConfiguration(String section) throws  Throwable{
@@ -520,9 +574,14 @@ public class Admin extends Controller {
 
 	public static Result getLatestVersion() {
 		String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
-		Logger.debug("Calling " + urlToCall);
-		final Promise<Response> promise = WS.url(urlToCall).get();
-		return status(promise.get().getStatus(),promise.get().getBody());
+		if (Logger.isDebugEnabled()) Logger.debug("Calling " + urlToCall);
+		try{
+			final Promise<Response> promise = WS.url(urlToCall).get();
+			return status(promise.get().getStatus(),promise.get().getBody());
+		}catch(Exception e){
+			Logger.warn("Could not reach BAASBOX site to check for new versions");
+		}
+		return status(503,"Could not reach BAASBOX site to check for new versions");
 	}//getLatestVersion
 
 
@@ -561,9 +620,9 @@ public class Admin extends Controller {
 			unauthorized("appcode can not be null");
 		}
 
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
+		java.io.File dir = new java.io.File(backupDir);
 		if(!dir.exists()){
-			boolean createdDir = dir.mkdir();
+			boolean createdDir = dir.mkdirs();
 			if(!createdDir){
 				return internalServerError("unable to create backup dir");
 			}
@@ -590,7 +649,7 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and the stream of the file
 	 */
 	public static Result getExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
+		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -610,7 +669,7 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir+fileSeparator+fileName);
+		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
 		if(!file.exists()){
 			return notFound();
 		}else{
@@ -643,9 +702,9 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(Play.application().path().getAbsolutePath()+fileSeparator+backupDir);
+		java.io.File dir = new java.io.File(backupDir);
 		if(!dir.exists()){
-			dir.mkdir();
+			dir.mkdirs();
 		}
 		Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
 		File[] fileArr = files.toArray(new File[files.size()]);
@@ -723,7 +782,7 @@ public class Admin extends Controller {
 						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
 							return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
 						}else{
-							Logger.debug("Version : "+version+" is valid");
+							if (Logger.isDebugEnabled()) Logger.debug("Version : "+version+" is valid");
 						}
 					}else{
 						return badRequest("The manifest file does not contain a version number");
@@ -731,7 +790,7 @@ public class Admin extends Controller {
 				}else{
 					return badRequest("Looks like zip file does not contain a manifest file");
 				}
-				Logger.debug("Importing: "+fileContent);
+				if (Logger.isDebugEnabled()) Logger.debug("Importing: "+fileContent);
 				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
 					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();

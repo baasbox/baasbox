@@ -1,11 +1,12 @@
 #!/bin/bash
 # Put this file into the directory $OPENSHIFT_REPO_DIR/.openshift/action_hooks/
 # Rename it as "start" and give to it the eXecution permission (chmod +x ./start)
-# The application will work only if it binds to $OPENSHIFT_INTERNAL_IP:8080
+# The application will work only if it binds to $OPENSHIFT_DIY_IP:8080
 # -Dorient.baasbox.path=$OPENSHIFT_DATA_DIR/baasbox the path of the data file, you should not modify this since this path is a persistent filesystem
 # -Dorient.baasbox.admin_password=admin the admin user password, modify it before launching BaasBox so to modify the admin pass at db creation time
 # -Dapplication.code=1234567890 you MUST modify this to any valid string. This will be your application code
-./stop
+BASEDIR=$(dirname $0)
+$BASEDIR/stop
 rm $OPENSHIFT_REPO_DIR/bin/RUNNING_PID
 
-nohup java -Dorient.baasbox.path=$OPENSHIFT_DATA_DIR/baasbox -Dorient.baasbox.admin_password=admin -Dapplication.code=1234567890 -Dhttp.port=$OPENSHIFT_INTERNAL_PORT -Dhttp.address=$OPENSHIFT_INTERNAL_IP $* -cp "$OPENSHIFT_REPO_DIR/bin/lib/*" play.core.server.NettyServer $OPENSHIFT_REPO_DIR/bin $OPENSHIFT_DIY_LOG_DIR/baasbox.log  > $OPENSHIFT_DIY_LOG_DIR/nohup.log 2>&1 & 
+nohup java -Dorient.baasbox.path=$OPENSHIFT_DATA_DIR/baasbox -Dorient.baasbox.admin_password=admin -Dapplication.code=1234567890 -Dhttp.port=$OPENSHIFT_DIY_PORT -Dhttp.address=$OPENSHIFT_DIY_IP $* -cp "$OPENSHIFT_REPO_DIR/bin/lib/*" play.core.server.NettyServer $OPENSHIFT_REPO_DIR/bin $OPENSHIFT_DIY_LOG_DIR/baasbox.log   & 

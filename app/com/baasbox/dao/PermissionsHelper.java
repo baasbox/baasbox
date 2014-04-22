@@ -54,29 +54,29 @@ public class PermissionsHelper {
 	}
 	
 	public static ODocument changeOwner(ODocument document,OUser user){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Set<ORID> set = new HashSet<ORID>();
 		set.add( user.getDocument().getIdentity() ); 
 		document.field( Permissions.ALLOW.toString(), set, OType.LINKSET ); 
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;		
 	}	
 	
 	public static ODocument changeOwner(ODocument document,OIdentifiable user){
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Set<OIdentifiable> set = new HashSet<OIdentifiable>();
 		set.add( user ); 
 		document.field( Permissions.ALLOW.toString(), set, OType.LINKSET ); 
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;		
 	}
 
 	/* Delayed due an OrientDb bug, see patch below
 	public static ODocument grant(ODocument document, Permissions permission,
 			ORole role) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (role==null){
 			Logger.warn("role is null! Grant command skipped");
 			return document;
@@ -84,26 +84,26 @@ public class PermissionsHelper {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowRole(document, permission.toString(), role.getName());
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument grant(ODocument document, Permissions permission,
 			OUser user) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (user==null){
 			Logger.warn("user is null! Grant command skipped");
 			return document;
 		}		
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowUser(document, permission.toString(), user.getName());
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			ORole role) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (role==null){
 			Logger.warn("role is null! Revoke command skipped");
 			return document;
@@ -111,27 +111,27 @@ public class PermissionsHelper {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowRole(document, permission.toString(), role.getName());
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			OUser user) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (user==null){
 			Logger.warn("user is null! Revoke command skipped");
 			return document;
 		}		
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowUser(document, permission.toString(), user.getName());
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 */
 	
 	public static ODocument grant(ODocument document, Permissions permission,
 			ORole role) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (role==null){
 			Logger.warn("role is null! Grant command skipped");
 			return document;
@@ -145,13 +145,13 @@ public class PermissionsHelper {
 		document.field( permission.toString(), set, OType.LINKSET ); 
 */ 
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument grant(ODocument document, Permissions permission,
 			OUser user) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 /*
@@ -161,13 +161,13 @@ public class PermissionsHelper {
 		document.field( permission.toString(), set, OType.LINKSET ); 
 */
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document; 
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			ORole role) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), role.getDocument().getIdentity());
 		/*
@@ -177,13 +177,13 @@ public class PermissionsHelper {
 		document.field( permission.toString(), set, OType.LINKSET );
 		*/
 		document.save();
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			OUser user) {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 /*
@@ -193,7 +193,7 @@ public class PermissionsHelper {
 		document.field( permission.toString(), set, OType.LINKSET ); 
 */
 		document.save(); 
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return document;
 	}
 }

@@ -38,7 +38,7 @@ public class PeopleTest extends AbstractRouteHeaderTest{
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -62,7 +62,7 @@ public class PeopleTest extends AbstractRouteHeaderTest{
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 

@@ -70,7 +70,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -85,8 +85,8 @@ public class UserChangePasswordTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					request = request.withJsonBody(getPayload("/userChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
-					Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
-					Logger.debug("testRouteChangePassword result: " + contentAsString(result));
+					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
+					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword result: " + contentAsString(result));
 					assertRoute(result, "testRouteChangePassword", Status.OK, null, false);
 
 					String sPwdChanged = getPayloadFieldValue("/userChangePasswordPayload.json", "new");
@@ -119,7 +119,7 @@ public class UserChangePasswordTest extends AbstractUserTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

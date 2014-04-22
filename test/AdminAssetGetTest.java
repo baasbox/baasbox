@@ -63,7 +63,7 @@ public class AdminAssetGetTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -84,7 +84,7 @@ public class AdminAssetGetTest extends AbstractAdminAssetTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

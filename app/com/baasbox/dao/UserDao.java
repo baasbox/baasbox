@@ -29,14 +29,13 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
 
@@ -49,7 +48,7 @@ public class UserDao extends NodeDao  {
 	public final static String USER_LINK = "user";
 	private final static String USER_NAME_INDEX = "ouser.name";
 
-	public final static String USER_DEVICE_ID="deviceId";
+	public final static String USER_PUSH_TOKEN="pushToken";
 	public final static String USER_DEVICE_OS="os";
 	public final static String USER_LOGIN_INFO="login_info";
 	public final static String SOCIAL_LOGIN_INFO="sso_tokens";
@@ -82,21 +81,20 @@ public class UserDao extends NodeDao  {
 	};
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException,InvalidParameterException {
-		OGraphDatabase db = DbHelper.getOGraphDatabaseConnection();
+		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
 		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
 		OUser user=null;
-		if (role==null) user=db.getMetadata().getSecurity().createUser(username,password,new 
+		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new 
 				String[]{DefaultRoles.REGISTERED_USER.toString()}); 
 		else {
 			ORole orole = RoleDao.getRole(role);
 			if (orole==null) throw new InvalidParameterException("Role " + role + " does not exists");
-			user=db.getMetadata().getSecurity().createUser(username,password,new String[]{role}); 
+			user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{role}); 
 		}
 		ODocument doc = new ODocument(this.MODEL_NAME);
-		ODocument vertex = db.createVertex(CLASS_VERTEX_NAME);
+		ODocument vertex = db.addVertex("class:"+CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 		doc.field(FIELD_LINK_TO_VERTEX,vertex);
 		doc.field(FIELD_CREATION_DATE,new Date());
-		vertex.field(FIELD_TO_DOCUMENT_FIELD,doc);
 
 		doc.field(USER_LINK,user.getDocument().getIdentity());
 		doc.save();
@@ -130,7 +128,7 @@ public class UserDao extends NodeDao  {
 		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
-		Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (Logger.isDebugEnabled()) Logger.debug("Found "+resultList.size() +" elements for given tokens");
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 
 		return result;

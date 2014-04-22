@@ -1,11 +1,12 @@
 package com.baasbox.configuration;
 
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.EnumSet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -64,7 +65,11 @@ public class PropertiesConfigurationHelper {
 			EnumSet values = EnumSet.allOf( en );
 			for (Object v : values) {
 				  String key=(String) (en.getMethod("getKey")).invoke(v);
-				  String valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
+				  boolean isVisible=(Boolean)(en.getMethod("isVisible")).invoke(v);
+				  String valueAsString;
+				  if (isVisible) valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
+				  else valueAsString = "--HIDDEN--";
+				  boolean isEditable=(Boolean)(en.getMethod("isEditable")).invoke(v);
 				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
 				  Class type = (Class) en.getMethod("getType").invoke(v);
 			      String subsection = key.substring(0, key.indexOf('.'));
@@ -74,10 +79,14 @@ public class PropertiesConfigurationHelper {
 			        gen.writeStartArray();																				//				[
 			        lastSection = subsection;
 			      }	
+			      boolean isOverridden = (Boolean)(en.getMethod("isOverridden")).invoke(v);
 			      gen.writeStartObject();																				//					{
 			      gen.writeStringField(key,valueAsString);															//							"key": "value"	
 			      gen.writeStringField("description", valueDescription);												//						,"description":"description"
 			      gen.writeStringField("type",type.getSimpleName());													//						,"type":"type"
+			      gen.writeBooleanField("editable",isEditable);													//						,"editable":"true|false"
+			      gen.writeBooleanField("visible",isVisible);													//						,"visible":"true|false"
+			      gen.writeBooleanField("overridden",isOverridden);													//						,"overridden":"true|false"
 			      gen.writeEndObject();																					//					}
 			}
 			if (gen.getOutputContext().inArray()) gen.writeEndArray();													//				]
@@ -166,6 +175,46 @@ public class PropertiesConfigurationHelper {
 		return "";
 	}//dumpConfiguration
 	
+	public static String dumpConfigurationSectionAsFlatJson(String section){
+		Class en = CONFIGURATION_SECTIONS.get(section);
+		try {
+			JsonFactory jfactory = new JsonFactory();
+			StringWriter sw = new StringWriter();
+			String enumDescription = "";			
+			JsonGenerator gen = jfactory.createJsonGenerator(sw);
+			gen.writeStartArray();	
+			EnumSet values = EnumSet.allOf( en );
+			for (Object v : values) {
+				  String key=(String) (en.getMethod("getKey")).invoke(v);
+				  
+				  
+				  boolean isVisible=(Boolean)(en.getMethod("isVisible")).invoke(v);
+				  String valueAsString;
+				  if (isVisible) valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
+				  else valueAsString = "--HIDDEN--";
+				  boolean isEditable=(Boolean)(en.getMethod("isEditable")).invoke(v);
+			      boolean isOverridden = (Boolean)(en.getMethod("isOverridden")).invoke(v);
+				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
+				  Class type = (Class) en.getMethod("getType").invoke(v);
+				  
+			      gen.writeStartObject();																				//					{
+			      gen.writeStringField("key", key);	
+			      gen.writeStringField("value",valueAsString);
+			      gen.writeStringField("description", valueDescription);												//						,"description":"description"
+			      gen.writeStringField("type",type.getSimpleName());													//						,"type":"type"
+			      gen.writeBooleanField("editable", isEditable);
+			      gen.writeBooleanField("overridden", isOverridden);
+			      gen.writeEndObject();																					//					}
+			}
+			if (gen.getOutputContext().inArray()) gen.writeEndArray();													//				]
+			gen.close();
+			return sw.toString();
+		} catch (Exception e) {
+			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+		}
+		return "{}";
+	}//dumpConfigurationSectionAsJson(String)()
+
 	/***
 	 * Returns an Enumerator value by its key
 	 * The Enumerator must implement the IProperties interface
@@ -187,6 +236,25 @@ public class PropertiesConfigurationHelper {
 	      }
 		return null;
 	}	//findByKey
+
+ 	
+	public static Object findByKey(String completeKey) throws ConfigurationException {
+		String[] splittedKeys=completeKey.split("\\.");
+		String section=splittedKeys[0];
+		Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
+		EnumSet values = EnumSet.allOf( en );
+	    for (Object v : values) {
+	        try {
+	        	String key=StringUtils.join(Arrays.copyOfRange(splittedKeys, 1, splittedKeys.length),".");
+				if ( ((String)en.getMethod("getKey").invoke(v)).equalsIgnoreCase(key)  )
+				  return v;
+			} catch (Exception e) {
+				throw new ConfigurationException ("Is it " + en.getCanonicalName() + " an Enum that implements the IProperties interface?",e );
+			}
+	      }
+		return null;
+	}	//findByKey
+	
 	
 	/***
 	 * Set an Enumerator value.
@@ -197,43 +265,54 @@ public class PropertiesConfigurationHelper {
 	 * @throws ConfigurationException 
 	 * @throws Exception
 	 */
-	public static void setByKey(Class en,String iKey,Object value) throws ConfigurationException  {
+	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException  {
 		Object enumValue = findByKey(en,iKey);
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
-		} catch (Exception e) {
+
+		}catch (Exception e) {
+			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey
 	
-	public static String dumpConfigurationSectionAsFlatJson(String section){
-		Class en = CONFIGURATION_SECTIONS.get(section);
+	public static void override(String completeKey,Object value) throws ConfigurationException  {
+		Object enumValue = findByKey(completeKey);
 		try {
-			JsonFactory jfactory = new JsonFactory();
-			StringWriter sw = new StringWriter();
-			String enumDescription = "";			
-			JsonGenerator gen = jfactory.createJsonGenerator(sw);
-			gen.writeStartArray();	
-			EnumSet values = EnumSet.allOf( en );
-			for (Object v : values) {
-				  String key=(String) (en.getMethod("getKey")).invoke(v);
-				  String valueAsString=(String) (en.getMethod("getValueAsString")).invoke(v);
-				  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(v);
-				  Class type = (Class) en.getMethod("getType").invoke(v);
-			      gen.writeStartObject();																				//					{
-			      gen.writeStringField("key", key);	
-			      gen.writeStringField("value",valueAsString);
-			      gen.writeStringField("description", valueDescription);												//						,"description":"description"
-			      gen.writeStringField("type",type.getSimpleName());													//						,"type":"type"
-			      gen.writeEndObject();																					//					}
-			}
-			if (gen.getOutputContext().inArray()) gen.writeEndArray();													//				]
-			gen.close();
-			return sw.toString();
+			String[] splittedKeys=completeKey.split("\\.");
+			String section=splittedKeys[0];
+			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
+			en.getMethod("override",Object.class).invoke(enumValue,value);
 		} catch (Exception e) {
-			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+			throw new ConfigurationException ("Invalid key -" +completeKey+ "- or value -" +value+"-"  ,e );
 		}
-		return "{}";
-	}//dumpConfigurationSectionAsJson(String)()
+	}
+	  
+	
+	public static void setVisible(String completeKey, Boolean value) throws ConfigurationException {
+		Object enumValue = findByKey(completeKey);
+		try {
+			String[] splittedKeys=completeKey.split("\\.");
+			String section=splittedKeys[0];
+			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
+			en.getMethod("setVisible",boolean.class).invoke(enumValue,value);
+		} catch (Exception e) {
+			Logger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
+			throw new ConfigurationException ("Invalid key -" +completeKey+ "- or value -" +value+"-"  ,e );
+		}
+	}
+	 
+	public static void setEditable(String completeKey, Boolean value) throws ConfigurationException {
+		Object enumValue = findByKey(completeKey);
+		try {
+			String[] splittedKeys=completeKey.split("\\.");
+			String section=splittedKeys[0];
+			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
+			en.getMethod("setEditable",boolean.class).invoke(enumValue,value);
+		} catch (Exception e) {
+			Logger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
+			throw new ConfigurationException ("Invalid key -" +completeKey+ "- or value -" +value+"-"  ,e );
+		}
+	}
 	
 }//PropertiesConfigurationHelper

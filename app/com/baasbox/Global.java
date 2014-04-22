@@ -23,7 +23,8 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.UnsupportedEncodingException;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -43,13 +44,16 @@ import play.mvc.Result;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
+import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.storage.StatisticsService;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
@@ -61,6 +65,12 @@ public class Global extends GlobalSettings {
 	@Override
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
+		  info("System details:");
+		  info(StatisticsService.os().toString());
+		  info(StatisticsService.memory().toString());
+		  info(StatisticsService.java().toString());
+		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString());
+		 
 		  info("...Loading plugin...");
 	  }
 	  
@@ -90,9 +100,9 @@ public class Global extends GlobalSettings {
 			  
 			  
 			  Orient.instance().startup();
-			  OGraphDatabase db = null;
+			  ODatabaseDocumentTx db = null;
 			  try{
-				db = new OGraphDatabase( "plocal:" + config.getString(BBConfiguration.DB_PATH) ) ; 
+				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -126,7 +136,7 @@ public class Global extends GlobalSettings {
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
-		    		DbHelper.setupDb(db);
+		    		DbHelper.setupDb();
 			    	info("Initializing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
@@ -172,18 +182,79 @@ public class Global extends GlobalSettings {
     		if (db!=null && !db.isClosed()) db.close();
     	}
     	info ("...done");
-	    info("BaasBox is Ready.");
+    	
+    	overrideSettings();
+    	
+    	//activate metrics
+    	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
+    	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
+    	
+    	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
 	    
+	    //write the Welcome Message
 	    info("");
 	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin AppCode: 1234567890");
+	    info("Default credentials are: user:admin pass:admin AppCode: " + BBConfiguration.getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
-		debug("Global.onStart() ended"); 
+		debug("Global.onStart() ended");
+	    info("BaasBox is Ready.");
 	  }
+
+	private void overrideSettings() {
+		info ("Override settings...");
+    	//takes only the settings that begin with baasbox.settings
+    	Configuration bbSettingsToOverride=BBConfiguration.configuration.getConfig("baasbox.settings");
+    	//if there is at least one of them
+    	if (bbSettingsToOverride!=null) {
+    		//takes the part after the "baasbox.settings" of the key names
+    		Set<String> keys = bbSettingsToOverride.keys();
+    		Iterator<String> keysIt = keys.iterator();
+    		//for each setting to override
+    		while (keysIt.hasNext()){
+    			String key = keysIt.next();
+    			//is it a value to override?
+    			if (key.endsWith(".value")){
+    				//sets the overridden value
+    				String value = "";
+    				try {
+     					value = bbSettingsToOverride.getString(key);
+    					key = key.substring(0, key.lastIndexOf(".value"));
+						PropertiesConfigurationHelper.override(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the setting " + key + " with the value " + value.toString() + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
+    				//sets the visibility
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".visible"));
+						PropertiesConfigurationHelper.setVisible(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+					}
+    			}else if (key.endsWith(".editable")){ //or maybe we have to 
+    				//sets the possibility to edit the value via REST API by the admin
+    				Boolean value;
+    				try {
+     					value = bbSettingsToOverride.getBoolean(key);
+    					key = key.substring(0, key.lastIndexOf(".editable"));
+						PropertiesConfigurationHelper.setEditable(key,value);
+					} catch (Exception e) {
+						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+					}
+    			}else { 
+    				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
+    			}
+    			key.subSequence(0, key.lastIndexOf("."));
+    		}
+    	}else info ("...No setting to override...");
+    	info ("...done");
+	}
 	  
 	  
 	  
@@ -217,7 +288,6 @@ public class Global extends GlobalSettings {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
 			result.put("result", "error");
-			result.put("bb_code", "");
 			result.put("message", error);
 			result.put("resource", request.path());
 			result.put("method", request.method());
@@ -233,11 +303,10 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 400);
 		  Result resultToReturn =  badRequest(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  }finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	  }  
 
 	// 404
@@ -248,11 +317,10 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 404);
 		  Result resultToReturn= notFound(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  }finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	    }
 
 	  // 500 - internal server error
@@ -265,75 +333,16 @@ public class Global extends GlobalSettings {
 		  error(ExceptionUtils.getFullStackTrace(throwable));
 		  Result resultToReturn= internalServerError(result);
 		  try {
-			Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
-		  } catch (UnsupportedEncodingException e) {
-				//
+			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+		  } finally{
+			  return resultToReturn;
 		  }
-		  return resultToReturn;
 	  }
 
 
-	@Override
+	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		
 		return new Class[]{com.baasbox.filters.LoggingFilter.class};
 	}
-
-	  
-	  
-	  
-	
-	    
-	  //these are needed to override the standard action calls and to centralized the errors response
-	   //TODO: we must implement the Play! 2.1 Filters
-	    /*
-	   @Override
-	  public Action onRequest(Request request, Method actionMethod) {
-		  return new ActionWrapper(super.onRequest(request, actionMethod));
-	  }
-	  
-	  private class ActionWrapper extends Action.Simple {
-		    public ActionWrapper(Action action) {
-		      this.delegate = action;
-		    }
-
-			@Override
-			public Result call(Context ctx) throws Throwable {
-				Http.Context.current.set(ctx);
-				//injects the CORS  header 
-				ctx.response().setHeader("Access-Control-Allow-Origin", "*");
-				//injects the user data & credential into the context
-				String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
-				if (token!=null) {
-					  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
-					  if (sessionData!=null){
-							ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
-							ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
-							ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
-					  }
-				}
-			    
-				//executes the request
-				Result result = this.delegate.call(ctx);
-			    
-				//checks the result of the request
-			    final int statusCode = JavaResultExtractor.getStatus(result);
-			    if (statusCode>399){	//an error occured
-				      final byte[] body = JavaResultExtractor.getBody(result);
-				      String stringBody = new String(body, "UTF-8");
-				      switch (statusCode) {
-				      	case 400: return onBadRequest(ctx.request(),stringBody);
-				      	case 401: return onUnauthorized(ctx.request(),stringBody);
-				      	case 403: return onForbidden(ctx.request(),stringBody);
-				      	case 404: return onResourceNotFound(ctx.request(),stringBody);
-				      	default:  return onDefaultError(statusCode,ctx.request(),stringBody);
-				      }
-			    }
-			    return result;
-			      //play.api.mvc.SimpleResult wrappedResult = (play.api.mvc.SimpleResult) result.getWrappedResult();
-			      //Response response = ctx.response();
-			}//call
-		  }//class ActionWrapper
-	  */
-	
 }

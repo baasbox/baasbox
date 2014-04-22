@@ -79,7 +79,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -91,12 +91,30 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);		
 	}
 	
+	@Test 
+	public void testCreationDateFormat(){
+		running 		(
+			getFakeApplication(), 
+			new Runnable()			{
+				public void run()				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
+					String sCreationDate = getCreationDate();
+					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}\\+\\d{4}")) {
+						 Assert.fail("_creationDate field is in wrong format: " + sCreationDate);
+					}
+				}
+			}
+		);
+	}
+	
 	@Test
 	public void testRouteCMDDocument()
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -159,7 +177,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					{
 						// Retrieve document in a collection
 						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1"));
-						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + "> using call_id", Status.OK, null, true);
+						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 					}
 					catch (UnsupportedEncodingException uex)
@@ -169,9 +187,9 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					
 					try
 					{
-						// Retrieve document in a collection using a call_id
+						// Test the call_id feature
 						result = routeGetDocument(getRouteAddress(sFakeCollection) + "/" + URLEncoder.encode(sRid, "ISO-8859-1")+"?call_id=123");
-						assertRoute(result, "testRouteCMDDocument get document RID <" + sRid + ">", Status.OK, null, true);
+						assertRoute(result, "testRouteCMDDocument.call_id", Status.OK, null, true);
 						assertJSONString(json, TEST_MODIFY_JSON);
 						assertJSONString(json, "\"call_id\":\"123\"");
 					}
@@ -262,7 +280,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -280,7 +298,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	public void testAccessDocumentsWithoutAuth() {
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -363,7 +381,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -598,6 +616,24 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		
 		return sUuid;
+	}
+	
+
+	private String getCreationDate()
+	{
+		String sRet = null;
+
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_creation_date");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get _author value: " + ex.getMessage());
+		}
+		
+		return sRet;
 	}
 	
 	private String getAuthor()

@@ -44,7 +44,7 @@ public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -65,7 +65,7 @@ public abstract class AbstractAdminAssetTest extends AbstractRouteHeaderTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

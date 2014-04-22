@@ -51,14 +51,14 @@ public class UserLoginTest extends AbstractTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
 				{
 					String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
 					
-					// Test update user
+					// Test login user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
@@ -78,6 +78,14 @@ public class UserLoginTest extends AbstractTest
 					JsonNode user = jsonRes.get("data").get("user");
 					Assert.assertNotNull(user);
 					assertJSON(user, "admin");
+					
+					//test logout
+					request = new FakeRequest(POST, "/logout");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_TOKEN, token);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteLogoutUser", Status.OK, "\"result\":\"ok\",\"data\":\"user logged out\",\"http_code\":200", true);
+					
 				}
 			}
 		);		

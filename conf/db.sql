@@ -1,3 +1,10 @@
+--database settings
+alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ
+alter database custom useLightweightEdges=true
+alter database custom useClassForEdgeLabel=true
+alter database custom useClassForVertexLabel=true
+alter database custom useVertexFieldsForEdgeLabels=true
+
 --classes
 alter database custom useLightweightEdges=true
 alter database custom useClassForEdgeLabel=true
@@ -63,6 +70,11 @@ create property _BB_File.file link;
 alter property _BB_File.file mandatory=true;
 alter property _BB_File.file notnull=true;
 
+create class _BB_File_Content;
+create property _BB_File_Content.content String;
+create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;
+
+
 --Assets
 create class _BB_Asset extends _BB_Node;
 create class _BB_FileAsset extends _BB_Asset;
@@ -83,6 +95,7 @@ alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
 --indices
+--deprecated since OrientDB 1.7:
 create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;

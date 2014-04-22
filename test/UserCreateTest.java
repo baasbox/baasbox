@@ -37,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -87,7 +88,7 @@ public class UserCreateTest extends AbstractUserTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -106,13 +107,12 @@ public class UserCreateTest extends AbstractUserTest
 		);		
 	}
 
-	
 	@Test
-	public void routeCreateUser()
+	public void testPasswordEmpty()
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -120,7 +120,32 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					
+					((ObjectNode)node).put("password", "");
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					assertRoute(result, "routeCreateUser", 422, null, false);
+				}
+			}
+		);
+	}
+	
+	@Test
+	public void routeCreateUser()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sFakeUser = USER_TEST + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+
 					// Create user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -145,7 +170,7 @@ public class UserCreateTest extends AbstractUserTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -164,7 +189,7 @@ public class UserCreateTest extends AbstractUserTest
 						getMethod(),
 						node
 					);
-					assertServer("serverCreateUser", Status.CREATED, null, false);
+					assertServer("serverCreateUser", Status.CREATED, "visibleByAnonymousUsers\":{}", true);
 				}
 	        }
 		);
@@ -176,7 +201,7 @@ public class UserCreateTest extends AbstractUserTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -201,7 +226,7 @@ public class UserCreateTest extends AbstractUserTest
 	public void testInternalUserSuspend(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -227,7 +252,7 @@ public class UserCreateTest extends AbstractUserTest
 	public void testUnkownUserSuspend(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -249,7 +274,7 @@ public class UserCreateTest extends AbstractUserTest
 	public void testUserAutoSuspend(){
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -257,7 +282,7 @@ public class UserCreateTest extends AbstractUserTest
 					String sFakeUser = USER_TEST + UUID.randomUUID();
 					// Prepare test user
 					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-					
+
 					// Create user
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);

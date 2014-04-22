@@ -15,7 +15,7 @@ public class Generic extends Controller{
 		response().setHeader("Allow", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		Logger.debug(Json.stringify(Json.toJson(request().headers())));
+		if (Logger.isDebugEnabled()) Logger.debug(Json.stringify(Json.toJson(request().headers())));
 		if (request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS")!=null)
 			response().setHeader("Access-Control-Allow-Headers",request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS"));
 		return ok();

@@ -47,7 +47,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	
 	@BeforeClass
 	public static void createCorrectFile() throws Exception{
-		running(fakeApplication(), new Runnable() {
+		running(getFakeApplication(), new Runnable() {
 			
 			@Override
 			public void run() {
@@ -84,13 +84,13 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
 				public void invoke(TestBrowser browser) 
 				{
-					Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
+					if (Logger.isDebugEnabled()) Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();
@@ -107,7 +107,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

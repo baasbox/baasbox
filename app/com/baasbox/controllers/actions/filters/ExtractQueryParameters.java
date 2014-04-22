@@ -29,15 +29,15 @@ public class ExtractQueryParameters extends Action.Simple{
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);		
-		Logger.debug("ExtractQueryParameters for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("ExtractQueryParameters for resource " + Http.Context.current().request());
 		
 		QueryParams qryp =QueryParams.getParamsFromQueryString(Http.Context.current().request());
-		Logger.debug("ExtractQueryParameters " + qryp);
+		if (Logger.isDebugEnabled()) Logger.debug("ExtractQueryParameters " + qryp);
 		
 		ctx.args.put(IQueryParametersKeys.QUERY_PARAMETERS, qryp);
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return delegate.call(ctx);
 	}
 

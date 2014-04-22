@@ -80,7 +80,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
     public void testDropCollectionCreate() throws Exception
     {
 
-            running (fakeApplication(),     
+            running (getFakeApplication(),     
             		new Runnable()  {
                             public void run()       {
                                     try {
@@ -110,7 +110,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.count", Status.OK, "\"count\":\""+cont+"\"", true);
+                                		assertRoute(result, "routeDropCollection.count", Status.OK, "\"count\":"+cont, true);
                                          
                                 		//drop the collection
                                 		requestCreation = new FakeRequest(DELETE, sFakeCollection);
@@ -138,7 +138,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                 		requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
                                 		result = route(requestCreation);
-                                		assertRoute(result, "routeDropCollection.count_must_be_empty", Status.OK, "\"count\":\"0\"", true);
+                                		assertRoute(result, "routeDropCollection.count_must_be_empty", Status.OK, "\"count\":0", true);
                                 		
                                 		//finally... drop
                                 		requestCreation = new FakeRequest(DELETE, sFakeCollection);
@@ -166,7 +166,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionPopulate()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}
@@ -191,7 +191,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionDrop()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}
@@ -202,7 +202,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
 	@Test
 	public void testDropCollectionCheck()
 	{
-		running	(fakeApplication(),	new Runnable()	{
+		running	(getFakeApplication(),	new Runnable()	{
 				public void run() 	{
 					routeDropCollectionPopulate();
 				}

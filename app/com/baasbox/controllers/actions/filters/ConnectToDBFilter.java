@@ -39,22 +39,24 @@ public class ConnectToDBFilter extends Action.Simple {
  
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
 		ODatabaseRecordTx database = null;
 		Result result=null;
 		try{
-			
+			//close an eventually  'ghost'  connection left open in this thread
+			//(this may happen in case of Promise usage)
+			DbHelper.close(DbHelper.getConnection());
 	        try{
 	        	database=DbHelper.open(appcode,username,password);
 	        }catch (OSecurityAccessException e){
-	        	Logger.debug(e.getMessage());
+	        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
 	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
 	        }catch(ShuttingDownDBException sde){
 	        	String message = sde.getMessage();
@@ -65,19 +67,19 @@ public class ConnectToDBFilter extends Action.Simple {
 			result = delegate.call(ctx);
 
 		}catch (OSecurityAccessException e){
-			Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
+			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
 			result = forbidden(e.getMessage());
 		}catch (InvalidAppCodeException e){
-			Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
+			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
 			result = unauthorized(e.getMessage());	
 		}catch (Throwable e){
-			Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
+			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
 			throw e;
 		}finally{
 			Http.Context.current.set(ctx); 
 			DbHelper.close(database);
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return result;
 	}
 

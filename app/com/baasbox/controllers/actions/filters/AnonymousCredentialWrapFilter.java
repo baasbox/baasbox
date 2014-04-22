@@ -30,10 +30,10 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
+		if (Logger.isDebugEnabled()) Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
 		String user=BBConfiguration.getBaasBoxUsername();
 		String password = BBConfiguration.getBaasBoxPassword();
@@ -45,10 +45,10 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		ctx.args.put("password", password);
 		ctx.args.put("appcode", appCode);
 		
-		Logger.debug("username (defined in conf file): " + user);
-		Logger.debug("password (defined in conf file): " + password);
-		Logger.debug("appcode (from header or querystring): " + appCode);
-		Logger.debug("token: N/A");
+		if (Logger.isDebugEnabled()) Logger.debug("username (defined in conf file): " + user);
+		if (Logger.isDebugEnabled()) Logger.debug("password (defined in conf file): " + password);
+		if (Logger.isDebugEnabled()) Logger.debug("appcode (from header or querystring): " + appCode);
+		if (Logger.isDebugEnabled()) Logger.debug("token: N/A");
 		
 		//executes the request
 		Result tempResult = delegate.call(ctx);
@@ -56,7 +56,7 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		Result result=wr.wrap(ctx, tempResult);
 				
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;
 	}
 

@@ -19,38 +19,43 @@ package com.baasbox.util;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.baasbox.BBConfiguration;
 
 import play.Logger;
 
 
 public class QueryParams implements IQueryParametersKeys{
-	String where="";
-	Integer page=-1;
-	Integer recordPerPage=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_PER_PAGE));
-	String orderBy="";
-	Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
-	Object[] params={};
-	
+	private String fields="";
+	private String where="";
+	private Integer page=-1;
+	private Integer recordPerPage=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_PER_PAGE));
+	private String groupBy="";
+	private String orderBy="";
+	private Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
+	private Object[] params={};
+
+
 	protected QueryParams(){};
 	
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String[] params) {
 		super();
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
 		if (orderBy!=null) this.orderBy = orderBy;
 		if (depth!=null) this.depth = depth;
 		if (params!=null) this.params=params;
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String param) {
 		super();
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
@@ -60,8 +65,37 @@ public class QueryParams implements IQueryParametersKeys{
 			String[] params = {param};
 			this.params= params ;
 		}
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
+	
+	public QueryParams(String fields, String where, Integer page,
+			Integer recordPerPage, String orderBy, Integer depth,
+			String[] params) {
+		this(where,  page,recordPerPage,  orderBy,  depth,	 params);
+		if (fields!=null) this.fields = fields;
+	}
+
+	public QueryParams(String fields, String where, Integer page,
+			Integer recordPerPage, String orderBy, Integer depth,
+			String params) {
+		this(where,  page,recordPerPage,  orderBy,  depth,	 params);
+		if (fields!=null) this.fields = fields;
+	}
+	
+	public QueryParams(String fields, String groupBy, String where,
+			Integer page, Integer recordPerPage, String orderBy,
+			Integer depth, String[] params) {
+		this(fields,where,  page,recordPerPage,  orderBy,  depth,	 params);
+		if (groupBy!=null) this.groupBy = groupBy;
+	}
+
+	public QueryParams(String fields, String groupBy, String where,
+			Integer page, Integer recordPerPage, String orderBy,
+			Integer depth, String params) {
+		this(fields,where,  page,recordPerPage,  orderBy,  depth,	 params);
+		if (groupBy!=null) this.groupBy = groupBy;
+	}
+	
 	/**
 	 * @return the where
 	 */
@@ -91,6 +125,13 @@ public class QueryParams implements IQueryParametersKeys{
 	}
 
 	/**
+	 * @return the groupBy
+	 */
+	public String getGroupBy() {
+		return groupBy;
+	}
+	
+	/**
 	 * @return the depth
 	 */
 	public Integer getDepth() {
@@ -111,16 +152,30 @@ public class QueryParams implements IQueryParametersKeys{
 	@Override
 	public String toString() {
 		return "QueryParams ["
+				+ (fields != null ? "fields=" + fields + ", " : "")
 				+ (where != null ? "where=" + where + ", " : "")
 				+ (page != null ? "page=" + page + ", " : "")
-				+ (recordPerPage != null ? "recordPerPage=" + recordPerPage
-						+ ", " : "")
+				+ (groupBy != null ? "groupBy=" + groupBy + ", " : "")		
 				+ (orderBy != null ? "orderBy=" + orderBy + ", " : "")
 				+ (depth != null ? "depth=" + depth + ", " : "")
 				+ (params != null ? "params=" + Arrays.toString(params) : "")
+				+ (recordPerPage != null ? "recordPerPage=" + recordPerPage
+						+ ", " : "")
 				+ "]";
 	}
 
+	public QueryParams fields (String fields){
+		if (fields!=null)
+			this.fields=fields;
+		return this;
+	}
+	
+	public QueryParams groupBy (String groupBy){
+		if (groupBy!=null)
+			this.groupBy=groupBy;
+		return this;
+	}
+	
 	public QueryParams where (String whereCondition){
 		if (whereCondition!=null)
 			this.where=whereCondition;
@@ -153,21 +208,27 @@ public class QueryParams implements IQueryParametersKeys{
 
 	
 	public static QueryParams getParamsFromQueryString(play.mvc.Http.RequestHeader header){
+		String fields;
 		String where;
 		Integer page;
 		Integer recordPerPage;
+		String groupBy;
 		String orderBy;
 		Integer depth;
 		String[] params;
 
+		String fieldsFromQS=null;
 		String whereFromQS=null;
 		String pageFromQS=null;
 		String recordPerPageFromQS=null;
 		String orderByFromQS=null;
+		String groupByFromQS=null;
 		String depthFromQS=null;
 		
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Map <String,String[]> queryString = header.queryString();
+		if (queryString.get(IQueryParametersKeys.FIELDS)!=null)
+			fieldsFromQS=queryString.get(IQueryParametersKeys.FIELDS)[0];
 		if (queryString.get(IQueryParametersKeys.WHERE)!=null)
 			whereFromQS=queryString.get(IQueryParametersKeys.WHERE)[0];
 		if (queryString.get(IQueryParametersKeys.PAGE)!=null)
@@ -178,11 +239,15 @@ public class QueryParams implements IQueryParametersKeys{
 			recordPerPageFromQS=queryString.get(IQueryParametersKeys.RECORDS_PER_PAGE)[0];
 		if (queryString.get(IQueryParametersKeys.ORDER_BY)!=null)
 			orderByFromQS=queryString.get(IQueryParametersKeys.ORDER_BY)[0];
+		if (queryString.get(IQueryParametersKeys.GROUP_BY)!=null)
+			groupByFromQS=queryString.get(IQueryParametersKeys.GROUP_BY)[0];
 		if (queryString.get(IQueryParametersKeys.DEPTH)!=null)
 			depthFromQS=queryString.get(IQueryParametersKeys.DEPTH)[0];
 		params = queryString.get(IQueryParametersKeys.PARAMS);
 		
+		fields=fieldsFromQS;
 		where=whereFromQS;
+		groupBy=groupByFromQS;
 		orderBy=orderByFromQS;
 		try{
 			page=pageFromQS==null?null:new Integer(pageFromQS);
@@ -200,10 +265,14 @@ public class QueryParams implements IQueryParametersKeys{
 			throw new NumberFormatException(IQueryParametersKeys.DEPTH + " parameter must be a valid Integer");
 		}		
 		
-		QueryParams qryp = new QueryParams(where, page, recordPerPage, orderBy, depth,params);
+		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params);
 		
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return qryp;
 		
+	}
+
+	public String getFields() {
+		return fields;
 	}
 }

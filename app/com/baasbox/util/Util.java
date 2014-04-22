@@ -38,7 +38,7 @@ public class Util {
 	 */
 	/*
 	  public static String listToJSON(Collection<? extends OIdentifiable> iRecords,String fetchPlan) throws IOException {
-		  Logger.trace("Method Start");
+		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		    final StringWriter buffer = new StringWriter();
 		    final OJSONWriter json = new OJSONWriter(buffer);
 		    json.beginCollection(0, false, null);
@@ -61,7 +61,7 @@ public class Util {
 		      }
 		    }
 		    json.endCollection(0, false);
-		    Logger.trace("Method End");
+		    if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		    return buffer.toString();
 		  }//listToJSON
 	 */
@@ -79,7 +79,7 @@ public class Util {
 
 	
 	public static void createZipFile(String path,File...files) {
-		Logger.debug("Zipping into:"+path);
+		if (Logger.isDebugEnabled()) Logger.debug("Zipping into:"+path);
 		ZipOutputStream zip = null;
 		FileOutputStream dest = null;
 		try{

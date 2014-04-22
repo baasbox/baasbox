@@ -34,15 +34,18 @@ public class TestConfig
 	
 	public static final String VALUE_APPCODE = "1234567890";
 	
-	public static final String ADMIN_USERNAME="admin";
-	public static final String ADMIN_PASSWORD="admin";
-	
-	public static final String AUTH_ADMIN = ADMIN_USERNAME+":"+ADMIN_PASSWORD;
+
+	public static final String AUTH_ADMIN_PASS = "admin";
+	public static final String AUTH_ADMIN = "admin:" + AUTH_ADMIN_PASS;
+	public static final String AUTH_ROOT_PASSWORD = "root";
+	public static final String AUTH_ROOT = "root:"+ AUTH_ROOT_PASSWORD;
+
 	public static final String AUTH_DEFAULT = "baasbox:baasbox";
 	
 	public static final String TEST_COLLECTION_NAME = "documents";
 	
 	public static final String AUTH_ADMIN_ENC;
+	public static final String AUTH_ROOT_ENC;
 	public static final String AUTH_DEFAULT_ENC;
 	 
 	public static final String MSG_INVALID_APP_CODE = "Invalid App Code";
@@ -53,12 +56,14 @@ public class TestConfig
 	public static final String MSG_BAD_RID = "is not a RecordId in form of string.";
 	public static final String MSG_BAD_RID_MODIFY = "is not a document";
 	public static final String MSG_CHANGE_PWD = "The old password does not match with the current one";
+	public static final String MSG_CHANGE_ADMIN_PWD = "The body payload doesn't contain password field";
 	public static final String MSG_ASSET_ALREADY_EXISTS = "An asset with the same name already exists";
 	public static final String MSG_NO_APP_CODE_NO_AUTH = "Missing Session Token, Authorization info and even the AppCode";
 
 	static
 	{
 		AUTH_ADMIN_ENC = encodeAuth(AUTH_ADMIN);
+		AUTH_ROOT_ENC = encodeAuth(AUTH_ROOT);
 		AUTH_DEFAULT_ENC = encodeAuth(AUTH_DEFAULT);
 	}
 	

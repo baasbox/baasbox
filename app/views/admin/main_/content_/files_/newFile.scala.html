@@ -1,0 +1,49 @@
+<!-- Add File starts -->
+	<div class="modal hide fade" id="addFileModal">
+     <form class="form-horizontal" id="fileForm">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">x</button>
+			<h3>New File</h3>
+		</div>
+		<div class="modal-body">
+			<div class="row-fluid">
+			<div class="box span12" id="">
+					<div class="box-content">
+						<div class="alert alert-info">
+							Please enter the File information
+						</div>
+							<fieldset>
+								<div id="errorFile" class="alert alert-error hide">
+
+								</div>
+								<div id="" class="control-group error hide" >
+									 <span class="help-inline" id="errorFileMessage"></span>
+								</div>							
+							  <div data-rel="tooltip" title="You can attach data in JSON format"  class="control-group" id="divFileAttachedData">
+								<label class="control-label" for="txtFileMeta">Attached JSON Data</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtFileAttachedData" name="attachedData"></textarea>
+								</div>
+							  </div>
+							  <div data-rel="tooltip" title="You have to provide a file"  class="control-group" id="divFileUpload">
+								<label class="control-label" for="fuFile">File</label>
+								<div class="controls">
+									<span class="btn btn-success fileinput-button">
+										<i class="icon-plus icon-white"></i>
+										<span>Pick a file...</span>
+										<input class="" id="fuFile" type="file" name="file">
+									</span>
+								</div>
+							  </div>
+							</fieldset>
+					</div>
+				</div><!--/span-->
+		</div><!--/row-->
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<input type="submit" class="btn btn-primary btn-FileCommit" value="Save changes">
+		</div>
+	  </form>
+	</div>
+	<!-- Add File ends -->

@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
@@ -51,6 +52,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
@@ -138,11 +140,11 @@ public class UserService {
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-		String deviceId=(String) data.get(UserDao.USER_DEVICE_ID);
+		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		boolean found=false;
 		for (ODocument loginInfo : loginInfos){
 
-			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
 				found=true;
 				break;
 			}
@@ -152,13 +154,27 @@ public class UserService {
 			systemProps.save();
 		}
 	}
-
-	public static void logout(String deviceId) throws SqlInjectionException {
+	public static void unregisterDevice(String pushToken) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
 		for (ODocument loginInfo : loginInfos){
-			if (loginInfo.field(UserDao.USER_DEVICE_ID)!=null && loginInfo.field(UserDao.USER_DEVICE_ID).equals(deviceId)){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
+				loginInfos.remove(loginInfo);
+				break;
+			}
+		}
+		systemProps.save();
+	}
+	
+	
+
+	public static void logout(String pushToken) throws SqlInjectionException {
+		ODocument user=getCurrentUser();
+		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
+		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+		for (ODocument loginInfo : loginInfos){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
 				loginInfos.remove(loginInfo);
 				break;
 			}
@@ -201,10 +217,13 @@ try{
        *    Friends
        *    User
        */
-            if (nonAppUserAttributes!=null)  {
+      
+      //anonymous
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(nonAppUserAttributes.toString());
+                    	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
+                    	  else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
                     }
@@ -219,10 +238,11 @@ try{
               /*    these attributes are visible by:
                *    User
                */                                
-            if (privateAttributes!=null) {
+            {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(privateAttributes.toString());
+                    	if (privateAttributes!=null) attrObj.fromJSON(privateAttributes.toString());
+                    	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
                     }
@@ -235,10 +255,11 @@ try{
                *    Friends
                *    User
                */                                
-            if (friendsAttributes!=null) {
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{        
-                            attrObj.fromJSON(friendsAttributes.toString());
+                    	 if (friendsAttributes!=null) attrObj.fromJSON(friendsAttributes.toString());
+                     	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
                     }
@@ -253,15 +274,15 @@ try{
                *    Friends
                *    User
                */                                
-            if (appUsersAttributes!=null) {
+           {
                     ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
                     try{
-                            attrObj.fromJSON(appUsersAttributes.toString());
+                    	if (appUsersAttributes!=null) attrObj.fromJSON(appUsersAttributes.toString());
+                     	else attrObj.fromJSON("{}");
                     }catch (OSerializationException e){
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
                     }
-                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-                    PermissionsHelper.grantRead(attrObj, friendRole);        
+                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
                     PermissionsHelper.changeOwner(attrObj, userRid);
                     profile.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
                     attrObj.save();
@@ -389,6 +410,18 @@ return profile;
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
 		//DbHelper.removeConnectionFromPool();
 	}
+	
+	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException {
+		ODatabaseRecordTx db=DbHelper.getConnection();
+		db = DbHelper.reconnectAsAdmin();
+		UserDao udao=UserDao.getInstance();
+		ODocument user = udao.getByUserName(username);
+		if(user==null){
+			if (Logger.isDebugEnabled()) Logger.debug("User " + username + " does not exist");
+			throw new UserNotFoundException("User " + username + " does not exist");
+		}
+		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
+	}
 
 	public static boolean exists(String username) {
 		UserDao udao=UserDao.getInstance();
@@ -400,23 +433,23 @@ return profile;
 		final String errorString ="Cannot send mail to reset the password: ";
 
 		//check method input
-		if (!user.getSchemaClass().getName().equalsIgnoreCase(UserDao.MODEL_NAME)) throw new Exception (errorString + " invalid user object");
+		if (!user.getSchemaClass().getName().equalsIgnoreCase(UserDao.MODEL_NAME)) throw new PasswordRecoveryException (errorString + " invalid user object");
 
 		//initialization
 		String siteUrl = Application.NETWORK_HTTP_URL.getValueAsString();
 		int sitePort = Application.NETWORK_HTTP_PORT.getValueAsInteger();
-		if (StringUtils.isEmpty(siteUrl)) throw  new Exception (errorString + " invalid site url (is empty)");
+		if (StringUtils.isEmpty(siteUrl)) throw  new PasswordRecoveryException (errorString + " invalid site url (is empty)");
 
 		String textEmail = PasswordRecovery.EMAIL_TEMPLATE_TEXT.getValueAsString();
 		String htmlEmail = PasswordRecovery.EMAIL_TEMPLATE_HTML.getValueAsString();
 		if (StringUtils.isEmpty(htmlEmail)) htmlEmail=textEmail;
-		if (StringUtils.isEmpty(htmlEmail)) throw  new Exception (errorString + " text to send is not configured");
+		if (StringUtils.isEmpty(htmlEmail)) throw  new PasswordRecoveryException (errorString + " text to send is not configured");
 
 		boolean useSSL = PasswordRecovery.NETWORK_SMTP_SSL.getValueAsBoolean();
 		boolean useTLS = PasswordRecovery.NETWORK_SMTP_TLS.getValueAsBoolean();
 		String smtpHost = PasswordRecovery.NETWORK_SMTP_HOST.getValueAsString();
 		int smtpPort = PasswordRecovery.NETWORK_SMTP_PORT.getValueAsInteger();
-		if (StringUtils.isEmpty(smtpHost)) throw  new Exception (errorString + " SMTP host is not configured");
+		if (StringUtils.isEmpty(smtpHost)) throw  new PasswordRecoveryException (errorString + " SMTP host is not configured");
 
 
 		String username_smtp = null;
@@ -424,11 +457,11 @@ return profile;
 		if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
 			username_smtp = PasswordRecovery.NETWORK_SMTP_USER.getValueAsString();
 			password_smtp = PasswordRecovery.NETWORK_SMTP_PASSWORD.getValueAsString();
-			if (StringUtils.isEmpty(username_smtp)) throw  new Exception (errorString + " SMTP username is not configured");
+			if (StringUtils.isEmpty(username_smtp)) throw  new PasswordRecoveryException (errorString + " SMTP username is not configured");
 		}
 		String emailFrom = PasswordRecovery.EMAIL_FROM.getValueAsString();
 		String emailSubject = PasswordRecovery.EMAIL_SUBJECT.getValueAsString();
-		if (StringUtils.isEmpty(emailFrom)) throw  new Exception (errorString + " sender email is not configured");
+		if (StringUtils.isEmpty(emailFrom)) throw  new PasswordRecoveryException (errorString + " sender email is not configured");
 
 		try {
 			String userEmail=((ODocument) user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER)).field("email").toString();
@@ -438,6 +471,9 @@ return profile;
 			//Random
 			String sRandom = appCode + "%%%%" + username + "%%%%" + UUID.randomUUID();
 			String sBase64Random = new String(Base64.encodeBase64(sRandom.getBytes()));
+
+			//Save on DB
+			ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
 
 			//Send mail
 			HtmlEmail email = null;
@@ -460,27 +496,59 @@ return profile;
 			email.setTextMsg(textMailTemplate.render());
 
 			//Email Configuration
-			email.setSSLOnConnect(useSSL);
+			email.setSSL(useSSL);
+			email.setTLS(useTLS);
 			email.setStartTLSEnabled(useTLS);
+			email.setStartTLSRequired(useTLS);
+			email.setSSLCheckServerIdentity(false);
+			email.setSslSmtpPort(String.valueOf(smtpPort));   
 			email.setHostName(smtpHost);
 			email.setSmtpPort(smtpPort);
 
+
 			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
-				email.setAuthenticator(new DefaultAuthenticator(username_smtp, password_smtp));
+				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
 			}
 			email.setFrom(emailFrom);			
 			email.addTo(userEmail);
 
 			email.setSubject(emailSubject);
+				
+			if (Logger.isDebugEnabled()) {
+				StringBuilder logEmail = new StringBuilder()
+						.append("HostName: ").append(email.getHostName()).append("\n")
+						.append("SmtpPort: ").append(email.getSmtpPort()).append("\n")
+						.append("SslSmtpPort: ").append(email.getSslSmtpPort()).append("\n")
+						
+						.append("SSL: ").append(email.isSSL()).append("\n")
+						.append("TLS: ").append(email.isTLS()).append("\n")						
+						.append("SSLCheckServerIdentity: ").append(email.isSSLCheckServerIdentity()).append("\n")
+						.append("SSLOnConnect: ").append(email.isSSLOnConnect()).append("\n")
+						.append("StartTLSEnabled: ").append(email.isStartTLSEnabled()).append("\n")
+						.append("StartTLSRequired: ").append(email.isStartTLSRequired()).append("\n")
+						
+						.append("SubType: ").append(email.getSubType()).append("\n")
+						.append("SocketConnectionTimeout: ").append(email.getSocketConnectionTimeout()).append("\n")
+						.append("SocketTimeout: ").append(email.getSocketTimeout()).append("\n")
+						
+						.append("FromAddress: ").append(email.getFromAddress()).append("\n")
+						.append("ReplyTo: ").append(email.getReplyToAddresses()).append("\n")
+						.append("BCC: ").append(email.getBccAddresses()).append("\n")
+						.append("CC: ").append(email.getCcAddresses()).append("\n")
+						
+						.append("Subject: ").append(email.getSubject()).append("\n")
+						.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+						
+						.append("SentDate: ").append(email.getSentDate()).append("\n");
+				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
+			}
 			email.send();
 
-			//Save on DB
-			ResetPwdDao.getInstance().create(new Date(), sBase64Random, user);
-
 		}  catch (EmailException authEx){
-			throw new Exception (errorString + " Could not reach the mail server. Please contact the server administrator");
-		}
-		catch (Exception e) {
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(authEx));
+			throw new PasswordRecoveryException (errorString + " Could not reach the mail server. Please contact the server administrator");
+		}  catch (Exception e) {
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(e));
 			throw new Exception (errorString,e);
 		}
 
@@ -509,7 +577,7 @@ return profile;
 				user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 				systemProps.save();
 				user.save();
-				Logger.debug("saved tokens for user ");
+				if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
 				DbHelper.commitTransaction();
 			}
 		}catch(Exception e){
@@ -535,7 +603,7 @@ return profile;
 			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();
 			user.save();
-			Logger.debug("saved tokens for user ");
+			if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
 			DbHelper.commitTransaction();
 
 		}catch(Exception e){
@@ -564,17 +632,17 @@ return profile;
 	}
 	
 	public static void addUserToRole(String username,String role){
-		boolean admin = false;
+		boolean admin = true;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
-			admin = true;
+			admin = false;
 		}
 		String sqlAdd="update ouser add roles = {TO_ROLE} where name = ?";
 		ORole toRole=RoleDao.getRole(role);
 		ORID toRID=toRole.getDocument().getRecord().getIdentity();
 		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString());
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
-		if(admin){
+		if(!admin){
 			DbHelper.reconnectAsAuthenticatedUser();
 		}
 		

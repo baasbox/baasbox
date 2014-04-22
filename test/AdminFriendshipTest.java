@@ -94,7 +94,7 @@ public class AdminFriendshipTest extends AbstractTest{
 	public void testCreateFollowship() throws Exception{
 		running
 		(
-				fakeApplication(), 
+				getFakeApplication(), 
 				new Runnable() 
 				{
 					public void run() 
@@ -128,7 +128,7 @@ public class AdminFriendshipTest extends AbstractTest{
 	public void testDeleteUnexistentFollowship() throws Exception{
 		running
 		(
-				fakeApplication(), 
+				getFakeApplication(), 
 				new Runnable() 
 				{
 					public void run() 
@@ -150,7 +150,7 @@ public class AdminFriendshipTest extends AbstractTest{
 	public void testCreateFollowshipWithUnexistentUser() throws Exception{
 		running
 		(
-				fakeApplication(), 
+				getFakeApplication(), 
 				new Runnable() 
 				{
 					public void run() 

@@ -24,11 +24,16 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Assert;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -36,7 +41,6 @@ import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
-
 import core.AbstractAdminTest;
 import core.TestConfig;
 
@@ -63,12 +67,13 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
 				{
 					routeCreateCollection();
+					getCollections();
 				}
 			}
 		);		
@@ -79,30 +84,96 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	{
 		running
 		(
-			testServer(TestConfig.SERVER_PORT), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
 				public void invoke(TestBrowser browser) 
 				{
 					serverCreateCollection();
+					getCollections();
 	            }
 	        }
 		);
 	}	
 	
-	public String routeCreateCollection()
+	public void getCollections()
 	{
-		String sFakeCollection = getRouteAddress();
-
-		FakeRequest request = new FakeRequest(getMethod(), sFakeCollection);
+		//get a collection
+		String collectionName=routeCreateCollection();
+		FakeRequest request = new FakeRequest("GET", "/admin/collection");
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		Result result = routeAndCall(request);
-		assertRoute(result, "testRouteOK", Status.CREATED, null, false);
+		assertRoute(result, "getCollection 1", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":0,\"size\":0", true);
+		
+		//create two doc
+		JsonNode document1;
+		try {
+			document1 = new ObjectMapper().readTree("{\"total\":2,\"city\":\"rome\"}");
+		
+			request = new FakeRequest("POST", "/document/" + collectionName);
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			request = request.withJsonBody(document1);
+		    result = routeAndCall(request); 
+			assertRoute(result, "getCollection 2", Status.OK, null, false);
+		
+			request = new FakeRequest("POST", "/document/" + collectionName);
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			request = request.withJsonBody(document1);
+		    result = routeAndCall(request); 
+			assertRoute(result, "getCollection 3", Status.OK, null, false);
+			
+			//check the content of the collection
+			request = new FakeRequest("GET", "/admin/collection");
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			result = routeAndCall(request);
+			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":68", true);
+		
+		} catch (JsonProcessingException e) {
+			Assert.fail(e.getMessage());
+		} catch (IOException e) {
+			Assert.fail(e.getMessage());
+		}
+		
+	}
+	
+	public String routeCreateCollection()
+	{
+		//tries to create an invalid collection
+		String collectionNameWithError="123";
+		FakeRequest request = new FakeRequest(getMethod(), "/admin/collection/" + collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		Result result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-Only_digits", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError="123NotValid";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-StartsWithDigits", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		String sFakeCollection = getRouteAddress();
 
+		//creates a valid collection
+		request = new FakeRequest(getMethod(), sFakeCollection);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRouteOK", Status.CREATED, null, false);
+		
 		return sFakeCollection.substring(sFakeCollection.lastIndexOf("/") +1);
 	}
+	
 	
 	public String serverCreateCollection()
 	{

@@ -34,10 +34,11 @@ public class UserCredentialWrapFilter extends Action.Simple {
 
 	@Override
 	public Result call(Context ctx) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Result tempResult=null;
 		Http.Context.current.set(ctx);
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
 		String authHeader = ctx.request().getHeader("authorization");
 		boolean isCredentialOk=false;
 		
@@ -47,8 +48,8 @@ public class UserCredentialWrapFilter extends Action.Simple {
 			else   
 				tempResult=badRequest("Missing Session Token, Authorization info and even the AppCode");
 		}else if (!StringUtils.isEmpty(authHeader) && StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
-			Logger.debug("There is basic auth header, but the appcode is missing");
-			Logger.debug("Invalid App Code, AppCode is empty!");
+			if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
+			if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= badRequest("Invalid App Code. AppCode is empty or not set");
 		}
 		
@@ -75,8 +76,8 @@ public class UserCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		Result result=wr.wrap(ctx, tempResult);
 				
-		Logger.debug(result.toString());
-		Logger.trace("Method End");
+		if (Logger.isDebugEnabled()) Logger.debug(result.toString());
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;
 	}
 

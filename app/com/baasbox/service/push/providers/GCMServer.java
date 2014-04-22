@@ -26,7 +26,7 @@ public class GCMServer extends Controller implements IPushServer {
 
 	public void send(String message, String deviceid)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
-		Logger.debug("GCM Push message: " + message + " to the device "
+		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: " + message + " to the device "
 				+ deviceid);
 		if (!isInit)
 			throw new PushNotInitializedException(

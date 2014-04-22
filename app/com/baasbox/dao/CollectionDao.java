@@ -57,11 +57,14 @@ public class CollectionDao extends NodeDao {
 	 * @throws Throwable 
 	 */
 	public ODocument create(String collectionName) throws Throwable {
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try {
 			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
+		}
+		if (Character.isDigit(collectionName.charAt(0))){
+			throw new InvalidCollectionException("Collection names cannot start by a digit");
 		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
@@ -83,20 +86,20 @@ public class CollectionDao extends NodeDao {
 		anonymousRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + collectionName, ORole.PERMISSION_READ);
 		PermissionsHelper.grantRead(doc, registeredRole);
 		PermissionsHelper.grantRead(doc, anonymousRole);
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return doc;
 	}//getNewModelInstance(String collectionName)
 	
 	public boolean existsCollection(String collectionName) throws SqlInjectionException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
-		Logger.trace("Method End");
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return (record!=null) ;
 	}
 	
 	public ODocument getByName(String collectionName) throws SqlInjectionException{
-		Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
 		if (record==null) return null;
@@ -146,7 +149,7 @@ public class CollectionDao extends NodeDao {
 		} catch (Exception e) {
 			//rollback in case of error
 			DbHelper.rollbackTransaction();
-			Logger.debug ("An error occured deleting the collection " + name, e);
+			if (Logger.isDebugEnabled()) Logger.debug ("An error occured deleting the collection " + name, e);
 			throw e;
 		}
 	}//delete

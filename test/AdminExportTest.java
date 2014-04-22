@@ -54,7 +54,7 @@ public class AdminExportTest extends AbstractTest {
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -113,7 +113,7 @@ public class AdminExportTest extends AbstractTest {
 	{
 		running
 		(
-			fakeApplication(), 
+			getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -176,6 +176,9 @@ public class AdminExportTest extends AbstractTest {
 	}
 	
 
+
+	
+		
 	
 	private void delete(String fileName){
 		String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
