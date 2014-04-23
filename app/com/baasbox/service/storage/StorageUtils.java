@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class StorageUtils {
@@ -188,7 +189,7 @@ public class StorageUtils {
 	
 	public static OrientVertex getNodeVertex(String nodeId) throws DocumentNotFoundException{
 		GenericDao dao = GenericDao.getInstance();
-		OrientGraph conn = DbHelper.getOrientGraphConnection();
+		 OrientGraphNoTx conn = DbHelper.getOrientGraphConnection();
 		ORID nodeORID = dao.getRidByUUID(nodeId);
 		if (nodeORID==null) throw new DocumentNotFoundException(nodeId + " is not a valid Id");
 		ODocument nodeDoc = dao.get(nodeORID);

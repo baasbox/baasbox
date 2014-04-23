@@ -112,7 +112,7 @@ public class LinkTest extends AbstractTest {
 				// administrator links the two documents with the "has" link
 				// name
 				Result result = createLink(TestConfig.ADMIN_USERNAME,
-						TestConfig.ADMIN_PASSWORD, idSource, idDest, "has");
+						TestConfig.AUTH_ADMIN_PASS, idSource, idDest, "has");
 				assertRoute(result, "LinkTest CREATE by Admin", Status.OK,
 						null, true);
 				idLink = getIdFromDocument(result);
@@ -167,10 +167,10 @@ public class LinkTest extends AbstractTest {
 				continueOnFail(true);
 				
 				// try to retrieve a non-existent link
-				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.ADMIN_PASSWORD, "mango"); // :-)
+				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, "mango"); // :-)
 				assertRoute(result, "Get By fake id 1", 404, null, false);
 				// administrator can read both links and their node
-				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.ADMIN_PASSWORD, idLink);
+				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, idLink);
 				assertRoute(result, "Get By id 1", 200, "\"@class\":\""+collection1, true);
 				assertRoute(result, "Get By id 1a", 200, "\"@class\":\""+collection2, true);
 				assertRoute(result, "Get By id 1b", 200, "\"id\":\""+idLink, true);
