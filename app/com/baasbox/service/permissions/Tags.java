@@ -8,11 +8,20 @@ import play.mvc.Http;
 import java.util.Set;
 
 /**
- * Created by eto on 08/04/14.
+ * Tags contains utility methods for permission check
+ * and default baasbox endpoints.
+ * Created by Andrea Tortorella on 08/04/14.
  */
 public class Tags {
     public final static String KEY ="tag";
 
+    /**
+     * Verifies if the current endpoint is enabled
+     * @param ctx
+     * @return
+     * @throws InvalidPermissionTagException
+     * @throws SqlInjectionException
+     */
     public static boolean verifyAccess(Http.Context ctx) throws InvalidPermissionTagException, SqlInjectionException {
         if (DbHelper.isConnectedAsAdmin(true)){
             return true;

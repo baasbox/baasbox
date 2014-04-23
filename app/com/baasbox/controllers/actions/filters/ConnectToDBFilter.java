@@ -68,7 +68,6 @@ public class ConnectToDBFilter extends Action.Simple {
                 if(!Tags.verifyAccess(ctx)){
                     return forbidden("endpoint has been disabled");
                 }
-
 	        }catch (OSecurityAccessException e){
 	        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
 	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
