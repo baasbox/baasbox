@@ -60,7 +60,7 @@ function refreshCollectionCache(arr,fun){
 	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
-				var data = data["data"];
+				data = data["data"];
 				dbCollectionsCache = data["data"]["collections_details"];
 				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
 				if(fun){
@@ -1632,8 +1632,7 @@ function setupTables(){
                       {"mData": "user.status","mRender": function ( data, type, full ) {
                           var classStyle="label-success"
                           if (data!="ACTIVE") classStyle="label-important";
-                          var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
-                          return htmlReturn;
+                          return "<span class='label "+classStyle+"'>"+data+"</span> ";
                       }}],
         "bRetrieve": true,
         "bDestroy": true,
@@ -1805,10 +1804,32 @@ function setupTables(){
 		            	},bSortable:false,bSearchable:false
 		               }
 		               ],
+//                       "sAjaxSource": "fake",
+//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
+//                           val = $("#selectCollection").val();
+//                           if(val != null) {
+//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
+//                                   data: {orderBy: "name asc"},
+//                                   success: function (data) {
+//                                       console.log("RECEIVED: " + JSON.stringify(data));
+//                                       console.log("SOURCE: " + JSON.stringify(sSource));
+//                                       console.log("DATA: " + JSON.stringify(aoData));
+//
+//                                       data = data["data"];
+//                                       console.log(JSON.stringify(data));
+//                                       if(fnCallback !== undefined) {
+//                                           console.log("CB: " + JSON.stringify(fnCallback));
+//                                           fnCallback(data);
+//                                       }
+//                                   }
+//                               });
+//                           }
+//                        },
+//                        "bProcessing": true,
+//                       "bServerSide": true,
 		               "bRetrieve": true,
 		               "bDestroy":true
-	} ).makeEditable(); 
-
+	} ).makeEditable();
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
@@ -1921,7 +1942,7 @@ function setupSelects(){
 				var scope=$("#documents").scope();
 				scope.$apply(function(){
 					scope.collectionName=val;
-				});	
+				});
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
 				documentDataArray=data;
@@ -2007,10 +2028,14 @@ function reloadFollowing(user){
 
 function callMenu(action){
 	var scope=$("#loggedIn").scope();
-	scope.$apply(function(){
+    scope.$apply(function(){
 		scope.menu="";
 	});
-	$('#loading').remove();
+	var docScope=$('#documents').scope();
+    docScope.$apply(function(){
+        docScope.collectionName = null;
+    });
+    $('#loading').remove();
 	$('#content').parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
 
 	setBradCrumb(action);
@@ -2243,14 +2268,13 @@ function callMenu(action){
 				ref(collections)
 		}else{
 			refreshCollectionCache(null,function(dd){
-				
 				collections = dd;
 				ref(collections)
 			});
 		}
 		break;//#collections
 	case "#documents":
-		$('#documentTable').dataTable().fnClearTable();
+        $('#documentTable').dataTable().fnClearTable();
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2311,6 +2335,7 @@ function UsersController($scope){
 function CollectionsController($scope){
 }
 function DocumentsController($scope){
+    $scope.collectionName = null;
 }
 
 function tryToLogin(user, pass,appCode){
