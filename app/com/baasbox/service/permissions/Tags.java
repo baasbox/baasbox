@@ -23,12 +23,22 @@ public class Tags {
 
     public static enum Reserved{
         ASSETS("assets"),
-        STORAGE("storage"),
-        SEND("send_notifications"),
-        RECEIVE("receive_notifications"),
-        FILES("files"),
-        GRANTS("grants"),
-        SOCIAL("social")
+        ACCOUNT("account"),
+        ACCOUNT_CREATION("account.create"),
+        SOCIAL("social"),
+        LOST_PASSWORD("account.lost_password"),
+        USERS("users"),
+        FRIENDSHIP("friendship"),
+        FRIENDSHIP_CREATIONS("friendship.create"),
+        SEND("notifications.send"),
+        RECEIVE("notifications.receive"),
+        STORAGE_WRITE("data.write"),
+        STORAGE_READ("data.read"),
+        STORAGE_UPDATE("data.update"),
+        STORAGE_GRANTS("data.grants"),
+        FILES_READ("file.read"),
+        FILES_WRITE("file.write"),
+        FILES_GRANTS("file.grants"),
         ;
         public final String name;
         private final static String PREFIX="baasbox.";
