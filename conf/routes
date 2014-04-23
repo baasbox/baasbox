@@ -54,7 +54,7 @@ GET		/asset/:name						com.baasbox.controllers.Asset.download(name: String, down
 
 # User actions
 
-# @tag(baasbox.create_account)
+# @tag(baasbox.account.create)
 POST	/user								com.baasbox.controllers.User.signUp()
 
 # @tag(baasbox.account)
@@ -150,10 +150,10 @@ GET      /following									com.baasbox.controllers.User.following(username: Str
 # @tag(baasbox.friendship)
 GET      /following/:username						com.baasbox.controllers.User.following(username: String)
 
-# @tag(baasbox.create_friendship)
+# @tag(baasbox.friendship.create)
 POST     /follow/:username                  		com.baasbox.controllers.User.follow(username: String)
 
-# @tag(baasbox.create_friendship)
+# @tag(baasbox.friendship.create)
 DELETE   /follow/:username                  		com.baasbox.controllers.User.unfollow(username: String)
 
 GET      /admin/following/:username					com.baasbox.controllers.Admin.following(username:String)
@@ -162,82 +162,82 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 
 # Push
 
-# @tag(baasbox.send_notifications)
+# @tag(baasbox.notifications.send)
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
 
-# @tag(baasbox.receive_notifications)
+# @tag(baasbox.notifications.receive)
 PUT 	/push/enable/:os/:pushToken     com.baasbox.controllers.Push.enablePush(os: String, pushToken: String)
 
-# @tag(baasbox.receive_notifications)
+# @tag(baasbox.notifications.receive)
 PUT 	/push/disable/:pushToken        com.baasbox.controllers.Push.disablePush(pushToken: String)
 #deprecated
-# @tag(baasbox.receive_notifications)
+# @tag(baasbox.notifications.receive)
 PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os: String, deviceId: String)
 
 #Storage Actions
 
-# @tag(baasbox.data_read)
+# @tag(baasbox.data.read)
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
 
-# @tag(baasbox.data_write)
+# @tag(baasbox.data.write)
 POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocument(collection: String)
 
-# @tag(baasbox.data_read)
+# @tag(baasbox.data.read)
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
 
-# @tag(baabox.data_read)
+# @tag(baabox.data.read)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
 
-# @tag(baasbox.data_update)
+# @tag(baasbox.data.update)
 PUT 	 /document/:collection/%23:rid					com.baasbox.controllers.Document.updateDocument(collection: String, rid: String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_read)
+# @tag(baasbox.data.read)
 GET		 /document/:collection/%23:rid					com.baasbox.controllers.Document.getDocument(collection: String, rid: String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_write)
+# @tag(baasbox.data.write)
 DELETE	 /document/:collection/%23:rid					com.baasbox.controllers.Document.deleteDocument(collection: String, rid: String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_update)
+# @tag(baasbox.data.update)
 PUT 	 /document/:collection/:uuid					com.baasbox.controllers.Document.updateDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_read)
+# @tag(baasbox.data.read)
 GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_write)
+# @tag(baasbox.data.write)
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_read)
+# @tag(baasbox.data.read)
 GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
-# @tag(baasbox.data_update)
+# @tag(baasbox.data.update)
 PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 
 
 #grant and revoke permissions on documents
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 PUT		/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 DELETE	/document/:collection/%23:rid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, rid:String, username:String, action:String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 PUT		/document/:collection/%23:rid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, rid:String, rolename:String, action:String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 DELETE	/document/:collection/%23:rid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, rid:String, rolename:String, action:String, isUUID: Boolean ?= false)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 PUT		/document/:collection/:uuid/:action/user/:username		com.baasbox.controllers.Document.grantToUser(collection:String, uuid:String, username:String, action:String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 DELETE	/document/:collection/:uuid/:action/user/:username		com.baasbox.controllers.Document.revokeToUser(collection:String, uuid:String, username:String, action:String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.grantToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
-# @tag(baasbox.data_grants)
+# @tag(baasbox.data.grants)
 DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
 
@@ -264,41 +264,41 @@ DELETE  /admin/role/:name				com.baasbox.controllers.Admin.deleteRole(name: Stri
 
 #Files
 
-# @tag(baasbox.file_read)
+# @tag(baasbox.file.read)
 GET		 /file/details					com.baasbox.controllers.File.getAllFile()
 
-# @tag(baasbox.file_write)
+# @tag(baasbox.file.write)
 POST 	 /file							com.baasbox.controllers.File.storeFile()
 
-# @tag(baasbox.file_write)
+# @tag(baasbox.file.write)
 DELETE	 /file/:uuid					com.baasbox.controllers.File.deleteFile(uuid: String)
 
-# @tag(baasbox.file_read)
+# @tag(baasbox.file.read)
 GET		 /file/details/:uuid			com.baasbox.controllers.File.getFile(uuid: String)
 
-# @tag(baasbox.file_read)
+# @tag(baasbox.file.read)
 GET		 /file/attachedData/:uuid		com.baasbox.controllers.File.getFileAttachedData(uuid: String)
 
-# @tag(baasbox.file_read)
+# @tag(baasbox.file.read)
 GET		 /file/content/:uuid		com.baasbox.controllers.File.getFileContent(uuid: String)
 
 #GET		 /file/download/:uuid			com.baasbox.controllers.File.downloadFile(uuid: String)
 
-# @tag(baasbox.file_read)
+# @tag(baasbox.file.read)
 GET		 /file/:uuid					com.baasbox.controllers.File.streamFile(uuid: String)
 
 #grants on Files
 
-# @tag(baasbox.file_grants)
+# @tag(baasbox.file.grants)
 PUT		/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= true)
 
-# @tag(baasbox.file_grants)
+# @tag(baasbox.file.grants)
 DELETE	/file/:uuid/:action/user/:username		com.baasbox.controllers.File.grantOrRevokeToUser(uuid:String, username:String, action:String, grant: Boolean ?= false)
 
-# @tag(baasbox.file_grants)
+# @tag(baasbox.file.grants)
 PUT		/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= true)
 
-# @tag(baasbox.file_grants)
+# @tag(baasbox.file.grants)
 DELETE	/file/:uuid/:action/role/:rolename		com.baasbox.controllers.File.grantOrRevokeToRole(uuid:String, rolename:String, action:String, grant: Boolean ?= false)
 
 
