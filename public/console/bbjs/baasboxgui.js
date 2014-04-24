@@ -1833,7 +1833,8 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-    	    			var datetime = data.split("T"); 
+    	    			console.log("DATA: "+data);
+                        var datetime = data.split("T");
     	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
 						}
 					   },
@@ -1859,29 +1860,23 @@ function setupTables(){
 		            	},bSortable:false,bSearchable:false
 		               }
 		               ],
-//                       "sAjaxSource": "fake",
-//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
-//                           val = $("#selectCollection").val();
-//                           if(val != null) {
-//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-//                                   data: {orderBy: "name asc"},
-//                                   success: function (data) {
-//                                       console.log("RECEIVED: " + JSON.stringify(data));
-//                                       console.log("SOURCE: " + JSON.stringify(sSource));
-//                                       console.log("DATA: " + JSON.stringify(aoData));
-//
-//                                       data = data["data"];
-//                                       console.log(JSON.stringify(data));
-//                                       if(fnCallback !== undefined) {
-//                                           console.log("CB: " + JSON.stringify(fnCallback));
-//                                           fnCallback(data);
-//                                       }
-//                                   }
-//                               });
-//                           }
-//                        },
-//                        "bProcessing": true,
-//                       "bServerSide": true,
+                       "sAjaxSource": "fake",
+                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
+                           val = $("#selectCollection").val();
+                           var callback = fnCallback;
+
+                           if(val != null) {
+                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
+                                   data: {orderBy: "name asc"},
+                                   success: function (data) {
+                                       console.log(typeof data["data"]);
+                                       callback({"aaData":data["data"]});
+                                   }
+                               });
+                           }
+                        },
+                        "bProcessing": true,
+                       "bServerSide": true,
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();

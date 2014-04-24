@@ -41,12 +41,13 @@ $(document).ready(function(){
 
 	
 	//animating menus on hover
-	$('ul.main-menu li:not(.nav-header)').hover(function(){
-		$(this).animate({'margin-left':'+=5'},300);
-	},
-	function(){
-		$(this).animate({'margin-left':'-=5'},300);
-	});
+    //fixme removed dancing buttons
+//	$('ul.main-menu li:not(.nav-header)').hover(function(){
+//		$(this).animate({'margin-left':'+=5'},300);
+//	},
+//	function(){
+//		$(this).animate({'margin-left':'-=5'},300);
+//	});
 	
 	//other things to do on document ready, seperated for ajax calls
 	docReady();
