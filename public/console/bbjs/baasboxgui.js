@@ -60,7 +60,7 @@ function refreshCollectionCache(arr,fun){
 	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
-				var data = data["data"];
+				data = data["data"];
 				dbCollectionsCache = data["data"]["collections_details"];
 				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
 				if(fun){
@@ -285,12 +285,28 @@ $('.btn-newFile').click(function(e){
 	$('#addFileModal').modal('show');
 }); // Show Modal for New File
 
+function switchEndpoint(enabled,name){
+    BBRoutes.com.baasbox.controllers.Admin.setPermissionTagEnabled(name,enabled).ajax({
+        success: function (data){
+            loadPermissionsTable();
+        }
+    });
+}
+
 $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
 
 	switch (action)	{
+        case "enable":
+            if(!confirm("Do you want to enable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(true,parameters);
+            break;
+        case "disable":
+            if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(false,parameters);
+            break;
 	case "insert":
 		switch (actionType)	{
 		case "user":
@@ -335,6 +351,17 @@ $(".btn-action").live("click", function() {
 	case "changePwdUser":
 		openChangePasswordUserForm(parameters);
 			break;
+    case "followers":
+        openFollowersModal(parameters);
+            break;
+    case "suspend":
+        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(true,parameters);
+            break;
+    case "activate":
+        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(false,parameters);
+            break;
 	case "delete":
 		switch (actionType)	{
 		case "user":
@@ -369,6 +396,22 @@ $(".btn-action").live("click", function() {
 		}
 	});
 
+function suspendOrActivateUser(suspend,userName)
+{
+    var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
+                        BBRoutes.com.baasbox.controllers.Admin.enable(userName);
+    route.ajax(
+        {
+            data: {"username": userName},
+            error: function(data){
+                alert(JSON.parse(data.responseText)["message"]);
+            },
+            success: function(data){
+                loadUserTable();
+            }
+        }
+    );
+}
 function deleteAsset(assetName)
 {
 	BBRoutes.com.baasbox.controllers.Asset.delete(assetName).ajax(
@@ -449,6 +492,11 @@ function openUserEditForm(editUserName){
 	$('#addUserModal').modal('show');
 }
 
+function openFollowersModal(user){
+    $("#followedUser").text(user);
+    reloadFollowing(user);
+    $("#followersModal").modal('show');
+}
 function openChangePasswordUserForm(changePassword){
     resetChangePasswordUserForm()
     var userObject;
@@ -603,7 +651,9 @@ function loadRoleTable()
 {
 	callMenu("#roles");
 }
-
+function loadPermissionsTable(){
+    callMenu('#permissions');
+}
 function loadUserTable()
 {
 	callMenu("#users");
@@ -853,7 +903,7 @@ function updateUser()
 function closeUserForm()
 {
 	$('#addUserModal').modal('hide');
-	loadUserTable();
+	loadUserTable()
 }
 
 function updateSetting()
@@ -1412,6 +1462,11 @@ function getActionButton(action, actionType,parameters){
 	var labelName;
 
 	switch (action)	{
+    case "followers":
+        iconType="icon-user";
+        classType="btn-info";
+        labelName="";
+        break;
 	case "edit":
 		iconType = "icon-edit";
 		classType = "btn-info";
@@ -1427,7 +1482,27 @@ function getActionButton(action, actionType,parameters){
 		classType = "btn-danger";
 		labelName = "Delete...";
 		break;
-	}
+    case "suspend":
+       iconType = "icon-off";
+       classType = "btn-danger";
+       labelName = "suspend";
+       break;
+    case "activate":
+       iconType = "icon-off";
+       classType="btn-success";
+       labelName="activate";
+       break;
+    case "enable":
+        iconType = "icon-off";
+        classType="btn-success";
+        labelName="enable";
+        break;
+    case "disable":
+        iconType = "icon-off";
+        classType="btn-danger";
+        labelName="disable";
+        break;
+    }
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
@@ -1576,11 +1651,58 @@ function setupTables(){
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
+    $('#followersTable').dataTable({
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "sPaginationType": "bootstrap",
+        "oLanguage": {"sLengthMenu": "_MENU_ records per page",
+                      "sEmptyTable": "No users are followed"},
+        "aoColumns": [{"mData": "user.name"},
+                      {"mData": "user.status","mRender": function ( data, type, full ) {
+                          var classStyle="label-success"
+                          if (data!="ACTIVE") classStyle="label-important";
+                          return "<span class='label "+classStyle+"'>"+data+"</span> ";
+                      }}],
+        "bRetrieve": true,
+        "bDestroy": true
+});
+    $('#endpointTable').dataTable( {
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "iDisplayLength": 20,
+        "bLengthChange": false,
+        "bPaginate": false,
+//        "oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+        "aoColumns": [
+            {"mData": "endpoint.name"},
+            {"mData": "endpoint.status","mRender": function (data,type,full){
+                   var classStyle ="label-success";
+                   var text = "enabled";
+                    if(!data){
+                       classStyle = "label-important";
+                       text = "disabled";
+                    }
+                  return "<span class='label "+classStyle+"'>"+text+"</span> ";
+            }},
+            {"mData":"endpoint",mRender: function(data,type,full){
+                console.log(JSON.stringify(data));
+                if(data.status){
+
+                }
+                return getActionButton(data.status?"disable":"enable", "endpoint", data.name);
+            }}],
+        "bRetrieve": true,
+        "bDestroy": true
+    }).makeEditable();
 	$('#userTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "user.name"},
+		"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
+            var html = data;
+            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
+               html = getActionButton("followers","user",data)+"&nbsp;"+html;
+            }
+            return html;
+        }},
 		               {"mData": "user.roles.0.name"},
 		               {"mData": "signUpDate","sDefaultContent":""},
 		               {"mData": "user.status","mRender": function ( data, type, full ) {
@@ -1590,9 +1712,12 @@ function setupTables(){
 		            	   return htmlReturn;
 		               }
 		               },
-		               {"mData": "user.name", "mRender": function ( data, type, full ) {
-		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
-		            		   return getActionButton("edit","user",data)+"&nbsp;"+getActionButton("changePwdUser","user",data);// +" "+ getActionButton("delete","user",data);
+		               {"mData": "user", "mRender": function ( data, type, full ) {
+		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
+                               var _active = data.status == "ACTIVE";
+                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);// +" "+ getActionButton("delete","user",data);
+                           }
 		            	   return "No action available";
 		               }
 		               }],
@@ -1734,10 +1859,32 @@ function setupTables(){
 		            	},bSortable:false,bSearchable:false
 		               }
 		               ],
+//                       "sAjaxSource": "fake",
+//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
+//                           val = $("#selectCollection").val();
+//                           if(val != null) {
+//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
+//                                   data: {orderBy: "name asc"},
+//                                   success: function (data) {
+//                                       console.log("RECEIVED: " + JSON.stringify(data));
+//                                       console.log("SOURCE: " + JSON.stringify(sSource));
+//                                       console.log("DATA: " + JSON.stringify(aoData));
+//
+//                                       data = data["data"];
+//                                       console.log(JSON.stringify(data));
+//                                       if(fnCallback !== undefined) {
+//                                           console.log("CB: " + JSON.stringify(fnCallback));
+//                                           fnCallback(data);
+//                                       }
+//                                   }
+//                               });
+//                           }
+//                        },
+//                        "bProcessing": true,
+//                       "bServerSide": true,
 		               "bRetrieve": true,
 		               "bDestroy":true
-	} ).makeEditable(); 
-
+	} ).makeEditable();
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
@@ -1850,7 +1997,7 @@ function setupSelects(){
 				var scope=$("#documents").scope();
 				scope.$apply(function(){
 					scope.collectionName=val;
-				});	
+				});
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
 				documentDataArray=data;
@@ -1918,13 +2065,32 @@ function applySuccessMenu(action,data){
 
 }//applySuccessMenu 
 
+function reloadFollowing(user){
+    BBRoutes.com.baasbox.controllers.Admin.following(user).ajax({
+
+        success: function(data){
+            var foll = data["data"];
+            $("#followersTable").dataTable().fnClearTable();
+            $("#followersTable").dataTable().fnAddData(foll);
+        },
+        error: function(data){
+            if(data.status==404){
+                $("#followersTable").dataTable().fnClearTable();
+            }
+        }
+    });
+}
 
 function callMenu(action){
 	var scope=$("#loggedIn").scope();
-	scope.$apply(function(){
+    scope.$apply(function(){
 		scope.menu="";
 	});
-	$('#loading').remove();
+	var docScope=$('#documents').scope();
+    docScope.$apply(function(){
+        docScope.collectionName = null;
+    });
+    $('#loading').remove();
 	$('#content').parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
 
 	setBradCrumb(action);
@@ -2157,14 +2323,13 @@ function callMenu(action){
 				ref(collections)
 		}else{
 			refreshCollectionCache(null,function(dd){
-				
 				collections = dd;
 				ref(collections)
 			});
 		}
 		break;//#collections
 	case "#documents":
-		$('#documentTable').dataTable().fnClearTable();
+        $('#documentTable').dataTable().fnClearTable();
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2209,9 +2374,26 @@ function callMenu(action){
 				$.trim($('#fuFile').val(""));
 			}
 		});
-		break;//#files	  
+		break;//#files
+        case "#permissions":
+            BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
+                success: function(data){
+                    data = data["data"];
+                    var arr = [];
+                    for(var tag in data){
+                        arr.push({"endpoint": {"name": tag,"status": data[tag]}});
+                    }
+
+                    applySuccessMenu(action,arr);
+                    $('#endpointTable').dataTable().fnClearTable();
+                    $('#endpointTable').dataTable().fnAddData(arr);
+                }
+            });
+            break;
 	}
 }//callMenu
+
+function PermissionsController($scope){}
 
 function RolesController($scope){
 
@@ -2225,6 +2407,7 @@ function UsersController($scope){
 function CollectionsController($scope){
 }
 function DocumentsController($scope){
+    $scope.collectionName = null;
 }
 
 function tryToLogin(user, pass,appCode){

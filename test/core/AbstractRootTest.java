@@ -25,6 +25,7 @@ import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -110,6 +111,7 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 	        {
 				public void invoke(TestBrowser browser) 
 				{
+					resetHeaders();
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					httpRequest(getURLAddress(), getMethod());
@@ -118,4 +120,6 @@ public abstract class AbstractRootTest extends AbstractRouteHeaderTest
 	        }
 		);
 	}
+	
+
 }
