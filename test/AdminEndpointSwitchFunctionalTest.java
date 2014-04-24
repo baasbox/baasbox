@@ -4,6 +4,7 @@ import core.TestConfig;
 import org.apache.http.HttpHeaders;
 import org.codehaus.jackson.JsonNode;
 import org.junit.Test;
+import org.omg.PortableInterceptor.NON_EXISTENT;
 import play.libs.F;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -34,6 +35,7 @@ public class AdminEndpointSwitchFunctionalTest extends AbstractAdminTest {
 
     }
 
+    //todo This test is not usable because it skips reading comments from routes.
 //    @Test
 //    public void testRouteOk(){
 //        running(getFakeApplication(),new Runnable() {
@@ -46,7 +48,37 @@ public class AdminEndpointSwitchFunctionalTest extends AbstractAdminTest {
 //            }
 //        });
 //    }
+    private static final String INVALID_TAG = "non.existing.tag";
 
+    @Test
+    public void testDisableInvalidTag(){
+        running(getTestServer(),new Runnable() {
+            @Override
+            public void run() {
+                resetAllHeadersBeforeTests();
+                String endpointName = TestConfig.SERVER_URL+"/admin/endpoints/"+INVALID_TAG+"/enabled";
+                setHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+                httpRequest(endpointName,PUT);
+                assertServer("testServerEnabledEndpoint", Http.Status.NOT_FOUND,null,false);
+            }
+        });
+    }
+
+    @Test
+    public void testEnableInvalidTag(){
+        running(getTestServer(),new Runnable() {
+            @Override
+            public void run() {
+                resetAllHeadersBeforeTests();
+                String endpointName = TestConfig.SERVER_URL+ "/admin/endpoints/"+INVALID_TAG+"/enabled";
+                setHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                setHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+                httpRequest(endpointName,PUT);
+                assertServer("testServerDisabledInvalidEndpoint", Http.Status.NOT_FOUND,null,false);
+            }
+        });
+    }
     @Test
     public void testServerOk(){
         running(
@@ -63,37 +95,38 @@ public class AdminEndpointSwitchFunctionalTest extends AbstractAdminTest {
         );
     }
 
-    private void routeEnabledSignupShouldPass(){
-        Result res = createUser();
-        assertRoute(res,"routeSignupShouldPass", Http.Status.CREATED,null,false);
-    }
+//    private void routeEnabledSignupShouldPass(){
+//        Result res = createUser();
+//        assertRoute(res,"routeSignupShouldPass", Http.Status.CREATED,null,false);
+//    }
 
-    private void routeDisabledSignupShouldFail(){
-        Result res = createUser();
-        assertRoute(res,"routeSignupShouldFail", Http.Status.FORBIDDEN,null,false);
-    }
+//    private void routeDisabledSignupShouldFail(){
+//        Result res = createUser();
+//        assertRoute(res,"routeSignupShouldFail", Http.Status.FORBIDDEN,null,false);
+//    }
 
-    private Result createUser(){
-        String endpointName = "/user";
-        String sFakeUser = UserCreateTest.USER_TEST + UUID.randomUUID();
-        // Prepare test user
-        JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-        FakeRequest request = new FakeRequest(POST,endpointName);
-        request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-        request = request.withJsonBody(node,POST);
-        return routeAndCall(request);
-    }
+//    private Result createUser(){
+//        String endpointName = "/user";
+//        String sFakeUser = UserCreateTest.USER_TEST + UUID.randomUUID();
+//        // Prepare test user
+//        JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+//        FakeRequest request = new FakeRequest(POST,endpointName);
+//        request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+//        request = request.withJsonBody(node,POST);
+//        return routeAndCall(request);
+//    }
 
-    private void routeEnableUserEndpoint(){
-        String endpointName = Tags.Reserved.ACCOUNT_CREATION.name;
-        FakeRequest request = new FakeRequest(PUT,"/admin/endpoints/"+endpointName+"/enabled");
-        request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-        request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
-        Result res = routeAndCall(request);
-        assertRoute(res,"testRoute-Enable-endpoint-users", Http.Status.OK,null,false);
-    }
+//    private void routeEnableUserEndpoint(){
+//        String endpointName = Tags.Reserved.ACCOUNT_CREATION.name;
+//        FakeRequest request = new FakeRequest(PUT,"/admin/endpoints/"+endpointName+"/enabled");
+//        request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+//        request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+//        Result res = routeAndCall(request);
+//        assertRoute(res,"testRoute-Enable-endpoint-users", Http.Status.OK,null,false);
+//    }
 
     private void serverDisableUsersEndpoint(){
+        resetAllHeadersBeforeTests();
         String endpointName = TestConfig.SERVER_URL+ "/admin/endpoints/"+Tags.Reserved.ACCOUNT_CREATION.name+"/enabled";
         setHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
         setHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
@@ -112,6 +145,7 @@ public class AdminEndpointSwitchFunctionalTest extends AbstractAdminTest {
     }
 
     private void serverCreateUser(){
+        resetAllHeadersBeforeTests();
         String endpointName = TestConfig.SERVER_URL+"/user";
         String sFakeUser = UserCreateTest.USER_TEST + UUID.randomUUID();
         JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
@@ -121,20 +155,22 @@ public class AdminEndpointSwitchFunctionalTest extends AbstractAdminTest {
     }
 
     private void serverEnableUsersEndpoint(){
+        resetAllHeadersBeforeTests();
         String endpointName = TestConfig.SERVER_URL+"/admin/endpoints/"+Tags.Reserved.ACCOUNT_CREATION.name+"/enabled";
         setHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-        setHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
-        removeHeader(HttpHeaders.CONTENT_TYPE);
+        setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
         httpRequest(endpointName,PUT);
         assertServer("testServerEnabledEndpoint", Http.Status.OK,null,false);
     }
 
-    private void routeDisableUsersEndpoint(){
-       String endpointName = Tags.Reserved.ACCOUNT_CREATION.name;
-       FakeRequest request = new FakeRequest(DELETE,"/admin/endpoints/"+endpointName+"/enabled");
-       request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-       request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
-       Result res = routeAndCall(request);
-       assertRoute(res,"testRoute-Disable-endpoint-users", Http.Status.OK,null,false);
-   }
+
+
+//    private void routeDisableUsersEndpoint(){
+//       String endpointName = Tags.Reserved.ACCOUNT_CREATION.name;
+//       FakeRequest request = new FakeRequest(DELETE,"/admin/endpoints/"+endpointName+"/enabled");
+//       request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+//       request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+//       Result res = routeAndCall(request);
+//       assertRoute(res,"testRoute-Disable-endpoint-users", Http.Status.OK,null,false);
+//   }
 }
