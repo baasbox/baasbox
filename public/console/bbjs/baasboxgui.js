@@ -285,12 +285,28 @@ $('.btn-newFile').click(function(e){
 	$('#addFileModal').modal('show');
 }); // Show Modal for New File
 
+function switchEndpoint(enabled,name){
+    BBRoutes.com.baasbox.controllers.Admin.setPermissionTagEnabled(name,enabled).ajax({
+        success: function (data){
+            loadPermissionsTable();
+        }
+    });
+}
+
 $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
 	var actionType = $(this).attr("actionType");
 	var parameters = $(this).attr("parameters");
 
 	switch (action)	{
+        case "enable":
+            if(!confirm("Do you want to enable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(true,parameters);
+            break;
+        case "disable":
+            if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(false,parameters);
+            break;
 	case "insert":
 		switch (actionType)	{
 		case "user":
@@ -635,7 +651,9 @@ function loadRoleTable()
 {
 	callMenu("#roles");
 }
-
+function loadPermissionsTable(){
+    callMenu('#permissions');
+}
 function loadUserTable()
 {
 	callMenu("#users");
@@ -885,7 +903,7 @@ function updateUser()
 function closeUserForm()
 {
 	$('#addUserModal').modal('hide');
-	loadUserTable();
+	loadUserTable()
 }
 
 function updateSetting()
@@ -1474,7 +1492,17 @@ function getActionButton(action, actionType,parameters){
        classType="btn-success";
        labelName="activate";
        break;
-	}
+    case "enable":
+        iconType = "icon-off";
+        classType="btn-success";
+        labelName="enable";
+        break;
+    case "disable":
+        iconType = "icon-off";
+        classType="btn-danger";
+        labelName="disable";
+        break;
+    }
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
@@ -1635,8 +1663,35 @@ function setupTables(){
                           return "<span class='label "+classStyle+"'>"+data+"</span> ";
                       }}],
         "bRetrieve": true,
-        "bDestroy": true,
+        "bDestroy": true
 });
+    $('#endpointTable').dataTable( {
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "iDisplayLength": 20,
+        "bLengthChange": false,
+        "bPaginate": false,
+//        "oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+        "aoColumns": [
+            {"mData": "endpoint.name"},
+            {"mData": "endpoint.status","mRender": function (data,type,full){
+                   var classStyle ="label-success";
+                   var text = "enabled";
+                    if(!data){
+                       classStyle = "label-important";
+                       text = "disabled";
+                    }
+                  return "<span class='label "+classStyle+"'>"+text+"</span> ";
+            }},
+            {"mData":"endpoint",mRender: function(data,type,full){
+                console.log(JSON.stringify(data));
+                if(data.status){
+
+                }
+                return getActionButton(data.status?"disable":"enable", "endpoint", data.name);
+            }}],
+        "bRetrieve": true,
+        "bDestroy": true
+    }).makeEditable();
 	$('#userTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
@@ -2319,9 +2374,26 @@ function callMenu(action){
 				$.trim($('#fuFile').val(""));
 			}
 		});
-		break;//#files	  
+		break;//#files
+        case "#permissions":
+            BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
+                success: function(data){
+                    data = data["data"];
+                    var arr = [];
+                    for(var tag in data){
+                        arr.push({"endpoint": {"name": tag,"status": data[tag]}});
+                    }
+
+                    applySuccessMenu(action,arr);
+                    $('#endpointTable').dataTable().fnClearTable();
+                    $('#endpointTable').dataTable().fnAddData(arr);
+                }
+            });
+            break;
 	}
 }//callMenu
+
+function PermissionsController($scope){}
 
 function RolesController($scope){
 

@@ -55,9 +55,10 @@ public final class RouteTagger {
     public static Map<String,Set<String>> parse(final String comment){
         try {
             if (Logger.isDebugEnabled()) Logger.debug("Parsing tags for current route with comment: "+comment);
-            if (comment==null){
+            if (comment==null||comment.length()==0){
                 return Collections.emptyMap();
             }
+            if (Logger.isDebugEnabled()) Logger.debug("Matched routes");
             return PARSER_CACHE.get(comment);
         } catch (ExecutionException e){
             if (Logger.isErrorEnabled())Logger.error("Error reading tags for current route with comment: "+comment);

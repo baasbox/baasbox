@@ -383,7 +383,7 @@ public abstract class AbstractTest extends FluentTest
         }
         catch(Exception e)
         {
-            Assert.fail("Unable to get HttpConnection");
+            Assert.fail("Unable to get HttpConnection "+e.getMessage());
         }
 
         return conn;
