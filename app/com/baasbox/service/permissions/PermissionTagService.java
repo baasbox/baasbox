@@ -57,7 +57,7 @@ public class PermissionTagService {
         ImmutableMap.Builder<String,Boolean> map = ImmutableMap.builder();
         for (ODocument doc:tags){
             String name = doc.field(PermissionTagDao.TAG);
-            boolean enabled = doc.field(PermissionTagDao.ENABLED);
+            boolean enabled = doc.<Boolean>field(PermissionTagDao.ENABLED);
             map.put(name,enabled);
         }
         return map.build();
@@ -79,7 +79,7 @@ public class PermissionTagService {
         ODocument doc = getPermissionTag(name);
         if (doc == null) return null;
         String tag = doc.field(PermissionTagDao.TAG);
-        boolean enabled = doc.field(PermissionTagDao.ENABLED);
+        boolean enabled = doc.<Boolean>field(PermissionTagDao.ENABLED);
         return ImmutableMap.<String,Object>of(PermissionTagDao.TAG,tag,PermissionTagDao.ENABLED,enabled);
     }
 
