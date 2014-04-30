@@ -56,7 +56,7 @@ public class PermissionTagService {
         List<ODocument> tags = getPermissionTags();
         ImmutableMap.Builder<String,Boolean> map = ImmutableMap.builder();
         for (ODocument doc:tags){
-            String name = doc.field(PermissionTagDao.TAG);
+            String name = doc.<String>field(PermissionTagDao.TAG);
             boolean enabled = doc.<Boolean>field(PermissionTagDao.ENABLED);
             map.put(name,enabled);
         }
