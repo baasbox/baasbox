@@ -133,7 +133,7 @@ public class PermissionTagDao  {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         ODocument doc = getByName(tagName);
         if (doc == null) throw new InvalidPermissionTagException("tag does not exists");
-        boolean oldValue=doc.field(ENABLED);
+        boolean oldValue=doc.<Boolean>field(ENABLED);
         boolean changed = false;
         if (enabled!=oldValue){
             doc.field(ENABLED,enabled);
