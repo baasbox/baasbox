@@ -20,7 +20,4 @@ public class InvalidPermissionTagException extends Exception {
         super(cause);
     }
 
-    public InvalidPermissionTagException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }
