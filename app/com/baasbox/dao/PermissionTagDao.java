@@ -155,7 +155,7 @@ public class PermissionTagDao  {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         ODocument doc = getByName(tagName);
         if (doc==null) throw new InvalidPermissionTagException("tag not found");
-        boolean enabled = doc.field(ENABLED);
+        boolean enabled = doc.<Boolean>field(ENABLED);
         if (Logger.isTraceEnabled()) Logger.trace("Method End");
         return enabled;
     }
