@@ -36,8 +36,9 @@
 
 	<!-- The fav icon -->
 	<link rel="shortcut icon" href="img/favicon.ico">
-	<link rel="icon" href="img/favicon.ico" />	
-	<link href='css/baasbox.css' rel='stylesheet'>
+	<link rel="icon" href="img/favicon.ico" />
+	<!--<link href="css/theme.css" rel="stylesheet">-->
+    <link href='css/baasbox.css' rel='stylesheet'>
 
 </head>
 
@@ -47,8 +48,8 @@
 	<input id="loggedIn" type="hidden" ng-model="loggedIn"   ng-init="loggedIn=false"/>
 	@admin.login(version)
 	@admin.main(version)
-	
-	
+
+
 	<!-- stylesheets -->
 	<link href="css/jquery-ui-1.8.21.custom.css" rel="stylesheet">
 	<link href='css/fullcalendar.css' rel='stylesheet'>
@@ -65,8 +66,8 @@
 	<link href='css/opa-icons.css' rel='stylesheet'>
 	<link href='css/uploadify.css' rel='stylesheet'>
 	<link href='css/uploadify.css' rel='stylesheet'>
-	
-	
+
+
 	<!-- --------- -->
 	<!-- jQuery -->
 	<script src="js/jquery-1.7.2.min.js"></script>
@@ -143,39 +144,40 @@
 	<script src="js/history.js"></script>
 	<!-- application script for Charisma demo -->
 	<script src="js/charisma.js"></script>
-	
+
 	<!-- BaasBox  -->
 	<script type="text/javascript" src="@com.baasbox.controllers.routes.AllRoutes.javascriptRoutes"></script>
 	<script type="text/javascript" src="bbjs/baasboxgui.js"></script>
 	<script type="text/javascript" src="bbjs/tour.js"></script>
 	<script type="text/javascript" src="bbjs/whatsnew-tour.js"></script>
-	
+
 	<!-- AngularJS -->
 	<script src="js/angular.min.js"></script>
 
 	<!-- jquery.form x Upload File -->
 	<script src="js/jquery.form.js"></script>
 
-<!-- UserVoice JavaScript SDK (only needed once on a page) -->
-<script>(function(){var uv=document.createElement('script');uv.type='text/javascript';uv.async=true;uv.src='//widget.uservoice.com/LufycuEwCsSZ768w7Mmmw.js';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(uv,s)})()</script>
 
-<!-- A tab to launch the Classic Widget -->
-<script>
-UserVoice = window.UserVoice || [];
-UserVoice.push(['showTab', 'classic_widget', {
-  mode: 'full',
-  primary_color: '#538378',
-  link_color: '#538378',
-  default_mode: 'support',
-  forum_id: 249063,
-  tab_label: 'Feedback & Support',
-  tab_color: '#538378',
-  tab_position: 'middle-right',
-  tab_inverted: false
-}]);
+
+<script type="text/javascript" src="//assets.zendesk.com/external/zenbox/v2.6/zenbox.js"></script>
+
+<link href='http://assets.zendesk.com/external/zenbox/v2.6/zenbox.css' rel='stylesheet'  media='screen'>
+<link href='http://assets.zendesk.com/external/zenbox/v2.6/zenbox.css' rel='stylesheet'  media='projection'>
+<script type="text/javascript">
+  if (typeof(Zenbox) !== "undefined") {
+    Zenbox.init({
+      dropboxID:   "20232907",
+      url:         "https://baasbox.zendesk.com",
+      tabTooltip:  "Feedback",
+      tabImageURL: "https://assets.zendesk.com/external/zenbox/images/tab_feedback_right.png",
+      tabColor:    "#3986AC",
+      tabPosition: "Right"
+    });
+  }
 </script>
-	
-	
+
+
+
 </body>
 
 </html>

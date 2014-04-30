@@ -19,7 +19,4 @@ public class PermissionTagAlreadyExistsException extends Exception {
         super(cause);
     }
 
-    public PermissionTagAlreadyExistsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }
