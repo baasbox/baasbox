@@ -1,11 +1,11 @@
 /**
- * javascript functions for the Admin GUI 
+ * javascript functions for the Admin GUI
  */
 
 
 /**
  * Utility Functions
- * 
+ *
  */
 
 /**
@@ -46,11 +46,11 @@ function changeTopBarLink(bbId){
 	var link = $($(".top-nav a.help")[0]);
 	var href = link.attr("href")+"/"+bbId;
 	link.attr("href",href);
-	
+
 }
 
 function refreshCollectionCache(arr,fun){
-	
+
 	if(arr){
 		dbCollectionsCache = arr;
 		if(fun){
@@ -60,7 +60,7 @@ function refreshCollectionCache(arr,fun){
 	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
-				var data = data["data"];
+				data = data["data"];
 				dbCollectionsCache = data["data"]["collections_details"];
 				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
 				if(fun){
@@ -115,7 +115,7 @@ $('#exportDb').click(function(e){
 					alert("Your database backup has been scheduled");
 				}
 
-			});	
+			});
 })
 $('#dropDbCancel').click(function(e){
 	$('#dropDbModal').modal('hide');
@@ -146,7 +146,7 @@ function dropDb()
 
 				}
 
-			})	
+			})
 }
 
 $('a.deleteCollection').live('click',function(e){
@@ -269,8 +269,8 @@ $('.btn-newAsset').click(function(e){
 	$('#txtAssetName').val('');
 	$('#txtAssetMeta').val('');
 	$('#fuAsset').val('');
-	$("#errorAsset").addClass("hide");	
-	$(".filename").text("no file selected")	
+	$("#errorAsset").addClass("hide");
+	$(".filename").text("no file selected")
 	$('#addAssetModal').modal('show');
 }); // Show Modal for New Asset
 
@@ -280,10 +280,18 @@ $('.btn-newFile').click(function(e){
 	$('#txtFileName').val('');
 	$('#txtFileAttachedData').val('');
 	$('#fuFsset').val('');
-	$("#errorFile").addClass("hide");	
-	$(".filename").text("no file selected")	
+	$("#errorFile").addClass("hide");
+	$(".filename").text("no file selected")
 	$('#addFileModal').modal('show');
 }); // Show Modal for New File
+
+function switchEndpoint(enabled,name){
+    BBRoutes.com.baasbox.controllers.Admin.setPermissionTagEnabled(name,enabled).ajax({
+        success: function (data){
+            loadPermissionsTable();
+        }
+    });
+}
 
 $(".btn-action").live("click", function() {
 	var action = $(this).attr("action");
@@ -291,6 +299,14 @@ $(".btn-action").live("click", function() {
 	var parameters = $(this).attr("parameters");
 
 	switch (action)	{
+        case "enable":
+            if(!confirm("Do you want to enable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(true,parameters);
+            break;
+        case "disable":
+            if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
+            switchEndpoint(false,parameters);
+            break;
 	case "insert":
 		switch (actionType)	{
 		case "user":
@@ -304,7 +320,7 @@ $(".btn-action").live("click", function() {
 		case "asset":
 			break;
 		case "file":
-			break;			
+			break;
 		}
 		break;
 	case "edit":
@@ -329,12 +345,23 @@ $(".btn-action").live("click", function() {
 			break;
 		case "role":
 			openRoleEditForm(parameters);
-			break;	
+			break;
 		}
 		break;
 	case "changePwdUser":
 		openChangePasswordUserForm(parameters);
 			break;
+    case "followers":
+        openFollowersModal(parameters);
+            break;
+    case "suspend":
+        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(true,parameters);
+            break;
+    case "activate":
+        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+            suspendOrActivateUser(false,parameters);
+            break;
 	case "delete":
 		switch (actionType)	{
 		case "user":
@@ -363,12 +390,28 @@ $(".btn-action").live("click", function() {
 			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
 				return;
 			deleteDocument(collection,id);
-			break;	
+			break;
 		}
 		break;
 		}
 	});
 
+function suspendOrActivateUser(suspend,userName)
+{
+    var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
+                        BBRoutes.com.baasbox.controllers.Admin.enable(userName);
+    route.ajax(
+        {
+            data: {"username": userName},
+            error: function(data){
+                alert(JSON.parse(data.responseText)["message"]);
+            },
+            success: function(data){
+                loadUserTable();
+            }
+        }
+    );
+}
 function deleteAsset(assetName)
 {
 	BBRoutes.com.baasbox.controllers.Asset.delete(assetName).ajax(
@@ -382,7 +425,7 @@ function deleteAsset(assetName)
 				{
 					loadAssetTable();
 				}
-			})	
+			})
 }
 
 function deleteFile(id)
@@ -398,7 +441,7 @@ function deleteFile(id)
 				{
 					loadFileTable();
 				}
-			})	
+			})
 }
 
 function deleteDocument(collection,id){
@@ -410,7 +453,7 @@ function deleteDocument(collection,id){
 				success: function(data)	{
 					$("#selectCollection").trigger("change");
 				}
-			})	
+			})
 }
 
 function deleteRole(roleName){
@@ -425,7 +468,7 @@ function deleteRole(roleName){
 				{
 					loadRoleTable();
 				}
-			})	
+			})
 }
 
 function openUserEditForm(editUserName){
@@ -449,6 +492,11 @@ function openUserEditForm(editUserName){
 	$('#addUserModal').modal('show');
 }
 
+function openFollowersModal(user){
+    $("#followedUser").text(user);
+    reloadFollowing(user);
+    $("#followersModal").modal('show');
+}
 function openChangePasswordUserForm(changePassword){
     resetChangePasswordUserForm()
     var userObject;
@@ -514,7 +562,7 @@ function openDocumentEditForm(id,collection){
 		docObject["@class"] = collection;
 	}
 	populateDocumentEditForm(docObject);
-	
+
 	$('#addDocumentModal').modal('show');
 }
 
@@ -551,8 +599,8 @@ function openSettingEditForm(editSettingName)
 			settingObject = settingPushDataArray[i];
 		}
 
-	}	
-	
+	}
+
 	$("#lblDescription").text(settingObject.description);
 	$("#txtKey").val(settingObject.key);
 	$("#txtKey").addClass("disabled");
@@ -582,7 +630,7 @@ function reverseJSON(objJSON)
 	if(strJSON == undefined)
 		return "";
 
-	var obj=JSON.parse(strJSON); 
+	var obj=JSON.parse(strJSON);
 
 	delete obj["_allow"];
 	delete obj["_allowRead"];
@@ -603,7 +651,9 @@ function loadRoleTable()
 {
 	callMenu("#roles");
 }
-
+function loadPermissionsTable(){
+    callMenu('#permissions');
+}
 function loadUserTable()
 {
 	callMenu("#users");
@@ -697,7 +747,7 @@ function addRole() {
 				{
 					closeRoleForm();
 				}
-			})	
+			})
 }
 function updateRole(){
 	var roleName = $("#txtRoleName").val();
@@ -717,7 +767,7 @@ function updateRole(){
 				{
 					closeRoleForm();
 				}
-			})	
+			})
 }//updateRole
 
 function addDocument(){
@@ -740,7 +790,7 @@ function addDocument(){
 				{
 					closeDocumentForm();
 				}
-			})	
+			})
 }//addDocument
 
 
@@ -751,7 +801,7 @@ function updateDocument(){
 	var version=$("#txtDocumentVersion").val();
 	var data=JSON.parse($("#txtDocumentData").val());
 	data["@version"]=parseInt(version);
-	
+
 	BBRoutes.com.baasbox.controllers.Document.updateDocument(collection,id,true).ajax(
 			{
 				data: JSON.stringify(data),
@@ -770,7 +820,7 @@ function updateDocument(){
 				{
 					closeDocumentForm();
 				}
-			})	
+			})
 }//updateDocument
 
 function closeDocumentForm() {
@@ -789,7 +839,7 @@ function addUser()
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
-	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
+	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
 	var visibleByAnonymousUsers = ($("#txtVisibleByAnonymousUsers").val() == "") ? "{}": $("#txtVisibleByAnonymousUsers").val();
@@ -814,7 +864,7 @@ function addUser()
 				{
 					closeUserForm();
 				}
-			})	
+			})
 }
 
 function updateUser()
@@ -822,7 +872,7 @@ function updateUser()
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
 	var role = $("#cmbSelectRole").val();
-	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
+	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends
         = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
@@ -836,7 +886,7 @@ function updateUser()
 					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
 					"visibleByRegisteredUsers": jQuery.parseJSON(visibleByRegisteredUsers),
 					"visibleByAnonymousUsers": jQuery.parseJSON(visibleByAnonymousUsers)
-				}),	
+				}),
 				contentType: "application/json",
 				processData: false,
 				error: function(data)
@@ -847,13 +897,13 @@ function updateUser()
 				{
 					closeUserForm();
 				}
-			})	
+			})
 }
 
 function closeUserForm()
 {
 	$('#addUserModal').modal('hide');
-	loadUserTable();
+	loadUserTable()
 }
 
 function updateSetting()
@@ -880,7 +930,7 @@ function updateSetting()
 				{
 					closeSettingForm();
 				}
-			})	
+			})
 }
 
 
@@ -897,7 +947,7 @@ $('.btn-RoleCommit').click(function(e){
 	var desc = $("#txtRoleDescription").val();
 	var errorMessage = '';
 	$("#errorAddRole").addClass("hide");
-	
+
 	if($.trim(roleName) == "")	errorMessage = "The 'Role name' field is required<br/>"
 	if(errorMessage != "")
 	{
@@ -941,10 +991,10 @@ $('.btn-DocumentCommit').click(function(e){
 $('.btn-DocumentReload').click(function(e){
 	var errorMessage = '';
 	$("#errorAddDocument").addClass("hide");
-	
+
 	var id=$("#txtDocumentId").val();
 	var collection=$("#txtDocumentCollection").val();
-	
+
 	BBRoutes.com.baasbox.controllers.Document.getDocument(collection,id,true).ajax(
 			{
 				error: function(data)
@@ -959,7 +1009,7 @@ $('.btn-DocumentReload').click(function(e){
 				    populateDocumentEditForm(data["data"]);
 					$("#selectCollection").trigger("change");
 				}
-			});	
+			});
 	return;
 }); // Validate and Ajax submit for reload document
 
@@ -970,7 +1020,7 @@ $('.btn-UserCommit').click(function(e){
 	var password = $("#txtPassword").val();
 	var retypePassword = $("#txtRetypePassword").val();
 	var role = $("#cmbSelectRole").val();
-	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val(); 
+	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends" +
         "").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
@@ -999,7 +1049,7 @@ $('.btn-UserCommit').click(function(e){
 									errorMessage += "'Password' and 'Retype Password' fields don't match<br/>"
 								}
 								else
-									$(".groupUserPwd").removeClass("error");		
+									$(".groupUserPwd").removeClass("error");
 			}
 
 	if($.trim(role) == "")
@@ -1092,7 +1142,7 @@ $('.btn-NewCollectionCommit').click(function(e){
 	if($.trim(collectionName) == '')
 	{
 		return;
-	}		
+	}
 
 	BBRoutes.com.baasbox.controllers.Admin.createCollection(collectionName).ajax(
 			{
@@ -1109,7 +1159,7 @@ $('.btn-NewCollectionCommit').click(function(e){
 					dbCollectionsCache = null;
 					loadCollectionsTable();
 				}
-			})	
+			})
 }); // Validate and Ajax submit for new collection
 
 $('.btn-ChangePwdCommit').click(function(e){
@@ -1129,7 +1179,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	{
         $("#errorPwdNotMatch").removeClass("hide");
 		return;
-	}		
+	}
 	else
 		$("#errorPwdNotMatch").addClass("hide");
 
@@ -1137,7 +1187,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 	{
         $("#errorNewPassword").removeClass("hide");
 		return;
-	}		
+	}
 	else
 		$("#errorNewPassword").addClass("hide");
 
@@ -1155,7 +1205,7 @@ $('.btn-ChangePwdCommit').click(function(e){
 					sessionStorage.password = newPassword;
 					$('#changePwdModal').modal('hide');
 				}
-			})	
+			})
 }); // Validate and Ajax submit for Change Password
 
 
@@ -1242,11 +1292,11 @@ $('#importDbForm').on('submit',function(){
 			success: function(){
 				unfreezeConsole();
 				BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
-						function() { 
+						function() {
 							sessionStorage.up="";
 							sessionStorage.appcode="";
 							sessionStorage.sessionToken="";
-							location.reload(); 
+							location.reload();
 						});
 			}, //success
 			error:function(data){
@@ -1284,7 +1334,7 @@ $('#assetForm').submit(function() {
 	var ext = $('#fuAsset').val().split('.').pop().toLowerCase();
 	/*if($.inArray(ext, ['gif','png','jpg','jpeg','tif','eps','pdf','doc','docx','xls','xlsx','ppt','pptx','txt','']) == -1) {
 		errorMessage += "Invalid File Extension<br/>"
-	}*/		
+	}*/
 
 	if(errorMessage != "")
 	{
@@ -1293,7 +1343,7 @@ $('#assetForm').submit(function() {
 		return;
 	}
 
-	if ($.trim(assetMeta) == "") 
+	if ($.trim(assetMeta) == "")
 		assetMeta = "{}";
 
 	var serverUrl=BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL();
@@ -1325,7 +1375,7 @@ $('#fileForm').submit(function() {
 
 	var fileMeta = ($.trim($("#txtFileAttachedData").val()) == "") ? "{}": $("#txtFileAttachedData").val();
 	var fileName = ($.trim($('#fuFile').val()))
-	
+
 	var errorMessage = '';
 
 	if(!isValidJson(fileMeta)){
@@ -1333,7 +1383,7 @@ $('#fileForm').submit(function() {
 		errorMessage += "The attached JSON data must be a valid JSON string<br/>";
 	}else
 		$("#divFileAttachedData").removeClass("error");
-	
+
 	if  (!fileName.length){
 		$("#divFileUpload").addClass("error");
 		errorMessage += "You must specify a file to upload<br/>";
@@ -1392,17 +1442,17 @@ function setup(){
 
 	$('.logout').click(function(e){
 		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
-				function() { 
+				function() {
 					sessionStorage.up="";
 					sessionStorage.appcode="";
 					sessionStorage.sessionToken="";
-					location.reload(); 
+					location.reload();
 				});
 	});
 
 	if (sessionStorage.up && sessionStorage.up!="") {
 		tryToLogin();
-	}	
+	}
 }
 
 function getActionButton(action, actionType,parameters){
@@ -1412,6 +1462,11 @@ function getActionButton(action, actionType,parameters){
 	var labelName;
 
 	switch (action)	{
+    case "followers":
+        iconType="icon-user";
+        classType="btn-info";
+        labelName="";
+        break;
 	case "edit":
 		iconType = "icon-edit";
 		classType = "btn-info";
@@ -1421,13 +1476,33 @@ function getActionButton(action, actionType,parameters){
 		iconType = "icon-lock";
 		classType = "btn-warning";
 		labelName = "Change PWD";
-		break;	
+		break;
 	case "delete":
 		iconType = "icon-trash";
 		classType = "btn-danger";
 		labelName = "Delete...";
 		break;
-	}
+    case "suspend":
+       iconType = "icon-off";
+       classType = "btn-danger";
+       labelName = "suspend";
+       break;
+    case "activate":
+       iconType = "icon-off";
+       classType="btn-success";
+       labelName="activate";
+       break;
+    case "enable":
+        iconType = "icon-off";
+        classType="btn-success";
+        labelName="enable";
+        break;
+    case "disable":
+        iconType = "icon-off";
+        classType="btn-danger";
+        labelName="disable";
+        break;
+    }
 	var actionButton = "<a class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
@@ -1440,7 +1515,7 @@ function setBradCrumb(type)
 	switch (type){
 	case "#roles":
 		sBradCrumb = "Roles";
-		break;	
+		break;
 	case "#users":
 		sBradCrumb = "Users";
 		break;
@@ -1576,11 +1651,58 @@ function setupTables(){
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
+    $('#followersTable').dataTable({
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "sPaginationType": "bootstrap",
+        "oLanguage": {"sLengthMenu": "_MENU_ records per page",
+                      "sEmptyTable": "No users are followed"},
+        "aoColumns": [{"mData": "user.name"},
+                      {"mData": "user.status","mRender": function ( data, type, full ) {
+                          var classStyle="label-success"
+                          if (data!="ACTIVE") classStyle="label-important";
+                          return "<span class='label "+classStyle+"'>"+data+"</span> ";
+                      }}],
+        "bRetrieve": true,
+        "bDestroy": true
+});
+    $('#endpointTable').dataTable( {
+        "sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+        "iDisplayLength": 20,
+        "bLengthChange": false,
+        "bPaginate": false,
+//        "oLanguage": {"sLengthMenu": "_MENU_ records per page"},
+        "aoColumns": [
+            {"mData": "endpoint.name"},
+            {"mData": "endpoint.status","mRender": function (data,type,full){
+                   var classStyle ="label-success";
+                   var text = "enabled";
+                    if(!data){
+                       classStyle = "label-important";
+                       text = "disabled";
+                    }
+                  return "<span class='label "+classStyle+"'>"+text+"</span> ";
+            }},
+            {"mData":"endpoint",mRender: function(data,type,full){
+                console.log(JSON.stringify(data));
+                if(data.status){
+
+                }
+                return getActionButton(data.status?"disable":"enable", "endpoint", data.name);
+            }}],
+        "bRetrieve": true,
+        "bDestroy": true
+    }).makeEditable();
 	$('#userTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "user.name"},
+		"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
+            var html = data;
+            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
+               html = getActionButton("followers","user",data)+"&nbsp;"+html;
+            }
+            return html;
+        }},
 		               {"mData": "user.roles.0.name"},
 		               {"mData": "signUpDate","sDefaultContent":""},
 		               {"mData": "user.status","mRender": function ( data, type, full ) {
@@ -1590,9 +1712,12 @@ function setupTables(){
 		            	   return htmlReturn;
 		               }
 		               },
-		               {"mData": "user.name", "mRender": function ( data, type, full ) {
-		            	   if(data!="admin" && data!="baasbox" && data!="internal_admin")
-		            		   return getActionButton("edit","user",data)+"&nbsp;"+getActionButton("changePwdUser","user",data);// +" "+ getActionButton("delete","user",data);
+		               {"mData": "user", "mRender": function ( data, type, full ) {
+		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
+                               var _active = data.status == "ACTIVE";
+                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);// +" "+ getActionButton("delete","user",data);
+                           }
 		            	   return "No action available";
 		               }
 		               }],
@@ -1708,7 +1833,8 @@ function setupTables(){
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-    	    			var datetime = data.split("T"); 
+//    	    			console.log("DATA: "+data);
+                        var datetime = data.split("T");
     	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
 						}
 					   },
@@ -1718,7 +1844,7 @@ function setupTables(){
 					   },
 		               {"mData": "_author"},
 		               {"mData": "@rid","mRender": function ( data, type, full ) 	{
-		            	   var obj=JSON.parse(JSON.stringify(full)); 
+		            	   var obj=JSON.parse(JSON.stringify(full));
 		            	   delete obj["@rid"];
 		            	   delete obj["@class"];
 		            	   delete obj["@version"];
@@ -1729,15 +1855,31 @@ function setupTables(){
 						},bSortable:false
 		               },
 		               {"mData": "id","mRender": function ( data, type, full ) {
-							var obj=JSON.parse(JSON.stringify(full)); 
+							var obj=JSON.parse(JSON.stringify(full));
 		            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
 		            	},bSortable:false,bSearchable:false
 		               }
 		               ],
+//                       "sAjaxSource": "fake",
+//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
+//                           val = $("#selectCollection").val();
+//                          var callback = fnCallback;
+//
+//                           if(val != null) {
+//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
+//                                  data: {orderBy: "name asc"},
+//                                   success: function (data) {
+//                                       console.log(typeof data["data"]);
+//                                       callback({"aaData":data["data"]});
+//                                   }
+//                               });
+//                           }
+//                        },
+//                        "bProcessing": true,
+//                       "bServerSide": true,
 		               "bRetrieve": true,
 		               "bDestroy":true
-	} ).makeEditable(); 
-
+	} ).makeEditable();
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
@@ -1748,7 +1890,7 @@ function setupTables(){
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ 
+		"aoColumns": [
 		              {"mData": "@class", "mRender": function (data, type, full ) {
 		            	  var obj=JSON.parse(JSON.stringify(full));
 		            	  if(data =="_BB_FileAsset")
@@ -1792,12 +1934,12 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
-	
+
 	$('#fileTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
 		"sPaginationType": "bootstrap",
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ 
+		"aoColumns": [
 		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
 		            	  var obj=JSON.parse(JSON.stringify(full));
 		            	  return getFileIcon(obj["contentType"],obj["id"]);
@@ -1836,7 +1978,7 @@ function setupTables(){
 		              "bRetrieve": true,
 		              "bDestroy":true
 	} ).makeEditable();
-	
+
 } //setupTables()
 
 function setupSelects(){
@@ -1850,7 +1992,7 @@ function setupSelects(){
 				var scope=$("#documents").scope();
 				scope.$apply(function(){
 					scope.collectionName=val;
-				});	
+				});
 				$('#documentTable').dataTable().fnClearTable();
 				$('#documentTable').dataTable().fnAddData(data);
 				documentDataArray=data;
@@ -1861,7 +2003,7 @@ function setupSelects(){
 
 function setupAjax(){
 	$.ajaxSetup({
-		beforeSend: function (xhr){ 
+		beforeSend: function (xhr){
 			xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
 		},
 		statusCode: {
@@ -1914,17 +2056,36 @@ function applySuccessMenu(action,data){
 	var scope=$(action).scope();
 	scope.$apply(function(){
 		scope.data=data;
-	});	
+	});
 
-}//applySuccessMenu 
+}//applySuccessMenu
 
+function reloadFollowing(user){
+    BBRoutes.com.baasbox.controllers.Admin.following(user).ajax({
+
+        success: function(data){
+            var foll = data["data"];
+            $("#followersTable").dataTable().fnClearTable();
+            $("#followersTable").dataTable().fnAddData(foll);
+        },
+        error: function(data){
+            if(data.status==404){
+                $("#followersTable").dataTable().fnClearTable();
+            }
+        }
+    });
+}
 
 function callMenu(action){
 	var scope=$("#loggedIn").scope();
-	scope.$apply(function(){
+    scope.$apply(function(){
 		scope.menu="";
 	});
-	$('#loading').remove();
+	var docScope=$('#documents').scope();
+    docScope.$apply(function(){
+        docScope.collectionName = null;
+    });
+    $('#loading').remove();
 	$('#content').parent().append('<div id="loading" class="center">Loading...<div class="center"></div></div>');
 
 	setBradCrumb(action);
@@ -2013,7 +2174,7 @@ function callMenu(action){
 				});
 				var serverPlatform=getPlatform(data["os"]["os_name"]);
 				$('#platformNameNews').text(data["os"]["os_name"]);
-				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true), 
+				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true),
 						{
 					header: false,
 					dateformat: "date",
@@ -2024,21 +2185,21 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news about BaasBox on " + data["os"]["os_name"] + " platform"
 						});
-				if (localStorage.generalTour!=bbv) 
+				if (localStorage.generalTour!=bbv)
 					tours["general"].restart();
 				localStorage.generalTour=bbv;
 			}//success function
 		});//ajax call
 
 		break;	//#dashboard
-	case "#settings":		
+	case "#settings":
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Application").ajax({
 			success: function(data) {
 				//console.debug("dumpConfiguration Application success:");
 				//console.debug(data);
 				settingDataArray = data["data"];
-				
-				
+
+
 				//applySuccessMenu(action,data);
 				$('#settingsTable').dataTable().fnClearTable();
 				$('#settingsTable').dataTable().fnAddData(settingDataArray);
@@ -2060,7 +2221,7 @@ function callMenu(action){
 				settingPushDataArray = data["data"];
 				//console.debug(settingPushDataArray);
 				settingPushMap = {}
-				
+
 				settingPushMap.add = function(setting,section){
 					if(settingPushMap[section]==null){
 						settingPushMap[section]=[];
@@ -2069,7 +2230,7 @@ function callMenu(action){
 				};
 				$(settingPushDataArray).each(function(i,setting){
 					var k = setting["key"];
-					
+
 					if(k.endsWith(".certificate")){
 						setting["file"] = true
 						if(setting.value){
@@ -2088,19 +2249,19 @@ function callMenu(action){
 				})
 				initializeData("push",settingPushMap);
 				//applySuccessMenu(action,data);
-				
+
 			}
 		});
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Images").ajax({
 			success: function(data) {
 
 				settingImgDataArray = data["data"];
-				
+
 				$('#settingsImgTable').dataTable().fnClearTable();
 				$('#settingsImgTable').dataTable().fnAddData(settingImgDataArray);
 			}
 		});
-		
+
 		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Social").ajax({
 			success: function(data) {
 				var result =  data["data"];
@@ -2121,15 +2282,15 @@ function callMenu(action){
 						settingSocialData[key]["enabled"] = def;
 						//console.log("enabled?",def);
 						settingSocialData[key]["saved"] = def;
-						
+
 					}
-					
-					
+
+
 				}
-				
+
 				applySuccessMenu(action,settingSocialData);
-				
-				
+
+
 			}
 		});
 		break;	//#settings
@@ -2157,14 +2318,13 @@ function callMenu(action){
 				ref(collections)
 		}else{
 			refreshCollectionCache(null,function(dd){
-				
 				collections = dd;
 				ref(collections)
 			});
 		}
 		break;//#collections
 	case "#documents":
-		$('#documentTable').dataTable().fnClearTable();
+        $('#documentTable').dataTable().fnClearTable();
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2209,9 +2369,26 @@ function callMenu(action){
 				$.trim($('#fuFile').val(""));
 			}
 		});
-		break;//#files	  
+		break;//#files
+        case "#permissions":
+            BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
+                success: function(data){
+                    data = data["data"];
+                    var arr = [];
+                    for(var tag in data){
+                        arr.push({"endpoint": {"name": tag,"status": data[tag]}});
+                    }
+
+                    applySuccessMenu(action,arr);
+                    $('#endpointTable').dataTable().fnClearTable();
+                    $('#endpointTable').dataTable().fnAddData(arr);
+                }
+            });
+            break;
 	}
 }//callMenu
+
+function PermissionsController($scope){}
 
 function RolesController($scope){
 
@@ -2225,6 +2402,7 @@ function UsersController($scope){
 function CollectionsController($scope){
 }
 function DocumentsController($scope){
+    $scope.collectionName = null;
 }
 
 function tryToLogin(user, pass,appCode){
@@ -2248,7 +2426,7 @@ function tryToLogin(user, pass,appCode){
 			$("#errorLogin").removeClass("hide");
 		}
 	});	 //ajax
-}//tryToLogin	
+}//tryToLogin
 
 function LoginController($scope) {
 	$scope.login = function() {
@@ -2260,23 +2438,23 @@ function LoginController($scope) {
 }	//LoginController
 
 function SettingsController($scope){
-	
+
 
 	$scope.sociallogins = $scope.data;
-	
+
 	$scope.$watch('data',function(){
 		$scope.sociallogins = $scope.data;
 	});
-	
+
 	$scope.showForm = function(name){
 		$scope.sociallogins[name].enabled = true;
 		$scope.sociallogins[name].saved = false;
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	$scope.disable = function(name){
 		var toModify = $scope.sociallogins[name];
 		toModify.enabled = false;
@@ -2285,7 +2463,7 @@ function SettingsController($scope){
 		toModify.secret = null;
 		var key = "social."+name+".token"
 		var value = toModify.token;
-		
+
 		updateSettings(key,value,function(){
 			var key2 = "social."+name+".secret"
 			var value2 = toModify.secret;
@@ -2295,10 +2473,10 @@ function SettingsController($scope){
 				updateSettings(key3,value3,null);
 			})
 		})
-		
+
 	}
-	
-	
+
+
 	function updateSettings(key,value,onSuccess){
 		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration("Social","dummy",key, '');
 		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
@@ -2321,7 +2499,7 @@ function SettingsController($scope){
 					}
 				});
 	}
-	
+
 	$scope.postsocialsettings = function(name){
 		var toModify = $scope.sociallogins[name];
 		toModify.errors = [];
@@ -2336,7 +2514,7 @@ function SettingsController($scope){
 		}else{
 			var key = "social."+name+".token"
 			var value = toModify.token;
-			
+
 			updateSettings(key,value,function(){
 				console.log("saving token")
 				var key2 = "social."+name+".secret"
@@ -2349,18 +2527,18 @@ function SettingsController($scope){
 						console.log("enabling")
 						$scope.sociallogins[name].saved = true;
 					});
-					
+
 				})
 			})
-			
-				
+
+
 
 		}
-		
+
 	}
-	
-	
-	
+
+
+
 }
 
 function DBManagerController($scope){
@@ -2393,30 +2571,30 @@ function PushSettingsController($scope){
 	$scope.$on("push-data",function(e,data){
 		$scope.pushData = data;
 	});
-	
+
 	$scope.keyName = function(k){
 		return k.replace(/\./g,'');
 	}
-	
+
 	$scope.isSandboxMode = function(){
 		if(!$scope.pushData['push']){
 			return false;
 		}
-		if($scope.pushData['push'][0].value==undefined || 
-		   $scope.pushData['push'][0].value=='false'  || 
+		if($scope.pushData['push'][0].value==undefined ||
+		   $scope.pushData['push'][0].value=='false'  ||
 		   !$scope.pushData['push'][0].value){
 			return false;
 		}else{
 			return true;
 		}
 	}
-	
+
 	$scope.sandboxMode = function(enable){
 		var ajaxProps = BBRoutes.com.baasbox.controllers.Admin.setConfiguration('Push',"dummy",$scope.pushData['push'][0].key,'');
 		var url = ajaxProps.url.substr(0,ajaxProps.url.length-1).replace('/dummy/','/')
 		$.ajax(
 				{
-		
+
 					method:'PUT',
 					type:'PUT',
 					contentType:'application/json',
@@ -2430,15 +2608,15 @@ function PushSettingsController($scope){
 					success: function(data)
 					{
 						$scope.$apply(function(){
-							
+
 							$scope.pushData['push'][0].value = ""+enable+"";
 							//console.debug($scope.pushData['push'][0].value)
 						})
-						
+
 					}
-				});	
+				});
 	}
-	
+
 	$scope.updateInlineSetting = function(section,s){
 		//console.debug(s.value)
 		s.error = null;
@@ -2465,10 +2643,10 @@ function PushSettingsController($scope){
 					{
 						alert("Setting "+s.key+" saved succesfully")
 					}
-				});	
+				});
 	}
-	
-	
+
+
 	$scope.updateFileSetting = function(section,s){
 		//console.debug("s",$scope[s.key])
 		s.error = null;
@@ -2499,10 +2677,10 @@ function PushSettingsController($scope){
 					//console.debug(data);
 				}
 		};
-		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);	
-		
+		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);
+
 	}
-	
+
 	$scope.setFiles = function(element) {
 	    $scope.$apply(function(scope) {
 	        scope.file =  element.files[0]

@@ -16,6 +16,7 @@
  */
 package com.baasbox.controllers;
 
+import static play.libs.Json.parse;
 import static play.libs.Json.toJson;
 
 import java.io.ByteArrayOutputStream;
@@ -38,6 +39,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.baasbox.dao.exception.*;
+import com.baasbox.service.permissions.PermissionTagService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
@@ -71,10 +74,6 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
-import com.baasbox.dao.exception.CollectionAlreadyExistsException;
-import com.baasbox.dao.exception.InvalidCollectionException;
-import com.baasbox.dao.exception.InvalidModelException;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
 import com.baasbox.enumerations.DefaultRoles;
@@ -435,7 +434,7 @@ public class Admin extends Controller {
 
 	/***
 	 * Change password of a specific user
-	 * @param name of user
+	 * @param username of user
 	 * @return 
 	 * @throws UserNotFoundException 
 	 * @throws SqlInjectionException 
@@ -909,7 +908,7 @@ public class Admin extends Controller {
 	 * DELETE /admin/follow/:follower/to/:tofollow
 	 * Delete a follow relationship beetwen user follower and user to follow
 	 * @param follower
-	 * @param toFollow
+	 * @param theFollowed
 	 * @return
 	 */
 	public static Result removeFollowRelationship(String follower,String theFollowed){
@@ -976,4 +975,50 @@ public class Admin extends Controller {
 		 }
 	}
 
+    /// permissions
+    public static Result getPermissionTag(String name){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        Result res;
+        try {
+            final ImmutableMap<String, Object> tag = PermissionTagService.getPermissionTagMap(name);
+            if (tag==null){
+                res = notFound("tag permission "+name+" does not exists");
+            } else {
+                res = ok(toJson(tag));
+            }
+        } catch (SqlInjectionException e) {
+            res = badRequest(e.getMessage());
+        }
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        return res;
+    }
+
+    public static Result setPermissionTagEnabled(String name,boolean enable){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        Result res;
+        try {
+            PermissionTagService.setTagEnabled(name,enable);
+            res = ok("success");
+        } catch (InvalidPermissionTagException e) {
+            res = notFound("tag permission "+name+" does not exists");
+        } catch (SqlInjectionException e) {
+            res = badRequest(e.getMessage());
+        }
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        return res;
+    }
+
+    public static Result getPermissionTags(){
+        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        Result res;
+        try{
+            ImmutableMap<String, Boolean> tags = PermissionTagService.getPermissionTagsMap();
+            res = ok(toJson(tags));
+        } catch (Throwable e){
+            Logger.error(e.getMessage());
+            res = internalServerError(e.getMessage());
+        }
+        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        return res;
+    }
 }
