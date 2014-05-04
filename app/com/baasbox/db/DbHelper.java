@@ -26,6 +26,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.baasbox.dao.RoleDao;
+import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.service.permissions.PermissionTagService;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -155,7 +159,7 @@ public class DbHelper {
 	 * @param from the class to query
 	 * @param count if true, perform a count instead of to retrieve the records
 	 * @param criteria the criteria to apply in the 'where' clause of the select
-	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(OCommandRequest, String[])} method
+	 * @return an OCommandRequest object ready to be passed to the {@link #selectCommandExecute(com.orientechnologies.orient.core.command.OCommandRequest, Object[])} (OCommandRequest, String[])} method
 	 * @throws SqlInjectionException If the query is not a select statement
 	 */
 	public static OCommandRequest selectCommandBuilder(String from, boolean count, QueryParams criteria) throws SqlInjectionException{
@@ -266,6 +270,15 @@ public class DbHelper {
 		if (db==null || db.isClosed()) db = open ( appcode,  username, password) ;
 		return db;
 	}
+
+	public static ODatabaseRecordTx getOrOpenConnectionWIthHTTPUsername() throws InvalidAppCodeException {
+		ODatabaseRecordTx db= getConnection();
+		if (db==null || db.isClosed()) db = open (  
+				(String) Http.Context.current().args.get("appcode"),  
+				getCurrentHTTPUsername(), 
+				getCurrentHTTPPassword()) ;
+		return db;
+	}
 	
 	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
@@ -286,6 +299,13 @@ public class DbHelper {
 		
 		return getConnection();
 	}
+
+    public static boolean isConnectedAsAdmin(boolean excludeInternal){
+        OUser user = getConnection().getUser();
+        Set<ORole> roles = user.getRoles();
+        boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
+        return excludeInternal ? isAdminRole && !BBConfiguration.getBaasBoxAdminUsername().equals(user.getName()) : isAdminRole;
+    }
 
 	public static ODatabaseRecordTx reconnectAsAdmin (){
 		getConnection().close();
@@ -435,7 +455,11 @@ public class DbHelper {
 		Logger.info("...done");
 	}
 
-
+    static void createDefaultPermissionTags(){
+        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        PermissionTagService.createDefaultPermissions();
+        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+    }
 
 	public static void setupDb() throws Exception{
 		Logger.info("Creating default roles...");
@@ -445,6 +469,7 @@ public class DbHelper {
 		Logger.info("Creating default users...");
 		createDefaultUsers();
 		populateConfiguration();
+        createDefaultPermissionTags();
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
@@ -568,5 +593,21 @@ public class DbHelper {
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());
 	}
-	
+
+    /**
+     * Executes a sequence of orient sql commands
+     */
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+        if (commands==null) return;
+        for (String command:commands){
+            if (command==null){
+                Logger.warn("null command found!! skipping");
+                continue;
+            }
+            if (log)Logger.debug("sql:> "+command);
+            if (!command.startsWith("--")&&!command.trim().isEmpty()){
+                db.command(new OCommandSQL(command.replace(';',' '))).execute();
+            }
+        }
+    }
 }

@@ -16,9 +16,10 @@ import play.mvc.Http.Session;
 public class TwitterLoginService extends SocialLoginService {
 
 	public static String PREFIX = "tw_";
+	public static String SOCIAL = "twitter";
 	
 	public TwitterLoginService(String appcode) {
-		super("twitter",appcode);
+		super(SOCIAL,appcode);
 	}
 
 	@Override
@@ -71,24 +72,29 @@ public class TwitterLoginService extends SocialLoginService {
 		
 	}
 
-	/**
-	 * {"time_zone":{"name":"Madrid","utc_offset":7200,"tzinfo_name":"Europe\/Madrid"},
-	 *  "protected":false,
-	 *  "screen_name":"swampie",
-	 *  "always_use_https":true,
-	 *  "use_cookie_personalization":true,
-	 *  "sleep_time":{"enabled":false,"end_time":null,"start_time":null},
-	 *  "geo_enabled":true,
-	 *  "language":"en","discoverable_by_email":false,"discoverable_by_mobile_phone":false,"display_sensitive_media":false,
-	 *  "trend_location":[{"name":"Madrid","countryCode":"ES","url":"http:\/\/where.yahooapis.com\/v1\/place\/766273","woeid":766273,"placeType":{"name":"Town","code":7},"parentid":23424950,"country":"Spain"}]}
-	 */
+	
 	@Override
 	public UserInfo extractUserInfo(Response r) {
 		UserInfo i =  new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
 		i.setUsername(user.get("screen_name").textValue());
 		i.addData("location",user.get("time_zone").get("name").asText());
+		i.setFrom(SOCIAL);
 		return i;
 	}
+
+	@Override
+	protected String getValidationURL(String token) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected boolean validate(Object response) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	
 
 }

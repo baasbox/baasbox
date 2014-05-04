@@ -7,6 +7,8 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
+import com.baasbox.configuration.SocialLoginConfiguration;
+
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -77,5 +79,21 @@ public class GithubLoginService extends SocialLoginService {
 		return ui;
 		
 	}
+
+
+	@Override
+	protected String getValidationURL(String token) {
+		return String.format("https://api.github.com/");
+	}
+
+
+
+	@Override
+	protected boolean validate(Object response) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	
 
 }

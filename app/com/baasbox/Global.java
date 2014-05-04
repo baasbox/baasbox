@@ -232,7 +232,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".value"));
 						PropertiesConfigurationHelper.override(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the setting " + key + " with the value " + value.toString() + ": " +e.getMessage());
+                        error ("Error overriding the setting " + key + " with the value " + value + ": " +e.getMessage());
 					}
     			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
     				//sets the visibility

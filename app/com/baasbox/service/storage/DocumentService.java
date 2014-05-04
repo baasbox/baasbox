@@ -112,6 +112,7 @@ public class DocumentService {
 		q.append(" where @rid=").append(rid);
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
+
 		//TODO:
 		/*if(parser.isArray()){
 			try {
@@ -129,6 +130,7 @@ public class DocumentService {
 				e.printStackTrace();
 			}
 		}*/
+
 		return result;
 	}
 

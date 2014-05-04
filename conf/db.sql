@@ -89,12 +89,22 @@ create property _BB_FileAsset.file link;
 alter property _BB_FileAsset.file mandatory=true;
 alter property _BB_FileAsset.file notnull=true;
 
+--permissions
+create class _BB_Permissions;
+create property _BB_Permissions.tag String;
+create property _BB_Permissions.enabled boolean;
+alter property _BB_Permissions.tag mandatory=true;
+alter property _BB_Permissions.tag notnull=true;
+alter property _BB_Permissions.enabled mandatory=true;
+alter property _BB_Permissions.enabled notnull=true;
+
 --indices
 --deprecated since OrientDB 1.7:
 create index ouser.name unique;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
+create index _BB_Permissions.tag unique;
 
 --configuration class
 create class _BB_Index;
@@ -102,7 +112,3 @@ create property _BB_Index.key String;
 alter property _BB_Index.key mandatory=true;
 alter property _BB_Index.key notnull=true;
 create index _BB_Index.key unique;
-
-
-
-

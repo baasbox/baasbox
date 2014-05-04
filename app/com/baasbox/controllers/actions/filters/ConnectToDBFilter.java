@@ -17,6 +17,9 @@
 package com.baasbox.controllers.actions.filters;
 
 
+import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.permissions.RouteTagger;
+import com.baasbox.service.permissions.Tags;
 import play.Logger;
 import play.libs.F;
 import play.mvc.Action;
@@ -29,8 +32,14 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+
 import play.mvc.SimpleResult;
 import play.libs.F;
+
+
+import java.util.Map;
+import java.util.Set;
+
 
 
 /**
@@ -43,18 +52,28 @@ public class ConnectToDBFilter extends Action.Simple {
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
-		Http.Context.current.set(ctx);
-		
-		if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
+        Http.Context.current.set(ctx);
+
+        //fixme should happen as early as possible in the action chain
+        RouteTagger.attachAnnotations(ctx);
+
+
+        if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
 		ODatabaseRecordTx database = null;
 		F.Promise<SimpleResult> result=null;
 		try{
-			
+			//close an eventually  'ghost'  connection left open in this thread
+			//(this may happen in case of Promise usage)
+			DbHelper.close(DbHelper.getConnection());
 	        try{
 	        	database=DbHelper.open(appcode,username,password);
+
+                if(!Tags.verifyAccess(ctx)){
+                    return  F.Promise.<SimpleResult>pure(forbidden("Endpoint has been disabled"));
+                }
 	        }catch (OSecurityAccessException e){
 	        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
 	        	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));

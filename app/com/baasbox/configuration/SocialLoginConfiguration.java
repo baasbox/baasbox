@@ -1,8 +1,8 @@
 package com.baasbox.configuration;
 
-import com.baasbox.configuration.index.IndexSocialLoginConfiguration;
-
 import play.Logger;
+
+import com.baasbox.configuration.index.IndexSocialLoginConfiguration;
 
 public enum SocialLoginConfiguration implements IProperties{
 	FACEBOOK_TOKEN("social.facebook.token","Application Token for facebook app",String.class),

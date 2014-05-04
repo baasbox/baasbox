@@ -86,7 +86,9 @@ public abstract class AbstractTest extends FluentTest
 	private int nStatusCode = -1;
 	private boolean fUseCollector = false;
 
-	
+	protected static void resetHeaders(){
+		mHeaders.clear();
+	}
 	protected static FakeApplication getFakeApplication(){
 		return fakeApplication(additionalConfigurations.asMap());
 	}
@@ -106,7 +108,11 @@ public abstract class AbstractTest extends FluentTest
 	public abstract String getMethod();
 	protected abstract void assertContent(String s);
 	
-
+	@Before
+	public void resetAllHeadersBeforeTests(){
+		resetHeaders();
+	}
+	
 	@Override
     public WebDriver getDefaultDriver() 
 	{
@@ -377,7 +383,7 @@ public abstract class AbstractTest extends FluentTest
         }
         catch(Exception e)
         {
-            Assert.fail("Unable to get HttpConnection");
+            Assert.fail("Unable to get HttpConnection "+e.getMessage());
         }
 
         return conn;
