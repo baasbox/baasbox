@@ -185,7 +185,7 @@ POST	 /document/:collection	 					com.baasbox.controllers.Document.createDocumen
 # @tag(baasbox.data.read)
 GET		 /document/:collection						com.baasbox.controllers.Document.getDocuments(collection: String)
 
-# @tag(baabox.data.read)
+# @tag(baasbox.data.read)
 GET 	 /document/:collection/count  				com.baasbox.controllers.Document.getCount(collection: String)
 
 # @tag(baasbox.data.update)
