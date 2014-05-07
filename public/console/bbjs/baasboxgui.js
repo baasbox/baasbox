@@ -1485,12 +1485,12 @@ function getActionButton(action, actionType,parameters){
     case "suspend":
        iconType = "icon-off";
        classType = "btn-danger";
-       labelName = "suspend";
+       labelName = "Suspend";
        break;
     case "activate":
        iconType = "icon-off";
        classType="btn-success";
-       labelName="activate";
+       labelName="Activate";
        break;
     case "enable":
         iconType = "icon-off";
@@ -1715,8 +1715,8 @@ function setupTables(){
 		               {"mData": "user", "mRender": function ( data, type, full ) {
 		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
                                var _active = data.status == "ACTIVE";
-                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);// +" "+ getActionButton("delete","user",data);
+                               return '<div class="btn-group">'+ getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);+"</div>"// +" "+ getActionButton("delete","user",data);
                            }
 		            	   return "No action available";
 		               }
