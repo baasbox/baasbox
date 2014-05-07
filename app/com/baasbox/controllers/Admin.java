@@ -16,7 +16,6 @@
  */
 package com.baasbox.controllers;
 
-import static play.libs.Json.parse;
 import static play.libs.Json.toJson;
 
 import java.io.ByteArrayOutputStream;
@@ -25,22 +24,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.baasbox.dao.exception.*;
-import com.baasbox.service.permissions.PermissionTagService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
@@ -49,7 +42,6 @@ import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
 import play.Play;
-import play.libs.Akka;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
@@ -61,7 +53,6 @@ import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Result;
 import play.mvc.With;
-import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
@@ -74,17 +65,23 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.CollectionAlreadyExistsException;
+import com.baasbox.dao.exception.FileNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.InvalidPermissionTagException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.db.async.ExportJob;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.dbmanager.DbManagerService;
+import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
-
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.ConfigurationFileContainer;
@@ -107,8 +104,8 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
 
-	static String backupDir = BBConfiguration.getDBBackupDir();
-	static String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
+	static String backupDir = DbManagerService.backupDir;
+	static String fileSeparator = DbManagerService.fileSeparator;
 
 	public static Result getUsers(){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -614,28 +611,16 @@ public class Admin extends Controller {
 	 */
 	public static Result exportDb(){
 		String appcode = (String)ctx().args.get("appcode");
-
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
 			unauthorized("appcode can not be null");
 		}
-
-		java.io.File dir = new java.io.File(backupDir);
-		if(!dir.exists()){
-			boolean createdDir = dir.mkdirs();
-			if(!createdDir){
-				return internalServerError("unable to create backup dir");
-			}
+		String fileName="";
+		try {
+			fileName = DbManagerService.exportDb(appcode);
+		} catch (FileNotFoundException e) {
+			return internalServerError(e.getMessage());
 		}
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
-		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),appcode);
-		//Async task
-		Akka.system().scheduler().scheduleOnce(
-				Duration.create(2, TimeUnit.SECONDS),
-				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
-				Akka.system().dispatcher()
-				); 
 		return status(202,Json.toJson(fileName));
-
 	}
 
 	/**
@@ -654,7 +639,6 @@ public class Admin extends Controller {
 		}else{
 			return ok(file);
 		}
-
 	}
 
 	/**
@@ -668,28 +652,14 @@ public class Admin extends Controller {
 	 * be deleted a 500 error code is returned
 	 */
 	public static Result deleteExport(String fileName){
-		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
-		if(!file.exists()){
+		try {
+			DbManagerService.deleteExport(fileName);
+		} catch (FileNotFoundException e1) {
 			return notFound();
-		}else{
-			boolean deleted = false;
-			try{
-				FileUtils.forceDelete(file);
-				deleted =true;
-			}catch(IOException e){
-				deleted = file.delete();
-				if(deleted==false){
-					file.deleteOnExit();
-
-				}
-			}
-			if(deleted){
-				return ok();
-			}else{
-				return internalServerError("Unable to delete export.It will be deleted on the next reboot."+fileName);
-			}
+		} catch (IOException e1) {
+			return internalServerError("Unable to delete export.It will be deleted on the next reboot."+fileName);
 		}
-
+		return ok();
 	}
 
 	/**
@@ -701,21 +671,8 @@ public class Admin extends Controller {
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
 	public static Result getExports(){
-		java.io.File dir = new java.io.File(backupDir);
-		if(!dir.exists()){
-			dir.mkdirs();
-		}
-		Collection<java.io.File> files = FileUtils.listFiles(dir, new String[]{"zip"},false);
-		File[] fileArr = files.toArray(new File[files.size()]);
-
-		Arrays.sort(fileArr,LastModifiedFileComparator.LASTMODIFIED_REVERSE);
-
-		List<String> fileNames = new ArrayList<String>();
-		for (java.io.File file : fileArr) {
-			fileNames.add(file.getName());
-		}
+		List<String> fileNames = DbManagerService.getExports();
 		return ok(Json.toJson(fileNames));
-
 	}
 
 	/**
@@ -731,77 +688,24 @@ public class Admin extends Controller {
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
 			unauthorized("appcode can not be null");
 		}
-
-
 		MultipartFormData  body = request().body().asMultipartFormData();
 		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
 		FilePart fp = body.getFile("file");
 
 		if (fp!=null){
 			ZipInputStream zis = null;
-			String fileContent = null;
 			try{
 				java.io.File multipartFile=fp.getFile();
 				java.util.UUID uuid = java.util.UUID.randomUUID();
 				File zipFile = File.createTempFile(uuid.toString(), ".zip");
 				FileUtils.copyFile(multipartFile,zipFile);
-				zis = 
-						new ZipInputStream(new FileInputStream(zipFile));
-				//get the zipped file list entry
-				ZipEntry ze = zis.getNextEntry();
-				if(ze.isDirectory()){
-					ze = zis.getNextEntry();
-				}
-				if(ze!=null){
-					File newFile = File.createTempFile("export",".json");
-					FileOutputStream fout = new FileOutputStream(newFile);
-					for (int c = zis.read(); c != -1; c = zis.read()) {
-						fout.write(c);
-					}
-					fout.close();
-					fileContent = FileUtils.readFileToString(newFile);
-					newFile.delete();
-				}else{
-					return badRequest("Looks like the uploaded file is not a valid export.");
-				}
-				ZipEntry manifest = zis.getNextEntry();
-				if(manifest!=null){
-					File manifestFile = File.createTempFile("manifest",".txt");
-					FileOutputStream fout = new FileOutputStream(manifestFile);
-					for (int c = zis.read(); c != -1; c = zis.read()) {
-						fout.write(c);
-					}
-					fout.close();
-					String manifestContent  = FileUtils.readFileToString(manifestFile);
-					manifestFile.delete();
-					Pattern p = Pattern.compile(BBInternalConstants.IMPORT_MANIFEST_VERSION_PATTERN);
-					Matcher m = p.matcher(manifestContent);
-					if(m.matches()){
-						String version = m.group(1);
-						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
-							return badRequest(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
-						}else{
-							if (Logger.isDebugEnabled()) Logger.debug("Version : "+version+" is valid");
-						}
-					}else{
-						return badRequest("The manifest file does not contain a version number");
-					}
-				}else{
-					return badRequest("Looks like zip file does not contain a manifest file");
-				}
-				if (Logger.isDebugEnabled()) Logger.debug("Importing: "+fileContent);
-				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
-					DbHelper.importData(appcode, fileContent);
-					zis.closeEntry();
-					zis.close();
-					zipFile.delete();
-					return ok();
-				}else{
-					return badRequest("The import file is empty");
-				}
+				zis = 	new ZipInputStream(new FileInputStream(zipFile));
+				DbManagerService.importDb(appcode, zis);
+				zipFile.delete();
+				return ok();		
 			}catch(Exception e){
-				Logger.error(e.getMessage());
-				return internalServerError("There was an error handling your zip import file.");
+				Logger.error(ExceptionUtils.getStackTrace(e));
+				return internalServerError(ExceptionUtils.getStackTrace(e));
 			}finally{
 				try {
 					if(zis!=null){
