@@ -5,6 +5,7 @@ import play.Logger;
 import com.baasbox.configuration.index.IndexApplicationConfiguration;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
+import com.google.common.annotations.VisibleForTesting;
 
 
 public enum Application implements IProperties{
@@ -194,6 +195,11 @@ public enum Application implements IProperties{
 	@Override
 	public boolean isEditable() {
 		return editable;
+	}
+	
+	@VisibleForTesting
+	public void _setOverridden(boolean value){
+		this.overridden=value;
 	}
 
 }

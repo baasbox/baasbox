@@ -21,12 +21,15 @@ package core;
 
 import static play.mvc.Http.Status.FORBIDDEN;
 import static play.mvc.Http.Status.OK;
+import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -116,4 +119,49 @@ public abstract class AbstractAdminTest extends AbstractRouteHeaderTest
 	        }
 		);
 	}
+	
+	@Before
+	@Test
+	public void checkSettingsBefore()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					//load settings
+					FakeRequest request = new FakeRequest(GET, "/admin/configuration/dump.json");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					AbstractAdminTest.super.assertRoute(result, "checkSettingsBefore", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
+				}
+			}
+			);
+	}
+
+	@After
+	@Test
+	public void checkSettingsAfter()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					//load settings
+					FakeRequest request = new FakeRequest(GET, "/admin/configuration/dump.json");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					AbstractAdminTest.super.assertRoute(result, "checkSettingsAfter", OK, "application.name\":\"BaasBox\",\"description\":\"The App name\",\"type\":\"String\",\"editable\":true,\"visible\":true,\"overridden\":false", true);
+				}
+			}
+			);
+	}
+
 }
