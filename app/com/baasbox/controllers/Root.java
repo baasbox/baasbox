@@ -1,21 +1,35 @@
 package com.baasbox.controllers;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
+import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.RootCredentialWrapFilter;
+import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.metrics.BaasBoxMetric;
+import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.user.UserService;
 import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -106,4 +120,127 @@ public class Root extends Controller {
 			BaasBoxMetric.stop();
 	        return ok("Metrics service stopped");
 	    }
+		
+		//backup & restore
+		/**
+		 * /root/db/export (POST)
+		 * 
+		 * the method generate a full dump of the db in an asyncronus task.
+		 * the response returns a 202 code (ACCEPTED) and the filename of the
+		 * file that will be generated.
+		 * 
+		 * The async nature of the method DOES NOT ensure the creation of the file
+		 * so, querying for the file name with the /admin/db/:filename could return a 404
+		 * @return a 202 accepted code and a json representation containing the filename of the generated file
+		 */
+		@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
+		public static Result exportDb(){
+			String appcode = (String)ctx().args.get("appcode");
+			String fileName="";
+			try {
+				fileName = DbManagerService.exportDb(appcode);
+			} catch (FileNotFoundException e) {
+				return internalServerError(e.getMessage());
+			}
+			return status(202,Json.toJson(fileName));
+		}
+		
+		/**
+		 * /root/db/export/:filename (GET)
+		 * 
+		 * the method returns the stream of the export file named after :filename parameter. 
+		 * 
+		 * if the file is not present a 404 code is returned to the client
+		 * 
+		 * @return a 200 ok code and the stream of the file
+		 */
+		@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
+		public static Result getExport(String filename){
+			java.io.File file = new java.io.File(DbManagerService.backupDir+DbManagerService.fileSeparator+filename);
+			if(!file.exists()){
+				return notFound();
+			}else{
+				return ok(file);
+			}
+
+		}
+		
+		/**
+		 * /root/db/export/:filename (DELETE)
+		 * 
+		 * Deletes an export file from the db backup folder, if it exists 
+		 * 
+		 * 
+		 * @param fileName the name of the file to be deleted
+		 * @return a 200 code if the file is deleted correctly or a 404.If the file could not
+		 * be deleted a 500 error code is returned
+		 */
+		@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
+		public static Result deleteExport(String filename){
+			try {
+				DbManagerService.deleteExport(filename);
+			} catch (FileNotFoundException e1) {
+				return notFound();
+			} catch (IOException e1) {
+				return internalServerError("Unable to delete export.It will be deleted on the next reboot."+filename);
+			}
+			return ok();
+		}
+		
+		/**
+		 * /root/db/export (GET)
+		 * 
+		 * the method returns the list as a json array of all the export files
+		 * stored into the db export folder ({@link BBConfiguration#getDBBackupDir()})
+		 * 
+		 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
+		 */
+		@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
+		public static Result getExports(){
+			List<String> fileNames = DbManagerService.getExports();
+			return ok(Json.toJson(fileNames));
+		}
+		
+		/**
+		 * /admin/db/import (POST)
+		 * 
+		 * the method allows to upload a json export file and apply it to the db.
+		 * WARNING: all data on the db will be wiped out before importing
+		 * 
+		 * @return a 200 Status code when the import is successfull,a 500 status code otherwise
+		 */
+		@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
+		public static Result importDb(){
+			String appcode = (String)ctx().args.get("appcode");
+			MultipartFormData  body = request().body().asMultipartFormData();
+			if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+			FilePart fp = body.getFile("file");
+
+			if (fp!=null){
+				ZipInputStream zis = null;
+				try{
+					java.io.File multipartFile=fp.getFile();
+					java.util.UUID uuid = java.util.UUID.randomUUID();
+					File zipFile = File.createTempFile(uuid.toString(), ".zip");
+					FileUtils.copyFile(multipartFile,zipFile);
+					zis = 	new ZipInputStream(new FileInputStream(zipFile));
+					DbManagerService.importDb(appcode, zis);
+					zipFile.delete();
+					return ok();		
+				}catch(Exception e){
+					Logger.error(ExceptionUtils.getStackTrace(e));
+					return internalServerError(ExceptionUtils.getStackTrace(e));
+				}finally{
+					try {
+						if(zis!=null){
+							zis.close();
+						}
+					} catch (IOException e) {
+						// Nothing to do here
+					}
+				}
+			}else{
+				return badRequest("The form was submitted without a multipart file field.");
+			}
+		}
 }
