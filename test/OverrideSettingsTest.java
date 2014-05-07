@@ -118,6 +118,12 @@ public class OverrideSettingsTest extends AbstractAdminTest
 					}finally{
 						DbHelper.close(DbHelper.getConnection());
 					}
+					
+					//reset the original values
+					Application.APPLICATION_NAME.setVisible(true);
+					Application.APPLICATION_NAME.override("BaasBox");
+					Application.APPLICATION_NAME.setEditable(true);
+					Application.APPLICATION_NAME._setOverridden(false);
 				}
 			}
 		);		
