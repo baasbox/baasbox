@@ -346,11 +346,11 @@ GET		/root/metrics/histograms								com.baasbox.controllers.Root.histograms()
 GET		/root/metrics/uptime									com.baasbox.controllers.Root.uptime()
 
 # ROOT backup & restore
-POST	/root/db/export											com.baasbox.controllers.Admin.exportDb()
-GET	    /root/db/export/:filename							    com.baasbox.controllers.Admin.getExport(filename:String)
-DELETE	/root/db/export/:filename							    com.baasbox.controllers.Admin.deleteExport(filename:String)
-GET	    /root/db/export											com.baasbox.controllers.Admin.getExports()
-POST	/root/db/import         							    com.baasbox.controllers.Admin.importDb()
+POST	/root/db/export											com.baasbox.controllers.Root.exportDb()
+GET	    /root/db/export/:filename							    com.baasbox.controllers.Root.getExport(filename:String)
+DELETE	/root/db/export/:filename							    com.baasbox.controllers.Root.deleteExport(filename:String)
+GET	    /root/db/export											com.baasbox.controllers.Root.getExports()
+POST	/root/db/import         							    com.baasbox.controllers.Root.importDb()
 
 
 
