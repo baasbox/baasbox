@@ -614,7 +614,7 @@ h4,
 h5,
 h6 {
   margin: 9px 0;
-  font-family: 'Telex', sans-serif;
+  font-family: 'Lato', sans-serif;
   font-weight: bold;
   line-height: 18px;
   color: #538378;
@@ -5236,7 +5236,7 @@ a.badge:focus {
 }
 .navbar .brand {
   padding: 14px 20px 16px;
-  font-family: 'Telex', sans-serif;
+  font-family: 'Lato', sans-serif;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
 .navbar li {
@@ -5244,7 +5244,7 @@ a.badge:focus {
 }
 .navbar .nav > li > a {
   padding: 16px 10px 14px;
-  font-family: 'Telex', sans-serif;
+  font-family: 'Lato', sans-serif;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
 }
 .navbar .search-query {
@@ -5262,7 +5262,7 @@ a.badge:focus {
 }
 @media (max-width: 979px) {
   .navbar .nav-collapse .nav li > a {
-    font-family: 'Telex', sans-serif;
+    font-family: 'Lato', sans-serif;
     font-weight: normal;
     color: #ffffff;
     text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
@@ -5301,7 +5301,7 @@ a.badge:focus {
   }
 }
 div.subnav {
-  font-family: 'Telex', sans-serif;
+  font-family: 'Lato', sans-serif;
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.2);
 }
 div.subnav-fixed {

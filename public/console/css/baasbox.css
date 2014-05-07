@@ -140,6 +140,9 @@ div.setting button.upload {
     box-shadow: none;
     background-image: none;
 }
+.navbar .brand, .navbar .nav > li > a {
+    color: #2e2727;
+}
 .sidebar-nav {
     -moz-border-radius: 0;
     -webkit-border-radius: 0;
