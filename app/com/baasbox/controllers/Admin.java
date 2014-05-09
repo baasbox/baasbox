@@ -38,7 +38,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import play.Logger;
 import play.Play;
@@ -219,7 +219,7 @@ public class Admin extends Controller {
 		String description="";
 		JsonNode json = request().body().asJson();
 		if(json != null) {
-			description = Objects.firstNonNull(json.findPath("description").getTextValue(),"");
+			description = Objects.firstNonNull(json.findPath("description").textValue(),"");
 		}
 		try {
 			RoleService.createRole(name, inheritedRole, description);
@@ -248,8 +248,8 @@ public class Admin extends Controller {
 		String newName="";
 		JsonNode json = request().body().asJson();
 		if(json != null) {
-			description = json.findPath("description").getTextValue();
-			newName = json.findPath("new_name").getTextValue();
+			description = json.findPath("description").textValue();
+			newName = json.findPath("new_name").textValue();
 		}
 		try {
 			RoleService.editRole(name, null, description,newName);
@@ -523,7 +523,7 @@ public class Admin extends Controller {
 			if(contentType.indexOf("application/json")>-1){
 				JsonNode bodyJson= b.asJson();
 				if(StringUtils.isEmpty(value)){
-					value = bodyJson.has("value")?bodyJson.get("value").getTextValue():null;
+					value = bodyJson.has("value")?bodyJson.get("value").textValue():null;
 				}else{
 					inQueryString = true;
 				}
@@ -637,6 +637,7 @@ public class Admin extends Controller {
 		if(!file.exists()){
 			return notFound();
 		}else{
+			response().setContentType("application/zip"); //added in Play 2.2.1. it is very strange because the content type should be set by the framework
 			return ok(file);
 		}
 	}

@@ -2,7 +2,7 @@ import com.baasbox.service.permissions.Tags;
 import core.AbstractAdminTest;
 import core.TestConfig;
 import org.apache.http.HttpHeaders;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.omg.PortableInterceptor.NON_EXISTENT;
 import play.libs.F;
