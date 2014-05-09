@@ -354,7 +354,8 @@ public class File extends Controller {
 				response().setContentType((String)doc.field(FileService.CONTENT_TYPE_FIELD_NAME));
 				response().setHeader("Content-Length", String.valueOf(output.length));
 				if (download) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode(filename,"UTF-8")+"\"");
-				return ok(new ByteArrayInputStream(output));
+				//return ok(new ByteArrayInputStream(output));
+				return ok(output);
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied id appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {

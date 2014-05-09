@@ -437,7 +437,7 @@ public abstract class AbstractTest extends FluentTest
 		return node;
 	}
 	
-	private byte[] getResource(String sName)
+	protected byte[] getResource(String sName)
 	{
 		InputStream is = null;
 		byte[] abRet = null;
