@@ -16,7 +16,7 @@
  */
 package com.baasbox.controllers;
 
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
 import play.mvc.Controller;

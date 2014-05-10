@@ -3,7 +3,7 @@ package com.baasbox.service.sociallogin;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import play.libs.Json;
 

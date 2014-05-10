@@ -17,7 +17,11 @@
 package com.baasbox.controllers.actions.filters;
 
 
+import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.permissions.RouteTagger;
+import com.baasbox.service.permissions.Tags;
 import play.Logger;
+import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -29,6 +33,13 @@ import com.baasbox.exception.ShuttingDownDBException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
+import play.mvc.SimpleResult;
+import play.libs.F;
+
+
+import java.util.Map;
+import java.util.Set;
+
 
 
 /**
@@ -38,40 +49,48 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 public class ConnectToDBFilter extends Action.Simple {
  
 	@Override
-	public Result call(Context ctx) throws Throwable {
+	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
-		Http.Context.current.set(ctx);
-		
-		if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
+        Http.Context.current.set(ctx);
+
+        //fixme should happen as early as possible in the action chain
+        RouteTagger.attachAnnotations(ctx);
+
+
+        if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
 		ODatabaseRecordTx database = null;
-		Result result=null;
+		F.Promise<SimpleResult> result=null;
 		try{
 			//close an eventually  'ghost'  connection left open in this thread
 			//(this may happen in case of Promise usage)
 			DbHelper.close(DbHelper.getConnection());
 	        try{
 	        	database=DbHelper.open(appcode,username,password);
+
+                if(!Tags.verifyAccess(ctx)){
+                    return  F.Promise.<SimpleResult>pure(forbidden("Endpoint has been disabled"));
+                }
 	        }catch (OSecurityAccessException e){
 	        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
-	        	return unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access");
+	        	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));
 	        }catch(ShuttingDownDBException sde){
 	        	String message = sde.getMessage();
 	        	Logger.info(message);
-	        	return status(503,message);
+	        	return F.Promise.<SimpleResult>pure(status(503,message));
 	        }
 			
 			result = delegate.call(ctx);
 
 		}catch (OSecurityAccessException e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
-			result = forbidden(e.getMessage());
+			result = F.Promise.<SimpleResult>pure(forbidden(e.getMessage()));
 		}catch (InvalidAppCodeException e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
-			result = unauthorized(e.getMessage());	
+			result = F.Promise.<SimpleResult>pure(unauthorized(e.getMessage()));	
 		}catch (Throwable e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
 			throw e;
