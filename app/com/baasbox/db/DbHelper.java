@@ -134,7 +134,7 @@ public class DbHelper {
 
 	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
 		String ret;
-		if (count) ret = "select count(*) from ";
+		if (count || criteria.justCountTheRecords()) ret = "select count(*) from ";
 		else ret = "select " + criteria.getFields() + " from ";
 		ret += from;
 		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
