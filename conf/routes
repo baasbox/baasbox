@@ -213,6 +213,18 @@ GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\
 PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 
+#Links between objects (documents, files, users)
+
+# @tag(baasbox.data.write)
+POST	/link/:sourceId/:linkName/:destId						com.baasbox.controllers.Link.createLink(sourceId: String, destId: String, linkName: String)
+
+# @tag(baasbox.data.read)
+GET		/link/:linkId											com.baasbox.controllers.Link.getLinkByItsId(linkId: String)
+
+# @tag(baasbox.data.read)
+GET		/link													com.baasbox.controllers.Link.getLinks()
+
+
 
 #grant and revoke permissions on documents
 

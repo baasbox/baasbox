@@ -12,7 +12,7 @@ import java.util.UUID;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.http.HttpHeaders;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;

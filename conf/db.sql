@@ -1,7 +1,7 @@
 --database settings
 alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ
-alter database custom useLightweightEdges=true
-alter database custom useClassForEdgeLabel=true
+alter database custom useLightweightEdges=false
+alter database custom useClassForEdgeLabel=false
 alter database custom useClassForVertexLabel=true
 alter database custom useVertexFieldsForEdgeLabels=true
 

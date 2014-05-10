@@ -145,7 +145,7 @@ public class Document extends Controller {
 		String rid=null;
 		if (isUUID) {
 			if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
-			ORID orid=GenericDao.getInstance().getRidByUUID(id);
+			ORID orid=GenericDao.getInstance().getRidNodeByUUID(id);
 			if (orid==null) throw new RidNotFoundException(id);
 			rid = orid.toString();
 			if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: " + rid);

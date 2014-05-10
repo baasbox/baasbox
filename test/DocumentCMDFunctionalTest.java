@@ -20,13 +20,9 @@
 import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.status;
-import static play.test.Helpers.testServer;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;

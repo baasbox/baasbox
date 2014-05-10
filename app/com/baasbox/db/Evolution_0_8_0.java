@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
- * Evolves the DB to the 0.7.5 schema
+ * Evolves the DB to the 0.8.0 schema
  * 
  * @author Claudio Tesoriero
  *
@@ -48,8 +48,8 @@ public class Evolution_0_8_0 implements IEvolution {
 //			}
 //		}
         DbHelper.execMultiLineCommands(db,true,
-                "alter database custom useLightweightEdges=true;",
-                "alter database custom useClassForEdgeLabel=true",
+                "alter database custom useLightweightEdges=false;",
+                "alter database custom useClassForEdgeLabel=false",
                 "alter database custom useClassForVertexLabel=true",
                 "alter database custom useVertexFieldsForEdgeLabels=true");
 		Logger.info("...done...");
