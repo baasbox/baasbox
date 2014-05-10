@@ -109,7 +109,6 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result = wr.wrap(ctx, tempResult);
-		byte b[]=JavaResultExtractor.getBody(result);
 		if (Logger.isDebugEnabled()) Logger.debug(result.toString());
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return F.Promise.<SimpleResult>pure(result);
