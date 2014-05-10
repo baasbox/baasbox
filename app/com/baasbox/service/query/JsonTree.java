@@ -1,8 +1,8 @@
 package com.baasbox.service.query;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.baasbox.service.query.PartsLexer.Part;
 
@@ -47,7 +47,7 @@ public class JsonTree {
 			if(arrNode.size()<=index){
 				arrNode.add(data);
 			}else{
-				arrNode._set(index, data);
+				arrNode.set(index, data);
 			}
 			return root;
 			

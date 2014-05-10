@@ -23,13 +23,20 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import play.api.libs.concurrent.Promise;
+import java.io.UnsupportedEncodingException;
+import play.mvc.Results.*;
+import play.libs.F;
+import play.mvc.*;
+import play.mvc.Http.*;
+
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Application;
 import play.Configuration;
@@ -298,44 +305,44 @@ public class Global extends GlobalSettings {
 	} 
 		
 	  @Override
-	  public Result onBadRequest(RequestHeader request, String error) {
+	  public F.Promise<SimpleResult> onBadRequest(RequestHeader request, String error) {
 		  ObjectNode result = prepareError(request, error);
 		  result.put("http_code", 400);
-		  Result resultToReturn =  badRequest(result);
+		  SimpleResult resultToReturn =  badRequest(result);
 		  try {
-			if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+			if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + result.toString(),"UTF-8");
 		  }finally{
-			  return resultToReturn;
+			  return F.Promise.pure (resultToReturn);
 		  }
 	  }  
 
 	// 404
 	  @Override
-	    public Result onHandlerNotFound(RequestHeader request) {
+	    public F.Promise<SimpleResult> onHandlerNotFound(RequestHeader request) {
 		  debug("API not found: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, "API not found");
 		  result.put("http_code", 404);
-		  Result resultToReturn= notFound(result);
+		  SimpleResult resultToReturn= notFound(result);
 		  try {
 			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
 		  }finally{
-			  return resultToReturn;
+			  return F.Promise.pure (resultToReturn);
 		  }
 	    }
 
 	  // 500 - internal server error
 	  @Override
-	  public Result onError(RequestHeader request, Throwable throwable) {
+	  public F.Promise<SimpleResult> onError(RequestHeader request, Throwable throwable) {
 		  error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
 		  ObjectNode result = prepareError(request, throwable.getMessage());
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
-		  Result resultToReturn= internalServerError(result);
+		  SimpleResult resultToReturn= internalServerError(result);
 		  try {
 			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
 		  } finally{
-			  return resultToReturn;
+			  return F.Promise.pure (resultToReturn);
 		  }
 	  }
 
@@ -345,4 +352,9 @@ public class Global extends GlobalSettings {
 		
 		return new Class[]{com.baasbox.filters.LoggingFilter.class};
 	}
+
+
+	  
+
+	
 }

@@ -29,10 +29,10 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -576,7 +576,7 @@ public class User extends Controller {
 					 if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
 					 return badRequest("login_data field is not a valid json string");
 				 }
-				 Iterator<Entry<String, JsonNode>> it =loginInfo.getFields();
+				 Iterator<Entry<String, JsonNode>> it =loginInfo.fields();
 				 HashMap<String, Object> data = new HashMap<String, Object>();
 				 while (it.hasNext()){
 					 Entry<String, JsonNode> element = it.next();
