@@ -1,5 +1,6 @@
 package com.baasbox.dao;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ public class LinkDao {
 		OrientEdge edge = (OrientEdge)sourceVertex.addEdge(edgeName, destVertex);
 		edge.getRecord().field(BaasBoxPrivateFields.ID.toString(),token.toString());
 		edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
+		edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
 		edge.save();
 		//TODO: when we will support transactions, this will have to be changed 
 		edge.getGraph().commit();

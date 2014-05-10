@@ -47,7 +47,7 @@ public class Audit extends BaasBoxHook {
 					||
 					 ( doc.field("type")==null )
 					){
-					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
+					if(!doc.isEmbedded() && doc.getClassName()!=null && (doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME) || doc.getSchemaClass().getName().equals("E") || doc.getSchemaClass().isSubClassOf("E"))){
 						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeCreate: creation of audit fields for document " + doc.getIdentity());
 						ODocument auditDoc = new ODocument();
 						Date data = new Date();
