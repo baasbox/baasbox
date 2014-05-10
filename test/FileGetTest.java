@@ -20,21 +20,23 @@
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.status;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
+import static play.test.Helpers.status;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.protocol.HTTP;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.mvc.SimpleResult;
+import play.core.j.JavaResultExtractor;
 import play.libs.F.Callback;
 import play.mvc.Http.Status;
 import play.mvc.Result;
@@ -124,6 +126,9 @@ public class FileGetTest extends AbstractFileTest{
 				    Assert.assertEquals(sTestName + " download 1 - status",200,status(result));
 					String contentType=play.test.Helpers.header("Content-Type", result);
 					Assert.assertEquals(sTestName + " download 1", "image/png", contentType);
+					byte[] resultInBytes=JavaResultExtractor.getBody((SimpleResult)result);
+					byte[] contentToCheck = getResource("/logo_baasbox_lp.png");
+					Assert.assertArrayEquals(sTestName + " check get content",contentToCheck,resultInBytes);
 					
 					//download it
 					request = new FakeRequest(GET, getStreamFileRouteAddress() + "/"+uuid1+"?download=true");

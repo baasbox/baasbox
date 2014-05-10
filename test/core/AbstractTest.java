@@ -285,7 +285,6 @@ public abstract class AbstractTest extends FluentTest
 			    				out.writeBytes("Content-Disposition: form-data; name=\"" + PARAM_FILE + "\";filename=\"" + fb.getFilename() + "\"\r\n");
 			    				out.writeBytes("Content-Type: " + nvpFile.getValue() + "\r\n\r\n");
 			    				out.write(getResource(nvpFile.getName()));
-			    				out.writeBytes("\n");
 			    			}
 			    			out.writeBytes("\r\n--" + BOUNDARY + "--\r\n");
 			    		}
@@ -437,7 +436,7 @@ public abstract class AbstractTest extends FluentTest
 		return node;
 	}
 	
-	private byte[] getResource(String sName)
+	protected byte[] getResource(String sName)
 	{
 		InputStream is = null;
 		byte[] abRet = null;

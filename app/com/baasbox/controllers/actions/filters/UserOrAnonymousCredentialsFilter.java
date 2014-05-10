@@ -23,13 +23,13 @@ import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.mvc.Result;
+import play.mvc.SimpleResult;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.security.SessionKeys;
-import play.mvc.SimpleResult;
-import play.libs.F;
+import play.core.j.JavaResultExtractor;
+
 /**
  * This Filter checks if user credentials are present in the request and injects
  * them into the context. Otherwise, injects the internal user for anonymous
@@ -109,7 +109,6 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result = wr.wrap(ctx, tempResult);
-
 		if (Logger.isDebugEnabled()) Logger.debug(result.toString());
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return F.Promise.<SimpleResult>pure(result);

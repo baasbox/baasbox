@@ -136,7 +136,7 @@ public class WrapResponse {
 	public SimpleResult wrap(Context ctx, F.Promise<SimpleResult> simpleResult) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
-		SimpleResult result=simpleResult.get();
+		SimpleResult result=simpleResult.get(10000);
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		ctx.response().setHeader("Access-Control-Allow-Headers", "X-Requested-With");
 		//this is an hack because scala can't access to the http context, and we need this information for the access log
