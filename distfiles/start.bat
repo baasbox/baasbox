@@ -1,1 +1,1 @@
-java %* -cp "./lib/*;" paly.core.server.NettyServer .
+java %* -cp "./lib/*;" play.core.server.NettyServer .
