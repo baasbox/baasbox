@@ -1,7 +1,7 @@
 package com.baasbox.service.sociallogin;
 
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.GoogleApi;
 import org.scribe.model.OAuthRequest;
@@ -69,19 +69,19 @@ public class GooglePlusLoginService extends SocialLoginService{
 	public UserInfo extractUserInfo(Response r) {
 		UserInfo i = new UserInfo();
 		JsonNode ji = Json.parse(r.getBody());
-		i.setId(ji.get("id").getTextValue());
+		i.setId(ji.get("id").textValue());
 		if(ji.get("email")!=null){
-			i.addData("email", ji.get("email").asText());
+			i.addData("email", ji.get("email").textValue());
 		}
 		if(ji.get("link")!=null){
-			i.addData("personal_url", ji.get("link").asText());
+			i.addData("personal_url", ji.get("link").textValue());
 		}
 		if(ji.get("picture")!=null){
-			i.addData("avatarUrl", ji.get("picture").asText());
+			i.addData("avatarUrl", ji.get("picture").textValue());
 		}
 		if(ji.get("email")!=null){
-			i.addData("name",ji.get("name").getTextValue());
-			String name = ji.get("name").getTextValue();
+			i.addData("name",ji.get("name").textValue());
+			String name = ji.get("name").textValue();
 			String username = StringUtils.deleteWhitespace(name.toLowerCase());
 			i.setUsername(username);
 		}
@@ -101,7 +101,7 @@ public class GooglePlusLoginService extends SocialLoginService{
 	protected boolean validate(Object response) throws BaasBoxSocialTokenValidationException {
 		if(response instanceof JsonNode){
 			JsonNode jn = (JsonNode)response;
-			String clientId = jn.get("issued_to").getTextValue();
+			String clientId = jn.get("issued_to").textValue();
 			boolean isValid = clientId!=null && clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString());
 			if(!isValid){
 				throw new BaasBoxSocialTokenValidationException("The provided g+ token is not valid");

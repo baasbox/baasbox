@@ -10,7 +10,9 @@ import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonNode;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -143,7 +145,7 @@ public class RootExportTest extends AbstractRootTest {
 						if(Helpers.status(result2) == 200){
 							gen = true;
 							String header = Helpers.header("Content-Type", result2);
-							assertEquals(header,"application/zip");
+							assertEquals("The Content-Type is wrong","application/zip",header);
 							request2 = new FakeRequest(getMethod(), "/root/db/export/");
 							request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request2 = request2.withHeader(TestConfig.KEY_AUTH, sAuthEnc);

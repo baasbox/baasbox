@@ -43,9 +43,9 @@ import javax.ws.rs.core.MediaType;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.fluentlenium.adapter.FluentTest;
 import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
@@ -285,7 +285,6 @@ public abstract class AbstractTest extends FluentTest
 			    				out.writeBytes("Content-Disposition: form-data; name=\"" + PARAM_FILE + "\";filename=\"" + fb.getFilename() + "\"\r\n");
 			    				out.writeBytes("Content-Type: " + nvpFile.getValue() + "\r\n\r\n");
 			    				out.write(getResource(nvpFile.getName()));
-			    				out.writeBytes("\n");
 			    			}
 			    			out.writeBytes("\r\n--" + BOUNDARY + "--\r\n");
 			    		}
@@ -437,7 +436,7 @@ public abstract class AbstractTest extends FluentTest
 		return node;
 	}
 	
-	private byte[] getResource(String sName)
+	protected byte[] getResource(String sName)
 	{
 		InputStream is = null;
 		byte[] abRet = null;

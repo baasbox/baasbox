@@ -21,6 +21,8 @@ import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import play.mvc.SimpleResult;
+import play.libs.F;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
@@ -35,8 +37,8 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 
 
 	@Override
-	public Result call(Context ctx) throws Throwable {
-		Result tempResult=null;
+	public F.Promise<SimpleResult> call(Context ctx) throws Throwable {
+		F.Promise<SimpleResult> tempResult=null;
 		if (Logger.isTraceEnabled())  Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
@@ -61,7 +63,7 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
 	    	if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
-	    	tempResult= badRequest("Invalid App Code. AppCode is empty or not set");
+	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 		}
 		
 		//executes the request
@@ -70,11 +72,11 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		}
 
 		WrapResponse wr = new WrapResponse();
-		Result result=wr.wrap(ctx, tempResult);
+		SimpleResult result=wr.wrap(ctx, tempResult);
 		
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	    return result;
+	    return F.Promise.<SimpleResult>pure(result);
 	}
 
 }
