@@ -20,6 +20,7 @@ package com.baasbox.controllers.actions.filters;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.RouteTagger;
 import com.baasbox.service.permissions.Tags;
+
 import play.Logger;
 import play.libs.F;
 import play.mvc.Action;
@@ -36,9 +37,10 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import play.mvc.SimpleResult;
 import play.libs.F;
 
-
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 
 
@@ -93,7 +95,7 @@ public class ConnectToDBFilter extends Action.Simple {
 			result = F.Promise.<SimpleResult>pure(unauthorized(e.getMessage()));	
 		}catch (Throwable e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
-			throw e;
+			result = F.Promise.<SimpleResult>pure(internalServerError(ExceptionUtils.getFullStackTrace(e)));	
 		}finally{
 			Http.Context.current.set(ctx); 
 			DbHelper.close(database);
