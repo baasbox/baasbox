@@ -34,6 +34,7 @@ public class JSONFormats {
 		DOCUMENT("fetchPlan:audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0,rid,version,class,attribSameRow,alwaysFetchEmbedded,indent:0"),
 		OBJECT("fetchPlan:audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0,keepTypes,attribSameRow,alwaysFetchEmbedded,indent:0"),
 		ASSET("fetchPlan:resized:-2 audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0 file:0,rid,version,class,attribSameRow,indent:0"),
+		//LINK("fetchPlan:*:0 out:-2 in:-2 from.data:1 to.data:1,version,class,attribSameRow,alwaysFetchEmbedded,indent:0"),
 		LINK("fetchPlan:*:0 out.data:1 in.data:1,version,class,attribSameRow,alwaysFetchEmbedded,indent:0"),
 		FILE("fetchPlan:resized:-2 audit:0 _links:0 _allow:0 _allowread:0 _allowwrite:0 _allowUpdate:0 _allowDelete:0 file:-2 metadata:1 text_content:-2,version,attribSameRow,indent:0"),
 		ROLES("indent:0,fetchPlan:rules:-2 inheritedRole:-2");

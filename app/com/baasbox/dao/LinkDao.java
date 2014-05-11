@@ -16,8 +16,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class LinkDao {
 	
+	//private static final String QUERY_BASE="select *,out._node as from,in._node as to from E ";
 	private static final String QUERY_BASE="select *,out._node as out,in._node as in from E ";
-	private static final String VIEW_BASE=" (select *,out._node as out,in._node as in from E) ";
+	private static final String VIEW_BASE=" (" + QUERY_BASE + ") ";
 	
 
 	public static LinkDao getInstance(){
@@ -29,12 +30,15 @@ public class LinkDao {
 	public ODocument createLink(String sourceId, String destId,String edgeName) throws DocumentNotFoundException {
 		OrientVertex sourceVertex = StorageUtils.getNodeVertex(sourceId);
 		OrientVertex destVertex = StorageUtils.getNodeVertex(destId);
+		
 		UUID token = UUID.randomUUID();
 		OrientEdge edge = (OrientEdge)sourceVertex.addEdge(edgeName, destVertex);
 		edge.getRecord().field(BaasBoxPrivateFields.ID.toString(),token.toString());
 		edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
 		edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
 		edge.save();
+		
+		
 		//TODO: when we will support transactions, this will have to be changed 
 		edge.getGraph().commit();
 		return edge.getRecord();
