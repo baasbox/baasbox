@@ -9,7 +9,7 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 
 import play.api.mvc.ChunkedResult;
@@ -66,7 +66,7 @@ public class AdminExportTest extends AbstractTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testExport", Status.ACCEPTED, null, true);
+					assertRoute(result, "testExport 1", Status.ACCEPTED, null, true);
 					
 					String body = play.test.Helpers.contentAsString(result);
 					JsonNode node = Json.parse(body);
@@ -86,7 +86,7 @@ public class AdminExportTest extends AbstractTest {
 						request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request2 = request2.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						Result result2 = routeAndCall(request2);
-						assertRoute(result2, "testExport", Status.OK, null, true);
+						assertRoute(result2, "testExport 2", Status.OK, null, true);
 						body = play.test.Helpers.contentAsString(result2);
 						node = Json.parse(body);
 						for(final JsonNode n : node.get("data")){
@@ -125,7 +125,7 @@ public class AdminExportTest extends AbstractTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testExport", Status.ACCEPTED, null, true);
+					assertRoute(result, "testExport 3", Status.ACCEPTED, null, true);
 					
 					String body = play.test.Helpers.contentAsString(result);
 					JsonNode node = Json.parse(body);
@@ -149,7 +149,7 @@ public class AdminExportTest extends AbstractTest {
 						if(Helpers.status(result2) == 200){
 							gen = true;
 							String header = Helpers.header("Content-Type", result2);
-							assertEquals(header,"application/zip");
+							assertEquals("The Content-Type is wrong","application/zip",header);
 							request2 = new FakeRequest(getMethod(), "/admin/db/export/");
 							request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request2 = request2.withHeader(TestConfig.KEY_AUTH, sAuthEnc);

@@ -21,6 +21,8 @@ import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
+import play.mvc.SimpleResult;
+import play.libs.F;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.security.SessionKeys;
@@ -29,7 +31,7 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 
 
 	@Override
-	public Result call(Context ctx) throws Throwable {
+	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
@@ -51,13 +53,13 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		if (Logger.isDebugEnabled()) Logger.debug("token: N/A");
 		
 		//executes the request
-		Result tempResult = delegate.call(ctx);
+		F.Promise<SimpleResult>  tempResult = delegate.call(ctx);
 
 		WrapResponse wr = new WrapResponse();
-		Result result=wr.wrap(ctx, tempResult);
+		SimpleResult result=wr.wrap(ctx, tempResult);
 				
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	    return result;
+	    return F.Promise.<SimpleResult>pure(result);
 	}
 
 }

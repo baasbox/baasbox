@@ -1,6 +1,6 @@
 package com.baasbox.service.sociallogin;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.TwitterApi;
 import org.scribe.model.OAuthRequest;
@@ -77,7 +77,7 @@ public class TwitterLoginService extends SocialLoginService {
 	public UserInfo extractUserInfo(Response r) {
 		UserInfo i =  new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
-		i.setUsername(user.get("screen_name").getTextValue());
+		i.setUsername(user.get("screen_name").textValue());
 		i.addData("location",user.get("time_zone").get("name").asText());
 		i.setFrom(SOCIAL);
 		return i;

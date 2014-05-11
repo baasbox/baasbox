@@ -9,18 +9,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.codehaus.jackson.JsonNode;
 
 import play.Logger;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.With;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Result;
+import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
@@ -33,6 +31,7 @@ import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.user.UserService;
 import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
@@ -160,6 +159,7 @@ public class Root extends Controller {
 			if(!file.exists()){
 				return notFound();
 			}else{
+				response().setContentType("application/zip"); //added in Play 2.2.1. it is very strange because the content type should be set by the framework
 				return ok(file);
 			}
 
