@@ -218,6 +218,9 @@ PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\
 # @tag(baasbox.data.write)
 POST	/link/:sourceId/:linkName/:destId						com.baasbox.controllers.Link.createLink(sourceId: String, destId: String, linkName: String)
 
+# @tag(baasbox.data.write)
+DELETE /link/:linkId											com.baasbox.controllers.Link.deleteLink(linkId: String)
+
 # @tag(baasbox.data.read)
 GET		/link/:linkId											com.baasbox.controllers.Link.getLinkByItsId(linkId: String)
 
@@ -252,10 +255,6 @@ PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers
 # @tag(baasbox.data.grants)
 DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
-
-#Links between objects (documents and files)
-POST	/link/:sourceId/:linkName/:destId						com.baasbox.controllers.Link.createLink(sourceId: String, destId: String, linkName: String)
-GET		/link/id/:linkId										com.baasbox.controllers.Link.getLinkByItsId(linkId: String)
 
 
 #Admin actions

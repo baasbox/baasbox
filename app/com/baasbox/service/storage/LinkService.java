@@ -22,4 +22,8 @@ public class LinkService {
 		return LinkDao.getInstance().getLinks(criteria);
 	}
 
+	public static void deleteLink(String linkId) {
+		LinkDao.getInstance().deleteLink(linkId); 
+	}
+
 }

@@ -117,3 +117,9 @@ create property _BB_Index.key String;
 alter property _BB_Index.key mandatory=true;
 alter property _BB_Index.key notnull=true;
 create index _BB_Index.key unique;
+
+--LINKS
+create property E.id String;
+alter property E.id notnull=true;
+create index E.id unique;
+

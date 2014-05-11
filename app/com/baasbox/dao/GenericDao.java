@@ -85,6 +85,7 @@ public class GenericDao {
 		return rid;
 	}
 	
+
 	/***
 	 * Execute a query against a given OrientDB Class
 	 * @param oclass

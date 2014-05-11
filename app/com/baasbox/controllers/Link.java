@@ -64,6 +64,14 @@ public class Link extends Controller{
 		return ok(JSONFormats.prepareResponseToJson(listOfLinks, Formats.LINK));
 	}
 	
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	public static Result deleteLink(String linkId){
+		ODocument link=LinkService.getLink(linkId);
+		if (link==null) return notFound("The link " + linkId + " was not found");
+		LinkService.deleteLink(linkId);
+		return ok();
+	}
+	
 	/*
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getLinksFromNode(String nodeId){

@@ -27,6 +27,7 @@ public class Evolution_0_8_0 implements IEvolution {
 		try{
 			setGraphDefaultValues(db);
             addPermissionsClass(db);
+            idOnEdgeClass(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -71,4 +72,17 @@ public class Evolution_0_8_0 implements IEvolution {
         DbHelper.createDefaultPermissionTags();
         Logger.info("...done...");
     }
+    
+    
+    private void idOnEdgeClass(ODatabaseRecordTx db) {
+        Logger.info("..creating id property on E class...:");
+        DbHelper.execMultiLineCommands(db,true,
+        		"create property E.id String;",
+        		"alter property E.id notnull=true;",
+        		"create index E.id unique;"
+        );
+        Logger.info("...done...");
+    }
+   
+    
 }
