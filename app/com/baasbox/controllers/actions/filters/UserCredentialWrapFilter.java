@@ -19,6 +19,7 @@ package com.baasbox.controllers.actions.filters;
 import org.apache.commons.lang.StringUtils;
 
 import play.Logger;
+import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -27,15 +28,16 @@ import play.mvc.Result;
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.security.SessionKeys;
-
+import play.mvc.SimpleResult;
+import play.libs.F;
 
 public class UserCredentialWrapFilter extends Action.Simple {
 
 
 	@Override
-	public Result call(Context ctx) throws Throwable {
+	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		Result tempResult=null;
+		F.Promise<SimpleResult> tempResult=null;
 		Http.Context.current.set(ctx);
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
@@ -44,13 +46,13 @@ public class UserCredentialWrapFilter extends Action.Simple {
 		
 		if (StringUtils.isEmpty(token) && StringUtils.isEmpty(authHeader)){
 			if (!StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx)))
-				tempResult=unauthorized("Missing both Session Token and Authorization info");
+				tempResult=F.Promise.<SimpleResult>pure(unauthorized("Missing both Session Token and Authorization info"));
 			else   
-				tempResult=badRequest("Missing Session Token, Authorization info and even the AppCode");
+				tempResult=F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
 		}else if (!StringUtils.isEmpty(authHeader) && StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
 			if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
 			if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
-	    	tempResult= badRequest("Invalid App Code. AppCode is empty or not set");
+	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 		}
 		
 		if (tempResult == null){
@@ -59,26 +61,26 @@ public class UserCredentialWrapFilter extends Action.Simple {
 			
 			if (!isCredentialOk){
 				//tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
-				tempResult= CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
+				tempResult= F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
 			} else	
 				//internal administrator is not allowed to access via REST
 				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 						||
 						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-					tempResult=forbidden("The user " +ctx.args.get("username")+ " cannot access via REST");
+					tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
 			
 				//if everything is ok.....
 				//executes the request
 				if (tempResult==null) tempResult = delegate.call(ctx);
 		}
 		
-
+		
 		WrapResponse wr = new WrapResponse();
-		Result result=wr.wrap(ctx, tempResult);
+		SimpleResult result=wr.wrap(ctx, tempResult);
 				
 		if (Logger.isDebugEnabled()) Logger.debug(result.toString());
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	    return result;
+	    return F.Promise.<SimpleResult>pure(result);
 	}
 
 }

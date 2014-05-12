@@ -234,7 +234,8 @@ public class Asset extends Controller{
 			response().setContentType(AssetService.getContentType(doc));
 			if(forceDownload) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode((String)doc.field("fileName"),"UTF-8")+"\"");
 			response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
-			return ok(new ByteArrayInputStream(out.toByteArray()));
+			//return ok(new ByteArrayInputStream(out.toByteArray()));
+			return ok(out.toByteArray());
 		} catch (IllegalArgumentException e) {
 			Logger.error("error retrieving asset " + name, e);
 			throw e;

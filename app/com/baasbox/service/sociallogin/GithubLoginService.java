@@ -1,6 +1,6 @@
 package com.baasbox.service.sociallogin;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -62,19 +62,19 @@ public class GithubLoginService extends SocialLoginService {
 	public UserInfo extractUserInfo(Response r) {
 		JsonNode user = Json.parse(r.getBody());
 		UserInfo ui = new UserInfo();
-		ui.setId(user.get("id").getTextValue());
-		ui.setUsername(user.get("login").getTextValue());
+		ui.setId(user.get("id").textValue());
+		ui.setUsername(user.get("login").textValue());
 		if(user.get("avatar_url")!=null){
-			ui.addData("avatar", user.get("avatar_url").getTextValue());
+			ui.addData("avatar", user.get("avatar_url").textValue());
 		}
 		if(user.get("html_url")!=null){
-			ui.addData("personal_url", user.get("html_url").getTextValue());
+			ui.addData("personal_url", user.get("html_url").textValue());
 		}
 		if(user.get("name")!=null){
-			ui.addData("name", user.get("name").getTextValue());
+			ui.addData("name", user.get("name").textValue());
 		}
 		if(user.get("location")!=null){
-			ui.addData("location", user.get("location").getTextValue());
+			ui.addData("location", user.get("location").textValue());
 		}
 		return ui;
 		

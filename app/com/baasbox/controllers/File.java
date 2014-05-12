@@ -36,9 +36,9 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;
 
 import play.Logger;
@@ -148,7 +148,7 @@ public class File extends Controller {
 						return status(CustomHttpCode.ACL_JSON_FIELD_MALFORMED.getBbCode(),"The 'acl' field is malformed");
 					}
 					/*check if the roles and users are valid*/
-					 Iterator<Entry<String, JsonNode>> it = aclJson.getFields();
+					 Iterator<Entry<String, JsonNode>> it = aclJson.fields();
 					 while (it.hasNext()){
 						 //check for permission read/update/delete/all
 						 Entry<String, JsonNode> next = it.next();
@@ -156,7 +156,7 @@ public class File extends Controller {
 							 return status(CustomHttpCode.ACL_PERMISSION_UNKNOWN.getBbCode(),"The key '"+next.getKey()+"' is invalid. Valid ones are 'read','update','delete','all'");
 						 }
 						 //check for users/roles
-						 Iterator<Entry<String, JsonNode>> it2 = next.getValue().getFields();
+						 Iterator<Entry<String, JsonNode>> it2 = next.getValue().fields();
 						 while (it2.hasNext()){
 							 Entry<String, JsonNode> next2 = it2.next();
 							 if (!next2.getKey().equals("users") && !next2.getKey().equals("roles")) {
@@ -354,7 +354,8 @@ public class File extends Controller {
 				response().setContentType((String)doc.field(FileService.CONTENT_TYPE_FIELD_NAME));
 				response().setHeader("Content-Length", String.valueOf(output.length));
 				if (download) response().setHeader("Content-Disposition", "attachment; filename=\""+URLEncoder.encode(filename,"UTF-8")+"\"");
-				return ok(new ByteArrayInputStream(output));
+				//return ok(new ByteArrayInputStream(output));
+				return ok(output);
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied id appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {

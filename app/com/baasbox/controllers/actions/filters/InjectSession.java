@@ -17,6 +17,7 @@
 package com.baasbox.controllers.actions.filters;
 
 import play.Logger;
+import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -25,13 +26,14 @@ import play.mvc.Result;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.google.common.collect.ImmutableMap;
-
+import play.mvc.SimpleResult;
+import play.libs.F;
 
 public class InjectSession extends Action.Simple {
 
 
 	@Override
-	public Result call(Context ctx) throws Throwable {
+	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
@@ -49,7 +51,7 @@ public class InjectSession extends Action.Simple {
 		}
 	    
 		//executes the request
-		Result result = delegate.call(ctx);
+		F.Promise<SimpleResult> result = delegate.call(ctx);
 
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	    return result;

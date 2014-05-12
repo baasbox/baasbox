@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+scriptdir=`dirname $0`
+classpath="$scriptdir/lib/*"
+exec java $* -cp "$classpath"  play.core.server.NettyServer `dirname $0`

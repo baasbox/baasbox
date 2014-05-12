@@ -1,7 +1,6 @@
 package com.baasbox.service.sociallogin;
 
-import org.codehaus.jackson.JsonNode;
-
+import com.fasterxml.jackson.databind.JsonNode;
 
 public abstract class  BaasBoxSocialException extends Exception {
 
