@@ -17,30 +17,22 @@
 package com.baasbox.controllers.actions.filters;
 
 
-import com.baasbox.service.permissions.PermissionTagService;
-import com.baasbox.service.permissions.RouteTagger;
-import com.baasbox.service.permissions.Tags;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.mvc.Result;
+import play.mvc.SimpleResult;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.ShuttingDownDBException;
+import com.baasbox.service.permissions.RouteTagger;
+import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-
-import play.mvc.SimpleResult;
-import play.libs.F;
-
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.commons.lang.exception.ExceptionUtils;
 
 
 

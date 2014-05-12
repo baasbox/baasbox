@@ -34,7 +34,6 @@ public class LinkDao {
 	public ODocument createLink(String sourceId, String destId,String edgeName) throws DocumentNotFoundException {
 		OrientVertex sourceVertex = StorageUtils.getNodeVertex(sourceId);
 		OrientVertex destVertex = StorageUtils.getNodeVertex(destId);
-		sourceVertex.getGraph().setUseClassForEdgeLabel(false);
 		UUID token = UUID.randomUUID();
 		OrientEdge edge = (OrientEdge)sourceVertex.addEdge(edgeName, destVertex);
 		edge.getRecord().field(BaasBoxPrivateFields.ID.toString(),token.toString());

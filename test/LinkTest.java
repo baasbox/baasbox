@@ -47,7 +47,7 @@ public class LinkTest extends AbstractTest {
 	}
 
 	public String getLinkById(String idLink) {
-		return getRouteAddress() + "/id/" + idLink;
+		return getRouteAddress() + "/" + idLink;
 	}
 
 	@Override
@@ -196,7 +196,7 @@ public class LinkTest extends AbstractTest {
 				//user1 cannot read the link
 				result = getLink(username1,password1, idLinkByUser);
 				assertRoute(result, "Get By id 4", 200, "\"@class\":\""+collection1, true);
-				assertRoute(result, "Get By id 4a", 200, "\"@class\":\""+collection2, true);
+				assertRoute(result, "Get By id 4a", 200, "\"in\":null", true);
 				assertRoute(result, "Get By id 4b", 200, "\"id\":\""+idLinkByUser, true);					
 				
 			}
