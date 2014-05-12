@@ -35,7 +35,7 @@ import play.core.j.JavaResultExtractor;
  * them into the context. Otherwise, injects the internal user for anonymous
  * access
  * 
- * @author utente
+ * @author Claudio
  * 
  */
 public class UserOrAnonymousCredentialsFilter extends Action.Simple {
