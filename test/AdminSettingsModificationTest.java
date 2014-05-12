@@ -11,9 +11,11 @@ import java.util.Iterator;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -145,20 +147,20 @@ public class AdminSettingsModificationTest extends AbstractAdminTest{
 
 	private String findInConfigurationDump(JsonNode data,
 			String section,String subsection, String key) {
-		Iterator<JsonNode> values = data.get("data").getElements();
+		Iterator<JsonNode> values = data.get("data").elements();
 		String result = null;
 		while(values.hasNext()){
 			JsonNode n = values.next();
 
-			if(n.has("section") && n.get("section").getTextValue().equalsIgnoreCase(section)){
+			if(n.has("section") && n.get("section").textValue().equalsIgnoreCase(section)){
 				JsonNode subValues = n.get("sub sections").get(subsection);
 
 				if(subValues!= null){
-					Iterator<JsonNode> keys = subValues.getElements();
+					Iterator<JsonNode> keys = subValues.elements();
 					while(keys.hasNext()){
 						JsonNode keyNode = keys.next();
 						if(keyNode.has(key)){
-							result = keyNode.get(key).getTextValue();
+							result = keyNode.get(key).textValue();
 							break;
 						}
 					}

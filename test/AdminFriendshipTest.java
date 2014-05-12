@@ -6,7 +6,7 @@ import core.TestConfig;
 import static play.test.Helpers.*;
 import static org.junit.Assert.*;
 
-import org.codehaus.jackson.JsonNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
