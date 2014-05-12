@@ -68,7 +68,9 @@ public class FileDao extends NodeDao  {
 		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
 		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(contentLength));
 		if (metadata!=null){
-			file.field(METADATA_FIELD_NAME,(new ODocument()).fromJSON(new JSONObject(metadata).toString()));			
+            ODocument doc = new ODocument();
+            doc = doc.fromJSON(new JSONObject(metadata).toString());
+			file.field(METADATA_FIELD_NAME,doc);
 		}
 		if (!StringUtils.isEmpty(contentString)){
 			file.field(FILE_CONTENT_FIELD_NAME,(new ODocument(FILE_CONTENT_CLASS)).field("content",contentString));
