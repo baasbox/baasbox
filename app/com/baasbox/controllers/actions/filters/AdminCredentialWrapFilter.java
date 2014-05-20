@@ -33,9 +33,6 @@ import com.baasbox.IBBConfigurationKeys;
  */
 public class AdminCredentialWrapFilter extends Action.Simple {
 
-
-
-
 	@Override
 	public F.Promise<SimpleResult> call(Context ctx) throws Throwable {
 		F.Promise<SimpleResult> tempResult=null;
