@@ -59,7 +59,7 @@ public abstract class NodeDao  {
 	
 	public static final String FIELD_LINK_TO_VERTEX = "_links";
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";
-	public static final String FIELD_CREATION_DATE = "_creation_date";
+	public static final String FIELD_CREATION_DATE = BaasBoxPrivateFields.CREATION_DATE.toString();
 	
 	public static final String EDGE_CLASS_CREATED = "Created";
 	

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014.
  *
- * BaasBox - info@baasbox.com
+ * BaasBox - info-at-baasbox.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class Audit extends BaasBoxHook {
 					||
 					 ( doc.field("type")==null )
 					){
-					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
+					if(!doc.isEmbedded() && doc.getClassName()!=null && (doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME) || doc.getSchemaClass().getName().equals("E") || doc.getSchemaClass().isSubClassOf("E"))){
 						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeCreate: creation of audit fields for document " + doc.getIdentity());
 						ODocument auditDoc = new ODocument();
 						Date data = new Date();

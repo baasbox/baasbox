@@ -20,13 +20,9 @@
 import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.status;
-import static play.test.Helpers.testServer;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -545,42 +541,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);
 	}
 	
-	// @Todo activate test when remove collection is ready
-	public void beforeTest()
-	{
-		running
-		(
-			getFakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
-				{
-					FakeRequest request = new FakeRequest(POST, new AdminCollectionFunctionalTest().getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-					Result result = routeAndCall(request);
-					Assert.assertEquals("beforeTest. Status", Status.CREATED, status(result));
-				}
-			}
-		);
-	}
 
-	// @Todo activate test when remove collection is ready
-	public void afterTest()
-	{
-		running
-		(
-			getFakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
-				{
-					// remove test collection
-				}
-			}
-		);		
-	}
 
 	protected Result routeDeleteDocument(String sCollectionName, String sRid)
 	{

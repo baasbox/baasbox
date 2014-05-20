@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014.
  *
- * BaasBox - info@baasbox.com
+ * BaasBox - info-at-baasbox.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,6 @@ public class Evolution_0_7_3 implements IEvolution {
 		try{
 			changeDefaultDateTimeFormat(db);
 			fileClassCreation(db);
-			
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -78,6 +77,7 @@ public class Evolution_0_7_3 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
+
 	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
 		Logger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
@@ -90,7 +90,7 @@ public class Evolution_0_7_3 implements IEvolution {
 		} 
 		Logger.info("...done...");
 	}
-		
+
 	private void fileClassCreation(ODatabaseRecordTx db) {
 		Logger.info("..creating _BB_File class..:");
 		String[] script=new String[]{

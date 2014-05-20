@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2014.
  *
- * BaasBox - info@baasbox.com
+ * BaasBox - info-at-baasbox.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
- * Evolves the DB to the 0.7.5 schema
+ * Evolves the DB to the 0.8.0 schema
  * 
  * @author Claudio Tesoriero
  *
@@ -45,6 +45,7 @@ public class Evolution_0_8_0 implements IEvolution {
 		try{
 			setGraphDefaultValues(db);
             addPermissionsClass(db);
+            idOnEdgeClass(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -66,8 +67,8 @@ public class Evolution_0_8_0 implements IEvolution {
 //			}
 //		}
         DbHelper.execMultiLineCommands(db,true,
-                "alter database custom useLightweightEdges=true;",
-                "alter database custom useClassForEdgeLabel=true",
+                "alter database custom useLightweightEdges=false;",
+                "alter database custom useClassForEdgeLabel=false",
                 "alter database custom useClassForVertexLabel=true",
                 "alter database custom useVertexFieldsForEdgeLabels=true");
 		Logger.info("...done...");
@@ -89,4 +90,17 @@ public class Evolution_0_8_0 implements IEvolution {
         DbHelper.createDefaultPermissionTags();
         Logger.info("...done...");
     }
+    
+    
+    private void idOnEdgeClass(ODatabaseRecordTx db) {
+        Logger.info("..creating id property on E class...:");
+        DbHelper.execMultiLineCommands(db,true,
+        		"create property E.id String;",
+        		"alter property E.id notnull=true;",
+        		"create index E.id unique;"
+        );
+        Logger.info("...done...");
+    }
+   
+    
 }
