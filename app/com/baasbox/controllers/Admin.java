@@ -867,7 +867,7 @@ public class Admin extends Controller {
 			}
 		 }
 		 if(usernames.isEmpty()){
-			 return notFound();
+			 return ok(User.prepareResponseToJson(new ArrayList<ODocument>()));
 		 }else{
 			 List<ODocument> followers;
 			try {
