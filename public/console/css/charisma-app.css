@@ -4,7 +4,6 @@ background-color:#fff;
 }
 
 .top-block{
-font-size:14px;
 text-align: center;
 padding: 5px;
 margin-bottom:10px;
@@ -222,7 +221,6 @@ margin:0;
 
 ul.dashboard-list li a span {
 display: inline-block;
-font-size: 18px;
 font-weight: bold;
 margin-right: 10px;
 text-align: left;
