@@ -1356,8 +1356,8 @@ input[type="checkbox"][readonly] {
 .control-group.info .input-prepend .add-on,
 .control-group.info .input-append .add-on {
   color: #3f645b;
-  background-color: #a7dff1;
-  border-color: #3f645b;
+	background-color: rgba(246, 217, 154, 0.25);
+	border-color: #E3D08D;
 }
 input:focus:invalid,
 textarea:focus:invalid,
@@ -1916,7 +1916,7 @@ table th[class*="span"],
   background-color: #f1ceab;
 }
 .table tbody tr.info > td {
-  background-color: #a7dff1;
+  background-color: rgba(246, 217, 154, 0.25);;
 }
 .table-hover tbody tr.success:hover > td {
   background-color: #c8e6ab;
@@ -3310,8 +3310,8 @@ input[type="submit"].btn.btn-mini {
   color: #bd4247;
 }
 .alert-info {
-  background-color: #a7dff1;
-  border-color: #88e4ec;
+  background-color: rgba(246, 217, 154, 0.25);;
+  border-color: #E3D08D;
   color: #3f645b;
 }
 .alert-info h4 {
