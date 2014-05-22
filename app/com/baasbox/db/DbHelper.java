@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
+
 public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME="db.sql";
@@ -133,7 +134,7 @@ public class DbHelper {
 
 	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
 		String ret;
-		if (count) ret = "select count(*) from ";
+		if (count || criteria.justCountTheRecords()) ret = "select count(*) from ";
 		else ret = "select " + criteria.getFields() + " from ";
 		ret += from;
 		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
@@ -585,10 +586,11 @@ public class DbHelper {
 	}
 	
 
-	
+
 	public static OrientGraphNoTx getOrientGraphConnection(){
 		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
 	}
+
 
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
 		return new ODatabaseDocumentTx(getConnection());

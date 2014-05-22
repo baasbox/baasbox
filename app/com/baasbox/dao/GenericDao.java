@@ -43,6 +43,12 @@ public class GenericDao {
 	
 	private GenericDao(){}
 	
+	/***
+	 * Get a DB element by its RID
+	 * @param rid the RID in format #xx:yy
+	 * @return
+	 * @throws IllegalArgumentException
+	 */
 	public ODocument get(String rid) throws IllegalArgumentException{
 		Object orid=OSQLHelper.parseValue(rid, null);
 		if (!(orid instanceof ORecordId)) throw new IllegalArgumentException(rid +" is not a valid rid");
@@ -58,17 +64,35 @@ public class GenericDao {
 		return doc;
 	}
 	
-	public ORID getRidByUUID(UUID id){
-		return getRidByUUID(id.toString());
+	/***
+	 * Returns a _BB_NODE element by its id (not RID)
+	 * @param id
+	 * @return
+	 */
+	public ORID getRidNodeByUUID(UUID id){
+		return getRidNodeByUUID(id.toString());
 	}
-	
-	public ORID getRidByUUID(String id){
+
+	/***
+	 * Returns a _BB_NODE element by its id (not RID)
+	 * @param id
+	 * @return
+	 */
+	public ORID getRidNodeByUUID(String id){
 		ODatabaseRecordTx db =DbHelper.getConnection();
 		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
 		ORID rid = (ORID) index.get(id);  
 		return rid;
 	}
 	
+
+	/***
+	 * Execute a query against a given OrientDB Class
+	 * @param oclass
+	 * @param criteria
+	 * @return
+	 * @throws SqlInjectionException
+	 */
 	public List<ODocument>executeQuery(String oclass, QueryParams criteria) throws SqlInjectionException{
 		OCommandRequest command = DbHelper.selectCommandBuilder(oclass, false, criteria);
 		List<ODocument> result = null;
@@ -81,7 +105,11 @@ public class GenericDao {
 	}
 	
 
-
+	/***
+	 * Executes a generic OrientDB SQL Command
+	 * @param commandString
+	 * @param params
+	 */
 	public void executeCommand(String commandString, Object[] params) {
 		ODatabaseRecordTx db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));

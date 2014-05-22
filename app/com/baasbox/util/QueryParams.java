@@ -27,6 +27,7 @@ import play.Logger;
 
 
 public class QueryParams implements IQueryParametersKeys{
+	private boolean justCount=false;
 	private String fields="";
 	private String where="";
 	private Integer page=-1;
@@ -52,6 +53,7 @@ public class QueryParams implements IQueryParametersKeys{
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 
+	
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String param) {
 		super();
@@ -94,6 +96,19 @@ public class QueryParams implements IQueryParametersKeys{
 			Integer depth, String params) {
 		this(fields,where,  page,recordPerPage,  orderBy,  depth,	 params);
 		if (groupBy!=null) this.groupBy = groupBy;
+	}
+	
+	protected QueryParams(String fields, String groupBy, String where,
+			Integer page, Integer recordPerPage, String orderBy,
+			Integer depth, String[] params,Boolean count) {
+		this(fields, groupBy, where,  page,recordPerPage,  orderBy,  depth, params);
+		this.justCount=count!=null?count:false;
+	}
+	
+
+
+	public boolean justCountTheRecords(){
+		return justCount;
 	}
 	
 	/**
@@ -152,6 +167,7 @@ public class QueryParams implements IQueryParametersKeys{
 	@Override
 	public String toString() {
 		return "QueryParams ["
+				+ ("justCount="+justCount +", ")
 				+ (fields != null ? "fields=" + fields + ", " : "")
 				+ (where != null ? "where=" + where + ", " : "")
 				+ (page != null ? "page=" + page + ", " : "")
@@ -200,6 +216,10 @@ public class QueryParams implements IQueryParametersKeys{
 		return this;
 	}
 	
+	public  QueryParams justCountTheRecords(boolean justCount){
+		this.justCount=justCount;
+		return new QueryParams();
+	}
 	
 	public static QueryParams getInstance(){
 		return new QueryParams();
@@ -215,6 +235,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String groupBy;
 		String orderBy;
 		Integer depth;
+		Boolean count;
 		String[] params;
 
 		String fieldsFromQS=null;
@@ -224,6 +245,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String orderByFromQS=null;
 		String groupByFromQS=null;
 		String depthFromQS=null;
+		String countFromQS=null;
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Map <String,String[]> queryString = header.queryString();
@@ -243,6 +265,8 @@ public class QueryParams implements IQueryParametersKeys{
 			groupByFromQS=queryString.get(IQueryParametersKeys.GROUP_BY)[0];
 		if (queryString.get(IQueryParametersKeys.DEPTH)!=null)
 			depthFromQS=queryString.get(IQueryParametersKeys.DEPTH)[0];
+		if (queryString.get(IQueryParametersKeys.COUNT)!=null)
+			countFromQS=queryString.get(IQueryParametersKeys.COUNT)[0];
 		params = queryString.get(IQueryParametersKeys.PARAMS);
 		
 		fields=fieldsFromQS;
@@ -264,8 +288,12 @@ public class QueryParams implements IQueryParametersKeys{
 		}catch (NumberFormatException e){
 			throw new NumberFormatException(IQueryParametersKeys.DEPTH + " parameter must be a valid Integer");
 		}		
-		
-		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params);
+		try{
+			count=countFromQS==null?null:new Boolean(countFromQS);
+		}catch (NumberFormatException e){
+			throw new NumberFormatException(IQueryParametersKeys.COUNT + " parameter must be true or false");
+		}		
+		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params,count);
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return qryp;

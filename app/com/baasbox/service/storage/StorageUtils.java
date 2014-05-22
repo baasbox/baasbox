@@ -11,11 +11,19 @@ import org.imgscalr.Scalr;
 
 import com.baasbox.dao.FileAssetDao;
 import com.baasbox.dao.FileDao;
+import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.NodeDao;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.google.common.collect.ImmutableSet;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class StorageUtils {
 	public enum WritebleImageFormat {
@@ -177,5 +185,15 @@ public class StorageUtils {
 		String contentType = doc.field("contentType");
 		if (contentType==null || contentType.isEmpty()) return false;
 		return (contentType.startsWith("image/"));
+	}
+	
+	public static OrientVertex getNodeVertex(String nodeId) throws DocumentNotFoundException{
+		GenericDao dao = GenericDao.getInstance();
+		 OrientGraphNoTx conn = DbHelper.getOrientGraphConnection();
+		ORID nodeORID = dao.getRidNodeByUUID(nodeId);
+		if (nodeORID==null) throw new DocumentNotFoundException(nodeId + " is not a valid Id");
+		ODocument nodeDoc = dao.get(nodeORID);
+		if (nodeDoc==null) throw new DocumentNotFoundException(nodeId + " is not a valid Id");
+		return conn.getVertex(nodeDoc.field(NodeDao.FIELD_LINK_TO_VERTEX));
 	}
 }
