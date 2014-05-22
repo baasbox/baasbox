@@ -24,6 +24,9 @@
     font-family: 'fjalla';
     src: url('FjallaOne-Regular.otf') format('opentype');
 }
+.nav-tabs li.active:first-child a{
+  border-left:0px;
+}
 
 #dbmanager .actions{
 	margin:7px 0 31px 0;
@@ -32,6 +35,10 @@
 p.errors{
  color:red;
  font-size:14px;
+}
+
+#login .help-inline {
+	margin-bottom: 12px;
 }
 
 p.title {
@@ -144,9 +151,7 @@ div.setting button.upload {
     color: #2e2727;
 }
 .sidebar-nav {
-    -moz-border-radius: 0;
-    -webkit-border-radius: 0;
-    border-radius: 0;
+
 }
 
 .box-header{
@@ -156,6 +161,11 @@ div.setting button.upload {
 .icon-supportbb{
 	margin-top:-11px;
 }
+
+.rssBody h4 {
+	font-size: 13px;
+}
+
 
 /*a {*/
     /*text-decoration: none;*/
@@ -194,9 +204,7 @@ div.setting button.upload {
     /*background-color: #7b3d35;*/
 /*}*/
 .box, .breadcrumb {
-    -webkit-box-shadow: 0 1px 0 rgba(0,0,0,0.1);
-    -moz-box-shadow: 0 1px 0 rgba(0,0,0,0.1);
-    box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+
 }
 
 .box-header {

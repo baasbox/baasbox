@@ -4,7 +4,6 @@ background-color:#fff;
 }
 
 .top-block{
-font-size:14px;
 text-align: center;
 padding: 5px;
 margin-bottom:10px;
@@ -222,7 +221,6 @@ margin:0;
 
 ul.dashboard-list li a span {
 display: inline-block;
-font-size: 18px;
 font-weight: bold;
 margin-right: 10px;
 text-align: left;
@@ -332,18 +330,10 @@ height:0px;
 
 .sidebar-nav{
 min-height:0;
-box-shadow: 0 0 10px #BDBDBD;
--webkit-box-shadow: 0 0 10px #BDBDBD;
--moz-box-shadow: 0 0 10px #BDBDBD;
-border-radius: 5px;
--webkit-border-radius: 5px;
--moz-border-radius: 5px;
 margin-bottom: 0;
 padding-bottom:0;
 }
 .sidebar-nav > ul > li:not(.nav-header){
-margin-right:-2px;
-margin-left:-2px;
 }
 .brand{
 font-family: Arial, serif;

@@ -116,7 +116,7 @@ public class AdminFriendshipTest extends AbstractTest{
 						assertEquals(followed.getString("name"),toFollow);
 						deleteFriendship(follower, toFollow);
 						r = routeAndCall(fk);
-						assertRoute(r, "Get friendships.", Status.NOT_FOUND, null, false);
+						assertRoute(r, "Get friendships.", Status.OK, "{\"result\":\"ok\",\"data\":[],\"http_code\":200}", false);
 						}catch(Exception e){
 							fail(e.getMessage());
 						}
