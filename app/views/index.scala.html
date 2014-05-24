@@ -1,6 +1,4 @@
-
-
-@(version: String)
+@(version: String, edition: String)
 <html>
 <!--
 ~ Copyright (c) 2014.
@@ -21,7 +19,7 @@
 -->
 	<head>
 
-        <title>BaasBox v.@version</title>
+        <title>BaasBox v.@version @edition</title>
 		<style>
 			body
 			{
@@ -73,7 +71,7 @@
 					<img src="/console/img/logo_baasbox_lp.png" />
 				</p>
 				<p>
-					<h2>V. @version</h2>
+					<h2>V. @version</h2><br/><h2>@edition</h2>
 				</p>			
 			
 				

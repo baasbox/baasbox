@@ -28,6 +28,12 @@
   border-left:0px;
 }
 
+#currentVersion{
+	font-size:13px;
+	padding-right:20px;
+	color:rgb(14, 15, 15);	
+}
+
 #dbmanager .actions{
 	margin:7px 0 31px 0;
 }

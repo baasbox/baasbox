@@ -24,13 +24,11 @@ public interface IBBConfigurationKeys {
 	public static final String ROOT_PASSWORD = "baasbox.root.password";
 	public static final String CAPTURE_METRICS = "baasbox.metrics.activate";
 	
-	
 	public static final String DB_PATH = "orient.baasbox.path";
 	public static final String DB_BACKUP_PATH = "orient.baasbox.backup.path";
-	@Deprecated
-	public static final String REALM = "authorization.basic.realm";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";
+	public static final String EDITION = "baasbox.edition";
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
 	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
@@ -45,4 +43,6 @@ public interface IBBConfigurationKeys {
 	
 	public static final String DUMP_DB_CONFIGURATION_ON_STARTUP = "baasbox.startup.dumpdb";
 	
+	@Deprecated
+	public static final String REALM = "authorization.basic.realm";
 }

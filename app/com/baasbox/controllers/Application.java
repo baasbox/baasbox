@@ -34,18 +34,21 @@ public class Application extends Controller {
 	   */
 	  public static Result login(){
 		  String version = BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION);
-		  return ok(views.html.admin.index.render(version));
+		  String edition = BBConfiguration.configuration.getString(IBBConfigurationKeys.EDITION);
+		  return ok(views.html.admin.index.render(version,edition));
 	  } 
 	  
 	//renders the spashscreen
   public static Result index() {
 	  String version = BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION);
-	  return ok(views.html.index.render(version));
+	  String edition = BBConfiguration.configuration.getString(IBBConfigurationKeys.EDITION);
+	  return ok(views.html.index.render(version,edition));
   }
   
   public static Result apiVersion() {
 	  ObjectNode result = Json.newObject();
 	  result.put("api_version", BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+	  result.put("edition", BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
 	  return ok(result);
   }
   
