@@ -1,4 +1,4 @@
-@(version: String)
+@(version: String, edition: String)
 <!-- topbar starts -->
 
 	@admin.main_.pwdmanagement_.changepwd()
@@ -15,6 +15,8 @@
 				
 				<!-- user dropdown starts -->
 				<div class="btn-group pull-right" >
+					<span id="currentVersion">v. @version @edition</span></a>
+						
 					<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 						<i class="icon-user"></i><span class="hidden-phone"><span id="username"></span></span>
 						<span class="caret"></span>
@@ -34,7 +36,6 @@
 				
 				<div class="top-nav nav-collapse">
 					<ul class="nav">
-						<li><a style="cursor: default;">Version <span id="currentVersion">@version</span></a></li>
 						<li data-rel="tooltip" title="Visit the BaasBox official site"><a target="_new" href="http://www.baasbox.com">Go to the Official Site</a></li>
 						<li>
 							<form class="navbar-search pull-left">
@@ -42,7 +43,7 @@
 							</form>
 						</li>
 						<li data-rel="tooltip" title="Go to the Support Site"><a target="_new" href="http://www.baasbox.com/version/help/support/">Go to the Support Site</a></li>
-					</ul>
+					</ul>	
 				</div><!--/.nav-collapse -->
 			</div>
 		</div>
