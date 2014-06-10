@@ -1272,7 +1272,7 @@ $('#importDbForm').on('submit',function(){
 			error:function(data){
 				unfreezeConsole();
 				$('#importErrors').removeClass("hide");
-				$('#importErrors').html(JSON.parse(data.responseText)["message"]);
+				$('#importErrors').html("There was a problem processing the file: " + JSON.parse(data.responseText)["message"]);
 			} //error
 	};
 
