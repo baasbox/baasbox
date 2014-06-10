@@ -181,48 +181,18 @@ $('a.deleteExport').live('click',function(e){
 });
 
 $('a.downloadExport').live('click',function(e){
-	var name = $(e.target).parents('tr').children()[0].innerHTML
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(), true);
-	xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
-	// Hack to pass bytes through unprocessed.
-	xhr.overrideMimeType('text/plain; charset=x-user-defined');
-	xhr.responseType = 'blob'
-		xhr.onload = function(e) {
-		if (this.status == 200) {
-			var binStr = this.response;
-			var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-			var builder;
-			var blob;
-			if(!BlobBuilder){
-				//console.debug("BlobBuilder is not available...Using plain BLOB")
-				blob = new Blob([binStr],{ "type" : "application\/zip" });
-			}else{
-				builder = new BlobBuilder();
-				builder.append(binStr);
-				blob = builder.getBlob();
-			}
-			var urlGen = window.webkitURL || window.mozURL || window.URL
-			var url = urlGen.createObjectURL(blob);
-			$($("#downloadExportModal .modal-body")[0]).html("")
-			.append($("<a id=\""+name+"\"/>")
-					.attr({href: url})
-					.attr("download",name)
-					.append("Download:" + name))
-					.on('click',function(e){
-						$(e.target).remove();
-						$('#downloadExportModal').modal('hide');
-					});
-
-			$('#downloadExportModal').modal('show');
-		}
-
-	};
-
-	xhr.send();
-
-
-});
+	var name = $(e.target).parents('tr').children()[0].innerHTML;
+	$($("#downloadExportModal .modal-body")[0]).html("")
+	.append($("<a id=\""+name+"\"/>")
+			.attr({href: "/admin/db/export/" + name + "?X-BB-SESSION=" + sessionStorage.sessionToken})
+			.attr("download",name)
+			.append("Download:" + name))
+			.on('click',function(e){
+				$(e.target).remove();
+				$('#downloadExportModal').modal('hide');
+			});
+	$('#downloadExportModal').modal('show');
+});//downloadExport click
 
 function downloadExportHref(name){
 	var reg = /(http:\/\/)(.*)/;
