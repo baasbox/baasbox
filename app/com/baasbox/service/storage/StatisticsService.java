@@ -131,13 +131,16 @@ public class StatisticsService {
 			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
 			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
 			
-			ImmutableMap response = ImmutableMap.of(
-					"properties", dbProp,
-					"size", db.getSize(),
-					"status", db.getStatus(),
-					"configuration", dbConfiguration(),
-					"physical_size",FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()))
-					);
+			HashMap map = new HashMap();
+			map.put("properties", dbProp);
+			map.put("size", db.getSize());
+			map.put("status", db.getStatus());
+			map.put("configuration", dbConfiguration());
+			map.put("physical_size", FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir())));
+			map.put("datafile.spaceleft", new File(BBConfiguration.getDBDir()).getFreeSpace()/1024L);
+			
+			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
+
 			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}
