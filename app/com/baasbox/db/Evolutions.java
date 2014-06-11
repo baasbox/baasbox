@@ -55,6 +55,8 @@ public class Evolutions {
 		me.put(ev.getFinalVersion(), ev);
 		ev= (IEvolution)new Evolution_0_8_0();
 		me.put(ev.getFinalVersion(), ev);
+		ev= (IEvolution)new Evolution_0_8_1();
+		me.put(ev.getFinalVersion(), ev);
 	}
 	
 	public Collection<IEvolution> getEvolutions(){

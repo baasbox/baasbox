@@ -101,12 +101,14 @@ alter property _BB_Permissions.enabled mandatory=true;
 alter property _BB_Permissions.enabled notnull=true;
 
 --indices
---deprecated since OrientDB 1.7:
-create index ouser.name unique;
+
+alter property ouser.name collate CI;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
 create index _BB_Permissions.tag unique;
+--deprecated since OrientDB 1.7:
+create index ouser.name unique;
 
 --configuration class
 create class _BB_Index;

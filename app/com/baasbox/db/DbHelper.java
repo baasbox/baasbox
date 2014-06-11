@@ -600,6 +600,8 @@ public class DbHelper {
      * Executes a sequence of orient sql commands
      */
     public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+
+    		Logger.debug("Ready to execute these commands: " + commands);
         if (commands==null) return;
         for (String command:commands){
             if (command==null){
@@ -608,6 +610,7 @@ public class DbHelper {
             }
             if (log)Logger.debug("sql:> "+command);
             if (!command.startsWith("--")&&!command.trim().isEmpty()){
+            	if (Logger.isDebugEnabled()) Logger.debug("Executing command: " + command);
                 db.command(new OCommandSQL(command.replace(';',' '))).execute();
             }
         }
