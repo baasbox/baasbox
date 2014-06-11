@@ -1475,7 +1475,7 @@ function getActionButton(action, actionType,parameters){
         labelName="disable";
         break;
     }
-	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
+	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action btn-mini' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
@@ -1687,11 +1687,11 @@ function setupTables(){
 		               {"mData": "user", "mRender": function ( data, type, full ) {
 		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
                                var _active = data.status == "ACTIVE";
-                               return '<div class="btn-group">'+ getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);+"</div>"// +" "+ getActionButton("delete","user",data);
+                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);
                            }
 		            	   return "No action available";
-		               }
+		               },bSortable:false
 		               }],
 		               "bRetrieve": true,
 		               "bDestroy":true
