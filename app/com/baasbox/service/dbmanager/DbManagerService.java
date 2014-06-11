@@ -37,6 +37,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.xmlbeans.impl.piccolo.io.FileFormatException;
 
 import play.Logger;
@@ -130,6 +131,7 @@ public class DbManagerService {
 			try{
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
+				if (ze==null) throw new FileFormatException("Looks like the uploaded file is not a valid export.");
 				if(ze.isDirectory()){
 					ze = zis.getNextEntry();
 				}
@@ -182,7 +184,7 @@ public class DbManagerService {
 				Logger.error(e.getMessage());
 				throw e;
 			}catch(Throwable e){
-				Logger.error(e.getMessage());
+				Logger.error(ExceptionUtils.getStackTrace(e));
 				throw new Exception("There was an error handling your zip import file.", e);
 			}finally{
 				try {
