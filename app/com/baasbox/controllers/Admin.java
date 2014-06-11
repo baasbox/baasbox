@@ -703,7 +703,10 @@ public class Admin extends Controller {
 				zis = 	new ZipInputStream(new FileInputStream(zipFile));
 				DbManagerService.importDb(appcode, zis);
 				zipFile.delete();
-				return ok();		
+				return ok();	
+			}catch(org.apache.xmlbeans.impl.piccolo.io.FileFormatException e){
+				Logger.warn(e.getMessage());
+				return badRequest(e.getMessage());
 			}catch(Exception e){
 				Logger.error(ExceptionUtils.getStackTrace(e));
 				return internalServerError(ExceptionUtils.getStackTrace(e));
