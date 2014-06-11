@@ -27,7 +27,7 @@ var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
-var dbCollectionsCache = [];
+
 
 $(document).ready(function(){
 	setup();
@@ -51,25 +51,16 @@ function changeTopBarLink(bbId){
 
 function refreshCollectionCache(arr,fun){
 
-	if(arr){
-		dbCollectionsCache = arr;
-		if(fun){
-			var args = [].slice.call(dbCollectionsCache, 0)
-			fun(dbCollectionsCache)
-		}
-	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
 				data = data["data"];
-				dbCollectionsCache = data["data"]["collections_details"];
-				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				collectionNames = data["data"]["collections_details"];
 				if(fun){
-					fun(dbCollectionsCache)
+					fun(collectionNames)
 				}
 
 			}
 		});
-	}
 }
 
 //see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
@@ -157,7 +148,6 @@ $('a.deleteCollection').live('click',function(e){
 				alert(JSON.parse(data.responseText)["message"]);
 			},
 			success: function(data){
-				dbCollectionsCache = null;
 				callMenu('#collections');
 			}
 		});
@@ -1126,7 +1116,6 @@ $('.btn-NewCollectionCommit').click(function(e){
 				success: function(data)
 				{
 					$('#newCollectionModal').modal('hide');
-					dbCollectionsCache = null;
 					loadCollectionsTable();
 				}
 			})
@@ -1795,7 +1784,7 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
 		               {"mData":"records"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteCollection\">Delete...</a>"}}],
+		               {"mData":null,"mRender":function(data,type,full){return "<a class=\"btn btn-mini btn-danger deleteCollection\">Delete...</a>"}}],
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
@@ -2285,15 +2274,12 @@ function callMenu(action){
 			$('#collectionTable').dataTable().fnClearTable();
 			$('#collectionTable').dataTable().fnAddData(collections);
 		}
-		if(dbCollectionsCache){
-				collections = dbCollectionsCache;
-				ref(collections)
-		}else{
-			refreshCollectionCache(null,function(dd){
-				collections = dd;
-				ref(collections)
-			});
-		}
+
+		refreshCollectionCache(null,function(dd){
+			collections = dd;
+			ref(collections)
+		});
+
 		break;//#collections
 	case "#documents":
         $('#documentTable').dataTable().fnClearTable();
