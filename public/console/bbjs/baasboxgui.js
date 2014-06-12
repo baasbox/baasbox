@@ -121,7 +121,7 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("dropping your db","please wait...")
+	freezeConsole("Deleting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
 				error: function(data)
