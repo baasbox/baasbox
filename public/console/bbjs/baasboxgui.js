@@ -2133,8 +2133,10 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news"
 				});
+				data["os"]["os_name"]=data["os"]["os_name"]=="N/A"?"cloud":data["os"]["os_name"];
 				var serverPlatform=getPlatform(data["os"]["os_name"]);
-				$('#platformNameNews').text(data["os"]["os_name"]);
+				var serverPlatformLabel=data["os"]["os_name"]=="cloud"?"BaasBox as a Service": "BaasBox on " + data["os"]["os_name"] 
+				$('#platformNameNews').text(serverPlatformLabel);
 				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true),
 						{
 					header: false,
@@ -2683,6 +2685,10 @@ function getPlatform(os){
 	function  isSolaris(OS) {
 		return (OS.indexOf("sunos") >= 0);
 	}
+	
+	function  isCloudService(OS) {
+		return (OS.indexOf("cloud") >= 0);
+	}
 
 	os = os.toLowerCase();
 	if (isWindows(os)) {
@@ -2693,6 +2699,8 @@ function getPlatform(os){
 		return "unix,linux";
 	} else if (isSolaris(os)) {
 		return "solaris,unix";
+	}else if (isCloudService(os)) {
+		return "service";
 	} else {
 		return "other";
 	}
