@@ -23,20 +23,11 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import play.api.libs.concurrent.Promise;
-import java.io.UnsupportedEncodingException;
-import play.mvc.Results.*;
-import play.libs.F;
-import play.mvc.*;
-import play.mvc.Http.*;
-
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Application;
 import play.Configuration;
@@ -45,9 +36,10 @@ import play.Logger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
+import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
-import play.mvc.Result;
+import play.mvc.SimpleResult;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
@@ -57,17 +49,21 @@ import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 
 public class Global extends GlobalSettings {
 	
 	  private static Boolean  justCreated = false;
-
+	  private static OServer server = null;
 
 	@Override
 	  public void beforeStart(Application app) {
@@ -136,9 +132,10 @@ public class Global extends GlobalSettings {
 	  public void onStart(Application app) {
 		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
-
 	    ODatabaseRecordTx db =null;
 	    try{
+	    	server = OServerMain.create();
+	    	server.startup();
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
@@ -273,7 +270,8 @@ public class Global extends GlobalSettings {
 	    	info("Closing the DB connections...");
 	    	ODatabaseDocumentPool.global().close();
 	    	info("Shutting down embedded OrientDB Server");
-	    	Orient.instance().shutdown();
+	    	//Orient.instance().shutdown();
+	    	if (server!=null) server.shutdown();
 	    	info("...ok");
 	    }catch (ODatabaseException e){
 	    	error("Error closing the DB!",e);
