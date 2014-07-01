@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'Lato-Regular';
-    src: url('lato-regular.svg') format('truetype');
+    src: url('Lato-Regular.ttf') format('truetype');
 }
 
 @font-face {
@@ -300,7 +300,7 @@ nav {
   -o-transition: all 0.3s ease;
   transition: all 0.3s ease;
   text-decoration:none;
-  font-family:"Lato", sans-serif !important;
+  font-family:Lato-Regular, sans-serif !important;
   font-size:17px;
   margin-top:6px;
 }
@@ -378,6 +378,6 @@ nav {
 	color:#000000 !important;
 }
 
-.nav.nav-tabs.nav-stacked.main-menu > .active > a {
+.nav-tabs.nav-stacked.main-menu > .active > a {
 	background-color:#999999 !important;
 }
