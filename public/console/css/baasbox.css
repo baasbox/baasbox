@@ -360,9 +360,16 @@ nav {
 }
 
 .navbar .btn, .navbar .btn-group {
-	margin-top:5px;
-	margin-right:-155px;
+	margin-top:20px;
+	margin-right:-755px;
 }
 
+.btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover {
+	margin-right:-55px;
+}
+
+.nav-tabs > .active > a, .nav-tabs > .active > a:hover, .nav-tabs > .active > a:focus{
+	color:#000000 !important;
+}
 
 
