@@ -342,7 +342,7 @@ nav {
   -ms-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
   transition: all 0.5s ease;
-  margin-left:56px;
+  margin-left:40px;
   margin-top:3px;
 }
 .mainmenu .menuwrapper .logoblock .companylogo:hover {
@@ -369,7 +369,49 @@ nav {
 }
 
 .nav-tabs > .active > a, .nav-tabs > .active > a:hover, .nav-tabs > .active > a:focus{
-	color:#000000 !important;
+}
+
+.nav-tabs.nav-stacked > li > a {
+	border-top:none !important;
+	border-bottom:none !important;
+	border-right:none !important;
+	background-color:#F2F2F2;
+	color:#000000;
+}
+
+.nav-tabs.nav-stacked > li > a:active {
+	background-color:#999999 !important;
+	border:none !important;
+}
+
+.nav-tabs.nav-stacked > li > a:focus {
+	border:none !important;
+	background-color:none !important;
+}
+
+.nav-tabs.nav-stacked > li > a:hover {
+	border:none !important;
+	background-color:none !important;
 }
 
 
+.nav-tabs > .active > a, .nav-tabs > .active > a:hover, .nav-tabs > .active > a:focus {
+
+}
+
+.nav-tabs > li > a {
+	color:#000000 !important;
+}
+
+.hidden-tablet {
+	background-color:#F2F2F2;
+}
+
+.well {
+	background-color:#F2F2F2 !important;
+}
+
+
+.nav-tabs .nav-stacked .main-menu > .active > a{
+	background-color:#F2F2F2 !important;
+}
