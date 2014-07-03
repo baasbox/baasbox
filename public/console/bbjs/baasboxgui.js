@@ -27,7 +27,7 @@ var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
-var dbCollectionsCache = [];
+
 
 $(document).ready(function(){
 	setup();
@@ -51,25 +51,16 @@ function changeTopBarLink(bbId){
 
 function refreshCollectionCache(arr,fun){
 
-	if(arr){
-		dbCollectionsCache = arr;
-		if(fun){
-			var args = [].slice.call(dbCollectionsCache, 0)
-			fun(dbCollectionsCache)
-		}
-	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
 				data = data["data"];
-				dbCollectionsCache = data["data"]["collections_details"];
-				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				collectionNames = data["data"]["collections_details"];
 				if(fun){
-					fun(dbCollectionsCache)
+					fun(collectionNames)
 				}
 
 			}
 		});
-	}
 }
 
 //see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
@@ -130,7 +121,7 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("dropping your db","please wait...")
+	freezeConsole("Deleting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
 				error: function(data)
@@ -157,7 +148,6 @@ $('a.deleteCollection').live('click',function(e){
 				alert(JSON.parse(data.responseText)["message"]);
 			},
 			success: function(data){
-				dbCollectionsCache = null;
 				callMenu('#collections');
 			}
 		});
@@ -181,48 +171,18 @@ $('a.deleteExport').live('click',function(e){
 });
 
 $('a.downloadExport').live('click',function(e){
-	var name = $(e.target).parents('tr').children()[0].innerHTML
-	var xhr = new XMLHttpRequest();
-	xhr.open('GET', BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(), true);
-	xhr.setRequestHeader('X-BB-SESSION', sessionStorage.sessionToken);
-	// Hack to pass bytes through unprocessed.
-	xhr.overrideMimeType('text/plain; charset=x-user-defined');
-	xhr.responseType = 'blob'
-		xhr.onload = function(e) {
-		if (this.status == 200) {
-			var binStr = this.response;
-			var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-			var builder;
-			var blob;
-			if(!BlobBuilder){
-				//console.debug("BlobBuilder is not available...Using plain BLOB")
-				blob = new Blob([binStr],{ "type" : "application\/zip" });
-			}else{
-				builder = new BlobBuilder();
-				builder.append(binStr);
-				blob = builder.getBlob();
-			}
-			var urlGen = window.webkitURL || window.mozURL || window.URL
-			var url = urlGen.createObjectURL(blob);
-			$($("#downloadExportModal .modal-body")[0]).html("")
-			.append($("<a id=\""+name+"\"/>")
-					.attr({href: url})
-					.attr("download",name)
-					.append("Download:" + name))
-					.on('click',function(e){
-						$(e.target).remove();
-						$('#downloadExportModal').modal('hide');
-					});
-
-			$('#downloadExportModal').modal('show');
-		}
-
-	};
-
-	xhr.send();
-
-
-});
+	var name = $(e.target).parents('tr').children()[0].innerHTML;
+	$($("#downloadExportModal .modal-body")[0]).html("")
+	.append($("<a id=\""+name+"\"/>")
+			.attr({href: "/admin/db/export/" + name + "?X-BB-SESSION=" + sessionStorage.sessionToken})
+			.attr("download",name)
+			.append("Download:" + name))
+			.on('click',function(e){
+				$(e.target).remove();
+				$('#downloadExportModal').modal('hide');
+			});
+	$('#downloadExportModal').modal('show');
+});//downloadExport click
 
 function downloadExportHref(name){
 	var reg = /(http:\/\/)(.*)/;
@@ -1156,7 +1116,6 @@ $('.btn-NewCollectionCommit').click(function(e){
 				success: function(data)
 				{
 					$('#newCollectionModal').modal('hide');
-					dbCollectionsCache = null;
 					loadCollectionsTable();
 				}
 			})
@@ -1302,7 +1261,7 @@ $('#importDbForm').on('submit',function(){
 			error:function(data){
 				unfreezeConsole();
 				$('#importErrors').removeClass("hide");
-				$('#importErrors').html(JSON.parse(data.responseText)["message"]);
+				$('#importErrors').html("There was a problem processing the file: " + JSON.parse(data.responseText)["message"]);
 			} //error
 	};
 
@@ -1505,7 +1464,7 @@ function getActionButton(action, actionType,parameters){
         labelName="disable";
         break;
     }
-	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
+	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action btn-mini' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
@@ -1717,11 +1676,11 @@ function setupTables(){
 		               {"mData": "user", "mRender": function ( data, type, full ) {
 		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
                                var _active = data.status == "ACTIVE";
-                               return '<div class="btn-group">'+ getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);+"</div>"// +" "+ getActionButton("delete","user",data);
+                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
+                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);
                            }
 		            	   return "No action available";
-		               }
+		               },bSortable:false
 		               }],
 		               "bRetrieve": true,
 		               "bDestroy":true
@@ -1825,7 +1784,7 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
 		               {"mData":"records"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteCollection\">Delete...</a>"}}],
+		               {"mData":null,"mRender":function(data,type,full){return "<a class=\"btn btn-mini btn-danger deleteCollection\">Delete...</a>"}}],
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
@@ -2174,8 +2133,10 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news"
 				});
+				data["os"]["os_name"]=data["os"]["os_name"]=="N/A"?"cloud":data["os"]["os_name"];
 				var serverPlatform=getPlatform(data["os"]["os_name"]);
-				$('#platformNameNews').text(data["os"]["os_name"]);
+				var serverPlatformLabel=data["os"]["os_name"]=="cloud"?"BaasBox as a Service": "BaasBox on " + data["os"]["os_name"] 
+				$('#platformNameNews').text(serverPlatformLabel);
 				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true),
 						{
 					header: false,
@@ -2315,15 +2276,12 @@ function callMenu(action){
 			$('#collectionTable').dataTable().fnClearTable();
 			$('#collectionTable').dataTable().fnAddData(collections);
 		}
-		if(dbCollectionsCache){
-				collections = dbCollectionsCache;
-				ref(collections)
-		}else{
-			refreshCollectionCache(null,function(dd){
-				collections = dd;
-				ref(collections)
-			});
-		}
+
+		refreshCollectionCache(null,function(dd){
+			collections = dd;
+			ref(collections)
+		});
+
 		break;//#collections
 	case "#documents":
         $('#documentTable').dataTable().fnClearTable();
@@ -2727,6 +2685,10 @@ function getPlatform(os){
 	function  isSolaris(OS) {
 		return (OS.indexOf("sunos") >= 0);
 	}
+	
+	function  isCloudService(OS) {
+		return (OS.indexOf("cloud") >= 0);
+	}
 
 	os = os.toLowerCase();
 	if (isWindows(os)) {
@@ -2737,6 +2699,8 @@ function getPlatform(os){
 		return "unix,linux";
 	} else if (isSolaris(os)) {
 		return "solaris,unix";
+	}else if (isCloudService(os)) {
+		return "service";
 	} else {
 		return "other";
 	}

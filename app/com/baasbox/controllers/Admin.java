@@ -21,24 +21,16 @@ import static play.libs.Json.toJson;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import play.Logger;
 import play.Play;
@@ -55,7 +47,6 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.BBInternalConstants;
 import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
@@ -71,6 +62,7 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
@@ -90,6 +82,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -349,6 +342,8 @@ public class Admin extends Controller {
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 					" they must be an object, not a value.");
+		}catch (UserAlreadyExistsException e){
+			return badRequest(e.getMessage());
 		}catch (Exception e) {
 			Logger.error(ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e) ;
@@ -703,7 +698,10 @@ public class Admin extends Controller {
 				zis = 	new ZipInputStream(new FileInputStream(zipFile));
 				DbManagerService.importDb(appcode, zis);
 				zipFile.delete();
-				return ok();		
+				return ok();	
+			}catch(org.apache.xmlbeans.impl.piccolo.io.FileFormatException e){
+				Logger.warn(e.getMessage());
+				return badRequest(e.getMessage());
 			}catch(Exception e){
 				Logger.error(ExceptionUtils.getStackTrace(e));
 				return internalServerError(ExceptionUtils.getStackTrace(e));
