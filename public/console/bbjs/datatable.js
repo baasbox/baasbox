@@ -48,6 +48,10 @@ Javascript helper functions for server side pagination of datatables
 			//same call but to know the total number of records that match the query
 			queryParams.count=true;
 			delete queryParams.orderBy;
+			delete queryParams.page;
+			delete queryParams.recordsPerPage;
+			delete queryParams.skip;
+			
 			$.getJSON( sSource, queryParams, function (json) { 
 				response.iTotalDisplayRecords=json["data"][0]["count"];
 				//call BaasBox to know the total number or records belonging to the collection
