@@ -9,9 +9,9 @@
 					<div class="box-content">
 						<ul class="nav nav-tabs" id="systemStatTab">
 							<li class="active" data-rel="tooltip" title="Database information"><a href="#db">Database</a></li>
-							<li data-rel="tooltip" title="System memory statistics"><a href="#memory">Memory</a></li>
-							<li data-rel="tooltip" title="Operating System information" ><a href="#os">OS</a></li>
-							<li data-rel="tooltip" title="JVM information"><a href="#java">Java</a></li>
+							<li ng-show="data.memory.max_allocable_memory!=0" data-rel="tooltip" title="System memory statistics"><a href="#memory">Memory</a></li>
+							<li ng-show="data.os.os_name!='N/A'" data-rel="tooltip" title="Operating System information" ><a href="#os">OS</a></li>
+							<li ng-show="data.os.os_name!='N/A'" data-rel="tooltip" title="JVM information"><a href="#java">Java</a></li>
 							
 						</ul>
 							
@@ -50,7 +50,7 @@
 								</ul>
 						</div><!-- DB Pane-->
 						
-							<div class="tab-pane" id="memory">
+							<div class="tab-pane" id="memory" ng-show="data.memory.max_allocable_memory!=0">
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
@@ -81,7 +81,7 @@
 										</li>																				
 									</ul>
 							</div><!-- Memory Pane-->
-							<div class="tab-pane" id="os">
+							<div class="tab-pane" id="os" ng-show="data.os.os_name!='N/A'" >
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
@@ -121,7 +121,7 @@
 										</li>										
 									</ul>
 							</div><!-- os Pane-->
-							<div class="tab-pane" id="java">
+							<div class="tab-pane" id="java" ng-show="data.os.os_name!='N/A'">
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
