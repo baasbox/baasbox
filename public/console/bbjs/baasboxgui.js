@@ -1813,49 +1813,7 @@ function setupTables(){
 		              "bDestroy":true
 	} ).makeEditable();
 
-	$('#fileTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [
-		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  return getFileIcon(obj["contentType"],obj["id"]);
-		              }},
-					   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		              {"mData": "id", "mRender": function ( data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  if(obj["attachedData"] != undefined)
-		            	  {
-		            		  return "<pre>" + JSON.stringify(obj["attachedData"],undefined,2) + "</pre>";
-		            	  }
-		            	  else
-		            	  {
-		            		  return "";
-		            	  }
-		              },bSortable:false},
-		              {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return  bytesToSize(obj["contentLength"],'KB');
-		              }},
-		         /*     {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return obj["contentType"];
-		              }},*/
-		              {"mData": "id", sWidth:"210px","mRender": function (data, type, full) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return "<a href='/file/" + obj["id"] + "?download=true&X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
-		              }},
-		              {"mData": "id", "mRender": function (data) {
-		            	  return getActionButton("delete","file",data);
-		              }}
-		              ],
-		              "bRetrieve": true,
-		              "bDestroy":true
-	} ).makeEditable();
+	$('#fileTable').dataTable().makeEditable();
 
 } //setupTables()
 
@@ -2220,7 +2178,7 @@ function callMenu(action){
 			}
 		});
 		break; //#documents
-	case "#assets":
+		case "#assets":
 		BBRoutes.com.baasbox.controllers.Asset.getAll().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2233,16 +2191,9 @@ function callMenu(action){
 			}
 		});
 		case "#files":
-		BBRoutes.com.baasbox.controllers.File.getAllFile().ajax({
-			data: {orderBy: "_creation_date asc"},
-			success: function(data) {
-				data=data["data"];
-				applySuccessMenu(action,data);
-				$('#fileTable').dataTable().fnClearTable();
-				$('#fileTable').dataTable().fnAddData(data);
-				$.trim($('#fuFile').val(""));
-			}
-		});
+			resetDataTable( $('#fileTable'));
+			loadFilesData();
+			applySuccessMenu(action,filesDataArray);
 		break;//#files
         case "#permissions":
             BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
