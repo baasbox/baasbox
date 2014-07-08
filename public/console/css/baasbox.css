@@ -387,4 +387,6 @@ nav {
 img.companylogo {
 	height:40px;
 	width:228px;
+	margin-top:-1px;
+	margin-left:53px;
 }
