@@ -43,20 +43,13 @@
 		});
 		
 		tours["general"].addStep({
-			element: "#zenbox_tab",
-			placement: "left",
-			title: "Feedback",
-			content: "You can also send feedbacks and comments to the BaasBox team through this 'Feedback' tab. You may even record and attach 2 minutes video.<br />"
-		});
-		
-		tours["general"].addStep({
 			element: ".main-menu .logout",
 			placement: "right",
 			title: "Logout",
 			content: "To exit the console, click on the 'Logout' item of the main menu.<br>"
 		});		
 		tours["general"].addStep({
-			element: ".navbar-inner a:contains('Version')", 
+			element: ".navbar-inner #currentVersion", 
 			placement: "bottom",
 			title: "That's all", 
 			content: "Now what would you like to do?<br />" +
