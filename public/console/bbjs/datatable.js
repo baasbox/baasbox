@@ -82,6 +82,7 @@ Javascript helper functions for server side pagination of datatables
     	tDef.sAjaxSource= sUrl;
     	tDef.bProcessing = true,
     	tDef.bServerSide = true,
+    	tDef.oLanguage = {sProcessing:"Loading data from BaasBox, please wait..."};
     	tDef.fnServerData= function ( sSource, aoData, fnCallback ) {serverDataTableCallback( sSource, aoData, fnCallback,dataArray)},
     	oDataTable.dataTable(tDef);
     }//loadTable
