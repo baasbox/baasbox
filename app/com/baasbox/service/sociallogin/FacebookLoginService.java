@@ -21,6 +21,7 @@ package com.baasbox.service.sociallogin;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import org.apache.commons.lang.StringUtils;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.FacebookApi;
 import org.scribe.model.OAuthRequest;
@@ -94,8 +95,10 @@ public class FacebookLoginService extends SocialLoginService{
 		if (user.has("error")){
 			throw new BaasBoxFacebookException(user.get("error"));
 		}
-		ui.setUsername(user.get("username").textValue());
 		ui.setId(user.get("id").textValue());
+		if(user.get("username")!=null){
+			ui.setUsername(user.get("username").textValue());
+		}
 		if(user.get("email")!=null){
 			ui.addData("email",user.get("email").textValue());
 		}
@@ -106,7 +109,11 @@ public class FacebookLoginService extends SocialLoginService{
 			ui.addData("personalUrl",user.get("link").textValue());
 		}
 		if(user.get("name")!=null){
+			
 			ui.addData("name",user.get("name").textValue());
+			if(ui.getUsername()==null){
+				ui.setUsername(StringUtils.deleteWhitespace(user.get("name").textValue()));
+			}
 		}
 		ui.setFrom(SOCIAL);
 		return ui;
