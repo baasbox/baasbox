@@ -33,6 +33,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.dao.AssetDao;
 import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.DocumentDao;
+import com.baasbox.dao.FileDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -56,18 +57,22 @@ public class StatisticsService {
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
+			FileDao fileDao = FileDao.getInstance();
 			ODatabaseRecordTx db = DbHelper.getConnection();
 			
 			long usersCount =userDao.getCount();
 			long assetsCount = assetDao.getCount();
 			long collectionsCount = collDao.getCount();
+			long filesCount = fileDao.getCount();
+			
 			List<ODocument> collections = collDao.get(QueryParams.getInstance());
 			ArrayList<ImmutableMap> collMap = collectionsDetails(collections);
 			ImmutableMap response = ImmutableMap.of(
 					"users", usersCount,
 					"collections", collectionsCount,
 					"collections_details", collMap,
-					"assets",assetsCount
+					"assets",assetsCount,
+					"files",filesCount
 					);
 			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
 			if (Logger.isTraceEnabled()) Logger.trace("Method End");
@@ -131,13 +136,15 @@ public class StatisticsService {
 			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
 			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
 			
-			ImmutableMap response = ImmutableMap.of(
-					"properties", dbProp,
-					"size", db.getSize(),
-					"status", db.getStatus(),
-					"configuration", dbConfiguration(),
-					"physical_size",FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()))
-					);
+			HashMap map = new HashMap();
+			map.put("properties", dbProp);
+			map.put("status", db.getStatus());
+			map.put("configuration", dbConfiguration());
+			map.put("physical_size", FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir())));
+			map.put("datafile_freespace", new File(BBConfiguration.getDBDir()).getFreeSpace());
+			
+			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
+
 			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return response;
 		}

@@ -55,7 +55,6 @@ public class ResetPwdDao extends NodeDao  {
 		GenericDao.getInstance().executeCommand(sql, new Object[] {((ODocument)user.field("user")).field("name")});
 		 
 		ODocument doc = new ODocument(MODEL_NAME);
-		doc.field(FIELD_CREATION_DATE, new Date());
 		doc.field(USER_LINK,user.getIdentity());
 		doc.field(ATTRIBUTES_BASE64CODE_STEP1, base64code);
 		doc.field(ATTRIBUTES_REQUEST_DATE, request_date);

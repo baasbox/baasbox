@@ -164,6 +164,45 @@ public class UserCreateTest extends AbstractUserTest
 		);		
 		
 	}
+
+	@Test
+	public void routeCreateUserCaseInsensitive()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					UUID uuid = UUID.randomUUID();
+					String sFakeUser = USER_TEST +uuid;
+					String sFakeUser2 = USER_TEST.toUpperCase() +uuid;
+					
+					
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					assertRoute(result, "routeCreateUserCaseInsensitive", Status.CREATED, null, false);
+					// try to create the second one
+					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser2);
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					result = routeAndCall(request);
+					//it should be fail
+					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, sFakeUser2 + " already exists", true);
+					
+				}
+			}
+		);		
+		
+	}
 	
 	@Test
 	public void serverCreateUser()

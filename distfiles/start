@@ -2,4 +2,4 @@
 
 scriptdir=`dirname $0`
 classpath="$scriptdir/lib/*"
-exec java $* -cp "$classpath"  play.core.server.NettyServer `dirname $0`
+exec java ${1+"$@"} -cp "$classpath"  play.core.server.NettyServer `dirname $0`

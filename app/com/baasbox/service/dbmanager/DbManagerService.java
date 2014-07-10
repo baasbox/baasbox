@@ -37,6 +37,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.xmlbeans.impl.piccolo.io.FileFormatException;
 
 import play.Logger;
@@ -52,6 +53,7 @@ import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.util.FileSystemPathUtil;
 
 public class DbManagerService {
 	public static final String backupDir = BBConfiguration.getDBBackupDir();
@@ -75,7 +77,7 @@ public class DbManagerService {
 			}
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
-		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),appcode);
+		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),FileSystemPathUtil.escapeName(appcode));
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
 				Duration.create(2, TimeUnit.SECONDS),
@@ -130,6 +132,7 @@ public class DbManagerService {
 			try{
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
+				if (ze==null) throw new FileFormatException("Looks like the uploaded file is not a valid export.");
 				if(ze.isDirectory()){
 					ze = zis.getNextEntry();
 				}
@@ -182,7 +185,7 @@ public class DbManagerService {
 				Logger.error(e.getMessage());
 				throw e;
 			}catch(Throwable e){
-				Logger.error(e.getMessage());
+				Logger.error(ExceptionUtils.getStackTrace(e));
 				throw new Exception("There was an error handling your zip import file.", e);
 			}finally{
 				try {

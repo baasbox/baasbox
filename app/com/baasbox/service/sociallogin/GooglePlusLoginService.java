@@ -97,7 +97,7 @@ public class GooglePlusLoginService extends SocialLoginService{
 		if(ji.get("picture")!=null){
 			i.addData("avatarUrl", ji.get("picture").textValue());
 		}
-		if(ji.get("email")!=null){
+		if(ji.get("name")!=null){
 			i.addData("name",ji.get("name").textValue());
 			String name = ji.get("name").textValue();
 			String username = StringUtils.deleteWhitespace(name.toLowerCase());
