@@ -1812,6 +1812,8 @@ function setupTables(){
 						   delete obj["id"];
 						   delete obj["_author"];
 						   delete obj["_creation_date"];
+						   delete obj["_update_date"];
+						   
 		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
 						},bSortable:false
 		               },

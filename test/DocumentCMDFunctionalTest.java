@@ -105,6 +105,42 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);
 	}
 	
+	@Test 
+	public void testUpdateDateFormat(){
+		running 		(
+			getFakeApplication(), 
+			new Runnable()			{
+				public void run()				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteCMDDocument UPDATE date format", Status.OK, null, true);
+					String sUpdateDate = getUpdateDate();
+					if (!sUpdateDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}\\+\\d{4}")) {
+						 Assert.fail("_update_date field is in wrong format: " + sUpdateDate);
+					}
+				}
+			}
+		);
+	}
+	
+	@Test 
+	public void testCreationAndUpdateDateAreEqual(){
+		running 		(
+			getFakeApplication(), 
+			new Runnable()			{
+				public void run(){
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteCMDDocument testCreationAndUpdateDateAreEqual", Status.OK, null, true);
+					String sCreationDate = getCreationDate();
+					String sUpdateDate = getUpdateDate();
+					Assert.assertEquals("_creation_date and _update_date are not equale: " + sCreationDate.toString() + " " + sUpdateDate.toString(), 
+							sCreationDate,sUpdateDate);
+				}
+			}
+		);
+	}
+	
 	@Test
 	public void testRouteCMDDocument()
 	{
@@ -626,9 +662,21 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Cannot get _author value: " + ex.getMessage());
+			Assert.fail("Cannot get _creation_date value: " + ex.getMessage());
 		}
 		
+		return sRet;
+	}
+	
+	private String getUpdateDate(){
+		String sRet = null;
+		try {
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_update_date");
+		}
+		catch (Exception ex){
+			Assert.fail("Cannot get _update_date value: " + ex.getMessage());
+		}
 		return sRet;
 	}
 	

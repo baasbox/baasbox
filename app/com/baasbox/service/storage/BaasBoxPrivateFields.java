@@ -28,6 +28,7 @@ public enum BaasBoxPrivateFields {
 	ALLOW_UPDATE	("_allowUpdate"),
 	ALLOW_DELETE	("_allowDelete"),
 	CREATION_DATE	("_creation_date",true),
+	UPDATE_DATE	("_update_date",true),
 	AUTHOR			("_author",true);
 	private String field;
 	private boolean visibleByTheClient=false;

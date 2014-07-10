@@ -94,8 +94,6 @@ public class UserDao extends NodeDao  {
 		ODocument doc = new ODocument(this.MODEL_NAME);
 		ODocument vertex = db.addVertex("class:"+CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 		doc.field(FIELD_LINK_TO_VERTEX,vertex);
-		doc.field(FIELD_CREATION_DATE,new Date());
-
 		doc.field(USER_LINK,user.getDocument().getIdentity());
 		doc.save();
 		return doc;
