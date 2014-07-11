@@ -2424,11 +2424,12 @@ function PushSettingsController($scope){
 					type:'PUT',
 					contentType:'application/json',
 					url: url,
-					data:JSON.stringify({value:"true"}),
+					data:JSON.stringify({value:enable}),
 					error: function(data)
 					{
-						////console.debug(data)
-						alert("Error updating sandbox mode:" + data["message"]);
+						//console.debug(data)
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating sandbox mode:" + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
