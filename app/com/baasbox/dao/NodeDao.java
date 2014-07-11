@@ -126,7 +126,7 @@ public abstract class NodeDao  {
 	
 	public ODocument create() throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
+		OrientGraph db = DbHelper.getOrientGraphConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
@@ -290,7 +290,7 @@ public abstract class NodeDao  {
 	
 	public void delete(ORID rid) throws Throwable{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
+		OrientGraph db = DbHelper.getOrientGraphConnection();
 		//retrieve the vertex associated to this node
 		try{
 			DbHelper.requestTransaction();

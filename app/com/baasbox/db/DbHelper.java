@@ -26,10 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.baasbox.dao.RoleDao;
-import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.service.permissions.PermissionTagService;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -46,14 +42,17 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
+import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -67,11 +66,13 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
@@ -112,7 +113,7 @@ public class DbHelper {
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
 			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
-			//db.begin();
+			db.begin();
 		}
 	}
 
@@ -120,7 +121,7 @@ public class DbHelper {
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
 			if (Logger.isTraceEnabled()) Logger.trace("Commit transaction");
-			//db.commit();
+			db.commit();
 		}
 	}
 
@@ -128,7 +129,7 @@ public class DbHelper {
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
 			if (Logger.isTraceEnabled()) Logger.trace("Rollback transaction");
-			//db.rollback();
+			db.rollback();
 		}		
 	}
 
@@ -402,7 +403,7 @@ public class DbHelper {
 
 	public static void populateDB() throws IOException{
 		ODatabaseRecordTx db = getConnection();
-		OrientGraphNoTx dbg =  getOrientGraphConnection();
+		OrientGraphNoTx dbg =  new OrientGraphNoTx(getODatabaseDocumentTxConnection()); 
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -597,8 +598,8 @@ public class DbHelper {
 	
 
 
-	public static OrientGraphNoTx getOrientGraphConnection(){
-		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
+	public static OrientGraph getOrientGraphConnection(){
+		return new OrientGraph(getODatabaseDocumentTxConnection());
 	}
 
 
