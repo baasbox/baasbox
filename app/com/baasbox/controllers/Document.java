@@ -25,6 +25,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import com.google.common.base.Joiner;
 import play.Logger;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
@@ -155,7 +156,6 @@ public class Document extends Controller {
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result queryDocument(String collectionName,String id,boolean isUUID,String parts){
-
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
 		} else{
@@ -164,14 +164,19 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 			ODocument doc;
 			try {
+				
 				String[] tokens = parts.split("/");
 				List<Part> queryParts = new ArrayList<Part>();
 				PartsLexer pp = new PartsLexer();
 				
 				try{
 				for (int i = 0; i < tokens.length; i++) {
-					String p = tokens[i];
-					queryParts.add(pp.parse(p, i+1));
+					try{
+						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
+						queryParts.add(pp.parse(p, i+1));
+					}catch(Exception e){
+						return badRequest("Unable to decode parts");
+					}
 				}
 				}catch(PartValidationException pve){
 					return badRequest(pve.getMessage());
@@ -330,9 +335,12 @@ public class Document extends Controller {
 				List<Part> objParts = new ArrayList<Part>();
 				for (int i = 0; i < tokens.length; i++) {
 					try{
-						objParts.add(lexer.parse(tokens[i], i+1));
+						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
+						objParts.add(lexer.parse(p, i+1));
 					}catch(PartValidationException pve){
 						return badRequest(pve.getMessage());
+					}catch(Exception e){
+						return badRequest("Unable to parse document parts");
 					}
 				}
 				PartsParser pp = new PartsParser(objParts);
