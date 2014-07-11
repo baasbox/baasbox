@@ -2424,7 +2424,7 @@ function PushSettingsController($scope){
 					type:'PUT',
 					contentType:'application/json',
 					url: url,
-					data:JSON.stringify({value:enable}),
+					data:JSON.stringify({value:""+enable+""}),
 					error: function(data)
 					{
 						//console.debug(data)
@@ -2463,7 +2463,8 @@ function PushSettingsController($scope){
 					error: function(data)
 					{
 						////console.debug(data)
-						alert("Error updating settings:" + data["message"]);
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating settings:" + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
