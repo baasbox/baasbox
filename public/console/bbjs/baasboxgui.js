@@ -1671,8 +1671,13 @@ function setupTables(){
 		               }
 		               }],
 
-		               "bRetrieve": true,
-		               "bDestroy":false
+           "bRetrieve": true,
+           "bDestroy":false,
+           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+        	          $(nRow).attr( 'style',"display:none" );
+        	    }
+        	}
 	} ).makeEditable();
 
 	$('#settingsPwdTable').dataTable( {
@@ -1690,9 +1695,13 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+       "bRetrieve": true,
+       "bDestroy":false,
+       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+    	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+    	          $(nRow).attr( 'style',"display:none" );
+    	    }
+    	}
 	} ).makeEditable();
 
 	$('#settingsImgTable').dataTable( {
@@ -1710,9 +1719,13 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+	       "bRetrieve": true,
+	       "bDestroy":false,
+	       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+	    	   if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+	    	          $(nRow).attr( 'style',"display:none" );
+	    	    }
+	    	}
 	} ).makeEditable();
 
 	$('#settingsPushTable').dataTable( {
@@ -1729,9 +1742,13 @@ function setupTables(){
 		            	   if (full.editable) return getActionButton("edit","setting",data);
 		            	   else return "";		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+           "bRetrieve": true,
+           "bDestroy":false,
+           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+        	          $(nRow).attr( 'style',"display:none" );
+        	    }
+        	}
 	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
