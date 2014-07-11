@@ -16,9 +16,8 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var userDataArray;
+
 var roleDataArray;
-var documentDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
@@ -259,11 +258,11 @@ $(".btn-action").live("click", function() {
 	var parameters = $(this).attr("parameters");
 
 	switch (action)	{
-        case "enable":
+    case "enable":
             if(!confirm("Do you want to enable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(true,parameters);
             break;
-        case "disable":
+    case "disable":
             if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(false,parameters);
             break;
@@ -1653,38 +1652,7 @@ function setupTables(){
         "bRetrieve": true,
         "bDestroy": true
     }).makeEditable();
-	$('#userTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
-            var html = data;
-            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
-               html = getActionButton("followers","user",data)+"&nbsp;"+html;
-            }
-            return html;
-        }},
-		               {"mData": "user.roles.0.name"},
-		               {"mData": "signUpDate","sDefaultContent":""},
-		               {"mData": "user.status","mRender": function ( data, type, full ) {
-		            	   var classStyle="label-success"
-		            		   if (data!="ACTIVE") classStyle="label-important";
-		            	   var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
-		            	   return htmlReturn;
-		               }
-		               },
-		               {"mData": "user", "mRender": function ( data, type, full ) {
-		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
-                               var _active = data.status == "ACTIVE";
-                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);
-                           }
-		            	   return "No action available";
-		               },bSortable:false
-		               }],
-		               "bRetrieve": true,
-		               "bDestroy":true
-	} ).makeEditable();
+	$('#userTable').dataTable( ).makeEditable();
 
 	$('#settingsTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
@@ -1789,58 +1757,7 @@ function setupTables(){
 		               "bDestroy":true
 	} ).makeEditable();
 
-	$('#documentTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-//    	    			console.log("DATA: "+data);
-                        var datetime = data.split("T");
-    	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
-						}
-					   },
-					   {"mData": "id", sWidth:"280px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		               {"mData": "_author"},
-		               {"mData": "@rid","mRender": function ( data, type, full ) 	{
-		            	   var obj=JSON.parse(JSON.stringify(full));
-		            	   delete obj["@rid"];
-		            	   delete obj["@class"];
-		            	   delete obj["@version"];
-						   delete obj["id"];
-						   delete obj["_author"];
-						   delete obj["_creation_date"];
-		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
-						},bSortable:false
-		               },
-		               {"mData": "id","mRender": function ( data, type, full ) {
-							var obj=JSON.parse(JSON.stringify(full));
-		            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
-		            	},bSortable:false,bSearchable:false
-		               }
-		               ],
-//                       "sAjaxSource": "fake",
-//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
-//                           val = $("#selectCollection").val();
-//                          var callback = fnCallback;
-//
-//                           if(val != null) {
-//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-//                                  data: {orderBy: "name asc"},
-//                                   success: function (data) {
-//                                       console.log(typeof data["data"]);
-//                                       callback({"aaData":data["data"]});
-//                                   }
-//                               });
-//                           }
-//                        },
-//                        "bProcessing": true,
-//                       "bServerSide": true,
-		               "bRetrieve": true,
-		               "bDestroy":true
-	} ).makeEditable();
+	$('#documentTable').dataTable().makeEditable();
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
@@ -1896,69 +1813,22 @@ function setupTables(){
 		              "bDestroy":true
 	} ).makeEditable();
 
-	$('#fileTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [
-		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  return getFileIcon(obj["contentType"],obj["id"]);
-		              }},
-					   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		              {"mData": "id", "mRender": function ( data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  if(obj["attachedData"] != undefined)
-		            	  {
-		            		  return "<pre>" + JSON.stringify(obj["attachedData"],undefined,2) + "</pre>";
-		            	  }
-		            	  else
-		            	  {
-		            		  return "";
-		            	  }
-		              },bSortable:false},
-		              {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return  bytesToSize(obj["contentLength"],'KB');
-		              }},
-		         /*     {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return obj["contentType"];
-		              }},*/
-		              {"mData": "id", sWidth:"210px","mRender": function (data, type, full) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return "<a href='/file/" + obj["id"] + "?download=true&X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
-		              }},
-		              {"mData": "id", "mRender": function (data) {
-		            	  return getActionButton("delete","file",data);
-		              }}
-		              ],
-		              "bRetrieve": true,
-		              "bDestroy":true
-	} ).makeEditable();
+	$('#fileTable').dataTable().makeEditable();
 
 } //setupTables()
 
 function setupSelects(){
 
 	$("#selectCollection").chosen().change(function(){
-		val=$("#selectCollection").val();
-		BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-			data: {orderBy: "name asc"},
-			success: function(data) {
-				data=data["data"];
-				var scope=$("#documents").scope();
-				scope.$apply(function(){
-					scope.collectionName=val;
-				});
-				$('#documentTable').dataTable().fnClearTable();
-				$('#documentTable').dataTable().fnAddData(data);
-				documentDataArray=data;
-			}
-		})//BBRoutes.com.baasbox.controllers.Document.getDocuments
+		if ($('#selectCollection').has('option').length>0){
+			val=$("#selectCollection").val();
+			console.log('collName length ' + $('#selectCollection').has('option').length);
+			loadDocumentsData(val);   
+			var scope=$("#documents").scope();
+			scope.$apply(function(){
+				scope.collectionName=val;
+			});
+		}//dropdown option has not been selected yet
 	});//selectCollection
 }
 
@@ -2064,19 +1934,21 @@ function callMenu(action){
 				$('#roleTable').dataTable().fnAddData(roleDataArray);
 			}
 		});
-		break;//#users
+		break;//#roles
 	case "#users":
+		resetDataTable( $('#userTable'));
+		loadUsersData();
+		applySuccessMenu(action,userDataArray);
+		/*
 		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
 			data: {orderBy: "user.name asc"},
 			success: function(data) {
 				userDataArray = data["data"];
-				//console.debug("Admin.getUsers success:");
-				//console.debug(data);
 				applySuccessMenu(action,userDataArray);
 				$('#userTable').dataTable().fnClearTable();
 				$('#userTable').dataTable().fnAddData(userDataArray);
 			}
-		});
+		})*/;
 		break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
@@ -2284,7 +2156,7 @@ function callMenu(action){
 
 		break;//#collections
 	case "#documents":
-        $('#documentTable').dataTable().fnClearTable();
+		resetDataTable( $('#documentTable'));
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2306,7 +2178,7 @@ function callMenu(action){
 			}
 		});
 		break; //#documents
-	case "#assets":
+		case "#assets":
 		BBRoutes.com.baasbox.controllers.Asset.getAll().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2319,16 +2191,9 @@ function callMenu(action){
 			}
 		});
 		case "#files":
-		BBRoutes.com.baasbox.controllers.File.getAllFile().ajax({
-			data: {orderBy: "_creation_date asc"},
-			success: function(data) {
-				data=data["data"];
-				applySuccessMenu(action,data);
-				$('#fileTable').dataTable().fnClearTable();
-				$('#fileTable').dataTable().fnAddData(data);
-				$.trim($('#fuFile').val(""));
-			}
-		});
+			resetDataTable( $('#fileTable'));
+			loadFilesData();
+			applySuccessMenu(action,filesDataArray);
 		break;//#files
         case "#permissions":
             BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
