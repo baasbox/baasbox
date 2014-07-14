@@ -26,6 +26,7 @@ public interface IQueryParametersKeys {
 	public static final String ORDER_BY="orderBy";
 	public static final String GROUP_BY="groupBy";
 	public static final String PARAMS="params";
+	public static final String SKIP="skip";
 	
 	
 	public static final String QUERY_PARAMETERS="qryp";
