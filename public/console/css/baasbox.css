@@ -156,6 +156,8 @@ div.setting button.upload {
 }
 .navbar .brand, .navbar .nav > li > a {
     color: #2e2727;
+    height:40px;
+    width:228px;
 }
 .sidebar-nav {
 
@@ -380,4 +382,11 @@ nav {
 
 .nav-tabs.nav-stacked.main-menu > .active > a {
 	background-color:#999999 !important;
+}
+
+img.companylogo {
+	height:40px;
+	width:228px;
+	margin-top:-1px;
+	margin-left:53px;
 }
