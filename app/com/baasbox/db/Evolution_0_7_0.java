@@ -21,7 +21,10 @@ package com.baasbox.db;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import play.Logger;
 
@@ -35,8 +38,10 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -133,16 +138,21 @@ public class Evolution_0_7_0 implements IEvolution {
 				"_bb_password_recovery"}
 		);
 		Logger.info("...migrating indices...");
+		
 		Collection indices= db.getMetadata().getIndexManager().getIndexes();
 		for (Object in:indices){
 			OIndex i = (OIndex)in;
 			if (indicesName.contains(i.getName())){
 				//migrate the index
 				Logger.info("....." + i.getName());
-				ArrayList keys = Lists.newArrayList(i.keys()) ;
-				for (int j=0;j<keys.size();j++){
-					String key = (String) keys.get(j);
-					Object valueOnDb=i.get(key);
+				
+				OIndexCursor cursor = i.cursor();
+				Set<Entry<Object, OIdentifiable>> entries = cursor.toEntries();
+				Iterator<Entry<Object, OIdentifiable>> it = entries.iterator();
+				while (it.hasNext()){
+					Entry<Object, OIdentifiable> entry = it.next();
+					String key = (String) entry.getKey();
+					Object valueOnDb=entry.getValue();
 					valueOnDb=db.load((ORID)valueOnDb);
 					if (valueOnDb!=null){
 						Logger.info(".....   key: " + key);
@@ -157,6 +167,7 @@ public class Evolution_0_7_0 implements IEvolution {
 				db.getMetadata().getIndexManager().dropIndex(i.getName());
 			}//the index is a baasbox index
 		}//for each index defined on the db	
+		
 		Logger.info("...end indices migration");
 	}//update indices
 	

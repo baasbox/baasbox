@@ -59,6 +59,7 @@ import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -106,30 +107,36 @@ public class DbHelper {
 	
 	public static boolean isInTransaction(){
 		 ODatabaseRecordTx db = getConnection();
-		return !(db.getTransaction() instanceof OTransactionNoTx);
+		 return db.getTransaction().isActive();
 	}
 
 	public static void requestTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
+			if (Logger.isDebugEnabled()) Logger.debug("Begin transaction");
 			db.begin();
+			 Logger.debug("*** 0 " + db.getTransaction().isActive());
 		}
 	}
 
 	public static void commitTransaction(){
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Commit transaction");
+			if (Logger.isDebugEnabled()) Logger.debug("Commit transaction");
 			db.commit();
+			db.getTransaction().close();
 		}
 	}
 
 	public static void rollbackTransaction(){
 		ODatabaseRecordTx db = getConnection();
+		db.rollback();
+		db.getTransaction().close();
+		
 		if (isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Rollback transaction");
+			if (Logger.isDebugEnabled()) Logger.debug("Rollback transaction");
 			db.rollback();
+			db.getTransaction().close();
 		}		
 	}
 
@@ -302,7 +309,8 @@ public class DbHelper {
 		String databaseName=BBConfiguration.getDBDir();
 		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
-		new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir()).open(username,password);
+		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir());
+		conn.open(username,password);
 		HooksManager.registerAll(getConnection());
 		
 		DbHelper.appcode.set(appcode);
@@ -599,7 +607,14 @@ public class DbHelper {
 
 
 	public static OrientGraph getOrientGraphConnection(){
-		return new OrientGraph(getODatabaseDocumentTxConnection());
+		boolean closeAutotx=false;
+		//TODO: when we will migrate to OrientDB 1.7 this will become
+		return new OrientGraph(getODatabaseDocumentTxConnection(),false);
+		/*if (!getConnection().getTransaction().isActive()) closeAutotx=true;
+		OrientGraph og = new OrientGraph(getODatabaseDocumentTxConnection());
+		og.setAutoStartTx(false);
+		if (closeAutotx) og.commit();
+		return og;*/
 	}
 
 

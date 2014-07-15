@@ -200,16 +200,19 @@ try{
     //because we have to create an OUser record and a User Object, we need a transaction
 
       DbHelper.requestTransaction();
-      
+      Logger.debug("*** 1 " + db.getTransaction().isActive());
       if (role==null) profile=dao.create(username, password);
       else profile=dao.create(username, password,role);
+      Logger.debug("*** 2 " + db.getTransaction().isActive());
       
       ORID userRid = ((ODocument)profile.field("user")).getIdentity();
       ORole friendRole=RoleDao.createFriendRole(username);
+      Logger.debug("*** 3 " + db.getTransaction().isActive());
       friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
       friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
       friendRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
       friendRole.getDocument().field(RoleService.FIELD_DESCRIPTION,"These are friends of " + username);
+      Logger.debug("*** 4 " + db.getTransaction().isActive());
       
       /*    these attributes are visible by:
        *    Anonymous users
@@ -224,8 +227,11 @@ try{
                     try{
                     	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
                     	  else attrObj.fromJSON("{}");
+                    	  Logger.debug("*** 5 " + db.getTransaction().isActive());
                     }catch (OSerializationException e){
+                    	 Logger.debug("*** 6 " + db.getTransaction().isActive());
                             throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
+                           
                     }
                     PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
                     PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));        

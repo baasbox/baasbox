@@ -96,6 +96,7 @@ public abstract class NodeDao  {
 	}
 
 	public Integer updateByQuery(String query) throws InvalidCriteriaException{
+		if (Logger.isDebugEnabled()) Logger.debug("Update query: " + query);
 		OCommandRequest command = db.command(new OCommandSQL(
 				query
 				));
