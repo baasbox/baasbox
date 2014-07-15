@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 
 
@@ -81,7 +81,7 @@ public class UserDao extends NodeDao  {
 	};
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException,InvalidParameterException {
-		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
+		OrientGraph db = DbHelper.getOrientGraphConnection();
 		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
 		OUser user=null;
 		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new 

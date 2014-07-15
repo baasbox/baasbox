@@ -52,7 +52,6 @@ public class DocumentDao extends NodeDao {
 	@Override
 	public ODocument create() throws Throwable{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		DbHelper.requestTransaction();
 		ODocument doc = super.create();
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return doc;

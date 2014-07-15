@@ -142,7 +142,7 @@ public class CollectionDao extends NodeDao {
 			//commit
 			DbHelper.commitTransaction();
 			
-			//drop the collection class
+			//drop the collection class outside collection
 			String dropCollection= "drop class " + name;
 			gdao.executeCommand(dropCollection, new Object[] {});
 			

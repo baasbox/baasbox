@@ -22,7 +22,6 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
@@ -34,6 +33,7 @@ import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -57,10 +57,11 @@ public class DocumentService {
 
 	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
-
-		ODocument doc = dao.create();
-		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-		dao.save(doc);
+		DbHelper.requestTransaction();
+			ODocument doc = dao.create();
+			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			dao.save(doc);
+		DbHelper.commitTransaction();
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}
 
@@ -208,14 +209,14 @@ public class DocumentService {
 		StringBuffer q = new StringBuffer("");
 
 		if(!pp.isMultiField() && !pp.isArray()){
-			q.append("update ").append(collectionName)
+			q.append("update ").append(rid)
 			.append(" set ")
 			.append(pp.treeFields())
 			.append(" = ")
 			.append(bodyJson.get("data").toString());
 
 		}else{
-			q.append("update ").append(collectionName)
+			q.append("update ").append(rid)
 			.append(" merge ");
 			String content = od.toJSON();
 			ObjectNode json = null;
@@ -227,7 +228,7 @@ public class DocumentService {
 			JsonTree.write(json, pp, bodyJson.get("data"));
 			q.append(json.toString());
 		}
-		q.append(" where @rid = ").append(rid);
+		//q.append(" where @rid = ").append(rid);
 		try{
 			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
 		}catch(OSecurityException  e){
