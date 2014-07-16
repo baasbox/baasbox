@@ -50,6 +50,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
+import com.baasbox.configuration.PushProfile;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
@@ -500,6 +501,23 @@ public class Admin extends Controller {
 		}
 		return ok(dump);
 	}
+	
+	public static Result createConfigurationPush(String nameProfile){
+	    if(StringUtils.isEmpty(nameProfile)) {
+	    	return badRequest("Name profile push cannot be blank");
+	    }
+		PushProfile pushProfile = new PushProfile(nameProfile);		
+		return ok();
+	}
+	
+	public static Result deleteConfigurationPush(String nameProfile){
+		return ok();
+	}
+	
+	public static Result setConfigurationPush(String nameProfile){
+		return ok();
+	}
+	
 
 	public static Result setConfiguration(String section, String subSection, String key, String value){
 		

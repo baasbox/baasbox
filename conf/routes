@@ -327,7 +327,14 @@ GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfig
 
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
 #DEPRECATED
+# --------
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+# --------
+
+POST 	/admin/configuration/Push/:nameProfile					com.baasbox.controllers.Admin.createConfigurationPush(nameProfile: String)
+DELETE  /admin/configuration/Push/:nameProfile					com.baasbox.controllers.Admin.deleteConfigurationPush(nameProfile: String)
+PUT     /admin/configuration/Push/:nameProfileWithKey           com.baasbox.controllers.Admin.setConfigurationPush(nameProfileWithKey: String)
+
 PUT     /admin/configuration/:section/:key                      com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String ?= "")
 PUT     /admin/configuration/:section                        	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String ?= "", value: String ?= "")
 

@@ -47,9 +47,10 @@ public class PropertiesConfigurationHelper {
 	public static final ImmutableMap<String,Class> CONFIGURATION_SECTIONS = ImmutableMap.of(
 														 "PasswordRecovery",(Class)PasswordRecovery.class
 														,"Application",(Class)Application.class
-														,"Push",(Class)Push.class
+														,"PushProfile",(Class)PushProfile.class
 														,"Images",(Class)ImagesConfiguration.class
 														,"Social",(Class)SocialLoginConfiguration.class
+														
 	);
 	
 	
