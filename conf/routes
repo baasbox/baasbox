@@ -207,10 +207,10 @@ GET		 /document/:collection/:uuid					com.baasbox.controllers.Document.getDocume
 DELETE	 /document/:collection/:uuid					com.baasbox.controllers.Document.deleteDocument(collection: String, uuid: String, isUUID: Boolean ?= true)
 
 # @tag(baasbox.data.read)
-GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+%5D)?/?)+>  com.baasbox.controllers.Document.queryDocument(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 # @tag(baasbox.data.update)
-PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(\[([0-9])+\])?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
+PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+%5D)?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
 
 #Links between objects (documents, files, users)

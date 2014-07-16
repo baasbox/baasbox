@@ -30,6 +30,7 @@ public class DocumentUpdateSingleFieldTest extends AbstractDocumentTest {
 	private Object json = null;
 	private JsonNode document1;
 	private JsonNode jsonForUpdate;
+	private JsonNode jsonForArrayUpdate,jsonForArrayIndexUpdate,jsonForArrayObjectUpdate,jsonForObjectStatusUpdate;
 	private String sFakeCollection;
 
 	@Override
@@ -52,10 +53,15 @@ public class DocumentUpdateSingleFieldTest extends AbstractDocumentTest {
 	public void setDocument() throws JsonProcessingException, IOException{
 		document1 = new ObjectMapper().readTree("{\"total\":2,\"city\":\"rome\"}");
 		jsonForUpdate=new ObjectMapper().readTree("{\"data\":\"milan\"}");
+		jsonForArrayUpdate=new ObjectMapper().readTree("{\"data\":[\"one\",\"two\",\"three\"]}");
+		jsonForArrayIndexUpdate=new ObjectMapper().readTree("{\"data\":\"four\"}");
+		jsonForArrayObjectUpdate=new ObjectMapper().readTree("{\"data\":[{\"title\":\"issue1\",\"description\":\"issue1-desc\",\"tags\":[\"1\",\"2\",\"3\"]}]}");
+		jsonForObjectStatusUpdate = new ObjectMapper().readTree("{\"data\":\"ONGOING\"}");
+		
 	}
 	
 	@Test
-	public void testOnlyFields(){
+	public void testOnlyFields() throws Exception{
 		running
 		(
 			getFakeApplication(), 
@@ -89,6 +95,47 @@ public class DocumentUpdateSingleFieldTest extends AbstractDocumentTest {
 					request = request.withJsonBody(jsonForUpdate,"PUT");
 					result = routeAndCall(request);
 					assertRoute(result, "testOnlyFields fields 1", Status.OK, "\"city\":\"milan\"", true);					
+					
+					request = new FakeRequest("PUT", "/document/" + sFakeCollection + "/" + id1 + "/.tags");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withJsonBody(jsonForArrayUpdate,"PUT");
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 2", Status.OK, "\"tags\":[\"one\",\"two\",\"three\"]", true);
+					
+					request = new FakeRequest("GET", "/document/" + sFakeCollection + "/" + id1 + "/.tags%5B0%5D");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 3", Status.OK, "\"result\":\"one\"", true);
+					
+					request = new FakeRequest("PUT", "/document/" + sFakeCollection + "/" + id1 + "/.tags%5B3%5D");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request.withJsonBody(jsonForArrayIndexUpdate,"PUT");
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 4", Status.OK, "\"tags\":[\"one\",\"two\",\"three\",\"four\"]", true);
+					
+					request = new FakeRequest("PUT", "/document/" + sFakeCollection + "/" + id1 + "/.issues");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request.withJsonBody(jsonForArrayObjectUpdate,"PUT");
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 5", Status.OK, "\"tags\":[\"1\",\"2\",\"3\"]", true);
+					
+					request = new FakeRequest("PUT", "/document/" + sFakeCollection + "/" + id1 + "/.issues%5B0%5D/.status");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request.withJsonBody(jsonForObjectStatusUpdate,"PUT");
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 6", Status.OK, "\"status\":\"ONGOING\"", true);
+					
+					request = new FakeRequest("PUT", "/document/" + sFakeCollection + "/" + id1 + "/.issues%5B0%5D/.tags%5B3%5D");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request.withJsonBody(jsonForArrayIndexUpdate,"PUT");
+					result = routeAndCall(request);
+					assertRoute(result, "testOnlyFields fields 7", Status.OK, "\"tags\":[\"1\",\"2\",\"3\",\"four\"]", true);
 
 					
 					//issue #243

@@ -18,6 +18,7 @@
 
 package com.baasbox.service.query;
 
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.google.code.regexp.Matcher;
 import com.google.code.regexp.Pattern;
 
@@ -90,6 +91,13 @@ public class PartsLexer {
 			}
 			if(this.fieldName==null){
 				error = "Field name is not compliant.It could only contain lowercase/uppercase letters and/or digits";
+			}else{
+				for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
+					if(r.toString().equals(this.fieldName)){
+						error = "This field is private and can't be modified";
+						break;
+					}
+				}
 			}
 			
 			return error;
