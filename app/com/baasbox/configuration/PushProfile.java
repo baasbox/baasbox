@@ -23,7 +23,7 @@ public class PushProfile implements IProperties {
 	
 	public PushProfile(String iprofileName,Push iPush){
 		property=iPush;
-		key=iprofileName+iPush.getKey();
+		key=String.format("%s.%s",iprofileName,iPush.getKey());
 		description=iPush.getValueDescription();
 		type=iPush.getType();
 		changeCallback=iPush.getCallback();
