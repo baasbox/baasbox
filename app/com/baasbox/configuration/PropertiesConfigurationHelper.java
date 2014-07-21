@@ -217,6 +217,13 @@ public class PropertiesConfigurationHelper {
 				  Class type = (Class) en.getMethod("getType").invoke(v);
 				  
 			      gen.writeStartObject();																				//					{
+			      
+			     /* if (en==Push.class){
+			    	  String prefix=(String)(en.getMethod("getProfileName")).invoke(v);
+			    	  gen.writeStringField("profileName",prefix);
+			 
+			      } */
+			      
 			      gen.writeStringField("key", key);	
 			      gen.writeStringField("value",valueAsString);
 			      gen.writeStringField("description", valueDescription);												//						,"description":"description"

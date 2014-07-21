@@ -37,7 +37,6 @@ public enum Push implements IProperties{
 	PRODUCTION_IOS_CERTIFICATE_PASSWORD("production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode", String.class);
 
 
-
 	private final String                 key;
 	private final Class<?>               type;
 	private String                       description;
@@ -56,7 +55,7 @@ public enum Push implements IProperties{
 		changeCallback = iChangeAction;
 	}
 
-	Push(final String iKey, final String iDescription, final Class<?> iType) {
+	 Push(final String iKey, final String iDescription, final Class<?> iType) {
 		key = iKey;
 		description = iDescription;
 		type = iType;
@@ -176,6 +175,10 @@ public enum Push implements IProperties{
 	public String getKey() {
 		return key;
 	}
+	
+	public IPropertyChangeCallback getCallback() {
+		return changeCallback;
+	}
 
 	@Override
 	public Class<?> getType() {
@@ -186,8 +189,6 @@ public enum Push implements IProperties{
 	public String getValueDescription() {
 		return description;
 	}
-
-
 
 	public static String getEnumDescription() {
 		return "Configurations for push related properties"; 

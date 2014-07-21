@@ -502,19 +502,48 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 	
+	
+	
+	/***
+	 * /admin/configuration/Push/:pushProfile (POST)
+	 * 
+	 * @param pushProfile
+	 * @return
+	 */
 	public static Result createConfigurationPush(String nameProfile){
-	    if(StringUtils.isEmpty(nameProfile)) {
-	    	return badRequest("Name profile push cannot be blank");
-	    }
-		PushProfile pushProfile = new PushProfile(nameProfile);		
-		return ok();
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+	
+		String name = nameProfile.replaceAll("\\W+", "");
+		
+		PushProfile newProductionAndroidProfile = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY);
+		PushProfile newProfileProductionIosCertificate = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE);
+		PushProfile newProfileProduction_Ios_CertificatePassword = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE_PASSWORD);
+		PushProfile newProfilePushAppleTimeout = new PushProfile(nameProfile,com.baasbox.configuration.Push.PUSH_APPLE_TIMEOUT);
+		PushProfile newProfilePushSandboxEnable = new PushProfile(nameProfile,com.baasbox.configuration.Push.PUSH_SANDBOX_ENABLE);
+		PushProfile newProfileSandboxAndroidApiKey = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_ANDROID_API_KEY);
+		PushProfile newProfileSandboxIosCertificate = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE);
+		PushProfile newProfileSandboxIosCertificatePassword = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE_PASSWORD);
+
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		return created();
 	}
 	
+	/***
+	 * /admin/configuration/Push/:pushProfile (DELETE)
+	 * 
+	 * @param pushProfile
+	 * @return
+	 */
 	public static Result deleteConfigurationPush(String nameProfile){
 		return ok();
 	}
 	
+	
 	public static Result setConfigurationPush(String nameProfile){
+		return ok();
+	}
+	
+	public static Result ConfigurationPush(String nameProfile){
 		return ok();
 	}
 	
