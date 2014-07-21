@@ -16,7 +16,7 @@
  */
 package com.baasbox.exception;
 
-public class PasswordRecoveryException extends Exception {
+public class PasswordRecoveryException extends BaasBoxException {
 
 	public PasswordRecoveryException() {
 		super();

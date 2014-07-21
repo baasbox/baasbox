@@ -29,10 +29,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -63,6 +65,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
@@ -495,7 +498,12 @@ public class User extends Controller {
 			  return badRequest("The old password does not match with the current one");
 		  }	  
 
-		  UserService.changePasswordCurrentUser(newPassword);
+		  try {
+			UserService.changePasswordCurrentUser(newPassword);
+		  } catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+		  }
 		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok();
 	  }	  
@@ -611,6 +619,9 @@ public class User extends Controller {
 				UserService.disableCurrentUser();
 			} catch (UserNotFoundException e) {
 				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
 			}
 		  return ok();
 	  }
@@ -633,7 +644,12 @@ public class User extends Controller {
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
 			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
 			if(!alreadyFriendOf){
-				UserService.addUserToRole(me.getName(), friendshipRoleName);
+				try {
+					UserService.addUserToRole(me.getName(), friendshipRoleName);
+				} catch (OpenTransactionException e) {
+					Logger.error (ExceptionUtils.getFullStackTrace(e));
+					throw new RuntimeException(e);
+				}
 				ODocument userToFollowObject;
 				try {
 					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
@@ -736,7 +752,12 @@ public class User extends Controller {
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
 			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
 			if(alreadyFriendOf){
-				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				try {
+					UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				} catch (OpenTransactionException e) {
+					Logger.error (ExceptionUtils.getFullStackTrace(e));
+					throw new RuntimeException(e);
+				}
 				return ok();
 		  	}else{
 		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);

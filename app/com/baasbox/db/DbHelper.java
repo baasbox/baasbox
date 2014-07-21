@@ -47,6 +47,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
@@ -317,7 +318,8 @@ public class DbHelper {
         return excludeInternal ? isAdminRole && !BBConfiguration.getBaasBoxAdminUsername().equals(user.getName()) : isAdminRole;
     }
 
-	public static ODatabaseRecordTx reconnectAsAdmin (){
+	public static ODatabaseRecordTx reconnectAsAdmin () throws OpenTransactionException{
+		if (isInTransaction()) throw new OpenTransactionException("Operation not allowed within an open transaction"); 
 		getConnection().close();
 		try {
 			return open (appcode.get(),BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
@@ -326,7 +328,8 @@ public class DbHelper {
 		}
 	}
 
-	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
+	public static ODatabaseRecordTx reconnectAsAuthenticatedUser () throws OpenTransactionException{
+		if (isInTransaction()) throw new OpenTransactionException("Operation not allowed within an open transaction"); 
 		getConnection().close();
 		try {
 			return open (appcode.get(),getCurrentHTTPUsername(),getCurrentHTTPPassword());

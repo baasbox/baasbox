@@ -66,6 +66,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
@@ -446,8 +447,11 @@ public class Admin extends Controller {
 		try{
 			UserService.changePassword(username, password);
 		} catch (UserNotFoundException e) {
-		    Logger.error("Username not found " + username, e);
+		    Logger.debug("Username not found " + username, e);
 		    return notFound("Username not found");
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok();	
@@ -735,6 +739,9 @@ public class Admin extends Controller {
 			UserService.disableUser(username);
 		} catch (UserNotFoundException e) {
 			return badRequest(e.getMessage());
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		return ok();
 	}
@@ -753,6 +760,9 @@ public class Admin extends Controller {
 			UserService.enableUser(username);
 		} catch (UserNotFoundException e) {
 			return badRequest(e.getMessage());
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		return ok();
 	}

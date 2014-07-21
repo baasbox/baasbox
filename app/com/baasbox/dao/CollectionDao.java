@@ -20,9 +20,11 @@ import play.Logger;
 
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.exception.OpenTransactionException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -54,9 +56,13 @@ public class CollectionDao extends NodeDao {
 	 * Creates an entry into the ODocument-Collection and create a new Class named "collectionName"
 	 * @param collectionName
 	 * @return
+	 * @throws CollectionAlreadyExistsException 
+	 * @throws InvalidCollectionException 
+	 * @throws InvalidModelException, Throwable 
 	 * @throws Throwable 
 	 */
-	public ODocument create(String collectionName) throws Throwable {
+	public ODocument create(String collectionName) throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable {
+		if (DbHelper.isInTransaction()) throw new OpenTransactionException("Cannot create a collection within an open transaction");
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		try {
 			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
