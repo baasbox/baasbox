@@ -22,6 +22,7 @@ public class PushProfile implements IProperties {
 	private boolean						 overridden=false;
 	
 	public PushProfile(String iprofileName,Push iPush){
+		profileName=iprofileName;
 		property=iPush;
 		key=String.format("%s.%s",iprofileName,iPush.getKey());
 		description=iPush.getValueDescription();
