@@ -1,19 +1,28 @@
 package com.baasbox.configuration;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.collections.MultiHashMap;
+import org.apache.commons.collections.MultiMap;
+
 import play.Logger;
 
 import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.SetMultimap;
 
 public class PushProfile implements IProperties {
 	public com.baasbox.configuration.Push property;
 	public String profileName;
+	private static MultiMap map;
 	
-	private final String                 key;
-	private final Class<?>               type;
-	private String                       description;
-	private IPropertyChangeCallback 	 changeCallback = null;
+	private  String                      key;
+	private  Class<?>                    type;
+	private  String                      description;
+	private  IPropertyChangeCallback 	 changeCallback = null;
 
 	//override 
 	private boolean 					 editable=true;
@@ -21,15 +30,22 @@ public class PushProfile implements IProperties {
 	private Object 						 overriddenValue=null;
 	private boolean						 overridden=false;
 	
-	public PushProfile(String iprofileName,Push iPush){
-		profileName=iprofileName;
-		property=iPush;
-		key=String.format("%s.%s",iprofileName,iPush.getKey());
-		description=iPush.getValueDescription();
-		type=iPush.getType();
-		changeCallback=iPush.getCallback();
+	public PushProfile(){
+		map=new MultiHashMap();
+	}
+	
+	public static void addElement(String iprofileName,Push iPush){
+		String key=String.format("%s.%s",iprofileName,iPush.getKey());
+		String description=iPush.getValueDescription();
+		Class<?> type=iPush.getType();
+		PushProperty pp=new PushProperty(iprofileName,key,description,type);
+		map.put(iprofileName, pp);
 	}
 
+	public static MultiMap getMap(){
+		return map;
+	}
+	
 	@Override
 	public void setValue(Object newValue) throws IllegalStateException{
 		if (!editable) throw new IllegalStateException("The value cannot be changed");
@@ -149,6 +165,7 @@ public class PushProfile implements IProperties {
 	public Class<?> getType() {
 		return type;
 	}
+	
 
 	@Override
 	public String getValueDescription() {

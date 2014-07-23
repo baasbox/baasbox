@@ -515,15 +515,19 @@ public class Admin extends Controller {
 	
 		String name = nameProfile.replaceAll("\\W+", "");
 		
-		PushProfile newProductionAndroidProfile = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY);
-		PushProfile newProfileProductionIosCertificate = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE);
-		PushProfile newProfileProduction_Ios_CertificatePassword = new PushProfile(nameProfile,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE_PASSWORD);
-		PushProfile newProfilePushAppleTimeout = new PushProfile(nameProfile,com.baasbox.configuration.Push.PUSH_APPLE_TIMEOUT);
-		PushProfile newProfilePushSandboxEnable = new PushProfile(nameProfile,com.baasbox.configuration.Push.PUSH_SANDBOX_ENABLE);
-		PushProfile newProfileSandboxAndroidApiKey = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_ANDROID_API_KEY);
-		PushProfile newProfileSandboxIosCertificate = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE);
-		PushProfile newProfileSandboxIosCertificatePassword = new PushProfile(nameProfile,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE_PASSWORD);
-
+	    PushProfile pp=new PushProfile();
+		
+		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY);
+		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE);
+		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE_PASSWORD);
+		pp.addElement(name,com.baasbox.configuration.Push.PUSH_APPLE_TIMEOUT);
+		pp.addElement(name,com.baasbox.configuration.Push.PUSH_SANDBOX_ENABLE);
+		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_ANDROID_API_KEY);
+		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE);
+		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE_PASSWORD);
+	
+		//com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY.setProfileName(name);
+		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		return created();
 	}
@@ -543,9 +547,6 @@ public class Admin extends Controller {
 		return ok();
 	}
 	
-	public static Result ConfigurationPush(String nameProfile){
-		return ok();
-	}
 	
 
 	public static Result setConfiguration(String section, String subSection, String key, String value){

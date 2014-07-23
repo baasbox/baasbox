@@ -22,12 +22,16 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.collections.MultiMap;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
@@ -35,6 +39,7 @@ import play.Logger;
 import com.baasbox.exception.ConfigurationException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.SetMultimap;
 
 
 
@@ -196,16 +201,50 @@ public class PropertiesConfigurationHelper {
 	
 	public static String dumpConfigurationSectionAsFlatJson(String section){
 		Class en = CONFIGURATION_SECTIONS.get(section);
+		
 		try {
 			JsonFactory jfactory = new JsonFactory();
 			StringWriter sw = new StringWriter();
 			String enumDescription = "";			
 			JsonGenerator gen = jfactory.createJsonGenerator(sw);
 			gen.writeStartArray();	
-			EnumSet values = EnumSet.allOf( en );
+			EnumSet values;
+			if(en==PushProfile.class) {
+				MultiMap map=PushProfile.getMap();
+				Set<String> keys=map.keySet();
+				for(String k: keys){
+					Collection coll=(Collection) map.get(k);
+					for(Object push:coll) {
+						String key=(String) (en.getMethod("getKey")).invoke(push);
+						  
+						  boolean isVisible=(Boolean)(en.getMethod("isVisible")).invoke(push);
+						  String valueAsString;
+						  if (isVisible) valueAsString=(String) (en.getMethod("getValueAsString")).invoke(push);
+						  else valueAsString = "--HIDDEN--";
+						  boolean isEditable=(Boolean)(en.getMethod("isEditable")).invoke(push);
+					      boolean isOverridden = (Boolean)(en.getMethod("isOverridden")).invoke(push);
+						  String valueDescription=(String) (en.getMethod("getValueDescription")).invoke(push);
+						  Class type = (Class) en.getMethod("getType").invoke(push);
+						  
+					      gen.writeStartObject();																				//					{
+					        
+					      
+					      gen.writeStringField("key", key);	
+					      gen.writeStringField("value",valueAsString);
+					      gen.writeStringField("description", valueDescription);												//						,"description":"description"
+					      gen.writeStringField("type",type.getSimpleName());													//						,"type":"type"
+					      gen.writeBooleanField("editable", isEditable);
+					      gen.writeBooleanField("overridden", isOverridden);
+					      gen.writeEndObject();
+					}
+				}
+				
+				values = EnumSet.allOf( Push.class );
+			}
+			else values = EnumSet.allOf( en );
+			
 			for (Object v : values) {
 				  String key=(String) (en.getMethod("getKey")).invoke(v);
-				  
 				  
 				  boolean isVisible=(Boolean)(en.getMethod("isVisible")).invoke(v);
 				  String valueAsString;
@@ -217,12 +256,7 @@ public class PropertiesConfigurationHelper {
 				  Class type = (Class) en.getMethod("getType").invoke(v);
 				  
 			      gen.writeStartObject();																				//					{
-			      
-			     /* if (en==Push.class){
-			    	  String prefix=(String)(en.getMethod("getProfileName")).invoke(v);
-			    	  gen.writeStringField("profileName",prefix);
-			 
-			      } */
+			        
 			      
 			      gen.writeStringField("key", key);	
 			      gen.writeStringField("value",valueAsString);
@@ -231,6 +265,7 @@ public class PropertiesConfigurationHelper {
 			      gen.writeBooleanField("editable", isEditable);
 			      gen.writeBooleanField("overridden", isOverridden);
 			      gen.writeEndObject();																					//					}
+			
 			}
 			if (gen.getOutputContext().inArray()) gen.writeEndArray();													//				]
 			gen.close();
