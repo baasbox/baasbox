@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public class PartFactory {
 
 	
-	static final String FIELD_STRING_PATTERN ="^\\.([a-zA-Z0-9]+)";
+	static final String FIELD_STRING_PATTERN ="^\\.([a-zA-Z0-9_-]+)";
 	static enum PartPattern {
 		
 		FIELD(FIELD_STRING_PATTERN+"$"),

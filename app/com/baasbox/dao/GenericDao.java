@@ -99,7 +99,7 @@ public class GenericDao {
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		return result;
 	}
