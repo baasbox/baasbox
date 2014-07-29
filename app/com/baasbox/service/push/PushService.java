@@ -35,6 +35,7 @@ import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -63,7 +64,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
+	public void send(String message, String username, JsonNode bodyJson) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
 		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
@@ -86,7 +87,7 @@ public class PushService {
 				if (vos!=null){
 					IPushServer pushServer = Factory.getIstance(vos);
 					pushServer.setConfiguration(getPushParameters());
-					pushServer.send(message, pushToken);
+					pushServer.send(message, pushToken, bodyJson);
 				} //vos!=null
 			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
 

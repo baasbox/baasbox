@@ -22,6 +22,8 @@ import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
@@ -56,9 +58,16 @@ public class APNServer  implements IPushServer {
 	
 	
 	@Override
-	public  void send(String message, String deviceid) throws PushNotInitializedException{	
+	public  void send(String message, String deviceid, JsonNode bodyJson) throws PushNotInitializedException{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
+		
+		JsonNode soundNode=bodyJson.findValue("sound");
+		String sound = null;
+		 if (!(soundNode==null)) {
+			sound=soundNode.asText();
+		}
+		
 		ApnsService service = null;
 		try{
 			service=getService();
@@ -67,7 +76,10 @@ public class APNServer  implements IPushServer {
 			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
 			//icallbackPush.onError(e.getMessage());
 		}
-		String payload = APNS.newPayload().alertBody(message).build();
+		
+		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: "+ sound);
+
+		String payload = APNS.newPayload().alertBody(message).sound(sound).build();
 		if(timeout<=0){
 			try {	
 				service.push(deviceid, payload);	

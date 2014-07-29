@@ -65,11 +65,11 @@ public class Push extends Controller {
 		 if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
-		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");
+		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
 		 String message=messageNode.asText();	  
 		 PushService ps=new PushService();
 		 try{
-		    	ps.send(message, username);
+		    	ps.send(message, username, bodyJson);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
