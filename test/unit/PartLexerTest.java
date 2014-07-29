@@ -43,6 +43,20 @@ public class PartLexerTest {
 	}
 	
 	@Test
+	public void testPrivateFieldWithAtError(){
+		List<PartsLexer.Part> parts = new ArrayList<PartsLexer.Part>();
+		try{
+			parts.add(PartFactory.parse(".@id",1));
+			new PartsParser(parts);
+			fail();
+		}catch(Exception e ){
+			assertEquals(PartsLexer.PartValidationException.class,e.getClass());
+			System.out.println(e.getMessage());
+			assertTrue(e.getMessage().toLowerCase().indexOf("unrecognized")>-1);
+		}
+	}
+	
+	@Test
 	public void testUpdateStringOnlyOneField(){
 		List<PartsLexer.Part> parts = new ArrayList<PartsLexer.Part>();
 		parts.add(PartFactory.parse(".field0",1));
