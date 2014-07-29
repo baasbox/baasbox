@@ -55,11 +55,9 @@ public class CollectionDao extends NodeDao {
 	/***
 	 * Creates an entry into the ODocument-Collection and create a new Class named "collectionName"
 	 * @param collectionName
-	 * @return
+	 * @return an ODocument instance representing the collection
 	 * @throws CollectionAlreadyExistsException 
-	 * @throws InvalidCollectionException 
-	 * @throws InvalidModelException, Throwable 
-	 * @throws Throwable 
+	 * @throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable
 	 */
 	public ODocument create(String collectionName) throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable {
 		if (DbHelper.isInTransaction()) throw new OpenTransactionException("Cannot create a collection within an open transaction");
