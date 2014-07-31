@@ -57,9 +57,9 @@ public abstract class NodeDao  {
 	public static final String CLASS_NODE_NAME = "_BB_Node";
 	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	
-	public static final String FIELD_LINK_TO_VERTEX = "_links";
+	public static final String FIELD_LINK_TO_VERTEX = BaasBoxPrivateFields.LINKS.toString();
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";
-	public static final String FIELD_CREATION_DATE = BaasBoxPrivateFields.CREATION_DATE.toString();
+	
 	
 	public static final String EDGE_CLASS_CREATED = "Created";
 	
@@ -130,8 +130,8 @@ public abstract class NodeDao  {
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
+				Date now = new Date();
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
-				doc.field(FIELD_CREATION_DATE,new Date());
 				UUID token = UUID.randomUUID();
 				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());

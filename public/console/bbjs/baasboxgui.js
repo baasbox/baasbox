@@ -1758,6 +1758,7 @@ function setupTables(){
 	} ).makeEditable();
 
 	$('#documentTable').dataTable().makeEditable();
+
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
