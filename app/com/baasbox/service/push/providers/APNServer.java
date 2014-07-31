@@ -19,6 +19,11 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -63,12 +68,61 @@ public class APNServer  implements IPushServer {
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
 		
 		JsonNode soundNode=bodyJson.findValue("sound");
-		String sound = null;
-		 if (!(soundNode==null)) {
+		String sound =null;
+		if (!(soundNode==null)) {
 			sound=soundNode.asText();
 		}
 		
+		JsonNode actionLocKeyNode=bodyJson.findValue("actionLocalizedKey"); 
+		String actionLocKey=null; 
+		
+		if (!(actionLocKeyNode==null)) {
+			actionLocKey=actionLocKeyNode.asText();
+		}
+		
+		JsonNode locKeyNodes=bodyJson.findValue("localizedKey"); 
+		String locKey=null; 
+		
+		if (!(locKeyNodes==null)) {
+			locKey=locKeyNodes.asText();
+		}
+		
+		JsonNode locArgsNode=bodyJson.get("localizedArguments");
+
+		List<String> locArgs = new ArrayList<String>();
+		if(!(locArgsNode==null)){
+					
+			for(JsonNode locArgNode : locArgsNode) {
+				locArgs.add(locArgNode.toString());
+			}	
+		}
+						
+		JsonNode customDataNodes=bodyJson.get("customData");
+		
+		//String key=customDataNodes.get(0).toString();
+		//String value=customDataNodes.get(1).toString();
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+				
+		if(!(customDataNodes==null)){	
+			if(customDataNodes.isArray()) {
+				for(JsonNode locArgNode : locArgsNode) {
+					locArgs.add(locArgNode.toString());
+					customData.put("custom", customDataNodes);
+				}	
+			}
+			else if (customDataNodes.isObject()) {
+				String title=customDataNodes.findValue("title").asText();
+				customData.put(title, customDataNodes);
+			}
+		}
+				
+		JsonNode badgeNode=bodyJson.findValue("badge");
+		
+		int badge=Integer.parseInt(badgeNode.asText());
+					
 		ApnsService service = null;
+		
 		try{
 			service=getService();
 		} catch (com.notnoop.exceptions.InvalidSSLConfig e) {
@@ -77,9 +131,22 @@ public class APNServer  implements IPushServer {
 			//icallbackPush.onError(e.getMessage());
 		}
 		
-		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: "+ sound);
+		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
+		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("Custom data1: " + customData.get("year"));
 
-		String payload = APNS.newPayload().alertBody(message).sound(sound).build();
+
+		
+		
+		String payload = APNS.newPayload()
+							.alertBody(message)
+							.sound(sound)
+							.actionKey(actionLocKey)
+							.localizedKey(locKey)
+							.localizedArguments(locArgs)
+							.badge(badge)
+							.customFields(customData)
+							.build();
 		if(timeout<=0){
 			try {	
 				service.push(deviceid, payload);	
