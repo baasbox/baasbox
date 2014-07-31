@@ -49,7 +49,7 @@ public class Evolution_0_8_1 implements IEvolution {
 		Logger.info("..updating ouser.name collate CI..:");
       		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
       	            "drop index ouser.name;",
-      	            "alter property ouser.name collate CI;",
+      	            "alter property ouser.name collate ci;",
       	            "create index ouser.name unique;"
       	        );
 		Logger.info("...done...");
