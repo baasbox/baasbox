@@ -103,17 +103,18 @@ public class APNServer  implements IPushServer {
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
 				
 		if(!(customDataNodes==null)){	
-			if(customDataNodes.isArray()) {
-				for(JsonNode locArgNode : locArgsNode) {
-					locArgs.add(locArgNode.toString());
-					customData.put("custom", customDataNodes);
-				}	
-			}
-			else if (customDataNodes.isObject()) {
+		    if (customDataNodes.isObject()) {
 				JsonNode titleNode=customDataNodes.findValue("title");
 				if(titleNode==null) throw new IOException("Error. Key title missing");
 				String title=titleNode.asText();
 				customData.put(title, customDataNodes);
+			}
+			
+		    else {
+				for(JsonNode locArgNode : locArgsNode) {
+					locArgs.add(locArgNode.toString());
+					customData.put("custom", customDataNodes);
+				}	
 			}
 		}
 				
