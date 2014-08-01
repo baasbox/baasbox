@@ -64,7 +64,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username, JsonNode bodyJson) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException, InvalidRequestException, IOException, UnknownHostException{
+	public void send(String message, String username, JsonNode bodyJson) throws Exception{
 		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);

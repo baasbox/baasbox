@@ -19,6 +19,7 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -63,7 +64,7 @@ public class APNServer  implements IPushServer {
 	
 	
 	@Override
-	public  void send(String message, String deviceid, JsonNode bodyJson) throws PushNotInitializedException{	
+	public  void send(String message, String deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
 		
@@ -99,9 +100,6 @@ public class APNServer  implements IPushServer {
 						
 		JsonNode customDataNodes=bodyJson.get("customData");
 		
-		//String key=customDataNodes.get(0).toString();
-		//String value=customDataNodes.get(1).toString();
-		
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
 				
 		if(!(customDataNodes==null)){	
@@ -112,7 +110,9 @@ public class APNServer  implements IPushServer {
 				}	
 			}
 			else if (customDataNodes.isObject()) {
-				String title=customDataNodes.findValue("title").asText();
+				JsonNode titleNode=customDataNodes.findValue("title");
+				if(titleNode==null) throw new IOException("Error. Key title missing");
+				String title=titleNode.asText();
 				customData.put(title, customDataNodes);
 			}
 		}
@@ -133,7 +133,7 @@ public class APNServer  implements IPushServer {
 		
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
 		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
-		if (Logger.isDebugEnabled()) Logger.debug("Custom data1: " + customData.get("year"));
+		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
 
 
 		

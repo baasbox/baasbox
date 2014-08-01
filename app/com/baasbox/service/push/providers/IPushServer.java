@@ -32,5 +32,5 @@ import com.google.common.collect.ImmutableMap;
 
 public interface IPushServer{
 	public void setConfiguration(ImmutableMap<Factory.ConfigurationKeys,String> configuration);
-	public void send(String message, String deviceid, JsonNode bodyJson) throws PushNotInitializedException, UnknownHostException, InvalidRequestException, IOException;
+	public void send(String message, String deviceid, JsonNode bodyJson) throws PushNotInitializedException, UnknownHostException, InvalidRequestException, IOException, Exception;
 }
