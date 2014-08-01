@@ -22,7 +22,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
@@ -44,6 +44,7 @@ import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -90,6 +91,14 @@ public class DocumentService {
 	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
+		return doc;
+	}
+	
+	public static ODocument getDeleted(String uuid) {
+		GenericDao dao = GenericDao.getInstance();
+		ORID rid = dao.getRidDeletedNodeByUUID(uuid);
+		if (rid==null) return null;
+		ODocument doc = dao.get(rid);
 		return doc;
 	}
 
@@ -143,6 +152,11 @@ public class DocumentService {
 	public static List<ODocument> getDocuments(String collectionName, QueryParams criteria) throws SqlInjectionException, InvalidCollectionException{
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		return dao.get(criteria);
+	}
+	
+
+	public static  List<ODocument> getDeleted(QueryParams criteria) throws SqlInjectionException {
+		return GenericDao.getInstance().executeQuery(BBInternalConstants.DELETED_CLASS_NAME, criteria);
 	}
 
 	/**
@@ -238,4 +252,7 @@ public class DocumentService {
 		od = get(collectionName,rid);
 		return od;
 	}
+
+
+	
 }

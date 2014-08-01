@@ -177,6 +177,12 @@ PUT 	/push/device/:os/:deviceId      com.baasbox.controllers.Push.enablePush(os:
 #Storage Actions
 
 # @tag(baasbox.data.read)
+GET /deleted/document/:uuid							com.baasbox.controllers.Document.getDeletedDocument(uuid: String)
+
+# @tag(baasbox.data.read)
+GET /deleted/document								com.baasbox.controllers.Document.getDeletedDocuments()
+
+# @tag(baasbox.data.read)
 GET		 /document/%23:rid							com.baasbox.controllers.Document.getDocumentByRid(rid: String)
 
 # @tag(baasbox.data.write)

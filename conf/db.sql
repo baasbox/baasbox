@@ -102,13 +102,13 @@ alter property _BB_Permissions.enabled notnull=true;
 
 --indices
 
-alter property ouser.name collate CI;
+alter property ouser.name collate ci;
 create index _BB_Collection.name unique;
 create index _BB_asset.name unique;
 create index _BB_Node.id unique;
 create index _BB_Permissions.tag unique;
 --deprecated since OrientDB 1.7:
-create index ouser.name unique;
+--create index ouser.name unique;
 
 --configuration class
 create class _BB_Index;
@@ -121,4 +121,9 @@ create index _BB_Index.key unique;
 create property E.id String;
 alter property E.id notnull=true;
 create index E.id unique;
+
+--store the delete documents
+create class _BB_Deleted extends ORestricted;
+create property _BB_Deleted.id String;
+create index _BB_Deleted.id unique;
 
