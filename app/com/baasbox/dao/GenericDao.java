@@ -84,7 +84,13 @@ public class GenericDao {
 		ORID rid = (ORID) index.get(id);  
 		return rid;
 	}
-	
+
+	public ORID getRidDeletedNodeByUUID(String id){
+		ODatabaseRecordTx db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Deleted.id");
+		ORID rid = (ORID) index.get(id);  
+		return rid;
+	}
 
 	/***
 	 * Execute a query against a given OrientDB Class

@@ -51,8 +51,9 @@ public class HooksManager {
 		}
 		if (register){
 			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... start");
-			db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
-			db.registerHook(NodeDates.getIstance(),HOOK_POSITION.REGULAR);
+			db.registerHook(AuditHook.getIstance(),HOOK_POSITION.REGULAR);
+			db.registerHook(NodeDatesHook.getIstance(),HOOK_POSITION.REGULAR);
+			db.registerHook(DeleteHook.getIstance(),HOOK_POSITION.REGULAR);
 			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... done");
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("Hooks: "+ db.getHooks());

@@ -44,6 +44,7 @@ public class Evolution_0_9_0 implements IEvolution {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			updateLastUpdateDate(db);
+			createDeleteClass(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -51,6 +52,12 @@ public class Evolution_0_9_0 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
+	private void createDeleteClass(ODatabaseRecordTx db) {
+		DbHelper.execMultiLineCommands(db,true,"create class _BB_Deleted extends ORestricted;",
+				"create property _BB_Deleted.id String;",
+				"create index _BB_Deleted.id unique;");
+	}
+
 	private void updateLastUpdateDate(ODatabaseRecordTx db) {
 		Logger.info("..update _update_date..:");
 		//deactivate HOOKS

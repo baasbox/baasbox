@@ -122,3 +122,8 @@ create property E.id String;
 alter property E.id notnull=true;
 create index E.id unique;
 
+--store the delete documents
+create class _BB_Deleted extends ORestricted;
+create property _BB_Deleted.id String;
+create index _BB_Deleted.id unique;
+
