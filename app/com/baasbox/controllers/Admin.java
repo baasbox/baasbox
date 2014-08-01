@@ -50,7 +50,6 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.configuration.PushProfile;
 import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
@@ -501,47 +500,6 @@ public class Admin extends Controller {
 		}
 		return ok(dump);
 	}
-	
-	
-	
-	/***
-	 * /admin/configuration/Push/:pushProfile (POST)
-	 * 
-	 * @param pushProfile
-	 * @return
-	 */
-	public static Result createConfigurationPush(String nameProfile){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-	
-		String name = nameProfile.replaceAll("\\W+", "");
-		
-	    PushProfile pp=new PushProfile();
-		
-		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY);
-		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE);
-		pp.addElement(name,com.baasbox.configuration.Push.PRODUCTION_IOS_CERTIFICATE_PASSWORD);
-		pp.addElement(name,com.baasbox.configuration.Push.PUSH_APPLE_TIMEOUT);
-		pp.addElement(name,com.baasbox.configuration.Push.PUSH_SANDBOX_ENABLE);
-		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_ANDROID_API_KEY);
-		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE);
-		pp.addElement(name,com.baasbox.configuration.Push.SANDBOX_IOS_CERTIFICATE_PASSWORD);
-	
-		//com.baasbox.configuration.Push.PRODUCTION_ANDROID_API_KEY.setProfileName(name);
-		
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		return created();
-	}
-	
-	/***
-	 * /admin/configuration/Push/:pushProfile (DELETE)
-	 * 
-	 * @param pushProfile
-	 * @return
-	 */
-	public static Result deleteConfigurationPush(String nameProfile){
-		return ok();
-	}
-	
 	
 	public static Result setConfigurationPush(String nameProfile){
 		return ok();

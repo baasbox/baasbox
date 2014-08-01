@@ -43,20 +43,20 @@ public class PushService {
 	
 	private ImmutableMap<ConfigurationKeys, String> getPushParameters(){
 		ImmutableMap<Factory.ConfigurationKeys,String> response=null;
-		if (Push.PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+		if (Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
 			response = ImmutableMap.of(
-					ConfigurationKeys.ANDROID_API_KEY, ""+Push.SANDBOX_ANDROID_API_KEY.getValueAsString(),
-					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PUSH_APPLE_TIMEOUT.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE, ""+Push.SANDBOX_IOS_CERTIFICATE.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValueAsString(),
+					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE, ""+Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 			);
 		}else{
 			response = ImmutableMap.of(
-					ConfigurationKeys.ANDROID_API_KEY, ""+Push.PRODUCTION_ANDROID_API_KEY.getValueAsString(),
-					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PUSH_APPLE_TIMEOUT.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE,""+ Push.PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
+					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE,""+ Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
 			);			
 		}

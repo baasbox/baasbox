@@ -110,8 +110,8 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			if(!f.exists()){
 				f.mkdirs();
 			}
-			ConfigurationFileContainer prod = Push.PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
-			ConfigurationFileContainer sandbox = Push.SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer prod = Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer sandbox = Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 			if(prod!=null){
 				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate:"+prod.getName());
 				File prodCertificate =  new File(folder+sep+prod.getName());
