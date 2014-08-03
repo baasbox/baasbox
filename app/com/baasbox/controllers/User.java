@@ -308,7 +308,7 @@ public class User extends Controller {
 	  		  return badRequest(e.getMessage());
 	  	  } catch (Exception e) {
 	  		  Logger.warn("resetPasswordStep1", e);
-	  		  return internalServerError(e.getMessage());
+	  		  return internalServerError(ExceptionUtils.getFullStackTrace(e));
 	  	  }
 	  	  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	  	  return ok();
@@ -725,7 +725,7 @@ public class User extends Controller {
 				 return ok(prepareResponseToJson(followers));
 			 }
 		  }catch(Exception e){
-			 return internalServerError(e.getMessage()); 
+			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
 		  }
 	}
 	  
@@ -736,7 +736,7 @@ public class User extends Controller {
 		  try{
 			 me = UserService.getOUserByUsername(currentUsername);
 		  }catch(Exception e){
-			 return internalServerError(e.getMessage()); 
+			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
 		  }
 		  if(UserService.exists(toUnfollowUsername)){
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
