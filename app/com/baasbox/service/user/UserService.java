@@ -541,7 +541,7 @@ public class UserService {
 						.append("CC: ").append(email.getCcAddresses()).append("\n")
 						
 						.append("Subject: ").append(email.getSubject()).append("\n")
-						.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+						.append("Message: ").append(email.toString()).append("\n")
 						
 						.append("SentDate: ").append(email.getSentDate()).append("\n");
 				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
