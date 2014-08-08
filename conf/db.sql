@@ -109,6 +109,9 @@ create index _BB_Node.id unique;
 create index _BB_Permissions.tag unique;
 --deprecated since OrientDB 1.7:
 --create index ouser.name unique;
+---bug on OrientDB index? (our issue #412) We have to define a "new" index to avoid class scan when looking for a username:
+create index _bb_user.user.name unique
+
 
 --configuration class
 create class _BB_Index;
