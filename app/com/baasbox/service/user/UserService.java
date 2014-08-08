@@ -508,7 +508,7 @@ public class UserService {
 			email.setSslSmtpPort(String.valueOf(smtpPort));   
 			email.setHostName(smtpHost);
 			email.setSmtpPort(smtpPort);
-
+			email.setCharset("utf-8");
 
 			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
 				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
@@ -517,7 +517,6 @@ public class UserService {
 			email.addTo(userEmail);
 
 			email.setSubject(emailSubject);
-				
 			if (Logger.isDebugEnabled()) {
 				StringBuilder logEmail = new StringBuilder()
 						.append("HostName: ").append(email.getHostName()).append("\n")
@@ -541,7 +540,10 @@ public class UserService {
 						.append("CC: ").append(email.getCcAddresses()).append("\n")
 						
 						.append("Subject: ").append(email.getSubject()).append("\n")
-						.append("Message: ").append(email.toString()).append("\n")
+
+						//the following line throws a NPE in debug mode
+						//.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+
 						
 						.append("SentDate: ").append(email.getSentDate()).append("\n");
 				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());

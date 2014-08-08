@@ -1671,8 +1671,13 @@ function setupTables(){
 		               }
 		               }],
 
-		               "bRetrieve": true,
-		               "bDestroy":false
+           "bRetrieve": true,
+           "bDestroy":false,
+           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+        	          $(nRow).attr( 'style',"display:none" );
+        	    }
+        	}
 	} ).makeEditable();
 
 	$('#settingsPwdTable').dataTable( {
@@ -1690,9 +1695,13 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+       "bRetrieve": true,
+       "bDestroy":false,
+       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+    	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+    	          $(nRow).attr( 'style',"display:none" );
+    	    }
+    	}
 	} ).makeEditable();
 
 	$('#settingsImgTable').dataTable( {
@@ -1710,9 +1719,13 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+	       "bRetrieve": true,
+	       "bDestroy":false,
+	       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+	    	   if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+	    	          $(nRow).attr( 'style',"display:none" );
+	    	    }
+	    	}
 	} ).makeEditable();
 
 	$('#settingsPushTable').dataTable( {
@@ -1729,9 +1742,13 @@ function setupTables(){
 		            	   if (full.editable) return getActionButton("edit","setting",data);
 		            	   else return "";		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+           "bRetrieve": true,
+           "bDestroy":false,
+           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+        	          $(nRow).attr( 'style',"display:none" );
+        	    }
+        	}
 	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
@@ -2424,11 +2441,12 @@ function PushSettingsController($scope){
 					type:'PUT',
 					contentType:'application/json',
 					url: url,
-					data:JSON.stringify({value:"true"}),
+					data:JSON.stringify({value:""+enable+""}),
 					error: function(data)
 					{
-						////console.debug(data)
-						alert("Error updating sandbox mode:" + data["message"]);
+						//console.debug(data)
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating sandbox mode:" + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
@@ -2462,7 +2480,8 @@ function PushSettingsController($scope){
 					error: function(data)
 					{
 						////console.debug(data)
-						alert("Error updating settings:" + data["message"]);
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating settings:" + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
