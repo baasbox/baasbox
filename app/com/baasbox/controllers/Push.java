@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -58,18 +59,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
-	 public static Result send(String username)  {
+	 public static Result send(String username) throws Exception  {
 		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		 Http.RequestBody body = request().body();
 		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		 if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
-		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");
+		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
 		 String message=messageNode.asText();	  
 		 PushService ps=new PushService();
 		 try{
-		    	ps.send(message, username);
+		    	ps.send(message, username, bodyJson);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
