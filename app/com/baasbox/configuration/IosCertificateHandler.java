@@ -112,8 +112,15 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			}
 			ConfigurationFileContainer prod = Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
 			ConfigurationFileContainer sandbox = Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+			
+			ConfigurationFileContainer prod2 = Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer sandbox2 = Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+			
+			ConfigurationFileContainer prod3 = Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer sandbox3 = Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+			
 			if(prod!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate:"+prod.getName());
+				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for default profile:"+prod.getName());
 				File prodCertificate =  new File(folder+sep+prod.getName());
 				if(!prodCertificate.exists()){
 					try{
@@ -128,7 +135,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 			}
 			if(sandbox!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate:"+sandbox.getName());
+				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for default profile:"+sandbox.getName());
 				File sandboxCertificate =  new File(folder+sep+sandbox.getName());
 				if(!sandboxCertificate.exists()){
 					try{
@@ -142,6 +149,68 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 					}
 				}
 			}
+			
+			if(prod2!=null){
+				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for profile 2:"+prod2.getName());
+				File prodCertificate =  new File(folder+sep+prod2.getName());
+				if(!prodCertificate.exists()){
+					try{
+						prodCertificate.createNewFile();
+						ByteArrayInputStream bais = new ByteArrayInputStream(prod.getContent());
+						FileUtils.copyInputStreamToFile(bais, prodCertificate);
+
+					}catch(Exception e){
+						prodCertificate.delete();
+						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+					}
+				}
+			}
+			if(sandbox2!=null){
+				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for profile 2:"+sandbox2.getName());
+				File sandboxCertificate =  new File(folder+sep+sandbox2.getName());
+				if(!sandboxCertificate.exists()){
+					try{
+						sandboxCertificate.createNewFile();
+						ByteArrayInputStream bais = new ByteArrayInputStream(sandbox.getContent());
+						FileUtils.copyInputStreamToFile(bais, sandboxCertificate);
+
+					}catch(Exception e){
+						sandboxCertificate.delete();
+						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+					}
+				}
+			}
+			
+			if(prod3!=null){
+				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for profile 3:"+prod3.getName());
+				File prodCertificate =  new File(folder+sep+prod3.getName());
+				if(!prodCertificate.exists()){
+					try{
+						prodCertificate.createNewFile();
+						ByteArrayInputStream bais = new ByteArrayInputStream(prod3.getContent());
+						FileUtils.copyInputStreamToFile(bais, prodCertificate);
+
+					}catch(Exception e){
+						prodCertificate.delete();
+						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+					}
+				}
+			}
+			if(sandbox3!=null){
+				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for profile 3:"+sandbox3.getName());
+				File sandboxCertificate =  new File(folder+sep+sandbox3.getName());
+				if(!sandboxCertificate.exists()){
+					try{
+						sandboxCertificate.createNewFile();
+						ByteArrayInputStream bais = new ByteArrayInputStream(sandbox.getContent());
+						FileUtils.copyInputStreamToFile(bais, sandboxCertificate);
+
+					}catch(Exception e){
+						sandboxCertificate.delete();
+						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+					}
+				}
+			}	
 
 		}
 

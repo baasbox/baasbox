@@ -67,10 +67,16 @@ public class Push extends Controller {
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
-		 String message=messageNode.asText();	  
+		 String message=messageNode.asText();	
+		 JsonNode pushProfileNode=bodyJson.findValue("profile");
+		 String pushProfile;
+		 if (pushProfileNode==null) pushProfile="1";
+		 else {
+			 pushProfile=pushProfileNode.asText();
+		 }
 		 PushService ps=new PushService();
 		 try{
-		    	ps.send(message, username, bodyJson);
+		    	ps.send(message, username, pushProfile, bodyJson);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);

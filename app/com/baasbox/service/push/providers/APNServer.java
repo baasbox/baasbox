@@ -119,8 +119,8 @@ public class APNServer  implements IPushServer {
 		}
 				
 		JsonNode badgeNode=bodyJson.findValue("badge");
-		
-		int badge=Integer.parseInt(badgeNode.asText());
+		int badge=0;
+		if(!(badgeNode==null)) badge=Integer.parseInt(badgeNode.asText());
 					
 		ApnsService service = null;
 		

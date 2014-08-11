@@ -42,9 +42,53 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class PushService {
 	
-	private ImmutableMap<ConfigurationKeys, String> getPushParameters(){
+	private ImmutableMap<ConfigurationKeys, String> getPushParameters(String pushProfile){
 		ImmutableMap<Factory.ConfigurationKeys,String> response=null;
-		if (Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+		if(pushProfile.equals("2")){
+			if (Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()) {
+				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 2 for sandbox environment");
+				response = ImmutableMap.of(
+						ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValueAsString(),
+						ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE2_PUSH_APPLE_TIMEOUT.getValueAsString(),
+						ConfigurationKeys.IOS_CERTIFICATE, ""+Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValueAsString(),
+						ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+						ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
+				);
+			}else{
+				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 2 for production environment");
+				response = ImmutableMap.of(
+						ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
+						ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE2_PUSH_APPLE_TIMEOUT.getValueAsString(),
+						ConfigurationKeys.IOS_CERTIFICATE,""+ Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
+						ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+						ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
+				);		
+			}
+		}	
+		else if(pushProfile.equals("3")){
+				if (Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()) {
+					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 3 for sandbox environment");
+					response = ImmutableMap.of(
+							ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValueAsString(),
+							ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE3_PUSH_APPLE_TIMEOUT.getValueAsString(),
+							ConfigurationKeys.IOS_CERTIFICATE, ""+Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValueAsString(),
+							ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+							ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
+					);
+				}else{
+					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 3 for production environment");
+					response = ImmutableMap.of(
+							ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
+							ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE3_PUSH_APPLE_TIMEOUT.getValueAsString(),
+							ConfigurationKeys.IOS_CERTIFICATE,""+ Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
+							ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+							ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
+					);		
+			}	
+			
+		}
+		else if (Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 1(default) for sandbox environment");
 			response = ImmutableMap.of(
 					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValueAsString(),
 					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -53,6 +97,7 @@ public class PushService {
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 			);
 		}else{
+			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 1(default) for production environment");
 			response = ImmutableMap.of(
 					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
 					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -64,7 +109,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username, JsonNode bodyJson) throws Exception{
+	public void send(String message, String username, String pushProfile, JsonNode bodyJson) throws Exception{
 		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
@@ -86,7 +131,7 @@ public class PushService {
 				if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
 				if (vos!=null){
 					IPushServer pushServer = Factory.getIstance(vos);
-					pushServer.setConfiguration(getPushParameters());
+					pushServer.setConfiguration(getPushParameters(pushProfile));
 					pushServer.send(message, pushToken, bodyJson);
 				} //vos!=null
 			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)

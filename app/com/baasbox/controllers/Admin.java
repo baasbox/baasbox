@@ -500,12 +500,6 @@ public class Admin extends Controller {
 		}
 		return ok(dump);
 	}
-	
-	public static Result setConfigurationPush(String nameProfile){
-		return ok();
-	}
-	
-	
 
 	public static Result setConfiguration(String section, String subSection, String key, String value){
 		
