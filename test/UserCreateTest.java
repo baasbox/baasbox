@@ -38,6 +38,7 @@ import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,6 +49,7 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
+import com.baasbox.dao.UserDao;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 
@@ -133,8 +135,7 @@ public class UserCreateTest extends AbstractUserTest
 	}
 	
 	@Test
-	public void routeCreateUser()
-	{
+	public void routeCreateUser()	{
 		running
 		(
 			getFakeApplication(), 
@@ -158,13 +159,40 @@ public class UserCreateTest extends AbstractUserTest
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 					Assert.assertNotNull(token);
 					Assert.assertFalse(SessionTokenProvider.getSessionTokenProvider().getSession(token).isEmpty());
-					
 				}
 			}
 		);		
-		
 	}
 
+	//https://github.com/baasbox/baasbox/issues/401
+	//500 error when visibleBy is null during signup 
+	@Test
+	public void routeCreateUser_issue_401()	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					UserDao dao = UserDao.getInstance();
+					String sFakeUser = USER_TEST + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					//this MUST not raise an error
+					((ObjectNode) node).put(dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER,(JsonNode)null);
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					
+					assertRoute(result, "routeCreateUser_issue_401", Status.BAD_REQUEST, "One or more profile sections is not a valid JSON object", true);
+				}
+			}
+		);		
+	}
+	
 	@Test
 	public void routeCreateUserCaseInsensitive()
 	{

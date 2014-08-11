@@ -21,12 +21,11 @@ package com.baasbox.db;
 import play.Logger;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-public class Evolution_0_8_1 implements IEvolution {
-	private String version="0.8.1";
+public class Evolution_0_8_3 implements IEvolution {
+	private String version="0.8.3";
 	
-	public Evolution_0_8_1() {}
+	public Evolution_0_8_3() {}
 
 	@Override
 	public String getFinalVersion() {
@@ -37,7 +36,7 @@ public class Evolution_0_8_1 implements IEvolution {
 	public void evolve(ODatabaseRecordTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
-			setUsernameCaseInsensitive(db);
+			setIndexOnUsername(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -45,12 +44,10 @@ public class Evolution_0_8_1 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
-	private void setUsernameCaseInsensitive(ODatabaseRecordTx db) {
-		Logger.info("..updating ouser.name collate CI..:");
+	private void setIndexOnUsername(ODatabaseRecordTx db) {
+		Logger.info("..creating index on _bb_user.user.name..:");
       		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
-      	            "drop index ouser.name;",
-      	            "alter property ouser.name collate ci;",
-      	            "create index ouser.name unique;"
+      	            "create index _bb_user.user.name unique;"
       	        );
 		Logger.info("...done...");
 	}

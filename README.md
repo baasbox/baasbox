@@ -32,7 +32,7 @@ To access the **Admin Console Panel**, go to <http://localhost:9000/console>
 Default credentials are:
 
 + username: admin
-+ passwrod: admin
++ password: admin
 + application code: 1234567890
 
 

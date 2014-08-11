@@ -190,125 +190,129 @@ public class UserService {
             JsonNode nonAppUserAttributes,
             JsonNode privateAttributes,
             JsonNode friendsAttributes,
-            JsonNode appUsersAttributes,boolean generated) throws Exception{
+            JsonNode appUsersAttributes,boolean generated) throws OSerializationException,Exception{
+			
+			
+			ODatabaseRecordTx db =  DbHelper.getConnection();
+			ODocument profile=null;
+			UserDao dao = UserDao.getInstance();
+			try{
+			    //because we have to create an OUser record and a User Object, we need a transaction
+			
+			      DbHelper.requestTransaction();
+			      
+			      if (role==null) profile=dao.create(username, password);
+			      else profile=dao.create(username, password,role);
+			      
+			      ORID userRid = ((ORID)profile.field("user")).getIdentity();
+			      ORole friendRole=RoleDao.createFriendRole(username);
+			      friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
+			      friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
+			      friendRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
+			      friendRole.getDocument().field(RoleService.FIELD_DESCRIPTION,"These are friends of " + username);
+			      
+			      /*    these attributes are visible by:
+			       *    Anonymous users
+			       *    Registered user
+			       *    Friends
+			       *    User
+			       */
+			      
+			      //anonymous
+			           {
+			                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+			                    try{
+			                    	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
+			                    	  else attrObj.fromJSON("{}");
+			                    }catch (OSerializationException e){
+			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
+			                    }
+			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
+			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));        
+			                    PermissionsHelper.grantRead(attrObj, friendRole);                                
+			                    PermissionsHelper.changeOwner(attrObj,userRid );
+			                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER,attrObj);
+			                    attrObj.save();
+			            }
+			            
+			              /*    these attributes are visible by:
+			               *    User
+			               */                                
+			            {
+			                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+			                    try{
+			                    	if (privateAttributes!=null) attrObj.fromJSON(privateAttributes.toString());
+			                    	else attrObj.fromJSON("{}");
+			                    }catch (OSerializationException e){
+			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
+			                    }
+			                    profile.field(dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER, attrObj);
+			                    PermissionsHelper.changeOwner(attrObj, userRid);                                        
+			                    attrObj.save();
+			            }
+			            
+			              /*    these attributes are visible by:
+			               *    Friends
+			               *    User
+			               */                                
+			           {
+			                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+			                    try{        
+			                    	 if (friendsAttributes!=null) attrObj.fromJSON(friendsAttributes.toString());
+			                     	else attrObj.fromJSON("{}");
+			                    }catch (OSerializationException e){
+			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
+			                    }
+			                    PermissionsHelper.grantRead(attrObj, friendRole);                                
+			                    PermissionsHelper.changeOwner(attrObj, userRid);
+			                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER, attrObj);
+			                    attrObj.save();
+			            }
+			            
+			              /*    these attributes are visible by:
+			               *    Registered user
+			               *    Friends
+			               *    User
+			               */                                
+			           {
+			                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+			                    try{
+			                    	if (appUsersAttributes!=null) attrObj.fromJSON(appUsersAttributes.toString());
+			                     	else attrObj.fromJSON("{}");
+			                    }catch (OSerializationException e){
+			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
+			                    }
+			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
+			                    PermissionsHelper.changeOwner(attrObj, userRid);
+			                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
+			                    attrObj.save();
+			            }
+			              
+			            ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+			            attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
+			            attrObj.field(UserDao.GENERATED_USERNAME,generated);
+			            PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
+			            PermissionsHelper.changeOwner(attrObj, userRid);
+			            profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);
+			            
+			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
+			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
+			            PermissionsHelper.changeOwner(profile, userRid);
+			            
+			            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
+			            profile.save();
+			      
+			      DbHelper.commitTransaction();
+				}catch( OSerializationException e ){
+				    DbHelper.rollbackTransaction();
+				    throw e;
+			    }catch( Exception e ){
+			     DbHelper.rollbackTransaction();
+			      throw e;
+			    } 
+			return profile;
+			} //signUp
 
-
-ODatabaseRecordTx db =  DbHelper.getConnection();
-ODocument profile=null;
-UserDao dao = UserDao.getInstance();
-try{
-    //because we have to create an OUser record and a User Object, we need a transaction
-
-      DbHelper.requestTransaction();
-      
-      if (role==null) profile=dao.create(username, password);
-      else profile=dao.create(username, password,role);
-      
-      ORID userRid = ((ODocument)profile.field("user")).getIdentity();
-      ORole friendRole=RoleDao.createFriendRole(username);
-      friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
-      friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
-      friendRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
-      friendRole.getDocument().field(RoleService.FIELD_DESCRIPTION,"These are friends of " + username);
-      
-      /*    these attributes are visible by:
-       *    Anonymous users
-       *    Registered user
-       *    Friends
-       *    User
-       */
-      
-      //anonymous
-           {
-                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-                    try{
-                    	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
-                    	  else attrObj.fromJSON("{}");
-                    }catch (OSerializationException e){
-                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
-                    }
-                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));        
-                    PermissionsHelper.grantRead(attrObj, friendRole);                                
-                    PermissionsHelper.changeOwner(attrObj,userRid );
-                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER,attrObj);
-                    attrObj.save();
-            }
-            
-              /*    these attributes are visible by:
-               *    User
-               */                                
-            {
-                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-                    try{
-                    	if (privateAttributes!=null) attrObj.fromJSON(privateAttributes.toString());
-                    	else attrObj.fromJSON("{}");
-                    }catch (OSerializationException e){
-                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
-                    }
-                    profile.field(dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER, attrObj);
-                    PermissionsHelper.changeOwner(attrObj, userRid);                                        
-                    attrObj.save();
-            }
-            
-              /*    these attributes are visible by:
-               *    Friends
-               *    User
-               */                                
-           {
-                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-                    try{        
-                    	 if (friendsAttributes!=null) attrObj.fromJSON(friendsAttributes.toString());
-                     	else attrObj.fromJSON("{}");
-                    }catch (OSerializationException e){
-                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
-                    }
-                    PermissionsHelper.grantRead(attrObj, friendRole);                                
-                    PermissionsHelper.changeOwner(attrObj, userRid);
-                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER, attrObj);
-                    attrObj.save();
-            }
-            
-              /*    these attributes are visible by:
-               *    Registered user
-               *    Friends
-               *    User
-               */                                
-           {
-                    ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-                    try{
-                    	if (appUsersAttributes!=null) attrObj.fromJSON(appUsersAttributes.toString());
-                     	else attrObj.fromJSON("{}");
-                    }catch (OSerializationException e){
-                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
-                    }
-                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
-                    PermissionsHelper.changeOwner(attrObj, userRid);
-                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
-                    attrObj.save();
-            }
-              
-            ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-            attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
-            attrObj.field(UserDao.GENERATED_USERNAME,generated);
-            PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-            PermissionsHelper.changeOwner(attrObj, userRid);
-            profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);
-            
-            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
-            PermissionsHelper.changeOwner(profile, userRid);
-            
-            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
-            profile.save();
-      
-      DbHelper.commitTransaction();
-    }catch( Exception e ){
-     DbHelper.rollbackTransaction();
-      throw e;
-    } 
-return profile;
-} //signUp
 
 	public static ODocument updateProfile(ODocument profile, JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
@@ -505,7 +509,7 @@ return profile;
 			email.setSslSmtpPort(String.valueOf(smtpPort));   
 			email.setHostName(smtpHost);
 			email.setSmtpPort(smtpPort);
-
+			email.setCharset("utf-8");
 
 			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
 				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
@@ -514,7 +518,6 @@ return profile;
 			email.addTo(userEmail);
 
 			email.setSubject(emailSubject);
-				
 			if (Logger.isDebugEnabled()) {
 				StringBuilder logEmail = new StringBuilder()
 						.append("HostName: ").append(email.getHostName()).append("\n")
@@ -538,7 +541,10 @@ return profile;
 						.append("CC: ").append(email.getCcAddresses()).append("\n")
 						
 						.append("Subject: ").append(email.getSubject()).append("\n")
-						.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+
+						//the following line throws a NPE in debug mode
+						//.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+
 						
 						.append("SentDate: ").append(email.getSentDate()).append("\n");
 				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
