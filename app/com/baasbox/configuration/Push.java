@@ -18,6 +18,9 @@
 
 package com.baasbox.configuration;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
@@ -26,18 +29,38 @@ import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.util.ConfigurationFileContainer;
 
 
-public enum Push implements IProperties{
-	PUSH_SANDBOX_ENABLE("push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server", Boolean.class),
-	PUSH_APPLE_TIMEOUT("push.apple.timeout", "The timeout for push notifications on Apple devices", Integer.class),
-	SANDBOX_ANDROID_API_KEY("sandbox.android.api.key", "The key to send push notifications to Android devices in SANDBOX mode", String.class),
-	SANDBOX_IOS_CERTIFICATE("sandbox.ios.certificate", "The Apple certificate in SANDBOX mode", ConfigurationFileContainer.class,new IosCertificateHandler()),
-	SANDBOX_IOS_CERTIFICATE_PASSWORD("sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode", String.class),
-	PRODUCTION_ANDROID_API_KEY("production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode", String.class),
-	PRODUCTION_IOS_CERTIFICATE("production.ios.certificate", "The Apple certificate in PRODUCTION mode", ConfigurationFileContainer.class,new IosCertificateHandler()),	
-	PRODUCTION_IOS_CERTIFICATE_PASSWORD("production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode", String.class);
-
-
-
+public enum Push implements IProperties	{
+	//DEFAULT PROFILE or FIRST
+	DEFAULT_PUSH_SANDBOX_ENABLE("default.push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server for default profile", Boolean.class),
+	DEFAULT_PUSH_APPLE_TIMEOUT("default.push.apple.timeout", "The timeout for push notifications on Apple devices for default profile", Integer.class),
+	DEFAULT_SANDBOX_ANDROID_API_KEY("default.sandbox.android.api.key", "The key to send push notifications to Android devices in SANDBOX mode for default profile", String.class),
+	DEFAULT_SANDBOX_IOS_CERTIFICATE("default.sandbox.ios.certificate", "The Apple certificate in SANDBOX mode for default profile", ConfigurationFileContainer.class,new IosCertificateHandler()),
+	DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD("default.sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode for default profile", String.class),
+	DEFAULT_PRODUCTION_ANDROID_API_KEY("default.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for default profile", String.class),
+	DEFAULT_PRODUCTION_IOS_CERTIFICATE("default.production.ios.certificate", "The Apple certificate in PRODUCTION mode for default profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
+	DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD("default.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for default profile", String.class),
+	
+	//SECOND PROFILE
+	PROFILE2_PUSH_SANDBOX_ENABLE("profile2.push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server for second profile", Boolean.class),
+	PROFILE2_PUSH_APPLE_TIMEOUT("profile2.push.apple.timeout", "The timeout for push notifications on Apple devices for second profile", Integer.class),
+	PROFILE2_SANDBOX_ANDROID_API_KEY("profile2.sandbox.android.api.key", "The key to send push notifications to Android devices in SANDBOX mode for second profile", String.class),
+	PROFILE2_SANDBOX_IOS_CERTIFICATE("profile2.sandbox.ios.certificate", "The Apple certificate in SANDBOX mode for second profile", ConfigurationFileContainer.class,new IosCertificateHandler()),
+	PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD("profile2.sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode for second profile", String.class),
+	PROFILE2_PRODUCTION_ANDROID_API_KEY("profile2.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for second profile", String.class),
+	PROFILE2_PRODUCTION_IOS_CERTIFICATE("profile2.production.ios.certificate", "The Apple certificate in PRODUCTION mode for second profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
+	PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD("profile2.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for second profile", String.class),
+	
+	//THIRD PROFILE
+	PROFILE3_PUSH_SANDBOX_ENABLE("profile3.push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server for third profile", Boolean.class),
+	PROFILE3_PUSH_APPLE_TIMEOUT("profile3.push.apple.timeout", "The timeout for push notifications on Apple devices for third profile", Integer.class),
+	PROFILE3_SANDBOX_ANDROID_API_KEY("profile3.sandbox.android.api.key", "The key to send push notifications to Android devices in SANDBOX mode for third profile", String.class),
+	PROFILE3_SANDBOX_IOS_CERTIFICATE("profile3.sandbox.ios.certificate", "The Apple certificate in SANDBOX mode for third profile", ConfigurationFileContainer.class,new IosCertificateHandler()),
+	PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD("profile3.sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode for third profile", String.class),
+	PROFILE3_PRODUCTION_ANDROID_API_KEY("profile3.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for third profile", String.class),
+	PROFILE3_PRODUCTION_IOS_CERTIFICATE("profile3.production.ios.certificate", "The Apple certificate in PRODUCTION mode for third profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
+	PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD("profile3.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for third profile", String.class);
+	
+	
 	private final String                 key;
 	private final Class<?>               type;
 	private String                       description;
@@ -50,22 +73,31 @@ public enum Push implements IProperties{
 	private boolean						 overridden=false;
   
 
-	Push(final String iKey, final String iDescription, final Class<?> iType, 
+	 Push(final String iKey, final String iDescription, final Class<?> iType, 
 			final IPropertyChangeCallback iChangeAction) {
 		this(iKey, iDescription, iType);
 		changeCallback = iChangeAction;
 	}
 
-	Push(final String iKey, final String iDescription, final Class<?> iType) {
-		key = iKey;
-		description = iDescription;
-		type = iType;
+	 Push(final String iKey, final String iDescription, final Class<?> iType) {
+		 key = iKey;
+		 description = iDescription;
+		 type = iType;
 	}
 
 	@Override
 	public void setValue(Object newValue) throws IllegalStateException{
 		if (!editable) throw new IllegalStateException("The value cannot be changed");
 		_setValue(newValue);
+	}
+	
+	public void setProfileName(String iprofileName) {
+		if (!editable) throw new IllegalStateException("The value cannot be changed");
+		_setProfileName(iprofileName);
+	}
+
+	public void _setProfileName(String iprofileName) {
+		
 	}
 
 	@Override
@@ -176,6 +208,7 @@ public enum Push implements IProperties{
 	public String getKey() {
 		return key;
 	}
+	
 
 	@Override
 	public Class<?> getType() {
@@ -186,8 +219,6 @@ public enum Push implements IProperties{
 	public String getValueDescription() {
 		return description;
 	}
-
-
 
 	public static String getEnumDescription() {
 		return "Configurations for push related properties"; 

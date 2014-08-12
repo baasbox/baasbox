@@ -27,7 +27,9 @@ import java.util.EnumSet;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
@@ -128,8 +130,12 @@ public class PropertiesConfigurationHelper {
 			gen.writeStartArray();	
 			for (String v: keys){
 				String st = dumpConfigurationAsJson(v);
-				JsonParser jp = jfactory.createJsonParser(st);
-				gen.writeTree(jp.readValueAsTree());
+				ObjectMapper op= new ObjectMapper();
+				JsonNode p = op.readTree(st);
+				Logger.debug("OBJECT:" + p.toString());
+				Logger.debug("STRING:" + st);
+				//JsonParser jp = jfactory.createJsonParser(st);
+				gen.writeTree(p);
 			}
 			gen.writeEndArray();
 			gen.close();

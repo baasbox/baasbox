@@ -19,9 +19,17 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
@@ -56,10 +64,66 @@ public class APNServer  implements IPushServer {
 	
 	
 	@Override
-	public  void send(String message, String deviceid) throws PushNotInitializedException{	
+	public  void send(String message, String deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
+		
+		JsonNode soundNode=bodyJson.findValue("sound");
+		String sound =null;
+		if (!(soundNode==null)) {
+			sound=soundNode.asText();
+		}
+		
+		JsonNode actionLocKeyNode=bodyJson.findValue("actionLocalizedKey"); 
+		String actionLocKey=null; 
+		
+		if (!(actionLocKeyNode==null)) {
+			actionLocKey=actionLocKeyNode.asText();
+		}
+		
+		JsonNode locKeyNodes=bodyJson.findValue("localizedKey"); 
+		String locKey=null; 
+		
+		if (!(locKeyNodes==null)) {
+			locKey=locKeyNodes.asText();
+		}
+		
+		JsonNode locArgsNode=bodyJson.get("localizedArguments");
+
+		List<String> locArgs = new ArrayList<String>();
+		if(!(locArgsNode==null)){
+					
+			for(JsonNode locArgNode : locArgsNode) {
+				locArgs.add(locArgNode.toString());
+			}	
+		}
+						
+		JsonNode customDataNodes=bodyJson.get("customData");
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+				
+		if(!(customDataNodes==null)){	
+		    if (customDataNodes.isObject()) {
+				JsonNode titleNode=customDataNodes.findValue("title");
+				if(titleNode==null) throw new IOException("Error. Key title missing");
+				String title=titleNode.asText();
+				customData.put(title, customDataNodes);
+			}
+			
+		    else {
+				for(JsonNode locArgNode : locArgsNode) {
+					locArgs.add(locArgNode.toString());
+					customData.put("custom", customDataNodes);
+				}	
+			}
+		}
+				
+		JsonNode badgeNode=bodyJson.findValue("badge");
+		int badge=0;
+		if(!(badgeNode==null)) badge=Integer.parseInt(badgeNode.asText());
+					
 		ApnsService service = null;
+		
 		try{
 			service=getService();
 		} catch (com.notnoop.exceptions.InvalidSSLConfig e) {
@@ -67,7 +131,23 @@ public class APNServer  implements IPushServer {
 			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
 			//icallbackPush.onError(e.getMessage());
 		}
-		String payload = APNS.newPayload().alertBody(message).build();
+		
+		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
+		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
+
+
+		
+		
+		String payload = APNS.newPayload()
+							.alertBody(message)
+							.sound(sound)
+							.actionKey(actionLocKey)
+							.localizedKey(locKey)
+							.localizedArguments(locArgs)
+							.badge(badge)
+							.customFields(customData)
+							.build();
 		if(timeout<=0){
 			try {	
 				service.push(deviceid, payload);	

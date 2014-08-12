@@ -28,6 +28,7 @@ import play.Logger;
 import play.mvc.Controller;
 
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
@@ -42,7 +43,7 @@ public class GCMServer extends Controller implements IPushServer {
 
 	}
 
-	public void send(String message, String deviceid)
+	public void send(String message, String deviceid, JsonNode bodyJson)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
 		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: " + message + " to the device "
 				+ deviceid);

@@ -74,7 +74,7 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 						fail();
 					}
 					ODatabaseRecordThreadLocal.INSTANCE.set(db);
-					ConfigurationFileContainer cfc = Push.SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+					ConfigurationFileContainer cfc = Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 					assertNotNull(cfc);
 					assertNotNull(cfc.getName());
 					assertNotNull(cfc.getContent());
