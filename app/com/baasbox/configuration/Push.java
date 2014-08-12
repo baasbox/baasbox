@@ -39,6 +39,7 @@ public enum Push implements IProperties	{
 	DEFAULT_PRODUCTION_ANDROID_API_KEY("default.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for default profile", String.class),
 	DEFAULT_PRODUCTION_IOS_CERTIFICATE("default.production.ios.certificate", "The Apple certificate in PRODUCTION mode for default profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
 	DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD("default.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for default profile", String.class),
+	DEFAULT_PUSH_PROFILE_ENABLE("default.push.profile.enable","Enable this profile",Boolean.class),
 	
 	//SECOND PROFILE
 	PROFILE2_PUSH_SANDBOX_ENABLE("profile2.push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server for second profile", Boolean.class),
@@ -49,6 +50,8 @@ public enum Push implements IProperties	{
 	PROFILE2_PRODUCTION_ANDROID_API_KEY("profile2.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for second profile", String.class),
 	PROFILE2_PRODUCTION_IOS_CERTIFICATE("profile2.production.ios.certificate", "The Apple certificate in PRODUCTION mode for second profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
 	PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD("profile2.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for second profile", String.class),
+	PROFILE2_PUSH_PROFILE_ENABLE("profile2.push.profile.enable","Enable this profile",Boolean.class),
+
 	
 	//THIRD PROFILE
 	PROFILE3_PUSH_SANDBOX_ENABLE("profile3.push.sandbox.enable", "The value to verify if BaasBox needs to contact the SANDBOX server or the PRODUCTION server for third profile", Boolean.class),
@@ -58,8 +61,9 @@ public enum Push implements IProperties	{
 	PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD("profile3.sandbox.ios.certificate.password", "The password of the Apple certificate in SANDBOX mode for third profile", String.class),
 	PROFILE3_PRODUCTION_ANDROID_API_KEY("profile3.production.android.api.key", "The key to send push notifications to Android devices in PRODUCTION mode for third profile", String.class),
 	PROFILE3_PRODUCTION_IOS_CERTIFICATE("profile3.production.ios.certificate", "The Apple certificate in PRODUCTION mode for third profile", ConfigurationFileContainer.class,new IosCertificateHandler()),	
-	PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD("profile3.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for third profile", String.class);
-	
+	PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD("profile3.production.ios.certificate.password", "The password of the Apple certificate in PRODUCTION mode for third profile", String.class),
+	PROFILE3_PUSH_PROFILE_ENABLE("profile3.push.profile.enable","Enable this profile",Boolean.class);
+
 	
 	private final String                 key;
 	private final Class<?>               type;
@@ -89,15 +93,9 @@ public enum Push implements IProperties	{
 	public void setValue(Object newValue) throws IllegalStateException{
 		if (!editable) throw new IllegalStateException("The value cannot be changed");
 		_setValue(newValue);
-	}
-	
-	public void setProfileName(String iprofileName) {
-		if (!editable) throw new IllegalStateException("The value cannot be changed");
-		_setProfileName(iprofileName);
-	}
-
-	public void _setProfileName(String iprofileName) {
-		
+		if(this.key.startsWith("default")) Push.DEFAULT_PUSH_PROFILE_ENABLE.setValue(true);
+		else if (this.key.startsWith("profile2")) Push.PROFILE2_PUSH_PROFILE_ENABLE.setValue(true);
+		else if (this.key.startsWith("profile3")) Push.PROFILE3_PUSH_PROFILE_ENABLE.setValue(true);
 	}
 
 	@Override
