@@ -18,6 +18,7 @@
 
 package com.baasbox.configuration;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -26,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 
 import com.baasbox.configuration.index.IndexPushConfiguration;
+import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.util.ConfigurationFileContainer;
 
 
@@ -90,12 +92,54 @@ public enum Push implements IProperties	{
 	}
 
 	@Override
-	public void setValue(Object newValue) throws IllegalStateException{
+	public void setValue(Object newValue) throws Exception{
 		if (!editable) throw new IllegalStateException("The value cannot be changed");
-		_setValue(newValue);
-		if(this.key.startsWith("default")) Push.DEFAULT_PUSH_PROFILE_ENABLE.setValue(true);
-		else if (this.key.startsWith("profile2")) Push.PROFILE2_PUSH_PROFILE_ENABLE.setValue(true);
-		else if (this.key.startsWith("profile3")) Push.PROFILE3_PUSH_PROFILE_ENABLE.setValue(true);
+		if(this.key.equals("default.push.profile.enable")) {
+			if(Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+				if((!Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+					_setValue(newValue);
+				}
+				else throw new PushNotInitializedException("Configuration not initialized");
+			}
+			else if((!Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+				_setValue(newValue);
+			}
+			else throw new PushNotInitializedException("Configuration not initialized");
+			
+		}
+		
+		else if(this.key.equals("profile2.push.profile.enable")) {
+			if(Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+				if((!Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+					_setValue(newValue);
+				}
+				else throw new PushNotInitializedException("Configuration not initialized");
+			}
+			else if((!Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+				_setValue(newValue);
+			}
+			else throw new PushNotInitializedException("Configuration not initialized");
+			
+		}
+		
+		else if(this.key.equals("profile3.push.profile.enable")) {
+			if(Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+				if((!Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+					_setValue(newValue);
+				}
+				else throw new PushNotInitializedException("Configuration not initialized");
+			}
+			else if((!Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
+				_setValue(newValue);
+			}
+			else throw new PushNotInitializedException("Configuration not initialized");
+			
+		}
+		
+		
+		
+		
+		else _setValue(newValue);
 	}
 
 	@Override

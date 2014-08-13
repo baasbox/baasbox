@@ -12,8 +12,6 @@ public class PushProfileInvalidException extends BaasBoxPushException {
 		// TODO Auto-generated constructor stub
 	}
 
-
-
 	public PushProfileInvalidException(String arg0, Throwable arg1) {
 		super(arg0, arg1);
 		// TODO Auto-generated constructor stub

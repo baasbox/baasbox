@@ -1,6 +1,6 @@
 package com.baasbox.exception;
 
-public class BaasBoxPushException extends Exception {
+public abstract class BaasBoxPushException extends Exception {
 	public BaasBoxPushException(String message){
 		super(message);
 	}

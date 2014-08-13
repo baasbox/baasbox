@@ -122,6 +122,13 @@ public class Push extends Controller {
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 return ok();
 	  }
+	 
+	 public static Result sendUsers() {
+		return ok();		 
+	 
+	 }
+	 
+	 
 	
 	 public static Result enablePush(String os, String pushToken) throws SqlInjectionException{
 		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
