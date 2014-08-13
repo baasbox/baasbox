@@ -1728,28 +1728,6 @@ function setupTables(){
 	    	}
 	} ).makeEditable();
 
-	$('#settingsPushTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "key"},
-		               {"mData": "description"},
-		               {"mData": "value", "mRender":function ( data, type, full ) {
-		            	   return $('<div/>').text(data).html();
-		               }
-		               },
-		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   if (full.editable) return getActionButton("edit","setting",data);
-		            	   else return "";		               }
-		               }],
-           "bRetrieve": true,
-           "bDestroy":false,
-           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
-        	          $(nRow).attr( 'style',"display:none" );
-        	    }
-        	}
-	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
@@ -2227,8 +2205,49 @@ function callMenu(action){
                 }
             });
             break;
+        case "#push_conf":
+        	//load push settings
+    		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
+    			success: function(data) {
+    				//console.debug("dumpConfiguration Push success:");
+    				settingPushDataArray = data["data"];
+    				//console.debug(settingPushDataArray);
+    				settingPushMap = {}
+
+    				settingPushMap.add = function(setting,section){
+    					if(settingPushMap[section]==null){
+    						settingPushMap[section]=[];
+    					}
+    					settingPushMap[section].push(setting)
+    				};
+    				$(settingPushDataArray).each(function(i,setting){
+    					var k = setting["key"];
+
+    					if(k.endsWith(".certificate")){
+    						setting["file"] = true
+    						if(setting.value){
+    							setting["filename"] = JSON.parse(setting.value).name
+    						}
+    					}else{
+    						setting["file"] = false;
+    					}
+    					if(k.indexOf('.apple.')>-1 || k.indexOf('.ios.')>-1){
+    						settingPushMap.add(setting,'ios');
+    					}else if(k.indexOf('.android')>-1){
+    						settingPushMap.add(setting,'android');
+    					}else{
+    						settingPushMap.add(setting,'push');
+    					}
+    				})
+    				//initializeData("push",settingPushMap);
+    				applySuccessMenu(action,settingPushMap);
+    			}
+    		});
+            break;
 	}
 }//callMenu
+
+//PushConfController is defined into the push.js file
 
 function PermissionsController($scope){}
 

@@ -1,0 +1,54 @@
+<p class="hint">
+    blablabla
+</p>
+<div class="box span11">
+    <div class="box-header well">
+        <h2><i class="icon-envelope"></i> Push Notification Settings</h2>
+        <div class="box-icon">
+            <a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+        </div>
+    </div>
+    				<div class="box-content">
+							<div class="tab-pane" id="push_conf" data-ng-controller="PushConfController">
+									{{data[0]}}
+									<div class="settings push">
+										<h3>Sandbox Mode</h3>
+											<p>{{pushData['push'][0].description}}</p>
+											<span ng-show="!isSandboxMode()"><button ng-click="sandboxMode(true)" type="button" class="btn btn-success" >Enable Sandbox Mode</button></span>
+											<span ng-show="isSandboxMode()"><button ng-click="sandboxMode(false)" type="button" class="btn btn-danger">Disable Sandbox Mode</button></span>
+									</div>
+									
+									<div class="settings android">
+										<h3>android</h3>
+										<div class="setting" ng-repeat="s in pushData['android'] | filter:{file:false}">
+											<p>{{s.description}}</p>
+											<input type="text" ng-model="s.value"/>
+											<button type="button" ng-click="updateInlineSetting('Push',s)" class="btn btn-primary save">Save</button><span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+										</div>
+										
+									</div>
+										
+									<div class="settings ios">
+										<h3>ios</h3>
+										<div class="setting" ng-repeat="s in pushData['ios'] | filter:{file:false}">
+											<p>{{s.description}}</p>
+											<input type="text" ng-model="s.value"/>
+											<button type="button" ng-click="updateInlineSetting('Push',s)" class="btn btn-primary save">Save</button>
+											<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+										</div>
+										
+										<div ng-repeat="s in pushData['ios'] | filter:{file:true}" class="setting">
+											<p>{{s.description}}</p>
+											<form name="{{keyName(s.key)}}" id="{{keyName(s.key)}}" method="PUT">
+												<div class="uploaded span7" data-ng-show="s.value">A file is already present:<strong>{{s.filename}}</strong></div>
+												<input data-no-uniform="true" accept=".p12" type="file" id="{{keyName(s.key)}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
+												<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting('Push',s)">Upload</button>
+												<span ng-show="s.error!=null" class="error"> {{s.error}} </span>
+											</form>
+										</div>
+									</div>		
+								
+							</div><!-- Push Pane-->
+
+    </div>
+</div>
