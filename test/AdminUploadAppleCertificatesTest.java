@@ -31,7 +31,7 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 
 	@Override
 	public String getRouteAddress() {
-		return "/admin/configuration/Push/dummy/sandbox.ios.certificate/filename.zip";
+		return "/admin/configuration/Push/dummy/default.sandbox.ios.certificate/filename.zip";
 	}
 	
 	@Override

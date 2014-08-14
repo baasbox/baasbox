@@ -30,10 +30,11 @@ public enum CustomHttpCode {
 			ACL_ROLE_DOES_NOT_EXIST(40006,400,"The specified role does not exist","error"),
 			JSON_VALUE_MUST_BE_ARRAY(40010,400,"The expected JSON value must be an array '[.., .., ..]'","error"),
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
+			PUSH_PROFILE_DISABLED(40011,400,"Push profile disabled","error"),
+			PUSH_PROFILE_INVALID(40012,400,"Push profile invalid. Accepted values are 1,2 or 3","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error"),
 			PUSH_INVALID_REQUEST (50303,503,"Could not send push notifications. HINT: Check your API Key(Google)","error");
-
 			;
 			private String type;
 			private int bbCode;

@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -46,9 +48,12 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.WrapResponse;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.push.PushProfileDisabledException;
+import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.service.user.UserService;
@@ -68,15 +73,20 @@ public class Push extends Controller {
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
 		 String message=messageNode.asText();	
-		 JsonNode pushProfileNode=bodyJson.findValue("profile");
-		 String pushProfile;
-		 if (pushProfileNode==null) pushProfile="1";
+		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
+		 List<Integer> pushProfiles = new ArrayList<Integer>();
+		 if(!(pushProfilesNodes==null)){
+						
+				for(JsonNode pushProfileNode : pushProfilesNodes) {
+					pushProfiles.add(pushProfileNode.asInt());
+				}	
+		 }
 		 else {
-			 pushProfile=pushProfileNode.asText();
+			 pushProfiles.add(1);
 		 }
 		 PushService ps=new PushService();
 		 try{
-		    	ps.send(message, username, pushProfile, bodyJson);
+		    	if(ps.validate(pushProfiles)) ps.send(message, username, pushProfiles, bodyJson);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
@@ -93,6 +103,14 @@ public class Push extends Controller {
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 		 }
+		 catch (PushProfileDisabledException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
+		 }
+		 catch (PushProfileInvalidException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+		 }
 		 catch (UnknownHostException e){
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
@@ -104,6 +122,13 @@ public class Push extends Controller {
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 return ok();
 	  }
+	 
+	 public static Result sendUsers() {
+		return ok();		 
+	 
+	 }
+	 
+	 
 	
 	 public static Result enablePush(String os, String pushToken) throws SqlInjectionException{
 		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");

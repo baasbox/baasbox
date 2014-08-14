@@ -29,6 +29,7 @@ import play.Logger;
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.providers.Factory;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
@@ -42,11 +43,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class PushService {
 	
-	private ImmutableMap<ConfigurationKeys, String> getPushParameters(String pushProfile){
+	private ImmutableMap<ConfigurationKeys, String> getPushParameters(Integer pushProfile){
 		ImmutableMap<Factory.ConfigurationKeys,String> response=null;
-		if(pushProfile.equals("2")){
+		if(pushProfile==2){
 			if (Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()) {
-				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 2 for sandbox environment");
+				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for sandbox environment: 2");
 				response = ImmutableMap.of(
 						ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValueAsString(),
 						ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE2_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -55,7 +56,7 @@ public class PushService {
 						ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 				);
 			}else{
-				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 2 for production environment");
+				if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for production environment: 2");
 				response = ImmutableMap.of(
 						ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
 						ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE2_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -65,9 +66,9 @@ public class PushService {
 				);		
 			}
 		}	
-		else if(pushProfile.equals("3")){
+		else if(pushProfile==3){
 				if (Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()) {
-					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 3 for sandbox environment");
+					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for sandbox environment: 3");
 					response = ImmutableMap.of(
 							ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValueAsString(),
 							ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE3_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -76,7 +77,7 @@ public class PushService {
 							ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 					);
 				}else{
-					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 3 for production environment");
+					if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for production environment: 3");
 					response = ImmutableMap.of(
 							ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
 							ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE3_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -88,7 +89,7 @@ public class PushService {
 			
 		}
 		else if (Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 1(default) for sandbox environment");
+			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for sandbox environment: 1(default)");
 			response = ImmutableMap.of(
 					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValueAsString(),
 					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -97,7 +98,7 @@ public class PushService {
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 			);
 		}else{
-			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen 1(default) for production environment");
+			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for production environment: 1(default)");
 			response = ImmutableMap.of(
 					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
 					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
@@ -109,7 +110,7 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username, String pushProfile, JsonNode bodyJson) throws Exception{
+	public void send(String message, String username, List<Integer> pushProfiles, JsonNode bodyJson) throws Exception{
 		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
@@ -131,13 +132,27 @@ public class PushService {
 				if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
 				if (vos!=null){
 					IPushServer pushServer = Factory.getIstance(vos);
-					pushServer.setConfiguration(getPushParameters(pushProfile));
-					pushServer.send(message, pushToken, bodyJson);
+					for(Integer pushProfile : pushProfiles) {
+						pushServer.setConfiguration(getPushParameters(pushProfile));
+						pushServer.send(message, pushToken, bodyJson);
+					}
+					
 				} //vos!=null
 			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
 
 		}//for (ODocument loginInfo : loginInfos)
 	}//send
+
+	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
+		if (pushProfiles.size()>3) throw new IOException("Too many push profiles");
+		for(Integer pushProfile : pushProfiles) {
+			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
+			if((pushProfile==1) && (!Push.DEFAULT_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+			if((pushProfile==2) && (!Push.PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+			if((pushProfile==3) && (!Push.PROFILE3_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+		}
+		return true;
+	}
 		
 	
 	/*public void sendAll(String message) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{		 			
