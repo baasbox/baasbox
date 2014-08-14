@@ -26,6 +26,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.mvc.Http.Status;
 import play.test.FakeRequest;
 
 import com.baasbox.db.DbHelper;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import core.AbstractUserTest;
 import core.TestConfig;
+import play.mvc.Result;
 
 public class UserSlowGetTest_issue_412 extends AbstractUserTest
 {
@@ -65,9 +67,11 @@ public class UserSlowGetTest_issue_412 extends AbstractUserTest
 			new Runnable() 	{
 				public void run() 	{
 					UUID uuid = UUID.randomUUID();
+					Result result=null;
+					String sFakeUser =null;
 					//create 100 fake users
 					for (int i=0;i<10;i++){
-						String sFakeUser = USER_TEST +uuid + "_" + i;
+						sFakeUser = USER_TEST +uuid + "_" + i;
 							
 						// Prepare test user
 						JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
@@ -76,8 +80,9 @@ public class UserSlowGetTest_issue_412 extends AbstractUserTest
 						FakeRequest request = new FakeRequest("POST", "/user");
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withJsonBody(node, "POST");
-						routeAndCall(request);
+						result=routeAndCall(request);
 					}//for i
+					assertRoute(result, "check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
 					try {
 						DbHelper.open("1234567890", "admin", "admin");
 					} catch (InvalidAppCodeException e) {

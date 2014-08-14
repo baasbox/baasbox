@@ -192,7 +192,6 @@ public class UserService {
             JsonNode friendsAttributes,
             JsonNode appUsersAttributes,boolean generated) throws OSerializationException,Exception{
 			
-			
 			ODatabaseRecordTx db =  DbHelper.getConnection();
 			ODocument profile=null;
 			UserDao dao = UserDao.getInstance();
@@ -301,7 +300,8 @@ public class UserService {
 			            
 			            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
 			            profile.save();
-			      
+			          //due to issue 412
+						profile=UserService.getUserProfilebyUsername(username);
 			      DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
 				    DbHelper.rollbackTransaction();
@@ -309,10 +309,9 @@ public class UserService {
 			    }catch( Exception e ){
 			     DbHelper.rollbackTransaction();
 			      throw e;
-			    } 
+                }
 			return profile;
-			} //signUp
-
+	} //signUp
 
 	public static ODocument updateProfile(ODocument profile, JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
