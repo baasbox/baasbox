@@ -1398,6 +1398,12 @@ function setup(){
 	setupTables();
 	setupSelects();
 
+	$('.iphone-toggle').iphoneStyle(
+			{resizeHandle: false,
+		      resizeContainer: false,
+		      checkedLabel:"PIPPO"}
+			);
+	
 	$('.logout').click(function(e){
 		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 				function() {
@@ -1883,6 +1889,8 @@ function applySuccessMenu(action,data){
 	scope.$apply(function(){
 		scope.data=data;
 	});
+	console.log(action);
+	console.log(scope);
 
 }//applySuccessMenu
 
@@ -1934,16 +1942,6 @@ function callMenu(action){
 		resetDataTable( $('#userTable'));
 		loadUsersData();
 		applySuccessMenu(action,userDataArray);
-		/*
-		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
-			data: {orderBy: "user.name asc"},
-			success: function(data) {
-				userDataArray = data["data"];
-				applySuccessMenu(action,userDataArray);
-				$('#userTable').dataTable().fnClearTable();
-				$('#userTable').dataTable().fnAddData(userDataArray);
-			}
-		})*/;
 		break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
@@ -2206,43 +2204,7 @@ function callMenu(action){
             });
             break;
         case "#push_conf":
-        	//load push settings
-    		BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
-    			success: function(data) {
-    				//console.debug("dumpConfiguration Push success:");
-    				settingPushDataArray = data["data"];
-    				//console.debug(settingPushDataArray);
-    				settingPushMap = {}
-
-    				settingPushMap.add = function(setting,section){
-    					if(settingPushMap[section]==null){
-    						settingPushMap[section]=[];
-    					}
-    					settingPushMap[section].push(setting)
-    				};
-    				$(settingPushDataArray).each(function(i,setting){
-    					var k = setting["key"];
-
-    					if(k.endsWith(".certificate")){
-    						setting["file"] = true
-    						if(setting.value){
-    							setting["filename"] = JSON.parse(setting.value).name
-    						}
-    					}else{
-    						setting["file"] = false;
-    					}
-    					if(k.indexOf('.apple.')>-1 || k.indexOf('.ios.')>-1){
-    						settingPushMap.add(setting,'ios');
-    					}else if(k.indexOf('.android')>-1){
-    						settingPushMap.add(setting,'android');
-    					}else{
-    						settingPushMap.add(setting,'push');
-    					}
-    				})
-    				//initializeData("push",settingPushMap);
-    				applySuccessMenu(action,settingPushMap);
-    			}
-    		});
+        	loadPushSettings(action);
             break;
 	}
 }//callMenu

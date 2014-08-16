@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
@@ -94,52 +96,45 @@ public enum Push implements IProperties	{
 	@Override
 	public void setValue(Object newValue) throws Exception{
 		if (!editable) throw new IllegalStateException("The value cannot be changed");
-		if(this.key.equals("default.push.profile.enable")) {
-			if(Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-				if((!Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-					_setValue(newValue);
-				}
-				else throw new PushNotInitializedException("Configuration not initialized");
-			}
-			else if((!Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-				_setValue(newValue);
-			}
-			else throw new PushNotInitializedException("Configuration not initialized");
-			
+		switch  (this) {
+			case DEFAULT_PUSH_PROFILE_ENABLE:
+				if(Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+					if(StringUtils.isEmpty(Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				}else //production
+					if(StringUtils.isEmpty(Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Production configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				break;
+			case PROFILE2_PUSH_SANDBOX_ENABLE:
+				if(Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+					if(StringUtils.isEmpty(Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Sandbox configuration not properly initialized for profile 2. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				}else //production
+					if(StringUtils.isEmpty(Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Production configuration not properly initialized for profile 2. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				break;
+			case PROFILE3_PUSH_SANDBOX_ENABLE:	
+				if(Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+					if(StringUtils.isEmpty(Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Sandbox configuration not properly initialized for profile 3. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				}else //production
+					if(StringUtils.isEmpty(Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
+							&& Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValue()==null
+							&& StringUtils.isEmpty(Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString())
+					   ) throw new PushNotInitializedException("Production configuration not properly initialized for profile 3. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
+				break;
 		}
-		
-		else if(this.key.equals("profile2.push.profile.enable")) {
-			if(Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-				if((!Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-					_setValue(newValue);
-				}
-				else throw new PushNotInitializedException("Configuration not initialized");
-			}
-			else if((!Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-				_setValue(newValue);
-			}
-			else throw new PushNotInitializedException("Configuration not initialized");
-			
-		}
-		
-		else if(this.key.equals("profile3.push.profile.enable")) {
-			if(Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-				if((!Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-					_setValue(newValue);
-				}
-				else throw new PushNotInitializedException("Configuration not initialized");
-			}
-			else if((!Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValue().equals(""))||((Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValue()!=null) && (!Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals("")))){
-				_setValue(newValue);
-			}
-			else throw new PushNotInitializedException("Configuration not initialized");
-			
-		}
-		
-		
-		
-		
-		else _setValue(newValue);
+		_setValue(newValue);
 	}
 
 	@Override

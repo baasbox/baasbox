@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -287,15 +288,16 @@ public class PropertiesConfigurationHelper {
 	 * @param iKey
 	 * @param value
 	 * @throws ConfigurationException 
+	 * @throws PushNotInitializedException 
 	 * @throws Exception
 	 */
 	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException  {
 		Object enumValue = findByKey(en,iKey);
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
-
 		}catch (Exception e) {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
+			if (e.getCause() instanceof PushNotInitializedException) throw new ConfigurationException(e.getCause().getMessage());
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey
