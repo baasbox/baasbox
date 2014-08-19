@@ -123,9 +123,9 @@ function PushConfController($scope){
 	$scope.updateInlineSetting = function(s,newValue){
 		var section="Push";
 		newValue=newValue || s.value
-		//console.debug(s.value)
+		console.debug(s.value)
 		s.error = null;
-		if(!s.value || s.value==''){
+		if(newValue.trim()===""){
 			s.error = "Value can't be empty";
 			return;
 		}

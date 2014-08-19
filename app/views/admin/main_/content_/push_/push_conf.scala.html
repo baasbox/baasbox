@@ -12,7 +12,7 @@
     					<div data-ng-repeat="i in [1,2,3]">
     					<div class="box span4" style="margin-right:17px !important">
     						<div  class="box-header well" >
-								<h2><i class="icon-file"></i> Profile {{$index+1}}</h2>
+								<h2><i class="icon-file"></i> Profile {{$index+1}} <span ng-show="$index == 0"">(Default)</span></h2>
 							</div>
 							<div class="box-content">
 							<div class="control-group">
