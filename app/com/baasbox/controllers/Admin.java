@@ -72,6 +72,8 @@ import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.push.PushSwitchException;
+import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.RoleService;
@@ -501,7 +503,7 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 
-	public static Result setConfiguration(String section, String subSection, String key, String value){
+	public static Result setConfiguration(String section, String subSection, String key, String value) throws PushNotInitializedException, PushSwitchException{
 		
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
@@ -548,6 +550,10 @@ public class Admin extends Controller {
 		
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
+		} catch (PushNotInitializedException e) {
+		 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
+		} catch (PushSwitchException e) {
+			return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
 		}

@@ -110,8 +110,8 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			if(!f.exists()){
 				f.mkdirs();
 			}
-			ConfigurationFileContainer prod = Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
-			ConfigurationFileContainer sandbox = Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer prod = Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
+			ConfigurationFileContainer sandbox = Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 			
 			ConfigurationFileContainer prod2 = Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValueAsFileContainer();
 			ConfigurationFileContainer sandbox2 = Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();

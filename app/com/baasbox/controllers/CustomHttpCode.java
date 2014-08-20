@@ -32,6 +32,8 @@ public enum CustomHttpCode {
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
 			PUSH_PROFILE_DISABLED(40011,400,"Push profile disabled","error"),
 			PUSH_PROFILE_INVALID(40012,400,"Push profile invalid. Accepted values are 1,2 or 3","error"),
+			PUSH_PROFILE_ARRAY_EXCEPTION(40013,400,"Push profile array too big. Max three values are accepted","error"),
+			PUSH_SWITCH_EXCEPTION(40014,400,"Cannot switch, because settings for the selected mode are missing","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error"),
 			PUSH_INVALID_REQUEST (50303,503,"Could not send push notifications. HINT: Check your API Key(Google)","error");

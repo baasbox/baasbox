@@ -88,22 +88,22 @@ public class PushService {
 			}	
 			
 		}
-		else if (Push.DEFAULT_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+		else if (Push.PROFILE1_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
 			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for sandbox environment: 1(default)");
 			response = ImmutableMap.of(
-					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_SANDBOX_ANDROID_API_KEY.getValueAsString(),
-					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE, ""+Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.DEFAULT_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+					ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE1_SANDBOX_ANDROID_API_KEY.getValueAsString(),
+					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE1_PUSH_APPLE_TIMEOUT.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE, ""+Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.TRUE.toString()
 			);
 		}else{
 			if (Logger.isDebugEnabled()) Logger.debug("Push profile choosen for production environment: 1(default)");
 			response = ImmutableMap.of(
-					ConfigurationKeys.ANDROID_API_KEY, ""+Push.DEFAULT_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
-					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.DEFAULT_PUSH_APPLE_TIMEOUT.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE,""+ Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
-					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.DEFAULT_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
+					ConfigurationKeys.ANDROID_API_KEY, ""+Push.PROFILE1_PRODUCTION_ANDROID_API_KEY.getValueAsString(),
+					ConfigurationKeys.APPLE_TIMEOUT, ""+Push.PROFILE1_PUSH_APPLE_TIMEOUT.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE,""+ Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE.getValueAsString(),
+					ConfigurationKeys.IOS_CERTIFICATE_PASSWORD, ""+Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString(),
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
 			);			
 		}
@@ -144,10 +144,34 @@ public class PushService {
 	}//send
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
-		if (pushProfiles.size()>3) throw new IOException("Too many push profiles");
+		if (pushProfiles.size()>3) throw new PushProfileArrayException("Too many push profiles");
 		for(Integer pushProfile : pushProfiles) {
 			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
-			if((pushProfile==1) && (!Push.DEFAULT_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+			if((pushProfile==1) && (!Push.PROFILE1_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+			if((pushProfile==2) && (!Push.PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+			if((pushProfile==3) && (!Push.PROFILE3_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
+		}
+	
+		return true;
+	}
+	
+	public boolean validateUser(List<Integer> pushProfiles, VendorOS vendor) throws PushProfileInvalidException, PushProfileDisabledException, PushNotInitializedException {
+		for(Integer pushProfile : pushProfiles) {
+			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
+			switch(vendor) {
+				case IOS:
+					if(pushProfile==1) {
+						if(Push.PROFILE1_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
+							if((Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValue()==null) && (Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals(""))){
+								throw new PushNotInitializedException("Configuration not initialized");
+							}
+						}
+						else if((Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE.getValue()==null) && (Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals(""))){
+							throw new PushNotInitializedException("Configuration not initialized");
+						}
+					}
+			}
+
 			if((pushProfile==2) && (!Push.PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
 			if((pushProfile==3) && (!Push.PROFILE3_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
 		}
