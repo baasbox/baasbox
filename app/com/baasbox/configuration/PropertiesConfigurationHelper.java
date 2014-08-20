@@ -304,7 +304,7 @@ public class PropertiesConfigurationHelper {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
 		}catch (Exception e) {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
-			if (e.getCause() instanceof PushSwitchException) throw new PushSwitchException(e.getCause());
+			if (e.getCause() instanceof PushSwitchException) throw new PushSwitchException(e.getCause().getMessage());
 			if (e.getCause() instanceof PushNotInitializedException) throw new ConfigurationException(e.getCause().getMessage());
 
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
