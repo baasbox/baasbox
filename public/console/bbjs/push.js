@@ -33,7 +33,7 @@ function PushConfController($scope){
 	
 	
 	_this.getProfileName = function(profileNumber) {
-		if (profileNumber==1) profile="default";
+		if (profileNumber==1) profile="profile1";
 		else profile="profile"+profileNumber;
 		return profile;
 	}
