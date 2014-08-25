@@ -36,7 +36,7 @@ import play.test.TestBrowser;
 import core.AbstractUserTest;
 import core.TestConfig;
 
-public class UserGetCurrentTest extends AbstractUserTest
+public class UserGetTest extends AbstractUserTest
 {
 	@Override
 	public String getRouteAddress()
@@ -67,27 +67,23 @@ public class UserGetCurrentTest extends AbstractUserTest
 			{
 				public void run() 
 				{
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					Result result = routeAndCall(request);
-					assertRoute(result, "RouteOK Admin user", Status.OK, null, true);
-					
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "RouteOK BaasBox user", Status.FORBIDDEN, null, false);
-					
+
 					//registered user
 					String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
 					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
 					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
 					
+					//registered user2
+					String sFakeUser2 = new AdminUserFunctionalTest().routeCreateNewUser();
+					String sPwd2 = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc2 = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
 					// Test update user
-					request = new FakeRequest("GET", "/user");
+					FakeRequest request = new FakeRequest("GET", "/user/"+sFakeUser2);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-					result = routeAndCall(request);
-					assertRoute(result, "testRouteGetCurrentUser - registered - username", Status.OK, "name\":\""+sFakeUser+"\"", true);
+					Result result = routeAndCall(request);
+					assertRoute(result, "testRouteGetCurrentUser - registered - username", Status.OK, "name\":\""+sFakeUser2+"\"", true);
 					assertRoute(result, "testRouteGetCurrentUser - registered - role", Status.OK, "roles\":[{\"name\":\"registered\"}", true);
 					
 				}
