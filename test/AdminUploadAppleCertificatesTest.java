@@ -31,7 +31,7 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 
 	@Override
 	public String getRouteAddress() {
-		return "/admin/configuration/Push/dummy/default.sandbox.ios.certificate/filename.zip";
+		return "/admin/configuration/Push/dummy/profile1.sandbox.ios.certificate/filename.zip";
 	}
 	
 	@Override
@@ -74,7 +74,7 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 						fail();
 					}
 					ODatabaseRecordThreadLocal.INSTANCE.set(db);
-					ConfigurationFileContainer cfc = Push.DEFAULT_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
+					ConfigurationFileContainer cfc = Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 					assertNotNull(cfc);
 					assertNotNull(cfc.getName());
 					assertNotNull(cfc.getContent());
