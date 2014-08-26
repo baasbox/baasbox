@@ -20,6 +20,7 @@ package com.baasbox.service.push;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,9 +32,11 @@ import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.push.providers.APNServer;
 import com.baasbox.service.push.providers.Factory;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
+import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.service.push.providers.IPushServer;
 import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -110,8 +113,71 @@ public class PushService {
 		return response;
 	}
 	
-	public void send(String message, String username, List<Integer> pushProfiles, JsonNode bodyJson) throws Exception{
-		if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
+	public void send(String message, List<String> usernames, List<Integer> pushProfiles, JsonNode bodyJson) throws Exception{
+		List<String> iosToken = new ArrayList<String>();
+		List<String> androidToken = new ArrayList<String>();
+
+		for(String username : usernames) {
+			if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
+			UserDao udao = UserDao.getInstance();
+			ODocument user = udao.getByUserName(username);
+			if (user==null) {
+				if (Logger.isDebugEnabled()) Logger.debug("User " + username + " does not exist");
+				throw new UserNotFoundException("User " + username + " does not exist");
+			}
+			ODocument userSystemProperties=user.field(UserDao.ATTRIBUTES_SYSTEM);
+			if (Logger.isDebugEnabled()) Logger.debug("userSystemProperties: " + userSystemProperties);
+			List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
+			if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
+			for(ODocument loginInfo : loginInfos){
+				String pushToken=loginInfo.field(UserDao.USER_PUSH_TOKEN);
+				String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
+				if (Logger.isDebugEnabled()) Logger.debug ("push token: "  + pushToken);
+				if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);
+				if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(pushToken)){
+					VendorOS vos = VendorOS.getVendorOs(vendor);
+					if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
+					if (vos!=null){
+						/*IPushServer pushServer = Factory.getIstance(vos);
+						for(Integer pushProfile : pushProfiles) {
+							pushServer.setConfiguration(getPushParameters(pushProfile));
+							pushServer.send(message, pushToken, bodyJson);
+						}*/
+						switch(vos) {
+							case IOS:
+								iosToken.add(pushToken);
+								break;
+							case ANDROID:
+								//androidToken.add(pushToken);
+								androidToken.add("aaa");
+								androidToken.add("bbb");
+								androidToken.add("ccc");
+								Logger.debug(androidToken.toString());
+
+								break;
+						}
+						
+						
+					} //vos!=null
+				}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
+
+			}//for (ODocument loginInfo : loginInfos)
+		}//for (String username : usernames)
+		
+		for(Integer pushProfile : pushProfiles) {
+			APNServer apnServer = new APNServer();
+			apnServer.setConfiguration(getPushParameters(pushProfile));
+			
+			GCMServer gcmServer = new GCMServer();
+			gcmServer.setConfiguration(getPushParameters(pushProfile));
+			
+			if(iosToken.size()>0) apnServer.send(message, iosToken, bodyJson);
+			if(androidToken.size()>0) gcmServer.send(message, androidToken, bodyJson);
+		}
+		
+	}//send
+		
+		/*if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 		UserDao udao = UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
 		if (user==null) {
@@ -119,29 +185,10 @@ public class PushService {
 			throw new UserNotFoundException("User " + username + " does not exist");
 		}
 		ODocument userSystemProperties = user.field(UserDao.ATTRIBUTES_SYSTEM);
-		if (Logger.isDebugEnabled()) Logger.debug("userSystemProperties: " + userSystemProperties);
-		List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
-		if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
-		for(ODocument loginInfo : loginInfos){
-			String pushToken=loginInfo.field(UserDao.USER_PUSH_TOKEN);
-			String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
-			if (Logger.isDebugEnabled()) Logger.debug ("push token: "  + pushToken);
-			if (Logger.isDebugEnabled()) Logger.debug ("vendor: "  + vendor);
-			if(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(pushToken)){
-				VendorOS vos = VendorOS.getVendorOs(vendor);
-				if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
-				if (vos!=null){
-					IPushServer pushServer = Factory.getIstance(vos);
-					for(Integer pushProfile : pushProfiles) {
-						pushServer.setConfiguration(getPushParameters(pushProfile));
-						pushServer.send(message, pushToken, bodyJson);
-					}
-					
-				} //vos!=null
-			}//(!StringUtils.isEmpty(vendor) && !StringUtils.isEmpty(deviceId)
-
-		}//for (ODocument loginInfo : loginInfos)
-	}//send
+		*/
+		
+		
+	
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
 		if (pushProfiles.size()>3) throw new PushProfileArrayException("Too many push profiles");
@@ -177,7 +224,7 @@ public class PushService {
 		}
 		return true;
 	}
-		
+
 	
 	/*public void sendAll(String message) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{		 			
 	}*/

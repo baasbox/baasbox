@@ -20,6 +20,9 @@ package com.baasbox.service.push.providers;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -39,22 +42,41 @@ public class GCMServer extends Controller implements IPushServer {
 	private String apikey;
 	private boolean isInit = false;
 
-	GCMServer() {
+	public GCMServer() {
 
 	}
 
-	public void send(String message, String deviceid, JsonNode bodyJson)
+	public void send(String message, List<String> deviceid, JsonNode bodyJson)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
-		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: " + message + " to the device "
-				+ deviceid);
+		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: "+message+" to the device "+deviceid);
 		if (!isInit)
 			throw new PushNotInitializedException(
 					"Configuration not initialized");
+		JsonNode customDataNodes=bodyJson.get("customData");
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+				
+		if(!(customDataNodes==null)){	
+		    /*if (customDataNodes.isObject()) {
+				JsonNode titleNode=customDataNodes.findValue("title");
+				if(titleNode==null) throw new IOException("Error. Key title missing");
+				String title=titleNode.asText();
+				customData.put(title, customDataNodes);
+			}*/
+			
+		    //else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}	
+			//}
+		}
+		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
+
 			Sender sender = new Sender(apikey);
-			Message msg = new Message.Builder().addData("message", message)
+			Message msg = new Message.Builder().addData("message", message).addData("custom", customData.toString())
 					.build();
 
-			sender.send(msg, deviceid, 1);
+			sender.send(msg, deviceid , 1);
 		
 
 		// icallbackPush.onError(e.getMessage());

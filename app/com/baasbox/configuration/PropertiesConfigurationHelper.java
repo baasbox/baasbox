@@ -292,10 +292,7 @@ public class PropertiesConfigurationHelper {
 	 * @param value
 	 * @throws ConfigurationException 
 	 * @throws PushNotInitializedException 
-<<<<<<< HEAD
 	 * @throws PushSwitchException 
-=======
->>>>>>> 0490d974993a72a97b19f606c92cfe8a3671b176
 	 * @throws Exception
 	 */
 	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException, PushNotInitializedException, PushSwitchException  {

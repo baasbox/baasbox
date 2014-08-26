@@ -74,6 +74,11 @@ public class Push extends Controller {
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
 		 String message=messageNode.asText();	
+		 
+		 
+		 List<String> usernames = new ArrayList<String>();
+		 usernames.add(username);
+		 
 		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
 		 List<Integer> pushProfiles = new ArrayList<Integer>();
 		 if(!(pushProfilesNodes==null)){
@@ -87,7 +92,7 @@ public class Push extends Controller {
 		 }
 		 PushService ps=new PushService();
 		 try{
-		    	if(ps.validate(pushProfiles)) ps.send(message, username, pushProfiles, bodyJson);
+		    	if(ps.validate(pushProfiles)) ps.send(message, usernames, pushProfiles, bodyJson);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
@@ -128,10 +133,83 @@ public class Push extends Controller {
 		 return ok();
 	  }
 	 
-	 public static Result sendUsers() {
-		return ok();		 
+	 public static Result sendUsers() throws Exception {
+		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		 Http.RequestBody body = request().body();
+		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
+		 if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
+		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		 JsonNode messageNode=bodyJson.findValue("message");
+		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
+		 String message=messageNode.asText();	
+		 
+		 JsonNode usernamesNodes=bodyJson.get("users");
+		 List<String> usernames = new ArrayList<String>();
+			
+			if(!(usernamesNodes==null)){
+				
+				for(JsonNode usernamesNode : usernamesNodes) {
+					usernames.add(usernamesNode.asText());
+				}	
+			}
+			else {
+				throw new Exception("The body payload doesn't contain key users or users is empty");
+			}
+		 
+		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
+		 List<Integer> pushProfiles = new ArrayList<Integer>();
+		 if(!(pushProfilesNodes==null)){			
+				for(JsonNode pushProfileNode : pushProfilesNodes) {
+					pushProfiles.add(pushProfileNode.asInt());
+				}	
+		 }
+		 else {
+			 pushProfiles.add(1);
+		 }
+		 PushService ps=new PushService();
+		 try{
+		    	if(ps.validate(pushProfiles)) ps.send(message, usernames, pushProfiles, bodyJson);
+		 }
+		 /*catch (UserNotFoundException e) {
+			    Logger.error("Username not found " + username, e);
+			    return notFound("Username not found");
+		 }*/
+		 catch (SqlInjectionException e) {
+			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+		 }
+		 catch (InvalidRequestException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
+		 }
+		 catch (PushNotInitializedException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
+		 }
+		 catch (PushProfileDisabledException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
+		 }
+		 catch (PushProfileInvalidException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+		 }
+		 catch (PushProfileArrayException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
+		 }
+		 catch (UnknownHostException e){
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
+		 }catch (IOException e) {
+			 return badRequest(e.getMessage());
+		}
+		 
+		
+		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		 return ok();
+	  }	 
 	 
-	 }
+	 
 	 
 	 
 	

@@ -53,7 +53,7 @@ public class APNServer  implements IPushServer {
 	private int identifier;
 	private boolean isInit=false;
 
-	APNServer(){
+	public APNServer(){
 		
 	}
 	
@@ -64,7 +64,7 @@ public class APNServer  implements IPushServer {
 	
 	
 	@Override
-	public  void send(String message, String deviceid, JsonNode bodyJson) throws Exception{	
+	public  void send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
 		
@@ -103,18 +103,17 @@ public class APNServer  implements IPushServer {
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
 				
 		if(!(customDataNodes==null)){	
-		    if (customDataNodes.isObject()) {
+		    /*if (customDataNodes.isObject()) {
 				JsonNode titleNode=customDataNodes.findValue("title");
 				if(titleNode==null) throw new IOException("Error. Key title missing");
 				String title=titleNode.asText();
 				customData.put(title, customDataNodes);
 			}
-			
-		    else {
-				for(JsonNode locArgNode : locArgsNode) {
-					locArgs.add(locArgNode.toString());
+			*/
+		    //else {
+				for(JsonNode customDataNode : customDataNodes) {
 					customData.put("custom", customDataNodes);
-				}	
+				//}	
 			}
 		}
 				
@@ -158,9 +157,9 @@ public class APNServer  implements IPushServer {
 			}
 		} else {
 			try {
-				EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
-				     Integer.MAX_VALUE, deviceid, payload);
-				service.push(notification);
+				//EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
+				 //    Integer.MAX_VALUE, deviceid, payload);
+				//service.push(notification);
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
 				Logger.error(ExceptionUtils.getStackTrace(e));
