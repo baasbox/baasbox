@@ -148,10 +148,7 @@ public class PushService {
 								iosToken.add(pushToken);
 								break;
 							case ANDROID:
-								//androidToken.add(pushToken);
-								androidToken.add("aaa");
-								androidToken.add("bbb");
-								androidToken.add("ccc");
+								androidToken.add(pushToken);
 								Logger.debug(androidToken.toString());
 
 								break;

@@ -170,10 +170,9 @@ public class Push extends Controller {
 		 try{
 		    	if(ps.validate(pushProfiles)) ps.send(message, usernames, pushProfiles, bodyJson);
 		 }
-		 /*catch (UserNotFoundException e) {
-			    Logger.error("Username not found " + username, e);
+		 catch (UserNotFoundException e) {
 			    return notFound("Username not found");
-		 }*/
+		 }
 		 catch (SqlInjectionException e) {
 			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		 }

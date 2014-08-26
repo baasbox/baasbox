@@ -57,18 +57,10 @@ public class GCMServer extends Controller implements IPushServer {
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
 				
 		if(!(customDataNodes==null)){	
-		    /*if (customDataNodes.isObject()) {
-				JsonNode titleNode=customDataNodes.findValue("title");
-				if(titleNode==null) throw new IOException("Error. Key title missing");
-				String title=titleNode.asText();
-				customData.put(title, customDataNodes);
-			}*/
-			
-		    //else {
-				for(JsonNode customDataNode : customDataNodes) {
-					customData.put("custom", customDataNodes);
-				}	
-			//}
+				
+			for(JsonNode customDataNode : customDataNodes) {
+				customData.put("custom", customDataNodes);
+			}	
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
 
