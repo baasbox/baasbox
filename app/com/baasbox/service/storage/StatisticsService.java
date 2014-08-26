@@ -140,8 +140,10 @@ public class StatisticsService {
 			map.put("properties", dbProp);
 			map.put("status", db.getStatus());
 			map.put("configuration", dbConfiguration());
-			map.put("physical_size", FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir())));
-			map.put("datafile_freespace", new File(BBConfiguration.getDBDir()).getFreeSpace());
+			map.put("physical_size", DbHelper.getDBTotalSize());
+			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
+			map.put("size_threshold_pecentage", BBConfiguration.getDBAlertThreshold());
+			
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
 
