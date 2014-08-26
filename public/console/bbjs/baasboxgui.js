@@ -2544,6 +2544,18 @@ function DashboardController($scope) {
 		}
 		return tot;
 	}
+	
+	$scope.alertThreshold = function(){
+		if ($scope.data){
+			var maxSize = $scope.data.db.datafile_freespace;
+			var currentSize = $scope.data.db.physical_size;
+			var percAlert = $scope.data.db.size_threshold_percentage;
+			var percRemainSize = 100-(100*currentSize/maxSize);
+			if (percRemainSize < 0) return 2;
+			if (percRemainSize < percAlert) return 1;
+			if (percRemainSize > percAlert) return 0;
+		}else return 0;
+	}
 
 	$scope.formatSize = function(size){
 		return bytesToSize(size,2);

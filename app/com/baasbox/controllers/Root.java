@@ -298,4 +298,17 @@ public class Root extends Controller {
 				return internalServerError(e.getMessage());
 			}
 		}
+		
+		@With({RootCredentialWrapFilter.class})
+		public static Result getOverridableConfiguration(){
+			HashMap returnMap = new HashMap();
+			returnMap.put(BBConfiguration.DB_ALERT_THRESHOLD, BBConfiguration.getDBAlertThreshold());
+			returnMap.put(BBConfiguration.DB_SIZE_THRESHOLD, BBConfiguration.getDBSizeThreshold());
+			try {
+				return ok(new ObjectMapper().writeValueAsString(returnMap));
+			} catch (JsonProcessingException e) {
+				return internalServerError(e.getMessage());
+			}
+		}
+		
 }

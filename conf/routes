@@ -369,7 +369,7 @@ POST	/root/db/import         							    com.baasbox.controllers.Root.importDb()
 
 #ROOT set or override some configuration parameters
 POST	/root/configuration         							com.baasbox.controllers.Root.overrideConfiguration()
-
+GET		/root/configuration										com.baasbox.controllers.Root.getOverridableConfiguration()
 
 # Home page & general API
 GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()

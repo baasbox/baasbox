@@ -59,7 +59,7 @@ public class AdminDBStatisticsFunctionalTest extends AbstractAdminTest
 			
 			assertJSON(db, "datafile_freespace");
 			assertJSON(db, "physical_size");
-			assertJSON(db, "size_threshold_pecentage");
+			assertJSON(db, "size_threshold_percentage");
 			
 			assertJSON(dataInternal, "users");
 			assertJSON(dataInternal, "collections");
