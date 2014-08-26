@@ -18,10 +18,12 @@ package com.baasbox.db;
 
 
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +32,7 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -99,6 +102,16 @@ public class DbHelper {
 	
 	private static final String fetchPlan = "*:?";
 
+	public static BigInteger getDBTotalSize(){
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBDir()));
+	}
+	
+	public static BigInteger getDBStorageFreeSpace(){
+		if (BBConfiguration.getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getDBSizeThreshold();
+		return BigInteger.valueOf(new File(BBConfiguration.getDBDir()).getFreeSpace());
+	}
+	
+		
 	public static String currentUsername(){
 		return username.get();
 	}

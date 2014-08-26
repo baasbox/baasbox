@@ -131,7 +131,8 @@ public class StatisticsService {
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
-			dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+			else dbProp.put("path", "N/A");
 			dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
 			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
 			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
@@ -140,8 +141,10 @@ public class StatisticsService {
 			map.put("properties", dbProp);
 			map.put("status", db.getStatus());
 			map.put("configuration", dbConfiguration());
-			map.put("physical_size", FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir())));
-			map.put("datafile_freespace", new File(BBConfiguration.getDBDir()).getFreeSpace());
+			map.put("physical_size", DbHelper.getDBTotalSize());
+			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
+			map.put("size_threshold_percentage", BBConfiguration.getDBAlertThreshold());
+			
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
 
