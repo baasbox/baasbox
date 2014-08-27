@@ -50,6 +50,7 @@ import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
+import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;

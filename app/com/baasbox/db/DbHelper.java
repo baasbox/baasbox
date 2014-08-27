@@ -48,6 +48,7 @@ import play.mvc.Http;
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
+import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
@@ -569,6 +570,8 @@ public class DbHelper {
 			 Logger.info("...registering hooks...");
 			 evolveDB(db);
 			 HooksManager.registerAll(db);
+			 Logger.info("...extract iOS certificates...");
+			 IosCertificateHandler.init();
 		}catch(Exception ioe){
 			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
