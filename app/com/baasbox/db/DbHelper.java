@@ -364,7 +364,7 @@ public class DbHelper {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
 			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
-			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
+			Logger.debug("Cound not retrieve the DB connection within this thread: " + e.getMessage());
 		}
 		return db;
 	}
