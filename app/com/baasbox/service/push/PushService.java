@@ -138,19 +138,12 @@ public class PushService {
 					VendorOS vos = VendorOS.getVendorOs(vendor);
 					if (Logger.isDebugEnabled()) Logger.debug("vos: " + vos);
 					if (vos!=null){
-						/*IPushServer pushServer = Factory.getIstance(vos);
-						for(Integer pushProfile : pushProfiles) {
-							pushServer.setConfiguration(getPushParameters(pushProfile));
-							pushServer.send(message, pushToken, bodyJson);
-						}*/
 						switch(vos) {
 							case IOS:
 								iosToken.add(pushToken);
 								break;
 							case ANDROID:
 								androidToken.add(pushToken);
-								Logger.debug(androidToken.toString());
-
 								break;
 						}
 						
