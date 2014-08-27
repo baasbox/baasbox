@@ -123,19 +123,14 @@ function dropDb()
 	freezeConsole("Deleting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
-				error: function(data)
-				{
+				error: function(data)	{
 					unfreezeConsole();
 					alert(JSON.parse(data.responseText)["message"]);
 				},
-				success: function(data)
-				{
+				success: function(data){
 					unfreezeConsole();
 					callMenu('#dashboard');
-
-
 				}
-
 			})
 }
 
@@ -1408,8 +1403,20 @@ function setup(){
 				});
 	});
 
-	if (sessionStorage.up && sessionStorage.up!="") {
-		tryToLogin();
+	if (sessionStorage.sessionToken && sessionStorage.sessionToken !="") {
+		BBRoutes.com.baasbox.controllers.User.getCurrentUser().ajax({
+	        success: function(data){
+	        	var scope=$("#loggedIn").scope();
+				scope.$apply(function(){
+					scope.loggedIn=true;
+				});
+				sessionStorage.up ="yep";
+				callMenu("#dashboard");
+	        },
+	        error: function(data){
+	           
+	        }
+	    });
 	}
 }
 
@@ -2256,13 +2263,14 @@ function tryToLogin(user, pass,appCode){
 			//console.debug("data received: ");
 			//console.debug(data);
 			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-			callMenu("#dashboard");
 			//refresh the sessiontoken every 5 minutes
 			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
 			var scope=$("#loggedIn").scope();
 			scope.$apply(function(){
 				scope.loggedIn=true;
 			});
+			sessionStorage.up ="yep";
+			callMenu("#dashboard");
 		},
 		error: function() {
 			$("#errorLogin").removeClass("hide");
