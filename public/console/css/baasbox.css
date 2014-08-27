@@ -4,18 +4,18 @@
 }
 
 @font-face {
-    font-family: 'lato';
-    src: url('Lato-Bol.ttf') format('truetype');
+    font-family: 'Lato';
+   	src: url('Lato-Regular.ttf') format('truetype') !important;
     font-weight: bold;
 }
 @font-face {
-    font-family: 'lato';
-    src: url('Lato-RegIta.ttf') format('truetype');
+    font-family: 'Lato';
+    src: url('Lato-Regular.ttf') format('truetype');
     font-style: italic;
 }
 @font-face {
-    font-family: 'lato';
-    src: url('Lato-BolIta.ttf') format('truetype');
+    font-family: 'Lato';
+    src: url('Lato-Regular.ttf') format('truetype');
     font-style: italic;
     font-weight: bold;
 }
