@@ -567,6 +567,8 @@ public class DbHelper {
 			
 			 Logger.info("...setting up internal user credential...");
 			 updateDefaultUsers();
+			 Logger.info("...setting up DataBase attributes...");
+			 setupAttributes();
 			 Logger.info("...registering hooks...");
 			 evolveDB(db);
 			 HooksManager.registerAll(db);
@@ -586,6 +588,17 @@ public class DbHelper {
 			}
 			Logger.info("...restore terminated");
 		}
+	}
+
+	private static void setupAttributes() {
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
+				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ"
+				,"alter database custom useLightweightEdges=false"
+				,"alter database custom useClassForEdgeLabel=false"
+				,"alter database custom useClassForVertexLabel=true"
+				,"alter database custom useVertexFieldsForEdgeLabels=true"
+  	        );
 	}
 
 	/**
