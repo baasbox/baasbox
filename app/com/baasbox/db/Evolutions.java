@@ -56,13 +56,7 @@ public class Evolutions {
 	
 	private static void  postEvolutionTasks(ODatabaseRecordTx db){
 		Logger.info("Performing post-evolutions tasks....");
-		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
-				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ"
-				,"alter database custom useLightweightEdges=false"
-				,"alter database custom useClassForEdgeLabel=false"
-				,"alter database custom useClassForVertexLabel=true"
-				,"alter database custom useVertexFieldsForEdgeLabels=true"
-  	        );
+		//nothing todo here at the moment
 		Logger.info("...end");
 	}
 	

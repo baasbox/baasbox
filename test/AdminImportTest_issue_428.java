@@ -18,8 +18,6 @@ import core.TestConfig;
 
 public class AdminImportTest_issue_428 extends AbstractDocumentTest {
 	
-	private static File correctZipFile;
-	
 	@Override
 	public String getRouteAddress() {
 		return "/admin/db/import";
