@@ -52,7 +52,7 @@ import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.push.PushProfileArrayException;
+import com.baasbox.service.push.PushInvalidApiKeyException;
 import com.baasbox.service.push.PushProfileDisabledException;
 import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
@@ -117,7 +117,7 @@ public class Push extends Controller {
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		 }
-		 catch (PushProfileArrayException e) {
+		 catch (PushInvalidApiKeyException e) {
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
 		 }
@@ -192,7 +192,7 @@ public class Push extends Controller {
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		 }
-		 catch (PushProfileArrayException e) {
+		 catch (PushInvalidApiKeyException e) {
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
 		 }

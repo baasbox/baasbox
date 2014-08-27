@@ -35,10 +35,10 @@ import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 
 import com.baasbox.exception.ConfigurationException;
-
+import com.baasbox.service.push.PushInvalidApiKeyException;
 import com.baasbox.service.push.PushSwitchException;
-
 import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -293,9 +293,10 @@ public class PropertiesConfigurationHelper {
 	 * @throws ConfigurationException 
 	 * @throws PushNotInitializedException 
 	 * @throws PushSwitchException 
+	 * @throws PushInvalidApiKeyException 
 	 * @throws Exception
 	 */
-	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException, PushNotInitializedException, PushSwitchException  {
+	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException, PushNotInitializedException, PushSwitchException, InvalidRequestException, PushInvalidApiKeyException  {
 		Object enumValue = findByKey(en,iKey);
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
@@ -303,7 +304,7 @@ public class PropertiesConfigurationHelper {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
 			if (e.getCause() instanceof PushSwitchException) throw new PushSwitchException(e.getCause());
 			if (e.getCause() instanceof PushNotInitializedException) throw new PushNotInitializedException(e.getCause());
-
+			if (e.getCause() instanceof PushInvalidApiKeyException) throw new PushInvalidApiKeyException(e.getCause());
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey

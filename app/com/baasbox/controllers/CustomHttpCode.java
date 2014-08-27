@@ -36,7 +36,8 @@ public enum CustomHttpCode {
 			PUSH_SWITCH_EXCEPTION(40014,400,"Cannot switch, because settings for the selected mode are missing","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error"),
-			PUSH_INVALID_REQUEST (50303,503,"Could not send push notifications. HINT: Check your API Key(Google), it's possible that push service aren't enabled in the Google Play Developer Console","error");
+			PUSH_INVALID_REQUEST (50303,503,"Could not send push notifications. HINT: Check your API Key(Google), it's possible that push service aren't enabled in the Google Play Developer Console","error"), 
+			PUSH_INVALID_APIKEY (50304,503,"Could not save API KEY. HINT: Check your API Key, it's possible that push service aren't enabled in the Google Play Developer Console","error")
 			;
 			private String type;
 			private int bbCode;
