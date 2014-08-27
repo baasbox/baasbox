@@ -122,7 +122,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static BigInteger getDBSizeThreshold(){
-		if (!isDBSizeThresholdOverridden && configuration.getInt(DB_SIZE_THRESHOLD)!=null) return BigInteger.valueOf(configuration.getLong(DB_SIZE_THRESHOLD));
+		if (!isDBSizeThresholdOverridden && configuration.getLong(DB_SIZE_THRESHOLD)!=null) return BigInteger.valueOf(configuration.getLong(DB_SIZE_THRESHOLD));
 		return dbSizeThreshold;
 	}
 	
