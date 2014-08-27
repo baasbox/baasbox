@@ -1120,14 +1120,6 @@ $('.btn-ChangePwdCommit').click(function(e){
 	var oldPassword = $("#oldpassword").val();
 	var newPassword = $("#newpassword").val();
 
-	if($("#password").val() != oldPassword)
-	{
-        $("#errorCPwd").removeClass("hide");
-		return;
-	}
-	else
-		$("#errorCPwd").addClass("hide");
-
 	if(newPassword != $("#retypenewpassword").val())
 	{
         $("#errorPwdNotMatch").removeClass("hide");
@@ -1155,7 +1147,6 @@ $('.btn-ChangePwdCommit').click(function(e){
 				},
 				success: function(data)
 				{
-					sessionStorage.password = newPassword;
 					$('#changePwdModal').modal('hide');
 				}
 			})
@@ -1192,7 +1183,6 @@ $('.btn-ChangePwdUserCommit').click(function(e){
             },
             success: function(data)
             {
-                sessionStorage.password = txtPwd;
                 $('#changePwdUserModal').modal('hide');
             }
         })
@@ -1246,9 +1236,7 @@ $('#importDbForm').on('submit',function(){
 				unfreezeConsole();
 				BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 						function() {
-							sessionStorage.up="";
-							sessionStorage.appcode="";
-							sessionStorage.sessionToken="";
+							sessionStorage.clear();
 							location.reload();
 						});
 			}, //success
@@ -1396,9 +1384,7 @@ function setup(){
 	$('.logout').click(function(e){
 		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 				function() {
-					sessionStorage.up="";
-					sessionStorage.appcode="";
-					sessionStorage.sessionToken="";
+					sessionStorage.clear();
 					location.reload();
 				});
 	});
@@ -1412,10 +1398,9 @@ function setup(){
 				});
 				sessionStorage.up ="yep";
 				$('a[href="'+sessionStorage.latestMenu+'"]')[0].click();
-				//callMenu(sessionStorage.latestMenu);
 	        },
 	        error: function(data){
-	           
+	        	sessionStorage.sessionToken="";
 	        }
 	    });
 	}
@@ -1651,7 +1636,7 @@ function setupTables(){
                   return "<span class='label "+classStyle+"'>"+text+"</span> ";
             }},
             {"mData":"endpoint",mRender: function(data,type,full){
-                console.log(JSON.stringify(data));
+                //console.log(JSON.stringify(data));
                 if(data.status){
 
                 }
@@ -1847,7 +1832,7 @@ function setupSelects(){
 	$("#selectCollection").chosen().change(function(){
 		if ($('#selectCollection').has('option').length>0){
 			val=$("#selectCollection").val();
-			console.log('collName length ' + $('#selectCollection').has('option').length);
+			//console.log('collName length ' + $('#selectCollection').has('option').length);
 			loadDocumentsData(val);   
 			var scope=$("#documents").scope();
 			scope.$apply(function(){
@@ -2260,6 +2245,7 @@ function tryToLogin(user, pass,appCode){
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
 			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+			$('#password').val('');
 			//console.debug("login success");
 			//console.debug("data received: ");
 			//console.debug(data);
@@ -2367,15 +2353,15 @@ function SettingsController($scope){
 			var value = toModify.token;
 
 			updateSettings(key,value,function(){
-				console.log("saving token")
+				//console.log("saving token")
 				var key2 = "social."+name+".secret"
 				var value2 = toModify.secret;
 				updateSettings(key2,value2,function(){
-					console.log("saving secret")
+					//console.log("saving secret")
 					var key3 = "social."+name+".enabled"
 					var value3 = "true";
 					updateSettings(key3,value3,function(){
-						console.log("enabling")
+						//console.log("enabling")
 						$scope.sociallogins[name].saved = true;
 					});
 
