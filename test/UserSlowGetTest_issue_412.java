@@ -70,7 +70,7 @@ public class UserSlowGetTest_issue_412 extends AbstractUserTest
 					Result result=null;
 					String sFakeUser =null;
 					//create 100 fake users
-					for (int i=0;i<10;i++){
+					for (int i=0;i<100;i++){
 						sFakeUser = USER_TEST +uuid + "_" + i;
 							
 						// Prepare test user
@@ -90,7 +90,7 @@ public class UserSlowGetTest_issue_412 extends AbstractUserTest
 					}
 					Object explain = DbHelper.genericSQLStatementExecute(
 							"explain select from _bb_user where user.name = ?", new String[]{USER_TEST +uuid + "_" + 1});
-					Assert.assertTrue("UserSlowGetTest_issue_412 FAILED! " + explain.toString(),explain.toString().contains("{compositeIndexUsed:1"));
+					Assert.assertTrue("UserSlowGetTest_issue_412 FAILED! " + explain.toString(),explain.toString().contains("compositeIndexUsed:1"));
 				}//run()
 			}// Runnable
 		);//running	
