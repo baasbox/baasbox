@@ -1411,7 +1411,8 @@ function setup(){
 					scope.loggedIn=true;
 				});
 				sessionStorage.up ="yep";
-				callMenu("#dashboard");
+				$('a[href="'+sessionStorage.latestMenu+'"]')[0].click();
+				//callMenu(sessionStorage.latestMenu);
 	        },
 	        error: function(data){
 	           
@@ -1912,7 +1913,7 @@ function applySuccessMenu(action,data){
 	scope.$apply(function(){
 		scope.data=data;
 	});
-
+	sessionStorage.latestMenu=action;
 }//applySuccessMenu
 
 function reloadFollowing(user){
