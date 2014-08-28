@@ -39,11 +39,10 @@ public class PushGcmApiKeyTest extends AbstractTest {
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-							request = request.withJsonBody(getPayload("/adminSetApiKey.json"), getMethod());
+							request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
 							Result result = routeAndCall(request);
 							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey request: " + request.getWrappedRequest().headers());
 							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey result: " + contentAsString(result));
-							Logger.debug("AAAA " + CustomHttpCode.PUSH_INVALID_APIKEY.getHttpCode());
 							assertRoute(result, "testSetApiKey not valid", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_INVALID_APIKEY.getDescription(), true);
 							//Assert.assertEquals(expected, actual);
 						
