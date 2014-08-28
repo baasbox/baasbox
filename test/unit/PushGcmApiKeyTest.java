@@ -44,7 +44,6 @@ public class PushGcmApiKeyTest extends AbstractTest {
 							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey request: " + request.getWrappedRequest().headers());
 							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey result: " + contentAsString(result));
 							assertRoute(result, "testSetApiKey not valid", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_INVALID_APIKEY.getDescription(), true);
-							//Assert.assertEquals(expected, actual);
 						
 					}
 				}
