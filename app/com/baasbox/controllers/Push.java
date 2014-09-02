@@ -213,7 +213,6 @@ public class Push extends Controller {
 			 return badRequest(e.getMessage());
 		}
 		 
-		
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 
 		 for(int i=0;i<withError.length;i++) {
