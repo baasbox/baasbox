@@ -349,6 +349,7 @@ DELETE  /admin/endpoints/:tag/enabled                           com.baasbox.cont
 # ROOT access
 # ROOT RESET ADMIN PASSWORD
 POST	/root/resetadminpassword								com.baasbox.controllers.Root.resetAdminPassword()
+
 # ROOT + METRICS
 POST	/root/metrics											com.baasbox.controllers.Root.startMetrics()
 DELETE 	/root/metrics											com.baasbox.controllers.Root.stopMetrics()
@@ -366,7 +367,9 @@ DELETE	/root/db/export/:filename							    com.baasbox.controllers.Root.deleteEx
 GET	    /root/db/export											com.baasbox.controllers.Root.getExports()
 POST	/root/db/import         							    com.baasbox.controllers.Root.importDb()
 
-
+#ROOT set or override some configuration parameters
+POST	/root/configuration         							com.baasbox.controllers.Root.overrideConfiguration()
+GET		/root/configuration										com.baasbox.controllers.Root.getOverridableConfiguration()
 
 # Home page & general API
 GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()

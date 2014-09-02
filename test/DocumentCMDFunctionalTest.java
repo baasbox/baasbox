@@ -626,7 +626,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Cannot get _author value: " + ex.getMessage());
+			Assert.fail("Cannot get _creation_date value: " + ex.getMessage());
 		}
 		
 		return sRet;
