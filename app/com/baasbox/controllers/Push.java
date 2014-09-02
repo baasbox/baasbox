@@ -91,9 +91,10 @@ public class Push extends Controller {
 		 else {
 			 pushProfiles.add(1);
 		 }
+		 boolean[] withError=new boolean[5];
 		 PushService ps=new PushService();
 		 try{
-		    	if(ps.validate(pushProfiles)) ps.send(message, usernames, pushProfiles, bodyJson);
+		    	if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
 		 }
 		 catch (UserNotFoundException e) {
 			    Logger.error("Username not found " + username, e);
@@ -131,6 +132,9 @@ public class Push extends Controller {
 		 
 		
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		 for(int i=0;i<withError.length;i++) {
+			 if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
+		 }		
 		 return ok();
 	  }
 	 
@@ -167,9 +171,10 @@ public class Push extends Controller {
 		 else {
 			 pushProfiles.add(1);
 		 }
+		 boolean[] withError=new boolean[6];
 		 PushService ps=new PushService();
 		 try{
-		    	if(ps.validate(pushProfiles)) ps.send(message, usernames, pushProfiles, bodyJson);
+		    	if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
 		 }
 		 catch (UserNotFoundException e) {
 			    return notFound("Username not found");
@@ -195,6 +200,10 @@ public class Push extends Controller {
 		 }
 		 catch (PushInvalidApiKeyException e) {
 			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
+		 }
+		 catch (PushProfileArrayException e) {
+			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
 		 }
 		 catch (UnknownHostException e){
@@ -206,6 +215,10 @@ public class Push extends Controller {
 		 
 		
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		 
+		 for(int i=0;i<withError.length;i++) {
+			 if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
+		 }
 		 return ok();
 	  }	 
 	 

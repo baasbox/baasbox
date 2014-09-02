@@ -22,6 +22,7 @@ import play.mvc.Results.Status;
 import play.mvc.Results;
 
 public enum CustomHttpCode {
+			PUSH_SENT_WITH_ERROR(20001,200,"Push notifications were sent but they may be subject to loss of data. HINT: check push settings in console","ok, with a reservation"),
 			DOCUMENT_VERSION(40001,400,"You are attempting to update a database object with older data. Versions is not the same","error"),
 			ACL_JSON_FIELD_MALFORMED(40002,400,"The 'acl' field is not a valid JSON string","error"),
 			ACL_PERMISSION_UNKNOWN(40003,400,"The specified 'permission' is unknown. Valid ones are 'read','update','delete',all'","error"),

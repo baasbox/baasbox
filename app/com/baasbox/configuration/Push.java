@@ -107,7 +107,8 @@ public enum Push implements IProperties	{
 			if(this.getValue()==null) _setValue(newValue);
 		}
 		if (this.key.contains("api.key")) {
-			GCMServer.validateApiKey(newValue.toString());
+			if(this.getValue()==null) _setValue(newValue);
+			else GCMServer.validateApiKey(newValue.toString());
 		}
 		switch  (this) {
 			case PROFILE1_PUSH_PROFILE_ENABLE:

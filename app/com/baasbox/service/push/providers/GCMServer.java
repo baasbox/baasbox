@@ -62,12 +62,12 @@ public class GCMServer extends Controller implements IPushServer {
 
 	}
 
-	public void send(String message, List<String> deviceid, JsonNode bodyJson)
+	public boolean send(String message, List<String> deviceid, JsonNode bodyJson)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
 		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: "+message+" to the device "+deviceid);
-		if (!isInit)
-			throw new PushNotInitializedException(
-					"Configuration not initialized");
+		if (!isInit) {
+			return true;
+		}
 		JsonNode customDataNodes=bodyJson.get("customData");
 		
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
@@ -90,6 +90,7 @@ public class GCMServer extends Controller implements IPushServer {
 		// icallbackPush.onError(e.getMessage());
 
 		// icallbackPush.onSuccess();
+			return false;
 
 	}
 

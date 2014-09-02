@@ -64,9 +64,11 @@ public class APNServer  implements IPushServer {
 	
 	
 	@Override
-	public  void send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
+	public boolean send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
-		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
+		if (!isInit) {
+			return true;
+		}
 		
 		JsonNode soundNode=bodyJson.findValue("sound");
 		String sound =null;
@@ -159,6 +161,7 @@ public class APNServer  implements IPushServer {
 				
 		}
 		//icallbackPush.onSuccess();
+		return false;
 	}
 		
 		
