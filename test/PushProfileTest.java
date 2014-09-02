@@ -108,23 +108,35 @@ public class PushProfileTest extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushTooManyProfiles.json"), getMethod());
+						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
-						//if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
 						assertRoute(result, "error with send, too many profiles", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription(), true);
 
 						continueOnFail(true);
 
-						// Profile not enabled
+						// Profile not enabled, with profile specified in Payload
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayload.json"), getMethod());
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
+						assertRoute(result, "error with send, push profile disabled, with profile specified in Payload", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
+
+						continueOnFail(true);
+						
+						// Profile not enabled, without profile specified in Payload
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
+						assertRoute(result, "error with send, push profile disabled, without profile specified in Payload", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						continueOnFail(true);
 						
@@ -132,7 +144,7 @@ public class PushProfileTest extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileNotSupported.json"), getMethod());
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfileNotSupported.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
@@ -146,6 +158,34 @@ public class PushProfileTest extends AbstractTest {
 				);
 		}
 		
+		@Test
+		public void PushProfileSendToUsers(){
+			running
+			(
+				getFakeApplication(), 
+				new Runnable() 
+				{
+					public void run() 
+					{
+						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
+
+						// Key users empty
+
+						FakeRequest request = new FakeRequest("POST", "/push/message");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
+						Result result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
+						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription(), true);
+							
+					}
+				}
+				);
+		}
+
 		public void addProfiles(){
 			profiles = new ArrayList<String>();
 			profiles.add("profile1");
@@ -173,7 +213,7 @@ public class PushProfileTest extends AbstractTest {
 		@Override
 		public String getDefaultPayload()
 		{
-			return "/pushEnableProfile.json";
+			return "/pushPayloadEnableProfile.json";
 		}
 		
 }

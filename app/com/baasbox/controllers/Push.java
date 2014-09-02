@@ -158,7 +158,7 @@ public class Push extends Controller {
 				}	
 			}
 			else {
-				throw new Exception("The body payload doesn't contain key users or users is empty");
+				return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
 			}
 		 
 		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
