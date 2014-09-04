@@ -35,6 +35,10 @@ import javax.ws.rs.core.MediaType;
 
 
 
+
+
+import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -47,6 +51,29 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 {
 	public static final String SERVICE_ROUTE = "/document/";
 	public static final String COLLECTION_NOT_EXIST = "fakeCollection";
+	
+	protected String getCreationDate(Object json){
+		String sRet = null;
+		try	{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_creation_date");
+		}catch (Exception ex){
+			Assert.fail("Cannot get _creation_date value: " + ex.getMessage());
+		}
+		return sRet;
+	}
+	protected String getAuthor(Object json){
+		String sRet = null;
+
+		try	{
+			JSONObject jo = (JSONObject)json;
+			sRet = jo.getJSONObject("data").getString("_author");
+		}	catch (Exception ex)	{
+			Assert.fail("Cannot get _author value: " + ex.getMessage());
+		}
+		return sRet;
+	}
+	
 	
 	public static String getRouteAddress(String sCollectionName)
 	{
@@ -120,11 +147,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-		httpRequest
-		( 
-			sAddress,
-			GET
-		);
+		httpRequest	( sAddress,	GET	);
 	}
 	
 	@Test
