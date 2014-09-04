@@ -68,15 +68,19 @@ public class GCMServer extends Controller implements IPushServer {
 		if (!isInit) {
 			return true;
 		}
-		JsonNode customDataNodes=bodyJson.get("customData");
+		JsonNode customDataNodes=bodyJson.get("custom");
 		
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
 				
-		if(!(customDataNodes==null)){	
-				
-			for(JsonNode customDataNode : customDataNodes) {
-				customData.put("custom", customDataNodes);
-			}	
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
+			}
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}
+			}
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
 

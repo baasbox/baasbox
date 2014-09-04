@@ -100,14 +100,19 @@ public class APNServer  implements IPushServer {
 			}	
 		}
 						
-		JsonNode customDataNodes=bodyJson.get("customData");
+		JsonNode customDataNodes=bodyJson.get("custom");
 		
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
-				
-		if(!(customDataNodes==null)){	
-			for(JsonNode customDataNode : customDataNodes) {
-				customData.put("custom", customDataNodes);
-			}				
+
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
+			}
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}
+			}
 		}
 				
 		JsonNode badgeNode=bodyJson.findValue("badge");
@@ -127,9 +132,7 @@ public class APNServer  implements IPushServer {
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
 		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
 		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
-
-
-		
+	
 		
 		String payload = APNS.newPayload()
 							.alertBody(message)
