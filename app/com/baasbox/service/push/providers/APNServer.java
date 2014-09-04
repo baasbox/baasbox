@@ -21,6 +21,7 @@ package com.baasbox.service.push.providers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -153,9 +154,8 @@ public class APNServer  implements IPushServer {
 			}
 		} else {
 			try {
-				//EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
-				 //    Integer.MAX_VALUE, deviceid, payload);
-				//service.push(notification);
+				Date expiry = new Date(Integer.MAX_VALUE);
+				service.push(deviceid,payload,expiry);
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
 				Logger.error(ExceptionUtils.getStackTrace(e));
