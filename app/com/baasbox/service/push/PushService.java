@@ -42,6 +42,8 @@ import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class PushService {
@@ -162,7 +164,12 @@ public class PushService {
 			
 			if(iosToken.size()>0) withError[i++]=apnServer.send(message, iosToken, bodyJson);
 		
-			if(androidToken.size()>0) withError[i++]=gcmServer.send(message, androidToken, bodyJson);
+			if(androidToken.size()>0) {
+				for(List<String> thousandUsers: Lists.partition(androidToken,1000)){ //needed for the GCM sending limit
+					withError[i]=gcmServer.send(message, thousandUsers, bodyJson);
+				}
+				i++;
+			}
 				
 		}
 		return withError;
