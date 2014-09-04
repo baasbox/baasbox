@@ -58,12 +58,6 @@ public class APNServer  implements IPushServer {
 		
 	}
 	
-	  public int INCREMENT_ID() {
-	        return ++identifier;
-	    }
-	
-	
-	
 	@Override
 	public boolean send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
@@ -154,7 +148,7 @@ public class APNServer  implements IPushServer {
 			}
 		} else {
 			try {
-				Date expiry = new Date(Integer.MAX_VALUE);
+				Date expiry = new Date(Long.MAX_VALUE);
 				service.push(deviceid,payload,expiry);
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
