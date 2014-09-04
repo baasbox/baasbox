@@ -176,65 +176,6 @@ public class PushService {
 		
 	}//send
 		
-	/*	
-	private boolean validatePushProfile(List<Integer> pushProfiles,
-			String vendor) throws PushNotInitializedException {
-		for(Integer pushProfile : pushProfiles) {
-			if(vendor.equalsIgnoreCase("ios")){
-				if(pushProfile==1) {
-					if(Push.PROFILE1_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if((Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValue()==null
-								|| StringUtils.isEmpty(Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if((Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE.getValue()==null
-						|| StringUtils.isEmpty(Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Production configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-				else if(pushProfile==2) {
-					if(Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if((Push.PROFILE2_SANDBOX_IOS_CERTIFICATE.getValue()==null
-								|| StringUtils.isEmpty(Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if((Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE.getValue()==null
-						|| StringUtils.isEmpty(Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Production configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-				else if(pushProfile==3) {
-					if(Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if((Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValue()==null
-								|| StringUtils.isEmpty(Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if((Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE.getValue()==null
-						|| StringUtils.isEmpty(Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValueAsString()))
-								) throw new PushNotInitializedException("Production configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-			}
-			else if(vendor.equalsIgnoreCase("android")){
-				if(pushProfile==1) {
-					if(Push.PROFILE1_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if(StringUtils.isEmpty(Push.PROFILE1_SANDBOX_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if(StringUtils.isEmpty(Push.PROFILE1_PRODUCTION_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-				if(pushProfile==2) {
-					if(Push.PROFILE2_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if(StringUtils.isEmpty(Push.PROFILE2_SANDBOX_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if(StringUtils.isEmpty(Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-				if(pushProfile==3) {
-					if(Push.PROFILE3_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-						if(StringUtils.isEmpty(Push.PROFILE3_SANDBOX_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-					}else //production
-						if(StringUtils.isEmpty(Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValueAsString())) throw new PushNotInitializedException("Sandbox configuration not properly initialized for default profile. Hint: check if both iOS Certificate and iOS password or Android API Key are set");
-				}
-			}
-		}
-		return true;
-	}*/
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
 		if (pushProfiles.size()>3) throw new PushProfileArrayException("Too many push profiles");
