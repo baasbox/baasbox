@@ -51,7 +51,6 @@ public class APNServer  implements IPushServer {
 	private String password;
 	private boolean sandbox;
 	private int timeout;
-	private int identifier;
 	private boolean isInit=false;
 
 	public APNServer(){
