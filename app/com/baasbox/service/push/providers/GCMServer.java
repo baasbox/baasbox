@@ -57,6 +57,7 @@ public class GCMServer extends Controller implements IPushServer {
 
 	private String apikey;
 	private boolean isInit = false;
+	private final static int MAX_TIME_TO_LIVE=2419200;  //4 WEEKS
 
 	public GCMServer() {
 
@@ -82,11 +83,39 @@ public class GCMServer extends Controller implements IPushServer {
 				}
 			}
 		}
+		
+		JsonNode collapse_KeyNode=bodyJson.findValue("collapse_key"); 
+		String collapse_key=null; 
+		
+		if(!(collapse_KeyNode==null)) {
+			collapse_key=collapse_KeyNode.asText();
+		}
+		else collapse_key="";
+		
+		JsonNode timeToLiveNode=bodyJson.findValue("time_to_live");
+		int time_to_live = 0;
+		
+		if(!(timeToLiveNode==null)) {
+			if(Integer.parseInt(timeToLiveNode.asText())>MAX_TIME_TO_LIVE){
+				time_to_live=MAX_TIME_TO_LIVE;
+			}
+			else time_to_live=Integer.parseInt(timeToLiveNode.asText());
+			
+		}
+		else time_to_live=MAX_TIME_TO_LIVE; //IF NULL WE SET DEFAULT VALUE (4 WEEKS)
+		
+		if (Logger.isDebugEnabled()) Logger.debug("collapse_key: " + collapse_key.toString());
+
+		if (Logger.isDebugEnabled()) Logger.debug("time_to_live: " + time_to_live);
+		
 		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
 
 			Sender sender = new Sender(apikey);
-			Message msg = new Message.Builder().addData("message", message).addData("custom", customData.toString())
-					.build();
+			Message msg = new Message.Builder().addData("message", message)
+											   .addData("custom", customData.toString())
+											   .collapseKey(collapse_key.toString())
+											   .timeToLive(time_to_live)
+											   .build();
 
 			sender.send(msg, deviceid , 1);
 		
