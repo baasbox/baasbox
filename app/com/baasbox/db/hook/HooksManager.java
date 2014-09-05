@@ -40,6 +40,7 @@ public class HooksManager {
 		//OrientDB 1.7: 
 		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
 		Iterator<ORecordHook> it =hooks.keySet().iterator();
+
 		
 		while (it.hasNext()){		
 			if (it.next() instanceof BaasBoxHook) {
@@ -66,8 +67,6 @@ public class HooksManager {
 		//OrientDB 1.7: 
 		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
 		List hs = IteratorUtils.toList(hooks.keySet().iterator());
-		
-		
 		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();

@@ -18,7 +18,6 @@
 
 package com.baasbox.db;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,7 +32,6 @@ import com.baasbox.dao.IndexDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.user.RoleService;
-import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -145,7 +143,6 @@ public class Evolution_0_7_0 implements IEvolution {
 			if (indicesName.contains(i.getName())){
 				//migrate the index
 				Logger.info("....." + i.getName());
-				
 				OIndexCursor cursor = i.cursor();
 				Set<Entry<Object, OIdentifiable>> entries = cursor.toEntries();
 				Iterator<Entry<Object, OIdentifiable>> it = entries.iterator();
@@ -163,9 +160,10 @@ public class Evolution_0_7_0 implements IEvolution {
 						newValue.field("value",value);
 						newValue.save();
 					}//the value is not null
-				} //for each key into the index	
+				} //while
 				db.getMetadata().getIndexManager().dropIndex(i.getName());
 			}//the index is a baasbox index
+			
 		}//for each index defined on the db	
 		
 		Logger.info("...end indices migration");

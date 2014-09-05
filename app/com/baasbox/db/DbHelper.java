@@ -18,10 +18,12 @@ package com.baasbox.db;
 
 
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,7 @@ import play.mvc.Http;
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
+import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -105,6 +108,16 @@ public class DbHelper {
 	
 	private static final String fetchPlan = "*:?";
 
+	public static BigInteger getDBTotalSize(){
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBDir()));
+	}
+	
+	public static BigInteger getDBStorageFreeSpace(){
+		if (BBConfiguration.getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getDBSizeThreshold();
+		return BigInteger.valueOf(new File(BBConfiguration.getDBDir()).getFreeSpace());
+	}
+	
+		
 	public static String currentUsername(){
 		return username.get();
 	}
@@ -378,7 +391,7 @@ public class DbHelper {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
 			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
-			Logger.warn("Cound not retrieve the DB connection within this thread: " + e.getMessage());
+			Logger.debug("Cound not retrieve the DB connection within this thread: " + e.getMessage());
 		}
 		return db;
 	}
@@ -581,9 +594,13 @@ public class DbHelper {
 			
 			 Logger.info("...setting up internal user credential...");
 			 updateDefaultUsers();
+			 Logger.info("...setting up DataBase attributes...");
+			 setupAttributes();
 			 Logger.info("...registering hooks...");
 			 evolveDB(db);
 			 HooksManager.registerAll(db);
+			 Logger.info("...extract iOS certificates...");
+			 IosCertificateHandler.init();
 		}catch(Exception ioe){
 			Logger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
@@ -598,6 +615,17 @@ public class DbHelper {
 			}
 			Logger.info("...restore terminated");
 		}
+	}
+
+	private static void setupAttributes() {
+		ODatabaseRecordTx db = DbHelper.getConnection();
+		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
+				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ"
+				,"alter database custom useLightweightEdges=false"
+				,"alter database custom useClassForEdgeLabel=false"
+				,"alter database custom useClassForVertexLabel=true"
+				,"alter database custom useVertexFieldsForEdgeLabels=true"
+  	        );
 	}
 
 	/**
