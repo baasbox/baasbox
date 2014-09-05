@@ -204,7 +204,9 @@ public class User extends Controller {
 		  //try to signup new user
 		  ODocument profile = null;
 		  try {
-			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+			  UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+	          //due to issue 412, we have to reload the profile
+			  profile=UserService.getUserProfilebyUsername(username);
 		  } catch (OSerializationException e){
 			  if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
 			  return badRequest("One or more profile sections is not a valid JSON object");
