@@ -300,9 +300,7 @@ public class UserService {
 			            
 			            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
 			            profile.save();
-			          //due to issue 412
-						profile=UserService.getUserProfilebyUsername(username);
-			      DbHelper.commitTransaction();
+			            DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
 				    DbHelper.rollbackTransaction();
 				    throw e;
@@ -312,6 +310,8 @@ public class UserService {
                 }
 			return profile;
 	} //signUp
+
+            
 
 	public static ODocument updateProfile(ODocument profile, JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,

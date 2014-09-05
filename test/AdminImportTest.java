@@ -96,7 +96,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					setMultipartFormData();
 					setAssetFile("/adminImportJson.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
-					assertTrue(status==200);
+					assertTrue("Status should be 200. It is " + status,status==200);
 				}
 	        }
 		);
@@ -118,9 +118,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 					setMultipartFormData();
 					setAssetFile("/adminImportWrongVersionJson.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
-					assertTrue(status!=200);
-					
-					
+					assertTrue("Status should not be 200. It is " + status,status!=200);
 				}
 	        }
 		);

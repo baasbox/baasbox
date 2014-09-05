@@ -28,11 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.baasbox.dao.RoleDao;
-import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.service.permissions.PermissionTagService;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -50,14 +45,20 @@ import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
+import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
+import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.NoTransactionException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.ShuttingDownDBException;
+import com.baasbox.exception.SwitchUserContextException;
+import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
@@ -71,11 +72,12 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.tx.OTransactionNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 
@@ -88,7 +90,10 @@ public class DbHelper {
 	private static ThreadLocal<Boolean> dbFreeze = new ThreadLocal<Boolean>() {
 		protected Boolean initialValue() {return Boolean.FALSE;};
 	};
-
+	private static ThreadLocal<Integer> tranCount = new ThreadLocal<Integer>() {
+		protected Integer initialValue() {return 0;};
+	};
+	
 	private static ThreadLocal<String> appcode = new ThreadLocal<String>() {
 		protected String initialValue() {return "";};
 	};
@@ -119,31 +124,45 @@ public class DbHelper {
 	
 	public static boolean isInTransaction(){
 		 ODatabaseRecordTx db = getConnection();
-		return !(db.getTransaction() instanceof OTransactionNoTx);
+		 return db.getTransaction().isActive();
 	}
 
 	public static void requestTransaction(){
+		if (Logger.isDebugEnabled()) Logger.debug("Request Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
-			//db.begin();
+			if (Logger.isDebugEnabled()) Logger.debug("Begin transaction");
+			db.begin();
 		}
+		tranCount.set(tranCount.get().intValue()+1);
+		if (Logger.isDebugEnabled()) Logger.debug("Request Transaction: transaction count -after-: " + tranCount.get());
 	}
 
 	public static void commitTransaction(){
+		if (Logger.isDebugEnabled()) Logger.debug("Commit Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Commit transaction");
-			//db.commit();
-		}
+			if (Logger.isDebugEnabled()) Logger.debug("Commit transaction");
+			tranCount.set(tranCount.get().intValue()-1);
+			if (tranCount.get()<0) throw new RuntimeException("Commit without transaction!");
+			if (tranCount.get()==0) {
+				db.commit();
+				db.getTransaction().close();
+			}	
+		}else throw new NoTransactionException("There is no open transaction to commit");
+		if (Logger.isDebugEnabled()) Logger.debug("Commit Transaction: transaction count -after-: " + tranCount.get());
 	}
 
 	public static void rollbackTransaction(){
+		if (Logger.isDebugEnabled()) Logger.debug("Rollback Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
-			if (Logger.isTraceEnabled()) Logger.trace("Rollback transaction");
-			//db.rollback();
-		}		
+			if (Logger.isDebugEnabled()) Logger.debug("Rollback transaction");
+			db.getTransaction().rollback();
+			db.getTransaction().close();
+			tranCount.set(0);
+		}
+		if (Logger.isDebugEnabled()) Logger.debug("Rollback Transaction: transaction count -after-: " + tranCount.get());
 	}
 
 	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
@@ -315,7 +334,8 @@ public class DbHelper {
 		String databaseName=BBConfiguration.getDBDir();
 		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
-		new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir()).open(username,password);
+		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir());
+		conn.open(username,password);
 		HooksManager.registerAll(getConnection());
 		
 		DbHelper.appcode.set(appcode);
@@ -333,6 +353,7 @@ public class DbHelper {
     }
 
 	public static ODatabaseRecordTx reconnectAsAdmin (){
+		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to admin context within an open transaction");
 		getConnection().close();
 		try {
 			return open (appcode.get(),BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
@@ -342,6 +363,7 @@ public class DbHelper {
 	}
 
 	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
+		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to user context within an open transaction");
 		getConnection().close();
 		try {
 			return open (appcode.get(),getCurrentHTTPUsername(),getCurrentHTTPPassword());
@@ -354,7 +376,12 @@ public class DbHelper {
 		if (Logger.isDebugEnabled()) Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
 			//HooksManager.unregisteredAll(db);
-			db.close();
+			try{
+				if (tranCount.get()!=0) throw new TransactionIsStillOpenException("Closing a connection with an active transaction: " + tranCount.get());
+			}finally{
+				db.close();
+				tranCount.set(0);
+			}
 		}else if (Logger.isDebugEnabled()) Logger.debug("connection already close or null");
 	}
 
@@ -416,7 +443,7 @@ public class DbHelper {
 
 	public static void populateDB() throws IOException{
 		ODatabaseRecordTx db = getConnection();
-		OrientGraphNoTx dbg =  getOrientGraphConnection();
+		OrientGraphNoTx dbg =  new OrientGraphNoTx(getODatabaseDocumentTxConnection()); 
 		Logger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd()) is	=Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -626,8 +653,8 @@ public class DbHelper {
 	
 
 
-	public static OrientGraphNoTx getOrientGraphConnection(){
-		return new OrientGraphNoTx(getODatabaseDocumentTxConnection());
+	public static OrientGraph getOrientGraphConnection(){
+		return new OrientGraph(getODatabaseDocumentTxConnection(),false);
 	}
 
 

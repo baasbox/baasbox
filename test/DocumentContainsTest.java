@@ -104,9 +104,6 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					//there is a bug in OrientDB 1.6.x, patched into the 1.7
-					//assertRoute(result, "testContains load document 1 using contains", 200, "\"data\":[]", true);					
-					//OrientDB 1.7:
 					assertRoute(result, "testContains load document 1 using contains", 200, "\"name\":\"john doe\"", true);					
 				}
 			}

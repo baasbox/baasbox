@@ -119,7 +119,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			request = request.withJsonBody(document1);
 		    result = routeAndCall(request); 
-			assertRoute(result, "getCollection 2", Status.OK, null, false);
+			assertRoute(result, "getCollection 2", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
 		
 			request = new FakeRequest("POST", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -128,14 +128,14 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			request = request.withJsonBody(document1);
 		    result = routeAndCall(request); 
-			assertRoute(result, "getCollection 3", Status.OK, null, false);
+			assertRoute(result, "getCollection 3", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
 			
 			//check the content of the collection
 			request = new FakeRequest("GET", "/admin/collection");
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
-			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
+			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":68", true);
 		
 		} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());
