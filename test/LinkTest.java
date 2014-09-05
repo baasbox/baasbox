@@ -29,8 +29,11 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpHeaders;
+
 import com.fasterxml.jackson.databind.JsonNode;
+
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -122,100 +125,108 @@ public class LinkTest extends AbstractTest {
 		running(fakeApplication(), new Runnable() {
 			public void run() {
 				continueOnFail(false);
-
-				// administrator creates two documents
-				String idSource = createDocumentAsAdmin(collection1);
-				String idDest = createDocumentAsAdmin(collection2);
-
-				// administrator links the two documents with the "has" link
-				// name
-				Result result = createLink(TestConfig.ADMIN_USERNAME,
-						TestConfig.AUTH_ADMIN_PASS, idSource, idDest, "has");
-				assertRoute(result, "LinkTest CREATE by Admin", Status.OK,
-						null, true);
-				idLink = getIdFromDocument(result);
-				Assert.assertNotNull("id not found", idLink);
-				String author = getAuthorFromDocument(result);
-				Assert.assertTrue("author is not admin",
-						author.equals(TestConfig.ADMIN_USERNAME));
-				String audit = getAuditFromDocument(result);
-				Assert.assertNull("audit is null", audit);
-
-				// user1 tries to connect two docs, but he has not access to
-				// them
-				result = createLink(username1, password1, idSource, idDest,
-						"has");
-				assertRoute(result,
-						"LinkTest CREATE by User 1 - first attempt",
-						Status.BAD_REQUEST, null, true);
-
-				// admin grants read permission on source
-				FakeRequest request = new FakeRequest(PUT, "/document/"
-						+ collection1 + "/" + idSource + "/read/user/"
-						+ username1);
-				request = request.withHeader(TestConfig.KEY_APPCODE,
-						TestConfig.VALUE_APPCODE);
-				request = request.withHeader(TestConfig.KEY_AUTH,
-						TestConfig.AUTH_ADMIN_ENC);
-				request = request.withHeader(HttpHeaders.CONTENT_TYPE,
-						MediaType.APPLICATION_FORM_URLENCODED);
-				result = routeAndCall(request);
-				contentAsString(result);
-
-				// user1 tries to connect two docs, but he has not access to
-				// dest
-				result = createLink(username1, password1, idSource, idDest,
-						"has");
-				assertRoute(result,
-						"LinkTest CREATE by User 1 - second attempt",
-						Status.BAD_REQUEST, null, true);
-
-				// admin grants read permission on destination
-				request = new FakeRequest(PUT, "/document/" + collection2 + "/"	+ idDest + "/read/user/" + username1);
-				request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-				request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
-				result = routeAndCall(request);
-				contentAsString(result);
-
-				// user1 tries to connect two docs, and everything goes ok
-				result = createLink(username1, password1, idSource, idDest,	"has");
-				assertRoute(result,	"LinkTest CREATE by User 1 - third attempt", Status.OK,	null, true);
-
-				idLinkByUser = getIdFromDocument(result);
-				continueOnFail(true);
+				String idSource = "";
+				String idDest = "";
+				Result result=null;
+				FakeRequest request = null;
 				
-				// try to retrieve a non-existent link
-				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, "mango"); // :-)
-				assertRoute(result, "Get By fake id 1", 404, null, false);
-				// administrator can read both links and their node
-				result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, idLink);
-				assertRoute(result, "Get By id 1", 200, "\"@class\":\""+collection1, true);
-				assertRoute(result, "Get By id 1a", 200, "\"@class\":\""+collection2, true);
-				assertRoute(result, "Get By id 1b", 200, "\"id\":\""+idLink, true);
-				
-				// user1 can read both links and their node
-				result = getLink(username1,password1, idLink);
-				assertRoute(result, "Get By id 2", 200, "\"@class\":\""+collection1, true);
-				assertRoute(result, "Get By id 2a", 200, "\"@class\":\""+collection2, true);
-				assertRoute(result, "Get By id 2b", 200, "\"id\":\""+idLink, true);
-				
-				result = getLink(username1,password1, idLinkByUser);
-				assertRoute(result, "Get By id 3", 200, "\"@class\":\""+collection1, true);
-				assertRoute(result, "Get By id 3a", 200, "\"@class\":\""+collection2, true);
-				assertRoute(result, "Get By id 3b", 200, "\"id\":\""+idLinkByUser, true);			
-				
-				//admin revoke read permission on destId
-				request = new FakeRequest(DELETE, "/document/" + collection2 + "/"	+ idDest + "/read/user/" + username1);
-				request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-				request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
-				result = routeAndCall(request);
-				contentAsString(result);		
-				
-				//user1 cannot read the link
-				result = getLink(username1,password1, idLinkByUser);
-				assertRoute(result, "Get By id 4", 200, "\"@class\":\""+collection1, true);
-				assertRoute(result, "Get By id 4a", 200, "\"in\":null", true);
-				assertRoute(result, "Get By id 4b", 200, "\"id\":\""+idLinkByUser, true);					
+					// administrator creates two documents
+					idSource = createDocumentAsAdmin(collection1);
+					idDest = createDocumentAsAdmin(collection2);
+	
+					// administrator links the two documents with the "has" link
+					// name
+					result = createLink(TestConfig.ADMIN_USERNAME,
+							TestConfig.AUTH_ADMIN_PASS, idSource, idDest, "has");
+					assertRoute(result, "LinkTest CREATE by Admin", Status.OK,
+							null, true);
+
+					idLink = getIdFromDocument(result);
+					Assert.assertNotNull("id not found", idLink);
+					String author = getAuthorFromDocument(result);
+					Assert.assertTrue("author is not admin",
+							author.equals(TestConfig.ADMIN_USERNAME));
+					String audit = getAuditFromDocument(result);
+					Assert.assertNull("audit is null", audit);
+				try{
+					// user1 tries to connect two docs, but he has not access to
+					// them
+					result = createLink(username1, password1, idSource, idDest,
+							"has");
+				}catch(Throwable e){
+					assertFail("Create Link as registerd user: " + ExceptionUtils.getStackTrace(e));
+				}
+					assertRoute(result,
+							"LinkTest CREATE by User 1 - first attempt",
+							Status.BAD_REQUEST, null, true);
+
+					// admin grants read permission on source
+					request = new FakeRequest(PUT, "/document/"
+							+ collection1 + "/" + idSource + "/read/user/"
+							+ username1);
+					request = request.withHeader(TestConfig.KEY_APPCODE,
+							TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,
+							TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE,
+							MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					contentAsString(result);
+	
+					// user1 tries to connect two docs, but he has not access to
+					// dest
+					result = createLink(username1, password1, idSource, idDest,
+							"has");
+					assertRoute(result,
+							"LinkTest CREATE by User 1 - second attempt",
+							Status.BAD_REQUEST, null, true);
+	
+					// admin grants read permission on destination
+					request = new FakeRequest(PUT, "/document/" + collection2 + "/"	+ idDest + "/read/user/" + username1);
+					request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					contentAsString(result);
+	
+					// user1 tries to connect two docs, and everything goes ok
+					result = createLink(username1, password1, idSource, idDest,	"has");
+					assertRoute(result,	"LinkTest CREATE by User 1 - third attempt", Status.OK,	null, true);
+	
+					idLinkByUser = getIdFromDocument(result);
+					continueOnFail(true);
+					
+					// try to retrieve a non-existent link
+					result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, "mango"); // :-)
+					assertRoute(result, "Get By fake id 1", 404, null, false);
+					// administrator can read both links and their node
+					result = getLink(TestConfig.ADMIN_USERNAME,TestConfig.AUTH_ADMIN_PASS, idLink);
+					assertRoute(result, "Get By id 1", 200, "\"@class\":\""+collection1, true);
+					assertRoute(result, "Get By id 1a", 200, "\"@class\":\""+collection2, true);
+					assertRoute(result, "Get By id 1b", 200, "\"id\":\""+idLink, true);
+					
+					// user1 can read both links and their node
+					result = getLink(username1,password1, idLink);
+					assertRoute(result, "Get By id 2", 200, "\"@class\":\""+collection1, true);
+					assertRoute(result, "Get By id 2a", 200, "\"@class\":\""+collection2, true);
+					assertRoute(result, "Get By id 2b", 200, "\"id\":\""+idLink, true);
+					
+					result = getLink(username1,password1, idLinkByUser);
+					assertRoute(result, "Get By id 3", 200, "\"@class\":\""+collection1, true);
+					assertRoute(result, "Get By id 3a", 200, "\"@class\":\""+collection2, true);
+					assertRoute(result, "Get By id 3b", 200, "\"id\":\""+idLinkByUser, true);			
+					
+					//admin revoke read permission on destId
+					request = new FakeRequest(DELETE, "/document/" + collection2 + "/"	+ idDest + "/read/user/" + username1);
+					request = request.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					contentAsString(result);		
+					
+					//user1 cannot read the link
+					result = getLink(username1,password1, idLinkByUser);
+					assertRoute(result, "Get By id 4", 200, "\"@class\":\""+collection1, true);
+					assertRoute(result, "Get By id 4a", 200, "\"in\":null", true);
+					assertRoute(result, "Get By id 4b", 200, "\"id\":\""+idLinkByUser, true);					
 				
 			}
 

@@ -135,7 +135,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
-			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":47", true);
+			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":68", true);
 		
 		} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());
