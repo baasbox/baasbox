@@ -20,8 +20,10 @@
 
 package core;
 
+import static play.test.Helpers.POST;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.status;
 import static play.test.Helpers.testServer;
 
@@ -37,15 +39,18 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.fluentlenium.adapter.FluentTest;
 import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
@@ -66,7 +71,9 @@ import play.Configuration;
 import play.Logger;
 import play.Play;
 import play.mvc.Result;
+import play.mvc.Http.Status;
 import play.test.FakeApplication;
+import play.test.FakeRequest;
 import play.test.TestServer;
 
 public abstract class AbstractTest extends FluentTest
@@ -86,6 +93,21 @@ public abstract class AbstractTest extends FluentTest
 	private int nStatusCode = -1;
 	private boolean fUseCollector = false;
 
+	public String createNewUser(String username) {
+		String sFakeUser = username + UUID.randomUUID();
+		// Prepare test user
+		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+
+		// Create user
+		FakeRequest request = new FakeRequest(POST, "/user");
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		request = request.withJsonBody(node, POST);
+		Result result = routeAndCall(request);
+		assertRoute(result, "Create user.", Status.CREATED, null, false);
+		return sFakeUser;
+	}
+	
 	protected static void resetHeaders(){
 		mHeaders.clear();
 	}
