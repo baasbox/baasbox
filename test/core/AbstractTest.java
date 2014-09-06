@@ -596,6 +596,29 @@ public abstract class AbstractTest extends FluentTest
 		}
 	}
 	
+	
+	protected String getUuid(Result result)
+	{
+		return getUuid(contentAsString(result));
+	}
+	
+	protected String getUuid(String content)
+	{
+		String sUuid = null;
+		Object json = toJSON(content);
+		try
+		{
+			JSONObject jo = (JSONObject)json;
+			sUuid = jo.getJSONObject("data").getString("id");
+		}
+		catch (Exception ex)
+		{
+			Assert.fail("Cannot get UUID (id) value: " + ex.getMessage() + "\n The json object is: \n" + json);
+		}
+		
+		return sUuid;
+	}
+	
 	protected Object toJSON(String s)
 	{
 		Object objRet = null;

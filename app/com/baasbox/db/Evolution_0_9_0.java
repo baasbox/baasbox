@@ -52,8 +52,7 @@ public class Evolution_0_9_0 implements IEvolution {
 	private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
 		Logger.info("...updating registered role");
 		ORole regRole = RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString());
-		regRole.getDocument().field(RoleDao.FIELD_INHERITED,RoleDao.getRole(DefaultRoles.REGISTERED_USER.getInheritsFrom()).getDocument().getRecord());
-		regRole.getDocument().field("name",DefaultRoles.REGISTERED_USER.toString());
+		regRole.getDocument().field(RoleDao.FIELD_INHERITED,DefaultRoles.ANONYMOUS_USER.getORole().getDocument().getRecord());
 		regRole.save();
 		Logger.info("...done");
 	}
