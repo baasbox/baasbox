@@ -525,7 +525,7 @@ public abstract class AbstractTest extends FluentTest
 				}
 				else
 				{
-					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + "> was expcted <" + sExpctedContent + ">", sContent.contains(sExpctedContent));
+					Assert.assertTrue(sTestName + ". Unexpected content <" + sContent + "> was expected <" + sExpctedContent + ">", sContent.contains(sExpctedContent));
 				}
 			}
 			else
