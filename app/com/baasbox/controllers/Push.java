@@ -149,10 +149,14 @@ public class Push extends Controller {
 		 String message=messageNode.asText();	
 		 
 		 JsonNode usernamesNodes=bodyJson.get("users");
+		 
+		 
 		 List<String> usernames = new ArrayList<String>();
 			
 			if(!(usernamesNodes==null)){
 				
+				if(!(usernamesNodes.isArray())) return badRequest("Users MUST be an Array");
+
 				for(JsonNode usernamesNode : usernamesNodes) {
 					usernames.add(usernamesNode.asText());
 				}	
