@@ -23,6 +23,7 @@ import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
+import play.test.Helpers.*;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -33,9 +34,11 @@ import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -136,7 +139,14 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
 			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":68", true);
-		
+			Logger.debug("AdminCollectionFunctionalTest -  getCollection 4 - : " + play.test.Helpers.contentAsString(result));
+			
+			request = new FakeRequest("GET", "/document/" + collectionName);
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			result = routeAndCall(request);
+			assertRoute(result, "getCollection 5", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
+			Logger.debug("AdminCollectionFunctionalTest -  getCollection 5 - : " + play.test.Helpers.contentAsString(result));
 		} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());
 		} catch (IOException e) {
