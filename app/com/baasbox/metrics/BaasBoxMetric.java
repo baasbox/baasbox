@@ -21,6 +21,7 @@ package com.baasbox.metrics;
 import static com.codahale.metrics.MetricRegistry.name;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -48,6 +49,9 @@ public class BaasBoxMetric {
 	public static final String GAUGE_FILESYSTEM_BACKUPDIR_SPACE_LEFT = "filesystem.backupdir.spaceleft";
 	public static final String GAUGE_DB_DATA_SIZE = "orientdb.data.size";
 	public static final String GAUGE_DB_DATA_DIRECTORY_SIZE = "orientdb.data.directory.size";
+	public static final String GAUGE_DB_MAX_SIZE_THRESHOLD = "baasbox.db.threshold";
+	
+	private static final int CACHE_TIMEOUT = 5;// (minutes)
 	
 	public static MetricRegistry registry=null;
 
@@ -107,23 +111,23 @@ public class BaasBoxMetric {
         			}
                 });	
 		registry.register(name(GAUGE_FILESYSTEM_DATAFILE_SPACE_LEFT),
-				new Gauge<Long>() {
+				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
-                    public Long getValue() {
+                    public Long loadValue() {
                     	return new File(BBConfiguration.getDBDir()).getFreeSpace();
         			}				
 				});
 		
 		registry.register(name(GAUGE_FILESYSTEM_BACKUPDIR_SPACE_LEFT),
-				new Gauge<Long>() {
+				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES)  {
 					@Override
-                    public Long getValue() {
+                    public Long loadValue() {
                     	return new File(BBConfiguration.getDBBackupDir()).getFreeSpace();
         			}				
 				});
 		
 		registry.register(name(GAUGE_DB_DATA_SIZE),
-				new CachedGauge<Long>(1, TimeUnit.MINUTES) {
+				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
 						boolean opened=false;
@@ -143,13 +147,19 @@ public class BaasBoxMetric {
 		
 
 		registry.register(name(GAUGE_DB_DATA_DIRECTORY_SIZE),
-				new CachedGauge<Long>(1, TimeUnit.MINUTES) {
+				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
 							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()));
         			}				
 				});
-		
+		registry.register(name(GAUGE_DB_MAX_SIZE_THRESHOLD),
+				new CachedGauge<BigInteger>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
+					@Override
+                    public BigInteger loadValue() {
+							return BBConfiguration.getDBSizeThreshold();
+        			}				
+				});
 
 	}
 

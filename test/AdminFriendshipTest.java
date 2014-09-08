@@ -16,22 +16,6 @@ import play.mvc.Http.Status;
 import play.test.FakeRequest;
 public class AdminFriendshipTest extends AbstractTest{
 
-	public String createNewUser(String username)
-	{
-		String sFakeUser = username + UUID.randomUUID();
-		// Prepare test user
-		JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
-
-		// Create user
-		FakeRequest request = new FakeRequest(POST, "/user");
-		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		request = request.withJsonBody(node, POST);
-		Result result = routeAndCall(request);
-		assertRoute(result, "Create user.", Status.CREATED, null, false);
-
-		return sFakeUser;
-	}
 
 	public void createFriendship(String follower,String toFollow)
 	{

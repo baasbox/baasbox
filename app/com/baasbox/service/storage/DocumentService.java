@@ -108,8 +108,7 @@ public class DocumentService {
 		q.append("select ")
 		.append(parser.fullTreeFields())
 		.append(" as ").append(OBJECT_QUERY_ALIAS)
-		.append(" from ").append(collectionName);
-		q.append(" where @rid=").append(rid);
+		.append(" from ").append(rid);
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
 
@@ -208,14 +207,14 @@ public class DocumentService {
 		StringBuffer q = new StringBuffer("");
 
 		if(!pp.isMultiField() && !pp.isArray()){
-			q.append("update ").append(collectionName)
+			q.append("update ").append(rid)
 			.append(" set ")
 			.append(pp.treeFields())
 			.append(" = ")
 			.append(bodyJson.get("data").toString());
 
 		}else{
-			q.append("update ").append(collectionName)
+			q.append("update ").append(rid)
 			.append(" merge ");
 			String content = od.toJSON();
 			ObjectNode json = null;
@@ -227,7 +226,6 @@ public class DocumentService {
 			JsonTree.write(json, pp, bodyJson.get("data"));
 			q.append(json.toString());
 		}
-		q.append(" where @rid = ").append(rid);
 		try{
 			DocumentDao.getInstance(collectionName).updateByQuery(q.toString());
 		}catch(OSecurityException  e){

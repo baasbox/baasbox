@@ -113,6 +113,7 @@ public class GenericDao {
 	public void executeCommand(String commandString, Object[] params) {
 		ODatabaseRecordTx db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
+		//Logger.debug("########## is in transaction??  : " + db.getTransaction().isActive());
 		command.execute(params);
 	}
 	

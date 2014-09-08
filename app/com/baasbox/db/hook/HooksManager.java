@@ -37,12 +37,10 @@ public class HooksManager {
 		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
 		boolean register=true;
-		//OrientDB 1.7: Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
-		//Iterator<ORecordHook> it =hooks.keySet().iterator();
-		
-		//OrientDB 1.6:
-		Set<ORecordHook> hooks = db.getHooks();
-		Iterator<ORecordHook> it = hooks.iterator();
+		//OrientDB 1.7: 
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		Iterator<ORecordHook> it =hooks.keySet().iterator();
+
 		
 		while (it.hasNext()){		
 			if (it.next() instanceof BaasBoxHook) {
@@ -66,13 +64,9 @@ public class HooksManager {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
 		if (Logger.isDebugEnabled()) Logger.debug("unregistering hooks...");
-		//OrientDB 1.7: Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
-		//List hs = IteratorUtils.toList(hooks.keySet().iterator());
-		
-		//OrientDB 1.6:
-		Set<ORecordHook> hooks = db.getHooks();
-		List hs = IteratorUtils.toList(hooks.iterator());
-		
+		//OrientDB 1.7: 
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		List hs = IteratorUtils.toList(hooks.keySet().iterator());
 		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
