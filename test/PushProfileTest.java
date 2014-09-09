@@ -150,9 +150,28 @@ public class PushProfileTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile not supported", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_INVALID.getDescription(), true);
 						
+						//Push with key message different from String
 						
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithMessageDifferentFromString.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString result: " + contentAsString(result));
+						assertRoute(result, "error with send, value message is not a String", Status.BAD_REQUEST, "Message MUST be a String", true);
 							
-							
+						// Value profiles different from array
+						
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithValueProfilesDifferentFromArray.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray result: " + contentAsString(result));
+						assertRoute(result, "error with send, value profiles is not an array", Status.BAD_REQUEST, "Profiles MUST be an Array", true);
+						
 					}
 				}
 				);
@@ -169,7 +188,7 @@ public class PushProfileTest extends AbstractTest {
 					{
 						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
 
-						// Key users empty
+						// Users key empty
 
 						FakeRequest request = new FakeRequest("POST", "/push/message");
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -177,10 +196,34 @@ public class PushProfileTest extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));
 						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription(), true);
 							
+						// Users value different from array
+						
+						request = new FakeRequest("POST", "/push/message");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithValueUsersDifferentFromArray.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
+						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, "Users MUST be an Array", true);
+						
+						// Profiles value must be expressed in numbers
+						
+						request = new FakeRequest("POST", "/push/message");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfilesValueExpressedInString.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
+						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, "Profiles MUST be express as number", true);
+						
 					}
 				}
 				);

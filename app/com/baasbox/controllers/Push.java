@@ -74,6 +74,8 @@ public class Push extends Controller {
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
+		 if(messageNode.isNumber()) return badRequest("Message MUST be a String");
+
 		 String message=messageNode.asText();	
 		 
 		 
@@ -81,12 +83,13 @@ public class Push extends Controller {
 		 usernames.add(username);
 		 
 		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
+		 		 
 		 List<Integer> pushProfiles = new ArrayList<Integer>();
 		 if(!(pushProfilesNodes==null)){
-						
-				for(JsonNode pushProfileNode : pushProfilesNodes) {
-					pushProfiles.add(pushProfileNode.asInt());
-				}	
+			 if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");						
+			 for(JsonNode pushProfileNode : pushProfilesNodes) {
+			 pushProfiles.add(pushProfileNode.asInt());
+			 }	
 		 }
 		 else {
 			 pushProfiles.add(1);
@@ -146,6 +149,8 @@ public class Push extends Controller {
 		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
+		 if(messageNode.isNumber()) return badRequest("Message MUST be a String");
+		 
 		 String message=messageNode.asText();	
 		 
 		 JsonNode usernamesNodes=bodyJson.get("users");
@@ -166,11 +171,16 @@ public class Push extends Controller {
 			}
 		 
 		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
+		 
+		 
+		 
 		 List<Integer> pushProfiles = new ArrayList<Integer>();
-		 if(!(pushProfilesNodes==null)){			
-				for(JsonNode pushProfileNode : pushProfilesNodes) {
-					pushProfiles.add(pushProfileNode.asInt());
-				}	
+		 if(!(pushProfilesNodes==null)){
+			 if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");
+			 for(JsonNode pushProfileNode : pushProfilesNodes) {
+				 if(pushProfileNode.isTextual()) return badRequest("Profiles MUST be express as number");	
+				 pushProfiles.add(pushProfileNode.asInt());
+			 	 }	
 		 }
 		 else {
 			 pushProfiles.add(1);
