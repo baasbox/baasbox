@@ -45,6 +45,7 @@ public class Evolution_0_9_0 implements IEvolution {
 		try{
 			updateLastUpdateDate(db);
 			createDeleteClass(db);
+			updateDefaultTimeFormat(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -57,6 +58,11 @@ public class Evolution_0_9_0 implements IEvolution {
 				"create property _BB_Deleted.id String;",
 				"create index _BB_Deleted.id unique;");
 	}
+	
+	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
+		DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+	}
+
 
 	private void updateLastUpdateDate(ODatabaseRecordTx db) {
 		Logger.info("..update _update_date..:");
