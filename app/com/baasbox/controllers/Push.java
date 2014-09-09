@@ -94,7 +94,7 @@ public class Push extends Controller {
 		 else {
 			 pushProfiles.add(1);
 		 }
-		 boolean[] withError=new boolean[5];
+		 boolean[] withError=new boolean[6];
 		 PushService ps=new PushService();
 		 try{
 		    	if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
