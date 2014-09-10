@@ -37,7 +37,7 @@ import org.json.simple.JSONValue;
 import play.Logger;
 import play.mvc.Controller;
 
-import com.baasbox.service.push.PushInvalidApiKeyException;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
@@ -64,7 +64,7 @@ public class GCMServer extends Controller implements IPushServer {
 	}
 
 	public boolean send(String message, List<String> deviceid, JsonNode bodyJson)
-			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException {
+			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException, PushTimeToLiveFormatException, PushCollapseKeyFormatException {
 		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: "+message+" to the device "+deviceid);
 		if (!isInit) {
 			return true;
@@ -88,6 +88,7 @@ public class GCMServer extends Controller implements IPushServer {
 		String collapse_key=null; 
 		
 		if(!(collapse_KeyNode==null)) {
+			if(!(collapse_KeyNode.isTextual())) throw new PushCollapseKeyFormatException();
 			collapse_key=collapse_KeyNode.asText();
 		}
 		else collapse_key="";
@@ -96,10 +97,12 @@ public class GCMServer extends Controller implements IPushServer {
 		int time_to_live = 0;
 		
 		if(!(timeToLiveNode==null)) {
-			if(Integer.parseInt(timeToLiveNode.asText())>MAX_TIME_TO_LIVE){
+			if(!(timeToLiveNode.isNumber())) throw new PushTimeToLiveFormatException();
+			else if(timeToLiveNode.asInt() < 0) throw new PushTimeToLiveFormatException();
+			else if(timeToLiveNode.asInt()>MAX_TIME_TO_LIVE){
 				time_to_live=MAX_TIME_TO_LIVE;
 			}
-			else time_to_live=Integer.parseInt(timeToLiveNode.asText());
+			else time_to_live=timeToLiveNode.asInt();
 			
 		}
 		else time_to_live=MAX_TIME_TO_LIVE; //IF NULL WE SET DEFAULT VALUE (4 WEEKS)

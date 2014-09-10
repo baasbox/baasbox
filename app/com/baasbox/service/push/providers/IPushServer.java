@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import com.baasbox.service.push.PushNotInitializedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;

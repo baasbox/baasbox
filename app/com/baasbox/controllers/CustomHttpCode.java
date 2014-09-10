@@ -36,10 +36,17 @@ public enum CustomHttpCode {
 			PUSH_PROFILE_ARRAY_EXCEPTION(40013,400,"Push profile array too big. Max three values are accepted","error"),
 			PUSH_SWITCH_EXCEPTION(40014,400,"Cannot switch, because settings for the selected mode are missing","error"),
 			PUSH_NOTFOUND_KEY_USERS(40015,400,"The body payload doesn't contain key users","error"),
+			PUSH_BADGE_FORMAT_INVALID(40016,400,"Badge value MUST be a number","error"),
+			PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID(40017,400,"actionLocalizedKey MUST be a String","error"),
+			PUSH_LOCALIZED_KEY_FORMAT_INVALID(40018,400,"LocalizedKey MUST be a String","error"),
+			PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID(40019,400,"LocalizedArguments MUST be ad Array of String","error"),
+			PUSH_COLLAPSE_KEY_FORMAT_INVALID(40020,400,"collapse_key MUST be a String","error"),
+			PUSH_TIME_TO_LIVE_FORMAT_INVALID(40021,400,"time_to_live MUST be a positive number or equal zero","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error"),
 			PUSH_INVALID_REQUEST (50303,503,"Could not send push notifications. HINT: Check your API Key(Google), it's possible that push service aren't enabled in the Google Play Developer Console","error"), 
 			PUSH_INVALID_APIKEY (50304,503,"Could not save API KEY. HINT: Check your API Key, it's possible that push service aren't enabled in the Google Play Developer Console","error")
+
 			;
 			private String type;
 			private int bbCode;

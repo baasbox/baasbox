@@ -1,4 +1,4 @@
-package com.baasbox.service.push;
+package com.baasbox.service.push.providers;
 
 import com.baasbox.exception.BaasBoxPushException;
 

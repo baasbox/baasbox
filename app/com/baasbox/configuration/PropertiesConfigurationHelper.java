@@ -35,9 +35,9 @@ import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 
 import com.baasbox.exception.ConfigurationException;
-import com.baasbox.service.push.PushInvalidApiKeyException;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
-import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;

@@ -31,9 +31,9 @@ import play.Logger;
 
 import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
 import com.baasbox.service.push.providers.GCMServer;
-import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.util.ConfigurationFileContainer;
 
 

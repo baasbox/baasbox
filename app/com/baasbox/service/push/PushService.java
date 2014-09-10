@@ -38,7 +38,6 @@ import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.service.push.providers.IPushServer;
-import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;

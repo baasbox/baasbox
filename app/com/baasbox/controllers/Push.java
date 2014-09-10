@@ -52,12 +52,18 @@ import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.push.PushInvalidApiKeyException;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushProfileArrayException;
 import com.baasbox.service.push.PushProfileDisabledException;
 import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
-import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.service.push.providers.PushActionLocalizedKeyFormatException;
+import com.baasbox.service.push.providers.PushBadgeFormatException;
+import com.baasbox.service.push.providers.PushCollapseKeyFormatException;
+import com.baasbox.service.push.providers.PushInvalidApiKeyException;
+import com.baasbox.service.push.providers.PushLocalizedArgumentsFormatException;
+import com.baasbox.service.push.providers.PushLocalizedKeyFormatException;
+import com.baasbox.service.push.providers.PushTimeToLiveFormatException;
 import com.baasbox.service.user.UserService;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
@@ -129,9 +135,29 @@ public class Push extends Controller {
 		 catch (UnknownHostException e){
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
-		 }catch (IOException e) {
-			 return badRequest(e.getMessage());
-		}
+		 }
+		 catch (IOException e) {
+			 	Logger.error(e.getMessage());
+			 	return badRequest(e.getMessage());
+		 }
+		 catch(PushBadgeFormatException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
+		 }
+		 catch(PushActionLocalizedKeyFormatException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
+		 }		
+		 catch(PushCollapseKeyFormatException e) {
+			 	Logger.error(e.getMessage());
+		 	 	return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
+		 }
+		 catch(PushTimeToLiveFormatException e) {
+			 	Logger.error(e.getMessage());
+		 	 	return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
+		 }
+		 
+		 
 		 
 		
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
@@ -223,9 +249,35 @@ public class Push extends Controller {
 		 catch (UnknownHostException e){
 			 	Logger.error(e.getMessage());
 			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
-		 }catch (IOException e) {
-			 return badRequest(e.getMessage());
-		}
+		 }
+		 catch (IOException e) {
+			 	Logger.error(e.getMessage());
+			 	return badRequest(e.getMessage());
+		 }
+		 catch(PushBadgeFormatException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
+		 }
+		 catch(PushActionLocalizedKeyFormatException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
+		 }
+		 catch(PushLocalizedKeyFormatException e) {
+			 	Logger.error(e.getMessage());
+			 	return status(CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
+		 }	
+		 catch(PushLocalizedArgumentsFormatException e) {
+			 	Logger.error(e.getMessage());
+		 	 	return status(CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
+		 }		
+		 catch(PushCollapseKeyFormatException e) {
+			 	Logger.error(e.getMessage());
+		 	 	return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
+		 }
+		 catch(PushTimeToLiveFormatException e) {
+			 	Logger.error(e.getMessage());
+		 	 	return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
+		 }
 		 
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		 

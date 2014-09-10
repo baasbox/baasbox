@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.google.common.collect.ImmutableMap;
@@ -74,22 +75,25 @@ public class APNServer  implements IPushServer {
 		String actionLocKey=null; 
 		
 		if (!(actionLocKeyNode==null)) {
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("");
 			actionLocKey=actionLocKeyNode.asText();
 		}
 		
-		JsonNode locKeyNodes=bodyJson.findValue("localizedKey"); 
+		JsonNode locKeyNode=bodyJson.findValue("localizedKey"); 
 		String locKey=null; 
 		
-		if (!(locKeyNodes==null)) {
-			locKey=locKeyNodes.asText();
+		if (!(locKeyNode==null)) {
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("");
+			locKey=locKeyNode.asText();
 		}
 		
 		JsonNode locArgsNode=bodyJson.get("localizedArguments");
 
 		List<String> locArgs = new ArrayList<String>();
 		if(!(locArgsNode==null)){
-					
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("");		
 			for(JsonNode locArgNode : locArgsNode) {
+				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("");
 				locArgs.add(locArgNode.toString());
 			}	
 		}
@@ -111,7 +115,10 @@ public class APNServer  implements IPushServer {
 				
 		JsonNode badgeNode=bodyJson.findValue("badge");
 		int badge=0;
-		if(!(badgeNode==null)) badge=Integer.parseInt(badgeNode.asText());
+		if(!(badgeNode==null)) {
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException();
+			else badge=badgeNode.asInt();
+		}
 					
 		ApnsService service = null;
 		
