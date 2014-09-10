@@ -164,6 +164,7 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 
 # @tag(baasbox.notifications.send)
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
+POST    /push/message					com.baasbox.controllers.Push.sendUsers()
 
 # @tag(baasbox.notifications.receive)
 PUT 	/push/enable/:os/:pushToken     com.baasbox.controllers.Push.enablePush(os: String, pushToken: String)
@@ -327,7 +328,10 @@ GET		/admin/configuration/:section							com.baasbox.controllers.Admin.getConfig
 
 PUT		/admin/configuration/:section/:subSection/:key/:value	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String, key: String, value: String)
 #DEPRECATED
+# --------
 PUT		/admin/configuration/:section/:key/:value				com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String)
+# --------
+
 PUT     /admin/configuration/:section/:key                      com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String, value: String ?= "")
 PUT     /admin/configuration/:section                        	com.baasbox.controllers.Admin.setConfiguration(section: String, subSection: String ?= "", key: String ?= "", value: String ?= "")
 
