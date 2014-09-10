@@ -41,6 +41,7 @@ public class Evolution_0_9_0 implements IEvolution {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
+			updateDefaultTimeFormat(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -55,6 +56,10 @@ public class Evolution_0_9_0 implements IEvolution {
 		regRole.getDocument().field(RoleDao.FIELD_INHERITED,DefaultRoles.ANONYMOUS_USER.getORole().getDocument().getRecord());
 		regRole.save();
 		Logger.info("...done");
+	}
+	
+	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
+			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	}
     
 }
