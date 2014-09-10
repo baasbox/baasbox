@@ -33,7 +33,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -49,14 +48,17 @@ import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -123,7 +125,7 @@ public class UserService {
 			JsonNode privateAttributes,
 			JsonNode friendsAttributes,
 			JsonNode appUsersAttributes,
-			boolean generated) throws Exception{
+			boolean generated) throws InvalidJsonException, UserAlreadyExistsException{
 		return signUp (
 				username,
 				password,
@@ -190,7 +192,10 @@ public class UserService {
             JsonNode nonAppUserAttributes,
             JsonNode privateAttributes,
             JsonNode friendsAttributes,
-            JsonNode appUsersAttributes,boolean generated) throws OSerializationException,Exception{
+            JsonNode appUsersAttributes,boolean generated) throws InvalidJsonException,UserAlreadyExistsException{
+			
+			if (StringUtils.isEmpty(username)) throw new IllegalArgumentException("username cannot be null or empty");
+			if (StringUtils.isEmpty(password)) throw new IllegalArgumentException("password cannot be null or empty");
 			
 			ODatabaseRecordTx db =  DbHelper.getConnection();
 			ODocument profile=null;
@@ -224,7 +229,7 @@ public class UserService {
 			                    	  if (nonAppUserAttributes!=null) attrObj.fromJSON(nonAppUserAttributes.toString());
 			                    	  else attrObj.fromJSON("{}");
 			                    }catch (OSerializationException e){
-			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
+			                            throw new InvalidJsonException (dao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER + " is not a valid JSON object",e);
 			                    }
 			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
 			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));        
@@ -243,7 +248,7 @@ public class UserService {
 			                    	if (privateAttributes!=null) attrObj.fromJSON(privateAttributes.toString());
 			                    	else attrObj.fromJSON("{}");
 			                    }catch (OSerializationException e){
-			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
+			                            throw new InvalidJsonException (dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER + " is not a valid JSON object",e);
 			                    }
 			                    profile.field(dao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER, attrObj);
 			                    PermissionsHelper.changeOwner(attrObj, userRid);                                        
@@ -260,7 +265,7 @@ public class UserService {
 			                    	 if (friendsAttributes!=null) attrObj.fromJSON(friendsAttributes.toString());
 			                     	else attrObj.fromJSON("{}");
 			                    }catch (OSerializationException e){
-			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
+			                            throw new InvalidJsonException (dao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER + " is not a valid JSON object",e);
 			                    }
 			                    PermissionsHelper.grantRead(attrObj, friendRole);                                
 			                    PermissionsHelper.changeOwner(attrObj, userRid);
@@ -279,7 +284,7 @@ public class UserService {
 			                    	if (appUsersAttributes!=null) attrObj.fromJSON(appUsersAttributes.toString());
 			                     	else attrObj.fromJSON("{}");
 			                    }catch (OSerializationException e){
-			                            throw new OSerializationException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
+			                            throw new InvalidJsonException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
 			                    }
 			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
 			                    PermissionsHelper.changeOwner(attrObj, userRid);
@@ -303,10 +308,16 @@ public class UserService {
 			            DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
 				    DbHelper.rollbackTransaction();
+				    throw new InvalidJsonException(e);
+				}catch( InvalidJsonException e ){
+				    DbHelper.rollbackTransaction();
+				    throw e;
+				}catch( UserAlreadyExistsException e ){
+				    DbHelper.rollbackTransaction();
 				    throw e;
 			    }catch( Exception e ){
 			     DbHelper.rollbackTransaction();
-			      throw e;
+			      throw new RuntimeException(e);
                 }
 			return profile;
 	} //signUp
@@ -370,7 +381,7 @@ public class UserService {
 
 	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
-			JsonNode appUsersAttributes) throws Exception{
+			JsonNode appUsersAttributes) throws InvalidJsonException,Exception{
 		try{
 			ORole newORole=RoleDao.getRole(role);
 			if (newORole==null) throw new InvalidParameterException(role + " is not a role");
@@ -401,6 +412,8 @@ public class UserService {
 			profile.reload();
 
 			return profile;
+		}catch (OSerializationException e){
+			throw new InvalidJsonException(e);
 		}catch (Exception e){
 			throw e;
 		}

@@ -23,9 +23,7 @@ import java.util.List;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 
-import com.google.common.base.Joiner;
 import play.Logger;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
@@ -48,6 +46,7 @@ import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.query.MissingNodeException;
@@ -59,6 +58,7 @@ import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -270,7 +270,12 @@ public class Document extends Controller {
 				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
 				return notFound(e.getMessage());
-			}catch (Throwable e){
+			}catch (InvalidJsonException e){
+				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
+			}catch (UpdateOldVersionException e){
+				return badRequest(ExceptionUtils.getMessage(e));
+			}
+			catch (Throwable e){
 				Logger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}

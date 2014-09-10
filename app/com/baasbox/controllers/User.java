@@ -65,6 +65,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
@@ -207,7 +208,7 @@ public class User extends Controller {
 			  UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 	          //due to issue 412, we have to reload the profile
 			  profile=UserService.getUserProfilebyUsername(username);
-		  } catch (OSerializationException e){
+		  } catch (InvalidJsonException e){
 			  if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
 			  return badRequest("One or more profile sections is not a valid JSON object");
 		  } catch (UserAlreadyExistsException e){

@@ -80,10 +80,8 @@ public class UserDao extends NodeDao  {
 		return create(username, password, null);
 	};
 
-	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException,InvalidParameterException {
-		 Logger.debug("*** 0 g " + db.getTransaction().isActive());
+	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException {
 		OrientGraph db = DbHelper.getOrientGraphConnection();
-		Logger.debug("*** 1 g " + db.getRawGraph().getTransaction().isActive());
 		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
 		OUser user=null;
 		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new 
@@ -93,7 +91,6 @@ public class UserDao extends NodeDao  {
 			if (orole==null) throw new InvalidParameterException("Role " + role + " does not exists");
 			user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{role}); 
 		}
-		Logger.debug("*** 2 g " + db.getRawGraph().getTransaction().isActive());
 		
 		ODocument doc = new ODocument(this.MODEL_NAME);
 		ODocument vertex = db.addVertex("class:"+CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();

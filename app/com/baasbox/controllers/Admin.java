@@ -66,6 +66,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
@@ -335,7 +336,7 @@ public class Admin extends Controller {
 			UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
-		}catch (OSerializationException e){
+		}catch (InvalidJsonException e){
 			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
 					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
@@ -408,7 +409,7 @@ public class Admin extends Controller {
 			user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
-		}catch (OSerializationException e){
+		}catch (InvalidJsonException e){
 			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
 					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
