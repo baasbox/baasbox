@@ -19,10 +19,14 @@ package com.baasbox.db.hook;
 
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
+
 import play.Logger;
+import play.mvc.Http;
 
 import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.NodeDao;
+import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
@@ -57,6 +61,7 @@ public class AuditHook extends BaasBoxHook {
 						auditDoc.field("createdOn",data); 
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
+						if ((StringUtils.isEmpty((String)Http.Context.current().args.get("token")))) auditDoc.field("modifiedByToken", (String)Http.Context.current().args.get("token"));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);		
 						return RESULT.RECORD_CHANGED;
 					}//doc.getClassName()
@@ -77,12 +82,13 @@ public class AuditHook extends BaasBoxHook {
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
-						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
+						if (Logger.isDebugEnabled()) Logger.debug("AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
 						ODocument auditDoc = doc.field(BBInternalConstants.FIELD_AUDIT);
 						if (auditDoc==null) auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
+						if ((StringUtils.isEmpty((String)Http.Context.current().args.get("token")))) auditDoc.field("modifiedByToken", (String)Http.Context.current().args.get("token"));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
 						return RESULT.RECORD_CHANGED;
 					}
