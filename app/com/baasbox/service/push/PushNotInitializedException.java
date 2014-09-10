@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.baasbox.service.push.providers;
+package com.baasbox.service.push;
 
 public class PushNotInitializedException extends Exception {
 	

@@ -27,12 +27,18 @@ import java.util.EnumSet;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.service.push.PushNotInitializedException;
+import com.baasbox.service.push.PushSwitchException;
+import com.baasbox.service.push.providers.PushInvalidApiKeyException;
+import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -128,8 +134,12 @@ public class PropertiesConfigurationHelper {
 			gen.writeStartArray();	
 			for (String v: keys){
 				String st = dumpConfigurationAsJson(v);
-				JsonParser jp = jfactory.createJsonParser(st);
-				gen.writeTree(jp.readValueAsTree());
+				ObjectMapper op= new ObjectMapper();
+				JsonNode p = op.readTree(st);
+				Logger.debug("OBJECT:" + p.toString());
+				Logger.debug("STRING:" + st);
+				//JsonParser jp = jfactory.createJsonParser(st);
+				gen.writeTree(p);
 			}
 			gen.writeEndArray();
 			gen.close();
@@ -281,15 +291,20 @@ public class PropertiesConfigurationHelper {
 	 * @param iKey
 	 * @param value
 	 * @throws ConfigurationException 
+	 * @throws PushNotInitializedException 
+	 * @throws PushSwitchException 
+	 * @throws PushInvalidApiKeyException 
 	 * @throws Exception
 	 */
-	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException  {
+	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException, PushNotInitializedException, PushSwitchException, InvalidRequestException, PushInvalidApiKeyException  {
 		Object enumValue = findByKey(en,iKey);
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
-
 		}catch (Exception e) {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
+			if (e.getCause() instanceof PushSwitchException) throw new PushSwitchException(e.getCause());
+			if (e.getCause() instanceof PushNotInitializedException) throw new PushNotInitializedException(e.getCause());
+			if (e.getCause() instanceof PushInvalidApiKeyException) throw new PushInvalidApiKeyException(e.getCause());
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey
