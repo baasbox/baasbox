@@ -17,6 +17,8 @@
  */
 package com.baasbox.db.hook;
 
+import java.security.MessageDigest;
+import org.apache.commons.codec.binary.Hex;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +44,18 @@ public class AuditHook extends BaasBoxHook {
 		super();
 	}
 	
+	  public static String sha256(String base) {
+		  if (base==null) return null;
+	        try{
+	            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+	            byte[] hash = digest.digest(base.getBytes("UTF-8"));
+	          
+	            return Hex.encodeHexString(hash);
+	    } catch(Exception ex){
+	       throw new RuntimeException(ex);
+	    }
+	}
+	  
 	@Override
 	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord<?> iRecord){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -61,7 +75,7 @@ public class AuditHook extends BaasBoxHook {
 						auditDoc.field("createdOn",data); 
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
-						if ((StringUtils.isEmpty((String)Http.Context.current().args.get("token")))) auditDoc.field("modifiedByToken", (String)Http.Context.current().args.get("token"));
+						auditDoc.field("modifiedByToken", sha256((String)Http.Context.current().args.get("token")));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);		
 						return RESULT.RECORD_CHANGED;
 					}//doc.getClassName()
@@ -88,7 +102,7 @@ public class AuditHook extends BaasBoxHook {
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
-						if ((StringUtils.isEmpty((String)Http.Context.current().args.get("token")))) auditDoc.field("modifiedByToken", (String)Http.Context.current().args.get("token"));
+						auditDoc.field("modifiedByToken", sha256((String)Http.Context.current().args.get("token")));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
 						return RESULT.RECORD_CHANGED;
 					}
