@@ -134,20 +134,21 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			assertRoute(result, "getCollection 3", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
 			
 			//check the content of the collection
-			request = new FakeRequest("GET", "/admin/collection");
-			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-			result = routeAndCall(request);
-			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":68", true);
-			Logger.debug("AdminCollectionFunctionalTest -  getCollection 4 - : " + play.test.Helpers.contentAsString(result));
 			
 			request = new FakeRequest("GET", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
-			assertRoute(result, "getCollection 5", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
-			Logger.debug("AdminCollectionFunctionalTest -  getCollection 5 - : " + play.test.Helpers.contentAsString(result));
-		} catch (JsonProcessingException e) {
+			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 5 - : " + play.test.Helpers.contentAsString(result));
+			
+			request = new FakeRequest("GET", "/admin/collection");
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			Result result4 = routeAndCall(request);
+			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":62", true);
+			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
+			
+			} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());
 		} catch (IOException e) {
 			Assert.fail(e.getMessage());
