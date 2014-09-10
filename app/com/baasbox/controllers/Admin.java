@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,14 +67,17 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
-import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.service.push.providers.GCMServer;
+import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.RoleService;
@@ -85,6 +89,7 @@ import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -337,7 +342,7 @@ public class Admin extends Controller {
 			UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
-		}catch (OSerializationException e){
+		}catch (InvalidJsonException e){
 			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
 					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
@@ -410,7 +415,7 @@ public class Admin extends Controller {
 			user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		}catch(InvalidParameterException e){
 			return badRequest(e.getMessage());  
-		}catch (OSerializationException e){
+		}catch (InvalidJsonException e){
 			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
 					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
@@ -503,7 +508,7 @@ public class Admin extends Controller {
 		return ok(dump);
 	}
 
-	public static Result setConfiguration(String section, String subSection, String key, String value) throws PushNotInitializedException, PushSwitchException{
+	public static Result setConfiguration(String section, String subSection, String key, String value) throws PushNotInitializedException, PushSwitchException, MalformedURLException, IOException, PushInvalidApiKeyException{
 		
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 		if (conf==null) return notFound(section + " is not a valid configuration section");
@@ -530,6 +535,7 @@ public class Admin extends Controller {
 				PropertiesConfigurationHelper.setByKey(conf, key, value);
 			
 			}else{
+				
 				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
 				if(i.getType().equals(ConfigurationFileContainer.class)){
 					MultipartFormData  body = request().body().asMultipartFormData();
@@ -556,6 +562,12 @@ public class Admin extends Controller {
 			return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
+		}catch (InvalidRequestException e) {
+			Logger.error(e.getMessage());
+		 	return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());		
+		}catch (PushInvalidApiKeyException e) {
+			Logger.error(e.getMessage());
+		 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());		
 		}
 		String message = "";
 		if(inQueryString){

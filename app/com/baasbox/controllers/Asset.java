@@ -50,6 +50,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.OperationDisabledException;
 import com.baasbox.service.storage.AssetService;
@@ -321,7 +322,7 @@ public class Asset extends Controller{
 		    	return badRequest("An asset with the same name already exists");
 		    }catch (OIndexException e){
 		    	return badRequest("An asset with the same name already exists");
-		    }catch (OSerializationException e){
+		    }catch (InvalidJsonException e){
 		    	return badRequest("the meta field has a problem: " + e.getMessage());
 		    }
 		}else{

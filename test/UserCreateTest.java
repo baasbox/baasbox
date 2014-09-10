@@ -153,7 +153,9 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withJsonBody(node, getMethod());
 					Result result = routeAndCall(request);
 					
-					assertRoute(result, "routeCreateUser", Status.CREATED, null, false);
+					assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
+					assertRoute(result, "routeCreateUser check role", Status.CREATED, "roles\":[{\"name\":\"registered\"}", true);
+					
 					String body = play.test.Helpers.contentAsString(result);
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();

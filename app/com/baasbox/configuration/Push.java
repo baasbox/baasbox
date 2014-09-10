@@ -25,12 +25,15 @@ import java.util.TreeMap;
 import org.apache.commons.lang.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.gcm.server.InvalidRequestException;
 
 import play.Logger;
 
 import com.baasbox.configuration.index.IndexPushConfiguration;
+import com.baasbox.controllers.CustomHttpCode;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
-import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.util.ConfigurationFileContainer;
 
 
@@ -102,6 +105,10 @@ public enum Push implements IProperties	{
 		}
 		if((this.key.equals("profile1.push.sandbox.enable")) || (this.key.equals("profile2.push.sandbox.enable")) || (this.key.equals("profile3.push.sandbox.enable"))) {
 			if(this.getValue()==null) _setValue(newValue);
+		}
+		if (this.key.contains("api.key")) {
+			if(this.getValue()==null) _setValue(newValue);
+			else GCMServer.validateApiKey(newValue.toString());
 		}
 		switch  (this) {
 			case PROFILE1_PUSH_PROFILE_ENABLE:

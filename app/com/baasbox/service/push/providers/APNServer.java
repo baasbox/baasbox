@@ -21,6 +21,7 @@ package com.baasbox.service.push.providers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.google.common.collect.ImmutableMap;
@@ -50,23 +52,18 @@ public class APNServer  implements IPushServer {
 	private String password;
 	private boolean sandbox;
 	private int timeout;
-	private int identifier;
 	private boolean isInit=false;
 
-	APNServer(){
+	public APNServer(){
 		
 	}
 	
-	  public int INCREMENT_ID() {
-	        return ++identifier;
-	    }
-	
-	
-	
 	@Override
-	public  void send(String message, String deviceid, JsonNode bodyJson) throws Exception{	
+	public boolean send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
-		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
+		if (!isInit) {
+			return true;
+		}
 		
 		JsonNode soundNode=bodyJson.findValue("sound");
 		String sound =null;
@@ -78,49 +75,50 @@ public class APNServer  implements IPushServer {
 		String actionLocKey=null; 
 		
 		if (!(actionLocKeyNode==null)) {
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("");
 			actionLocKey=actionLocKeyNode.asText();
 		}
 		
-		JsonNode locKeyNodes=bodyJson.findValue("localizedKey"); 
+		JsonNode locKeyNode=bodyJson.findValue("localizedKey"); 
 		String locKey=null; 
 		
-		if (!(locKeyNodes==null)) {
-			locKey=locKeyNodes.asText();
+		if (!(locKeyNode==null)) {
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("");
+			locKey=locKeyNode.asText();
 		}
 		
 		JsonNode locArgsNode=bodyJson.get("localizedArguments");
 
 		List<String> locArgs = new ArrayList<String>();
 		if(!(locArgsNode==null)){
-					
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("");		
 			for(JsonNode locArgNode : locArgsNode) {
+				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("");
 				locArgs.add(locArgNode.toString());
 			}	
 		}
 						
-		JsonNode customDataNodes=bodyJson.get("customData");
+		JsonNode customDataNodes=bodyJson.get("custom");
 		
 		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
-				
-		if(!(customDataNodes==null)){	
-		    if (customDataNodes.isObject()) {
-				JsonNode titleNode=customDataNodes.findValue("title");
-				if(titleNode==null) throw new IOException("Error. Key title missing");
-				String title=titleNode.asText();
-				customData.put(title, customDataNodes);
+
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
 			}
-			
-		    else {
-				for(JsonNode locArgNode : locArgsNode) {
-					locArgs.add(locArgNode.toString());
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
 					customData.put("custom", customDataNodes);
-				}	
+				}
 			}
 		}
 				
 		JsonNode badgeNode=bodyJson.findValue("badge");
 		int badge=0;
-		if(!(badgeNode==null)) badge=Integer.parseInt(badgeNode.asText());
+		if(!(badgeNode==null)) {
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException();
+			else badge=badgeNode.asInt();
+		}
 					
 		ApnsService service = null;
 		
@@ -135,9 +133,7 @@ public class APNServer  implements IPushServer {
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
 		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
 		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
-
-
-		
+	
 		
 		String payload = APNS.newPayload()
 							.alertBody(message)
@@ -158,9 +154,8 @@ public class APNServer  implements IPushServer {
 			}
 		} else {
 			try {
-				EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
-				     Integer.MAX_VALUE, deviceid, payload);
-				service.push(notification);
+				Date expiry = new Date(Long.MAX_VALUE);
+				service.push(deviceid,payload,expiry);
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
 				Logger.error(ExceptionUtils.getStackTrace(e));
@@ -169,6 +164,7 @@ public class APNServer  implements IPushServer {
 				
 		}
 		//icallbackPush.onSuccess();
+		return false;
 	}
 		
 		

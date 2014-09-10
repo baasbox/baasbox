@@ -20,7 +20,7 @@ package com.baasbox.configuration;
 
 import java.io.IOException;
 
-import com.baasbox.service.push.providers.PushNotInitializedException;
+import com.baasbox.service.push.PushNotInitializedException;
 
 
 
