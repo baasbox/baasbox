@@ -58,7 +58,7 @@ Javascript helper functions for server side pagination of datatables
 				delete queryParams.where;
 				$.getJSON( sSource, queryParams, function (json) { 
 					response.iTotalRecords=json["data"][0]["count"];
-					console.log(response);
+					//console.log(response);
 					//returns converted data to datatable
 					fnCallback(response);
 				}); //getJSON

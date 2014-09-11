@@ -29,6 +29,7 @@ import play.mvc.SimpleResult;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.ShuttingDownDBException;
+import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.service.permissions.RouteTagger;
 import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -79,6 +80,8 @@ public class ConnectToDBFilter extends Action.Simple {
 			
 			result = delegate.call(ctx);
 
+			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) throw new TransactionIsStillOpenException("Controller leaved an open transaction. Database will be rollbacked"); 
+			
 		}catch (OSecurityAccessException e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
 			result = F.Promise.<SimpleResult>pure(forbidden(e.getMessage()));
@@ -90,6 +93,7 @@ public class ConnectToDBFilter extends Action.Simple {
 			result = F.Promise.<SimpleResult>pure(internalServerError(ExceptionUtils.getFullStackTrace(e)));	
 		}finally{
 			Http.Context.current.set(ctx); 
+			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) DbHelper.rollbackTransaction();
 			DbHelper.close(database);
 		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");

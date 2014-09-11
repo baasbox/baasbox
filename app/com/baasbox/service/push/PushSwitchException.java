@@ -1,8 +1,7 @@
 package com.baasbox.service.push;
 
-import com.baasbox.exception.BaasBoxPushException;
 
-public class PushSwitchException extends BaasBoxPushException {
+public class PushSwitchException extends PushConfigurationException {
 	public PushSwitchException(String message){
 		super(message);
 	}

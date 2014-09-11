@@ -127,7 +127,9 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 					result = routeAndCall(request);
 					assertRoute(result, "testRouteCreateAndUpdateUser: Check updated user.", Status.OK, null, false);
-
+					assertRoute(result, "testRouteCreateAndUpdateUser check username", Status.OK, "name\":\""+sFakeUser+"\"", true);
+					assertRoute(result, "testRouteCreateAndUpdateUser check role", Status.OK, "roles\":[{\"name\":\"registered\"}", true);
+					
 					assertCheckUserUpdate(contentAsString(result), sFakeUser);
 				}
 			}

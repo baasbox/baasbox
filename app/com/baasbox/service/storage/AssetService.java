@@ -31,18 +31,20 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.OperationDisabledException;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.storage.StorageUtils.WritebleImageFormat;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class AssetService {
-	public static ODocument create(String name, String meta) throws Throwable{
+	public static ODocument create(String name, String meta) throws InvalidJsonException,Throwable{
 		AssetDao dao = AssetDao.getInstance();
 		ODocument doc=dao.create(name);
 		try{
@@ -52,6 +54,8 @@ public class AssetService {
 				doc.merge(metaDoc, true, false);
 			}
 			dao.save(doc);
+		}catch (OSerializationException e){
+			throw new InvalidJsonException(e);
 		}catch (Throwable e){
 			throw e;
 		}

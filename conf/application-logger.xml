@@ -1,15 +1,9 @@
 <configuration>
 
-  <!-- returns package.class.method (line number), used for debug level -->
-  <!-- with Play 2.1 logback does not load che custom converter 
-  <conversionRule conversionWord="classmethod" converterClass="com.baasbox.log.ClassMethodConverter" />
- -->  
-  <evaluator name="SHOW_CLASS_AND_METHOD_FOR_DEBUG_AND_ERROR_LEVEL">
-    <expression>level==ERROR || level==DEBUG</expression>
-  </evaluator>
+ <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
   
-  <!-- log only the info level-->
-		  <appender name="FILE_ONLY_INFO" class="ch.qos.logback.core.FileAppender">
+  		<!-- log only the info level-->
+		  <appender name="FILE_ONLY_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
 			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
 			      <evaluator> 
 			        <expression>level==INFO</expression>
@@ -19,8 +13,12 @@
 			    </filter> 
 			     <file>${application.home}/logs/application.log</file>
 			     <encoder>
-			       <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
+			       <pattern>%date - %-5level - %message %n</pattern>
 			     </encoder>
+			     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/application.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
 		   </appender>
 		   
 		   <appender name="STDOUT_ONLY_INFO" class="ch.qos.logback.core.ConsoleAppender">
@@ -32,24 +30,12 @@
 		      <OnMatch>ACCEPT</OnMatch>
 		    </filter> 
 		    <encoder>
-		      <pattern>%date - App: %-15mdc{appid} - %-5level - %-11logger: %message %n%rootException</pattern>
+		      <pattern>%date - %coloredLevel - %message %n</pattern>
 		    </encoder>
 		  </appender>
 		  
-		  <appender name="ACCESS_LOG_FILE" class="ch.qos.logback.core.FileAppender">
-     			<file>${application.home}/logs/access.log</file>
-     			<encoder>
-       				<pattern>%m%n</pattern>
-     			</encoder>
-   			</appender>
-		  
-		  <logger name="com.baasbox.accesslog" level="info" additivity="false">
-    		<appender-ref ref="ACCESS_LOG_FILE" />
-  		  </logger>
-  		  
-  		  
   <!-- log all but info level, it's slow so it's active only for debug purpose-->
-		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.FileAppender">
+		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
 			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
 			      <evaluator> 
 			        <expression>level==INFO</expression>
@@ -59,9 +45,12 @@
 			    </filter> 
 			     <file>${application.home}/logs/application.log</file>
 			     <encoder>
-			       <!-- <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern> -->
-			     	<pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t  %message %n%rootException</pattern>
+			       <pattern>%date - %-5level - %logger: %t  %message %n%rootException</pattern>
 			     </encoder>
+			     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/application.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
 		   </appender>
 		
 		  <appender name="STDOUT_BUT_INFO" class="ch.qos.logback.core.ConsoleAppender">
@@ -73,12 +62,27 @@
 		      <OnMatch>DENY</OnMatch>
 		    </filter> 
 		    <encoder>
-		      <!-- <pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t %classmethod %message %n%rootException</pattern> -->
-		    	<pattern>%date - App: %-15mdc{appid} - %-5level - %logger: %t  %message %n%rootException</pattern> 
+		      <pattern>%date - %coloredLevel - %logger: %t  %message %n%rootException</pattern> 
 		    </encoder>
 		  </appender>
-    
-  <!-- these are overriden by application.conf -->  
+		  
+    <!-- ACCESS LOG -->
+		  <appender name="ACCESS_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+     			<file>${application.home}/logs/access.log</file>
+     			<encoder>
+       				<pattern>%m%n</pattern>
+     			</encoder>
+     			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/access.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
+   			</appender>
+		  
+		  <logger name="com.baasbox.accesslog" level="info" additivity="false">
+    		<appender-ref ref="ACCESS_LOG_FILE" />
+  		  </logger>
+  		      
+  <!-- these are overridden by application.conf (when in dev)-->  
   <logger name="play" level="INFO" />
   <logger name="application" level="INFO" />
 

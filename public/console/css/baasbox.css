@@ -4,17 +4,17 @@
 }
 
 @font-face {
-    font-family: 'lato';
-    src: url('Lato-Bol.ttf') format('truetype');
+    font-family: 'Lato';
+   	src: url('Lato-Bol.ttf') format('truetype');
     font-weight: bold;
 }
 @font-face {
-    font-family: 'lato';
+    font-family: 'Lato';
     src: url('Lato-RegIta.ttf') format('truetype');
     font-style: italic;
 }
 @font-face {
-    font-family: 'lato';
+    font-family: 'Lato';
     src: url('Lato-BolIta.ttf') format('truetype');
     font-style: italic;
     font-weight: bold;
@@ -365,7 +365,7 @@ nav {
 }
 
 .btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover {
-	margin-right:-55px;
+	margin-right:0px;
 }
 
 .well {

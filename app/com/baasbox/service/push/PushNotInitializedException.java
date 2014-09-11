@@ -18,7 +18,7 @@
 
 package com.baasbox.service.push;
 
-public class PushNotInitializedException extends Exception {
+public class PushNotInitializedException extends PushConfigurationException {
 	
 	public PushNotInitializedException(String message){
 		super(message);

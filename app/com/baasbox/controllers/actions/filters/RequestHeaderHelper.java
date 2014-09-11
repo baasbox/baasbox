@@ -34,7 +34,7 @@ public class RequestHeaderHelper {
 			appCode=ctx.request().getQueryString(SessionKeys.APP_CODE.toString());
 			if (Logger.isDebugEnabled()) Logger.debug("AppCode from queryString: " + appCode);
 		}
-		if (appCode==null) Logger.warn(SessionKeys.APP_CODE.toString() + " is null");
+		if (appCode==null) Logger.debug(SessionKeys.APP_CODE.toString() + " is null");
 		return appCode;
 	}
 }
