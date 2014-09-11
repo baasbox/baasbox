@@ -26,15 +26,43 @@ import com.baasbox.service.push.providers.GCMServer;
 import core.AbstractTest;
 import core.TestConfig;
 
-public class PushProfileTest extends AbstractTest {
-		List<String> profiles;
-	
-		@Before
-		public void beforeTest(){
-			addProfiles();
+public abstract class PushProfileAbstractTest extends AbstractTest {
+		private List<String> profiles;
+		
+		{
+			profiles = new ArrayList<String>();
+			profiles.add("profile2");
+			profiles.add("profile3");
 		}
+	
+		protected abstract int getProfile1DisabledReturnCode();
+		protected abstract int getProfile1SwitchReturnCode();
 		
 	
+		@Test
+		public void PushProfileDisabledProfile1(){
+			running
+			(
+				getFakeApplication(), 
+				new Runnable() 	{
+					public void run() 	{
+						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
+						String profile= "profile1";
+						FakeRequest request = new FakeRequest("PUT", "/admin/configuration/Push/"+profile+".push.profile.enable");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
+						Result result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
+						assertRoute(result, "configuration missing for the selected profile ("+profile+")", getProfile1DisabledReturnCode(), null, false);
+					}
+				}
+			);
+		}
+		
+		
 	
 		@Test
 		public void PushProfileDisabled(){
@@ -55,12 +83,39 @@ public class PushProfileTest extends AbstractTest {
 							Result result = routeAndCall(request);
 							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
 							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
-							assertRoute(result, "configuration missing for the selected profile", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_CONFIG_INVALID.getDescription(), true);
+							assertRoute(result, "configuration missing for the selected profile ("+profile+")", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_CONFIG_INVALID.getDescription(), true);
 						}
 					}
 				}
 				);
 		}
+		
+		
+		@Test
+		public void PushProfileSwitchModeProfile1(){
+			running
+			(
+				getFakeApplication(), 
+				new Runnable() 
+				{
+					public void run() 
+					{
+						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
+						String profile= "profile1";
+						FakeRequest request = new FakeRequest("PUT", "/admin/configuration/Push/"+profile+".push.sandbox.enable");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushDisableSandbox.json"), getMethod());
+						Result result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode result: " + contentAsString(result));
+						assertRoute(result, "configuration missing for the selected mode ("+profile+")", getProfile1SwitchReturnCode(), null, false);
+					}
+				}
+				);
+		}
+		
 		
 		@Test
 		public void PushProfileSwitchMode(){
@@ -81,7 +136,7 @@ public class PushProfileTest extends AbstractTest {
 							Result result = routeAndCall(request);
 							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
 							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode result: " + contentAsString(result));
-							assertRoute(result, "configuration missing for the selected mode", Status.BAD_REQUEST, CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription(), true);
+							assertRoute(result, "configuration missing for the selected mode ("+profile+")", Status.BAD_REQUEST, CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription(), true);
 						}
 					}
 				}
@@ -229,12 +284,6 @@ public class PushProfileTest extends AbstractTest {
 				);
 		}
 
-		public void addProfiles(){
-			profiles = new ArrayList<String>();
-			profiles.add("profile1");
-			profiles.add("profile2");
-			profiles.add("profile3");
-		}
 		
 		@Override
 		public String getRouteAddress() {

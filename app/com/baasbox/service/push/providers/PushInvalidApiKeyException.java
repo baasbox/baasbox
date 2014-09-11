@@ -1,8 +1,9 @@
 package com.baasbox.service.push.providers;
 
 import com.baasbox.exception.BaasBoxPushException;
+import com.baasbox.service.push.PushConfigurationException;
 
-public class PushInvalidApiKeyException extends BaasBoxPushException {
+public class PushInvalidApiKeyException extends PushConfigurationException {
 	public PushInvalidApiKeyException(String message){
 		super(message);
 	}
