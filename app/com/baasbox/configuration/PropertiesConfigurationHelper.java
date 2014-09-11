@@ -24,12 +24,6 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
@@ -37,8 +31,10 @@ import play.Logger;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
-import com.baasbox.service.push.providers.PushInvalidApiKeyException;
-import com.google.android.gcm.server.InvalidRequestException;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -293,18 +289,16 @@ public class PropertiesConfigurationHelper {
 	 * @throws ConfigurationException 
 	 * @throws PushNotInitializedException 
 	 * @throws PushSwitchException 
-	 * @throws PushInvalidApiKeyException 
 	 * @throws Exception
 	 */
-	public static void setByKey(Class en,String iKey,Object value) throws IllegalStateException,ConfigurationException, PushNotInitializedException, PushSwitchException, InvalidRequestException, PushInvalidApiKeyException  {
+	public static void setByKey(Class en,String iKey,Object value) throws ConfigurationException {
 		Object enumValue = findByKey(en,iKey);
 		try {
 			en.getMethod("setValue",Object.class).invoke(enumValue,value);
 		}catch (Exception e) {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
-			if (e.getCause() instanceof PushSwitchException) throw new PushSwitchException(e.getCause());
-			if (e.getCause() instanceof PushNotInitializedException) throw new PushNotInitializedException(e.getCause());
-			if (e.getCause() instanceof PushInvalidApiKeyException) throw new PushInvalidApiKeyException(e.getCause());
+			if (e.getCause() instanceof PushSwitchException) throw (PushSwitchException) e.getCause();
+			if (e.getCause() instanceof PushNotInitializedException) throw (PushNotInitializedException) e.getCause();
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey
