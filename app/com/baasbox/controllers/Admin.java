@@ -554,20 +554,19 @@ public class Admin extends Controller {
 				}
 			}
 		
-		} catch (ConfigurationException e) {
-			return badRequest(e.getMessage());
 		} catch (PushNotInitializedException e) {
 		 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 		} catch (PushSwitchException e) {
 			return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
-		}catch (InvalidRequestException e) {
-			Logger.error(e.getMessage());
-		 	return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());		
+		/*TODO: check this because it is never thrown
 		}catch (PushInvalidApiKeyException e) {
 			Logger.error(e.getMessage());
 		 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());		
+		*/
+		} catch (ConfigurationException e) {
+			return badRequest(e.getMessage());
 		}
 		String message = "";
 		if(inQueryString){
