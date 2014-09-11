@@ -560,11 +560,8 @@ public class Admin extends Controller {
 			return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
 		}catch (IllegalStateException e) {
 			return badRequest("This configuration value is not editable");
-		/*TODO: check this because it is never thrown
 		}catch (PushInvalidApiKeyException e) {
-			Logger.error(e.getMessage());
 		 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());		
-		*/
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}

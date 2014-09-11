@@ -31,6 +31,7 @@ import play.Logger;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
+import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -299,6 +300,7 @@ public class PropertiesConfigurationHelper {
 			if (e.getCause() instanceof IllegalStateException) throw new IllegalStateException(e.getCause());
 			if (e.getCause() instanceof PushSwitchException) throw (PushSwitchException) e.getCause();
 			if (e.getCause() instanceof PushNotInitializedException) throw (PushNotInitializedException) e.getCause();
+			if (e.getCause() instanceof PushInvalidApiKeyException) throw (PushInvalidApiKeyException) e.getCause();
 			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
 		}
 	}	//setByKey

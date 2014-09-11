@@ -94,19 +94,43 @@ public class Evolution_0_9_0 implements IEvolution {
 		
 		try{
 			//set the new profile1 settings
-			Push.PROFILE1_PUSH_PROFILE_ENABLE.setValue(true);
-			Push.PROFILE1_PUSH_SANDBOX_ENABLE.setValue(sandbox);
-			Push.PROFILE1_PRODUCTION_ANDROID_API_KEY.setValue(prodAndroidApiKey);
+			Push.PROFILE1_PRODUCTION_ANDROID_API_KEY._setValue(prodAndroidApiKey);
 			//Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE
-			Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD.setValue(prodBoxIosCertificatePassword);
-			Push.PROFILE1_PUSH_APPLE_TIMEOUT.setValue(appleTimeout);
-			Push.PROFILE1_SANDBOX_ANDROID_API_KEY.setValue(sandboxAndroidApiKey);
+			Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD._setValue(prodBoxIosCertificatePassword);
+			Push.PROFILE1_PUSH_APPLE_TIMEOUT._setValue(appleTimeout);
+			Push.PROFILE1_SANDBOX_ANDROID_API_KEY._setValue(sandboxAndroidApiKey);
 			//Push.PROFILE1_SANDBOX_IOS_CERTIFICATE
-			Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.setValue(sandBoxIosCertificatePassword);
+			Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD._setValue(sandBoxIosCertificatePassword);
+			Push.PROFILE1_PUSH_SANDBOX_ENABLE._setValue(sandbox);
+			
+			try{
+				Push.PROFILE1_PUSH_PROFILE_ENABLE.setValue(true);
+			}catch (Exception e){
+				Push.PROFILE1_PUSH_PROFILE_ENABLE.setValue(false);
+			}
 			
 			//disable other profiles
-			Push.PROFILE2_PUSH_PROFILE_ENABLE.setValue(false);
-			Push.PROFILE3_PUSH_PROFILE_ENABLE.setValue(false);
+			Push.PROFILE2_PUSH_PROFILE_ENABLE._setValue(false);
+			Push.PROFILE3_PUSH_PROFILE_ENABLE._setValue(false);
+			
+			//default value other profiles
+			Push.PROFILE2_PUSH_SANDBOX_ENABLE._setValue(true);
+			Push.PROFILE2_PRODUCTION_ANDROID_API_KEY._setValue("");
+			//Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE
+			Push.PROFILE2_PRODUCTION_IOS_CERTIFICATE_PASSWORD._setValue("");
+			Push.PROFILE2_PUSH_APPLE_TIMEOUT._setValue(0);
+			Push.PROFILE2_SANDBOX_ANDROID_API_KEY._setValue("");
+			//Push.PROFILE2_SANDBOX_IOS_CERTIFICATE
+			Push.PROFILE2_SANDBOX_IOS_CERTIFICATE_PASSWORD._setValue("");
+			
+			Push.PROFILE3_PUSH_SANDBOX_ENABLE._setValue(true);
+			Push.PROFILE3_PRODUCTION_ANDROID_API_KEY._setValue("");
+			//Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE
+			Push.PROFILE3_PRODUCTION_IOS_CERTIFICATE_PASSWORD._setValue("");
+			Push.PROFILE3_PUSH_APPLE_TIMEOUT._setValue(0);
+			Push.PROFILE3_SANDBOX_ANDROID_API_KEY._setValue("");
+			//Push.PROFILE3_SANDBOX_IOS_CERTIFICATE
+			Push.PROFILE3_SANDBOX_IOS_CERTIFICATE_PASSWORD._setValue("");
 		}catch (Exception e){
 			throw new RuntimeException(e);
 		}	
