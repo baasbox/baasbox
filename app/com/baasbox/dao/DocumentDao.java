@@ -54,6 +54,7 @@ public class DocumentDao extends NodeDao {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		DbHelper.requestTransaction();
 		ODocument doc = super.create();
+		DbHelper.commitTransaction();
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return doc;
 	}//getNewModelInstance

@@ -23,6 +23,7 @@ import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
+import play.test.Helpers.*;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -33,9 +34,11 @@ import javax.ws.rs.core.MediaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.Logger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -119,7 +122,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			request = request.withJsonBody(document1);
 		    result = routeAndCall(request); 
-			assertRoute(result, "getCollection 2", Status.OK, null, false);
+			assertRoute(result, "getCollection 2", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
 		
 			request = new FakeRequest("POST", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -128,16 +131,24 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			request = request.withJsonBody(document1);
 		    result = routeAndCall(request); 
-			assertRoute(result, "getCollection 3", Status.OK, null, false);
+			assertRoute(result, "getCollection 3", Status.OK, "\"total\":2,\"city\":\"rome\"", true);
 			
 			//check the content of the collection
-			request = new FakeRequest("GET", "/admin/collection");
+			
+			request = new FakeRequest("GET", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
-			assertRoute(result, "getCollection 4", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
-		
-		} catch (JsonProcessingException e) {
+			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 5 - : " + play.test.Helpers.contentAsString(result));
+			
+			request = new FakeRequest("GET", "/admin/collection");
+			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+			Result result4 = routeAndCall(request);
+			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":62", true);
+			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
+			
+			} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());
 		} catch (IOException e) {
 			Assert.fail(e.getMessage());
