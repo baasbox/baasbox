@@ -168,6 +168,10 @@ public enum Push implements IProperties	{
 				}
 				break;
 			case PROFILE1_PUSH_SANDBOX_ENABLE:
+				if(!(PROFILE1_PUSH_PROFILE_ENABLE.getValueAsBoolean())){
+					_setValue(newValue);
+					return;
+				}
 				bNewValue = Boolean.parseBoolean(newValue.toString());
 				if(!bNewValue){//switch to production mode
 					if(StringUtils.isEmpty(Push.PROFILE1_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
@@ -181,6 +185,10 @@ public enum Push implements IProperties	{
 				   ) throw new PushSwitchException("");
 				break;
 			case PROFILE2_PUSH_SANDBOX_ENABLE:
+				if(!(PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())){
+					_setValue(newValue);
+					return;
+				}
 				bNewValue = Boolean.parseBoolean(newValue.toString());
 				if(!bNewValue){//switch to production mode
 					if(StringUtils.isEmpty(Push.PROFILE2_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
@@ -194,6 +202,10 @@ public enum Push implements IProperties	{
 				   ) throw new PushSwitchException("");
 				break;
 			case PROFILE3_PUSH_SANDBOX_ENABLE:
+				if(!(PROFILE3_PUSH_PROFILE_ENABLE.getValueAsBoolean())){
+					_setValue(newValue);
+					return;
+				}				
 				bNewValue = Boolean.parseBoolean(newValue.toString());
 				if(!bNewValue){//switch to production mode
 					if(StringUtils.isEmpty(Push.PROFILE3_PRODUCTION_ANDROID_API_KEY.getValueAsString()) 
@@ -209,7 +221,6 @@ public enum Push implements IProperties	{
 			
 		}
 		_setValue(newValue);
-
 	}
 
 	@Override
