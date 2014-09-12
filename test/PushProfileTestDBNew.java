@@ -48,7 +48,7 @@ public class PushProfileTestDBNew extends PushProfileAbstractTest {
 
 	@Override
 	protected int getProfile1SwitchReturnCode() {
-		return 400;
+		return 200;
 	}
 	
 }//class
