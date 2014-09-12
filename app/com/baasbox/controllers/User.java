@@ -152,18 +152,18 @@ public class User extends Controller {
 		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Context ctx=Http.Context.current.get();
 		  QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		  String where="user.name not in ?" ;
-		  if (!StringUtils.isEmpty(criteria.getWhere())) {
-			  where += " and (" + criteria.getWhere() + ")";
-		  }
-		  Object[] params = criteria.getParams();
-		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
-		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
-		  criteria.where(where);
-		  criteria.params(veryNewParams);
+//		  String where="user.name not in ?" ;
+//		  if (!StringUtils.isEmpty(criteria.getWhere())) {
+//			  where += " and (" + criteria.getWhere() + ")";
+//		  }
+//		  Object[] params = criteria.getParams();
+//		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
+//		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
+//		  criteria.where(where);
+//		  criteria.params(veryNewParams);
 		  List<ODocument> profiles=null;;
 		  try {
-			profiles = UserService.getUsers(criteria);
+			profiles = UserService.getUsers(criteria,true);
 		  } catch (SqlInjectionException e) {
 			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
 		  }

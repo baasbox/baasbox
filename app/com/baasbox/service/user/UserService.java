@@ -27,7 +27,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import net.sf.ehcache.search.expression.Criteria;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
@@ -87,6 +89,23 @@ public class UserService {
 			throw new RuntimeException(e);
 		}
 	}
+
+    public static List<ODocument> getUsers(QueryParams criteria,boolean excludeInternal) throws SqlInjectionException {
+        if (excludeInternal) {
+            String where="user.name not in ?" ;
+            if (!StringUtils.isEmpty(criteria.getWhere())) {
+                where += " and (" + criteria.getWhere() + ")";
+            }
+            Object[] params = criteria.getParams();
+            Object[] injectedParams = new String[]{BBConfiguration.getBaasBoxAdminUsername(),
+                                                   BBConfiguration.getBaasBoxUsername()};
+            Object[] newParams = ArrayUtils.addAll(new Object[]{injectedParams},params);
+            criteria.where(where);
+            criteria.params(newParams);
+        }
+        return getUsers(criteria);
+    }
+
 
 	public static List<ODocument> getUsers(QueryParams criteria) throws SqlInjectionException{
 		UserDao dao = UserDao.getInstance();
@@ -732,4 +751,9 @@ public class UserService {
 		}
 		return null;
 	}
+
+    public static boolean isInternalUsername(String username) {
+        return BBConfiguration.getBaasBoxAdminUsername().equals(username)||
+               BBConfiguration.getBaasBoxUsername().equals(username);
+    }
 }

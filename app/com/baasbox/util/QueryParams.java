@@ -17,8 +17,11 @@
 package com.baasbox.util;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baasbox.BBConfiguration;
@@ -241,10 +244,41 @@ public class QueryParams implements IQueryParametersKeys{
 	public static QueryParams getInstance(){
 		return new QueryParams();
 	}
-	
+
+
+    public static QueryParams getParamsFromJson(JsonNode node){
+        if (node == null) {
+            return QueryParams.getInstance();
+        }
+        Map<String,String[]> query = new HashMap<String,String[]>();
+        Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
+        while (nodes.hasNext()) {
+            Map.Entry<String, JsonNode> next = nodes.next();
+            String k = next.getKey();
+            JsonNode val = next.getValue();
+            if (val.isArray()) {
+                String[] ary = new String[val.size()];
+                int idx = 0;
+                for (JsonNode n: val){
+                    String s = n==null?null:n.toString();
+                    ary[idx] = s;
+                }
+                query.put(k,ary);
+            } else {
+                String[] o = {val.toString()};
+                query.put(k,o);
+            }
+        }
+
+        return getParamsFromQueryString(query);
+    }
+
+    public static QueryParams getParamsFromQueryString(play.mvc.Http.RequestHeader header){
+        return getParamsFromQueryString(header.queryString());
+    }
 
 	
-	public static QueryParams getParamsFromQueryString(play.mvc.Http.RequestHeader header){
+	public static QueryParams getParamsFromQueryString(Map<String,String[]> queryString){
 		String fields;
 		String where;
 		Integer page;
@@ -267,7 +301,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String skipFromQS=null;
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		Map <String,String[]> queryString = header.queryString();
+//		Map <String,String[]> queryString = header.queryString();
 		if (queryString.get(IQueryParametersKeys.FIELDS)!=null)
 			fieldsFromQS=queryString.get(IQueryParametersKeys.FIELDS)[0];
 		if (queryString.get(IQueryParametersKeys.WHERE)!=null)
