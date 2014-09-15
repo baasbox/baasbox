@@ -118,5 +118,49 @@ public class PushValidateAPNPayloadTest {
 	
 		
 	}
+	
+	public void ValidateCorrectBadgeKey(){
+		try{	
+			ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+			jNode.put("badge", 123);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e){
+			Assert.assertEquals("Validate passed",true,true);
+		}
+	}
+	
+	public void ValidateFormatInvalidBadgeKey(){
+		ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+		try {
+			//String
+			jNode.put("badge", "1");
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try{
+			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
+			aNode.put("badge", 10);
+			// ObjectNode
+			jNode.put("badge", aNode);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try {
+			//ArrayNode
+			ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+			arrayNode.add(10);
+			jNode.put("badge", arrayNode);
+			APNServer.validatePushPayload(jNode);
+			
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+	}
 
 }

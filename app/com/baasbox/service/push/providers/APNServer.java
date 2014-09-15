@@ -120,7 +120,7 @@ public class APNServer  implements IPushServer {
 		JsonNode badgeNode=bodyJson.findValue("badge");
 		int badge=0;
 		if(!(badgeNode==null)) {
-			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException();
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
 			else badge=badgeNode.asInt();
 		}
 					
@@ -225,7 +225,7 @@ public class APNServer  implements IPushServer {
 		JsonNode badgeNode=bodyJson.findValue("badge");
 		int badge=0;
 		if(!(badgeNode==null)) {
-			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException();
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
 			else badge=badgeNode.asInt();
 		}
 		
