@@ -18,6 +18,8 @@
 
 package com.baasbox.db;
 
+import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import play.Logger;
 
@@ -43,6 +45,8 @@ public class Evolution_0_9_0 implements IEvolution {
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
+            addScriptsClass(db);
+            addScriptsPermissionTag();
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -66,7 +70,42 @@ public class Evolution_0_9_0 implements IEvolution {
         db.getMetadata().reload();
         Logger.info("...done");
     }
-	
+
+
+    private void addScriptsClass(ODatabaseRecordTx db){
+        Logger.info("creating scripts class...");
+        DbHelper.execMultiLineCommands(db,true,
+                "create class _BB_Script;" +
+                "create property _BB_Script.name String;" +
+                "alter property _BB_Script.name mandatory=true;" +
+                "alter property _BB_Script.name notnull=true;" +
+                "create property _BB_Script.code embeddedlist string;" +
+                "alter property _BB_Script.code mandatory=true;" +
+                "alter property _BB_Script.code notnull=true;" +
+                "create property _BB_Script.lang string;" +
+                "alter property _BB_Script.lang mandatory=true;" +
+                "alter property _BB_Script.lang notnull=true;" +
+                "create property _BB_Script.library boolean;" +
+                "alter property _BB_Script.library mandatory=true;" +
+                "alter property _BB_Script.library notnull=true;" +
+                "create property _BB_Script.active boolean;" +
+                "alter property _BB_Script.active mandatory=true;" +
+                "alter property _BB_Script.active notnull=true;" +
+                "create property _BB_Script.store embedded;" +
+                "create property _BB_Script._creation_date datetime;" +
+                "create property _BB_Script._invalid boolean;" +
+                "alter property _BB_Script._invalid mandatory=true;" +
+                "alter property _BB_Script._invalid notnull=true;" +
+                "create index _BB_Script.name unique;");
+        Logger.info("...done");
+    }
+
+    private void addScriptsPermissionTag(){
+        Logger.info("Creating script permission tag...");
+        PermissionTagService.createReservedPermission(Tags.Reserved.SCRIPT_INVOCATION);
+        Logger.info("... done");
+    }
+
 	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	}
