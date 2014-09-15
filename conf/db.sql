@@ -130,7 +130,7 @@ alter property _BB_Script.name notnull=true;
 create property _BB_Script.code embeddedlist string;
 alter property _BB_Script.code mandatory=true;
 alter property _BB_Script.code notnull=true;
-create property _BB_Script.lang String;
+create property _BB_Script.lang string;
 alter property _BB_Script.lang mandatory=true;
 alter property _BB_Script.lang notnull=true;
 create property _BB_Script.library boolean;
