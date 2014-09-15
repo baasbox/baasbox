@@ -62,27 +62,27 @@ public class Evolution_0_9_0 implements IEvolution {
     private void addScriptsClass(ODatabaseRecordTx db){
         Logger.info("Creating scripts classes...");
         DbHelper.execMultiLineCommands(db,true,
-                "create class _BB_Script;" +
-                "create property _BB_Script.name String;" +
-                "alter property _BB_Script.name mandatory=true;" +
-                "alter property _BB_Script.name notnull=true;" +
-                "create property _BB_Script.code embeddedlist string;" +
-                "alter property _BB_Script.code mandatory=true;" +
-                "alter property _BB_Script.code notnull=true;" +
-                "create property _BB_Script.lang String;" +
-                "alter property _BB_Script.lang mandatory=true;" +
-                "alter property _BB_Script.lang notnull=true;" +
-                "create property _BB_Script.library boolean;" +
-                "alter property _BB_Script.library mandatory=true;" +
-                "alter property _BB_Script.library notnull=true;" +
-                "create property _BB_Script.active boolean;" +
-                "alter property _BB_Script.active mandatory=true;" +
-                "alter property _BB_Script.active notnull=true;" +
-                "create property _BB_Script._store embedded;" +
-                "create property _BB_Script._creation_date datetime;" +
-                "create property _BB_Script._invalid boolean;" +
-                "alter property _BB_Script._invalid mandatory=true;" +
-                "alter property _BB_Script._invalid notnull=true;" +
+                "create class _BB_Script;" ,
+                "create property _BB_Script.name String;",
+                "alter property _BB_Script.name mandatory=true;" ,
+                "alter property _BB_Script.name notnull=true;" ,
+                "create property _BB_Script.code embeddedlist string;" ,
+                "alter property _BB_Script.code mandatory=true;" ,
+                "alter property _BB_Script.code notnull=true;" ,
+                "create property _BB_Script.lang String;" ,
+                "alter property _BB_Script.lang mandatory=true;" ,
+                "alter property _BB_Script.lang notnull=true;" ,
+                "create property _BB_Script.library boolean;" ,
+                "alter property _BB_Script.library mandatory=true;" ,
+                "alter property _BB_Script.library notnull=true;" ,
+                "create property _BB_Script.active boolean;" ,
+                "alter property _BB_Script.active mandatory=true;" ,
+                "alter property _BB_Script.active notnull=true;" ,
+                "create property _BB_Script._store embedded;" ,
+                "create property _BB_Script._creation_date datetime;" ,
+                "create property _BB_Script._invalid boolean;" ,
+                "alter property _BB_Script._invalid mandatory=true;" ,
+                "alter property _BB_Script._invalid notnull=true;" ,
                 "create index _BB_Script.name unique;");
         Logger.info("...done!");
     }
