@@ -25,9 +25,9 @@ import play.Logger;
 
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
-import com.baasbox.service.user.RoleService;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Evolution_0_9_0 implements IEvolution {
 	private String version="0.9.0";
@@ -45,8 +45,6 @@ public class Evolution_0_9_0 implements IEvolution {
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
-            addScriptsClass(db);
-            addScriptsPermissionTag();
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -71,43 +69,9 @@ public class Evolution_0_9_0 implements IEvolution {
         Logger.info("...done");
     }
 
-
-    private void addScriptsClass(ODatabaseRecordTx db){
-        Logger.info("creating scripts class...");
-        DbHelper.execMultiLineCommands(db,true,
-                "create class _BB_Script;" +
-                "create property _BB_Script.name String;" +
-                "alter property _BB_Script.name mandatory=true;" +
-                "alter property _BB_Script.name notnull=true;" +
-                "create property _BB_Script.code embeddedlist string;" +
-                "alter property _BB_Script.code mandatory=true;" +
-                "alter property _BB_Script.code notnull=true;" +
-                "create property _BB_Script.lang string;" +
-                "alter property _BB_Script.lang mandatory=true;" +
-                "alter property _BB_Script.lang notnull=true;" +
-                "create property _BB_Script.library boolean;" +
-                "alter property _BB_Script.library mandatory=true;" +
-                "alter property _BB_Script.library notnull=true;" +
-                "create property _BB_Script.active boolean;" +
-                "alter property _BB_Script.active mandatory=true;" +
-                "alter property _BB_Script.active notnull=true;" +
-                "create property _BB_Script.store embedded;" +
-                "create property _BB_Script._creation_date datetime;" +
-                "create property _BB_Script._invalid boolean;" +
-                "alter property _BB_Script._invalid mandatory=true;" +
-                "alter property _BB_Script._invalid notnull=true;" +
-                "create index _BB_Script.name unique;");
-        Logger.info("...done");
+    private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
+        DbHelper.execMultiLineCommands(db, true, "alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     }
 
-    private void addScriptsPermissionTag(){
-        Logger.info("Creating script permission tag...");
-        PermissionTagService.createReservedPermission(Tags.Reserved.SCRIPT_INVOCATION);
-        Logger.info("... done");
-    }
 
-	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
-			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-	}
-    
 }
