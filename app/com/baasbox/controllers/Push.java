@@ -63,6 +63,7 @@ import com.baasbox.service.push.providers.PushCollapseKeyFormatException;
 import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.baasbox.service.push.providers.PushLocalizedArgumentsFormatException;
 import com.baasbox.service.push.providers.PushLocalizedKeyFormatException;
+import com.baasbox.service.push.providers.PushSoundKeyFormatException;
 import com.baasbox.service.push.providers.PushTimeToLiveFormatException;
 import com.baasbox.service.user.UserService;
 import com.google.android.gcm.server.InvalidRequestException;
@@ -72,100 +73,104 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
-	 public static Result send(String username) throws Exception  {
-		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		 Http.RequestBody body = request().body();
-		 JsonNode bodyJson= body.asJson(); //{"message":"Text"}
-		 if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
-		 if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
-		 JsonNode messageNode=bodyJson.findValue("message");
-		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
-		 if(messageNode.isNumber()) return badRequest("Message MUST be a String");
+	public static Result send(String username) throws Exception  {
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
+		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
+		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		JsonNode messageNode=bodyJson.findValue("message");
+		if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
+		if(messageNode.isNumber()) return badRequest("Message MUST be a String");
 
-		 String message=messageNode.asText();	
-		 
-		 
-		 List<String> usernames = new ArrayList<String>();
-		 usernames.add(username);
-		 
-		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
-		 		 
-		 List<Integer> pushProfiles = new ArrayList<Integer>();
-		 if(!(pushProfilesNodes==null)){
-			 if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");						
-			 for(JsonNode pushProfileNode : pushProfilesNodes) {
-			 pushProfiles.add(pushProfileNode.asInt());
-			 }	
-		 }
-		 else {
-			 pushProfiles.add(1);
-		 }
-		 boolean[] withError=new boolean[6];
-		 PushService ps=new PushService();
-		 try{
-		    	if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
-		 }
-		 catch (UserNotFoundException e) {
-			    Logger.error("Username not found " + username, e);
-			    return notFound("Username not found");
-		 }
-		 catch (SqlInjectionException e) {
-			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
-		 }
-		 catch (InvalidRequestException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
-		 }
-		 catch (PushNotInitializedException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
-		 }
-		 catch (PushProfileDisabledException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
-		 }
-		 catch (PushProfileInvalidException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
-		 }
-		 catch (PushProfileArrayException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
-		 }
-		 catch (UnknownHostException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
-		 }
-		 catch (IOException e) {
-			 	Logger.error(e.getMessage());
-			 	return badRequest(e.getMessage());
-		 }
-		 catch(PushBadgeFormatException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
-		 }
-		 catch(PushActionLocalizedKeyFormatException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
-		 }		
-		 catch(PushCollapseKeyFormatException e) {
-			 	Logger.error(e.getMessage());
-		 	 	return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
-		 }
-		 catch(PushTimeToLiveFormatException e) {
-			 	Logger.error(e.getMessage());
-		 	 	return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
-		 }
-		 
-		 
-		 
-		
-		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		 for(int i=0;i<withError.length;i++) {
-			 if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
-		 }		
-		 return ok();
-	  }
+		String message=messageNode.asText();	
+
+
+		List<String> usernames = new ArrayList<String>();
+		usernames.add(username);
+
+		JsonNode pushProfilesNodes=bodyJson.get("profiles");
+
+		List<Integer> pushProfiles = new ArrayList<Integer>();
+		if(!(pushProfilesNodes==null)){
+			if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");						
+			for(JsonNode pushProfileNode : pushProfilesNodes) {
+				pushProfiles.add(pushProfileNode.asInt());
+			}	
+		}
+		else {
+			pushProfiles.add(1);
+		}
+		boolean[] withError=new boolean[6];
+		PushService ps=new PushService();
+		try{
+			if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
+		}
+		catch (UserNotFoundException e) {
+			Logger.error("Username not found " + username, e);
+			return notFound("Username not found");
+		}
+		catch (SqlInjectionException e) {
+			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+		}
+		catch (InvalidRequestException e){
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
+		}
+		catch (PushNotInitializedException e){
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
+		}
+		catch (PushProfileDisabledException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
+		}
+		catch (PushProfileInvalidException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+		}
+		catch (PushProfileArrayException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
+		}
+		catch (UnknownHostException e){
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
+		}
+		catch (IOException e) {
+			Logger.error(e.getMessage());
+			return badRequest(e.getMessage());
+		}
+		catch(PushSoundKeyFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
+		}
+		catch(PushBadgeFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
+		}
+		catch(PushActionLocalizedKeyFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
+		}		
+		catch(PushCollapseKeyFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
+		}
+		catch(PushTimeToLiveFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
+		}
+
+
+
+
+		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		for(int i=0;i<withError.length;i++) {
+			if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
+		}		
+		return ok();
+	}
 	 
 	 public static Result sendUsers() throws Exception {
 		 if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -176,37 +181,37 @@ public class Push extends Controller {
 		 JsonNode messageNode=bodyJson.findValue("message");
 		 if (messageNode==null) return badRequest("The body payload doesn't contain key message");	  
 		 if(messageNode.isNumber()) return badRequest("Message MUST be a String");
-		 
-		 String message=messageNode.asText();	
-		 
-		 JsonNode usernamesNodes=bodyJson.get("users");
-		 
-		 
-		 List<String> usernames = new ArrayList<String>();
-			
-			if(!(usernamesNodes==null)){
-				
-				if(!(usernamesNodes.isArray())) return badRequest("Users MUST be an Array");
 
-				for(JsonNode usernamesNode : usernamesNodes) {
-					usernames.add(usernamesNode.asText());
-				}	
-			}
-			else {
-				return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
-			}
-		 
+		 String message=messageNode.asText();	
+
+		 JsonNode usernamesNodes=bodyJson.get("users");
+
+
+		 List<String> usernames = new ArrayList<String>();
+
+		 if(!(usernamesNodes==null)){
+
+			 if(!(usernamesNodes.isArray())) return badRequest("Users MUST be an Array");
+
+			 for(JsonNode usernamesNode : usernamesNodes) {
+				 usernames.add(usernamesNode.asText());
+			 }	
+		 }
+		 else {
+			 return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
+		 }
+
 		 JsonNode pushProfilesNodes=bodyJson.get("profiles");
-		 
-		 
-		 
+
+
+
 		 List<Integer> pushProfiles = new ArrayList<Integer>();
 		 if(!(pushProfilesNodes==null)){
 			 if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");
 			 for(JsonNode pushProfileNode : pushProfilesNodes) {
 				 if(pushProfileNode.isTextual()) return badRequest("Profiles MUST be express as number");	
 				 pushProfiles.add(pushProfileNode.asInt());
-			 	 }	
+			 }	
 		 }
 		 else {
 			 pushProfiles.add(1);
@@ -214,79 +219,83 @@ public class Push extends Controller {
 		 boolean[] withError=new boolean[6];
 		 PushService ps=new PushService();
 		 try{
-		    	if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
+			 if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
 		 }
 		 catch (UserNotFoundException e) {
-			    return notFound("Username not found");
+			 return notFound("Username not found");
 		 }
 		 catch (SqlInjectionException e) {
-			    return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
+			 return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		 }
 		 catch (InvalidRequestException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
 		 }
 		 catch (PushNotInitializedException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 		 }
 		 catch (PushProfileDisabledException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
 		 }
 		 catch (PushProfileInvalidException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		 }
 		 catch (PushInvalidApiKeyException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
 		 }
 		 catch (PushProfileArrayException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
 		 }
 		 catch (UnknownHostException e){
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 		 }
 		 catch (IOException e) {
-			 	Logger.error(e.getMessage());
-			 	return badRequest(e.getMessage());
+			 Logger.error(e.getMessage());
+			 return badRequest(e.getMessage());
+		 }
+		 catch(PushSoundKeyFormatException e) {
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
 		 }
 		 catch(PushBadgeFormatException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
 		 }
 		 catch(PushActionLocalizedKeyFormatException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
 		 }
 		 catch(PushLocalizedKeyFormatException e) {
-			 	Logger.error(e.getMessage());
-			 	return status(CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 		 }	
 		 catch(PushLocalizedArgumentsFormatException e) {
-			 	Logger.error(e.getMessage());
-		 	 	return status(CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 		 }		
 		 catch(PushCollapseKeyFormatException e) {
-			 	Logger.error(e.getMessage());
-		 	 	return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
 		 }
 		 catch(PushTimeToLiveFormatException e) {
-			 	Logger.error(e.getMessage());
-		 	 	return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
+			 Logger.error(e.getMessage());
+			 return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
 		 }
-		 
+
 		 if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		 
+
 		 for(int i=0;i<withError.length;i++) {
 			 if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 		 }
 		 return ok();
-	  }	 
-	 
+	 }	 
+
 	 
 	 
 	 

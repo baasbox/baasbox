@@ -281,12 +281,21 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, "Profiles MUST be express as number", true);
 						
+					
 					}
+					
+					
+					
+					
+					
+					
+					
+					
 				}
 				);
 		}
-
 		
+
 		@Override
 		public String getRouteAddress() {
 			// TODO Auto-generated method stub
