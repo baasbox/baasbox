@@ -143,7 +143,7 @@ public class ScriptsDao {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         List<ODocument> docs= null;
         params = params==null?QueryParams.getInstance():params;
-        OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME,params.isCountOnly(),params);
+        OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME,params.justCountTheRecords(),params);
         docs = DbHelper.commandExecute(command,params.getParams());
 
         if (Logger.isTraceEnabled()) Logger.trace("Method End");
