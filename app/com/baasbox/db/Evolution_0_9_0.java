@@ -18,6 +18,8 @@
 
 package com.baasbox.db;
 
+import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.permissions.Tags;
 import play.Logger;
 
 import com.baasbox.dao.RoleDao;
@@ -48,12 +50,13 @@ public class Evolution_0_9_0 implements IEvolution {
 		}
 		Logger.info ("DB now is on " + version + " level");
 	}
-	
+
+
 	//issue #195 Registered users should have access to anonymous resources
 	private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
 		Logger.info("...updating registered role");
 		ORole regRole = RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString());
-		regRole.getDocument().field(RoleDao.FIELD_INHERITED,DefaultRoles.ANONYMOUS_USER.getORole().getDocument().getRecord());
+		regRole.getDocument().field(RoleDao.FIELD_INHERITED, DefaultRoles.ANONYMOUS_USER.getORole().getDocument().getRecord());
 		regRole.save();
 		Logger.info("...done");
 	}
@@ -61,5 +64,38 @@ public class Evolution_0_9_0 implements IEvolution {
 	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	}
-    
+
+    private void addScriptsClass(ODatabaseRecordTx db){
+        Logger.info("Creating scripts classes...");
+        DbHelper.execMultiLineCommands(db,true,
+                "create class _BB_Script;" +
+                "create property _BB_Script.name String;" +
+                "alter property _BB_Script.name mandatory=true;" +
+                "alter property _BB_Script.name notnull=true;" +
+                "create property _BB_Script.code embeddedlist string;" +
+                "alter property _BB_Script.code mandatory=true;" +
+                "alter property _BB_Script.code notnull=true;" +
+                "create property _BB_Script.lang String;" +
+                "alter property _BB_Script.lang mandatory=true;" +
+                "alter property _BB_Script.lang notnull=true;" +
+                "create property _BB_Script.library boolean;" +
+                "alter property _BB_Script.library mandatory=true;" +
+                "alter property _BB_Script.library notnull=true;" +
+                "create property _BB_Script.active boolean;" +
+                "alter property _BB_Script.active mandatory=true;" +
+                "alter property _BB_Script.active notnull=true;" +
+                "create property _BB_Script._store embedded;" +
+                "create property _BB_Script._creation_date datetime;" +
+                "create property _BB_Script._invalid boolean;" +
+                "alter property _BB_Script._invalid mandatory=true;" +
+                "alter property _BB_Script._invalid notnull=true;" +
+                "create index _BB_Script.name unique;");
+        Logger.info("...done!");
+    }
+
+    private void addScriptsPermission() {
+        Logger.info("Creating scripts permission tag...");
+        PermissionTagService.createReservedPermission(Tags.Reserved.SCRIPT_INVOKE);
+        Logger.info("...done!");
+    }
 }
