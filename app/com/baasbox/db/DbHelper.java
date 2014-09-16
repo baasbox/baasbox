@@ -173,6 +173,10 @@ public class DbHelper {
 		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
 			ret += " where ( " + criteria.getWhere() + " )";
 		}
+		//patch for issue #469
+		if (StringUtils.isEmpty(criteria.getWhere())){
+			ret += " where 1=1";
+		}
 		if (!StringUtils.isEmpty(criteria.getGroupBy())){
 			ret += " group by ( " + criteria.getGroupBy() + " )";
 		}
