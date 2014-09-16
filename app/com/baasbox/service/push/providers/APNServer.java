@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import play.Logger;
 
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.util.ConfigurationFileContainer;
@@ -65,9 +66,12 @@ public class APNServer  implements IPushServer {
 			return true;
 		}
 		
+		
+		
 		JsonNode soundNode=bodyJson.findValue("sound");
 		String sound =null;
 		if (!(soundNode==null)) {
+			if(!(soundNode.isTextual())) throw new PushSoundKeyFormatException("Sound value MUST be a String");
 			sound=soundNode.asText();
 		}
 		
@@ -75,7 +79,7 @@ public class APNServer  implements IPushServer {
 		String actionLocKey=null; 
 		
 		if (!(actionLocKeyNode==null)) {
-			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("");
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
 			actionLocKey=actionLocKeyNode.asText();
 		}
 		
@@ -83,7 +87,7 @@ public class APNServer  implements IPushServer {
 		String locKey=null; 
 		
 		if (!(locKeyNode==null)) {
-			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("");
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
 			locKey=locKeyNode.asText();
 		}
 		
@@ -91,9 +95,9 @@ public class APNServer  implements IPushServer {
 
 		List<String> locArgs = new ArrayList<String>();
 		if(!(locArgsNode==null)){
-			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("");		
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
 			for(JsonNode locArgNode : locArgsNode) {
-				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("");
+				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
 				locArgs.add(locArgNode.toString());
 			}	
 		}
@@ -116,7 +120,7 @@ public class APNServer  implements IPushServer {
 		JsonNode badgeNode=bodyJson.findValue("badge");
 		int badge=0;
 		if(!(badgeNode==null)) {
-			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException();
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
 			else badge=badgeNode.asInt();
 		}
 					
@@ -165,6 +169,67 @@ public class APNServer  implements IPushServer {
 		}
 		//icallbackPush.onSuccess();
 		return false;
+	}
+	
+	
+	public static boolean validatePushPayload(JsonNode bodyJson) throws BaasBoxPushException {
+		JsonNode soundNode=bodyJson.findValue("sound");
+		String sound =null;
+		if (!(soundNode==null)) {
+			if(!(soundNode.isTextual())) throw new PushSoundKeyFormatException("Sound value MUST be a String");
+			sound=soundNode.asText();
+		}
+		
+		JsonNode actionLocKeyNode=bodyJson.findValue("actionLocalizedKey"); 
+		String actionLocKey=null; 
+		
+		if (!(actionLocKeyNode==null)) {
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
+			actionLocKey=actionLocKeyNode.asText();
+		}
+		
+		JsonNode locKeyNode=bodyJson.findValue("localizedKey"); 
+		String locKey=null; 
+		
+		if (!(locKeyNode==null)) {
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
+			locKey=locKeyNode.asText();
+		}
+		
+		JsonNode locArgsNode=bodyJson.get("localizedArguments");
+
+		List<String> locArgs = new ArrayList<String>();
+		if(!(locArgsNode==null)){
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
+			for(JsonNode locArgNode : locArgsNode) {
+				if(!locArgNode.isTextual()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
+				locArgs.add(locArgNode.toString());
+			}	
+		}
+						
+		JsonNode customDataNodes=bodyJson.get("custom");
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
+			}
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}
+			}
+		}
+				
+		JsonNode badgeNode=bodyJson.findValue("badge");
+		int badge=0;
+		if(!(badgeNode==null)) {
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
+			else badge=badgeNode.asInt();
+		}
+		
+		return true;
 	}
 		
 		

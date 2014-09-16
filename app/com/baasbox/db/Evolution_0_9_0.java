@@ -29,6 +29,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Evolution_0_9_0 implements IEvolution {
 	private String version="0.9.0";
@@ -55,17 +56,22 @@ public class Evolution_0_9_0 implements IEvolution {
 	}
 	
 	//issue #195 Registered users should have access to anonymous resources
-	private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
-		Logger.info("...updating registered role");
-		ORole regRole = RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString());
-		regRole.setParentRole(DefaultRoles.ANONYMOUS_USER.getORole());
-		regRole.save();
-//		db.freeze();
-//		db.release();
-//		db.getMetadata().reload();
-//		db.getMetadata().getSecurity().repair();
-		Logger.info("...done");
-	}
+		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
+			Logger.info("...updating registered role");
+			
+			RoleDao.getRole(DefaultRoles.ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("admin").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("anonymous").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.BACKOFFICE_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
+			
+			
+			RoleDao.getRole(DefaultRoles.BASE_READER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			RoleDao.getRole(DefaultRoles.BASE_WRITER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			RoleDao.getRole(DefaultRoles.BASE_ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			
+			db.getMetadata().reload();
+			Logger.info("...done");
+		}
 	
 	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
