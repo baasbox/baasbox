@@ -242,7 +242,7 @@ public class DocumentCountFunctionalTest extends AbstractDocumentTest
 					try{
 						List<ODocument> listOfdoc = (List<ODocument>) DbHelper.genericSQLStatementExecute("select count(*) from " + sFakeCollection,new String[]{});
 						ODocument doc = listOfdoc.get(0);
-						count=doc.field("count");
+						count=(Long)doc.field("count");
 					}catch(Exception e){
 						assertFail(ExceptionUtils.getMessage(e));
 					}finally{
