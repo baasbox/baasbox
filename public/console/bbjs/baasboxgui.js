@@ -1381,6 +1381,12 @@ function setup(){
 	setupTables();
 	setupSelects();
 
+	$('.iphone-toggle').iphoneStyle(
+			{resizeHandle: false,
+		      resizeContainer: false,
+		      checkedLabel:"PIPPO"}
+			);
+	
 	$('.logout').click(function(e){
 		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 				function() {
@@ -1721,28 +1727,6 @@ function setupTables(){
 	    	}
 	} ).makeEditable();
 
-	$('#settingsPushTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "key"},
-		               {"mData": "description"},
-		               {"mData": "value", "mRender":function ( data, type, full ) {
-		            	   return $('<div/>').text(data).html();
-		               }
-		               },
-		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   if (full.editable) return getActionButton("edit","setting",data);
-		            	   else return "";		               }
-		               }],
-           "bRetrieve": true,
-           "bDestroy":false,
-           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
-        	          $(nRow).attr( 'style',"display:none" );
-        	    }
-        	}
-	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
@@ -1899,6 +1883,8 @@ function applySuccessMenu(action,data){
 		scope.data=data;
 	});
 	sessionStorage.latestMenu=action;
+	console.log(action);
+	console.log(scope);
 }//applySuccessMenu
 
 function reloadFollowing(user){
@@ -1949,16 +1935,6 @@ function callMenu(action){
 		resetDataTable( $('#userTable'));
 		loadUsersData();
 		applySuccessMenu(action,userDataArray);
-		/*
-		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
-			data: {orderBy: "user.name asc"},
-			success: function(data) {
-				userDataArray = data["data"];
-				applySuccessMenu(action,userDataArray);
-				$('#userTable').dataTable().fnClearTable();
-				$('#userTable').dataTable().fnAddData(userDataArray);
-			}
-		})*/;
 		break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
@@ -2220,8 +2196,13 @@ function callMenu(action){
                 }
             });
             break;
+        case "#push_conf":
+        	loadPushSettings(action);
+            break;
 	}
 }//callMenu
+
+//PushConfController is defined into the push.js file
 
 function PermissionsController($scope){}
 
