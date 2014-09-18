@@ -18,6 +18,8 @@
 
 package com.baasbox.db;
 
+import org.apache.commons.lang.StringUtils;
+
 import play.Logger;
 
 import com.baasbox.configuration.Push;
@@ -25,9 +27,9 @@ import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
-import com.baasbox.service.user.RoleService;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Evolution_0_9_0 implements IEvolution {
 	private String version="0.9.0";
@@ -54,13 +56,22 @@ public class Evolution_0_9_0 implements IEvolution {
 	}
 	
 	//issue #195 Registered users should have access to anonymous resources
-	private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
-		Logger.info("...updating registered role");
-		ORole regRole = RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString());
-		regRole.getDocument().field(RoleDao.FIELD_INHERITED,DefaultRoles.ANONYMOUS_USER.getORole().getDocument().getRecord());
-		regRole.save();
-		Logger.info("...done");
-	}
+		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
+			Logger.info("...updating registered role");
+			
+			RoleDao.getRole(DefaultRoles.ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("admin").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("anonymous").getDocument().getRecord() ).save();
+			RoleDao.getRole(DefaultRoles.BACKOFFICE_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
+			
+			
+			RoleDao.getRole(DefaultRoles.BASE_READER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			RoleDao.getRole(DefaultRoles.BASE_WRITER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			RoleDao.getRole(DefaultRoles.BASE_ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
+			
+			db.getMetadata().reload();
+			Logger.info("...done");
+		}
 	
 	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -79,14 +90,21 @@ public class Evolution_0_9_0 implements IEvolution {
 		}
 		
 		//load the old settings
-		String sandbox = (idx.get("push.sandbox.enable")).toString();
-		String appleTimeout= (idx.get("push.apple.timeout")).toString();
+		String sandbox=null;
+		if(idx.get("push.sandbox.enable")==null) sandbox="true";
+		else sandbox=idx.get("push.sandbox.enable").toString();
+		//String sandbox = StringUtils.defaultString(()idx.get("push.sandbox.enable"),"true");
+		String appleTimeout=null;
+		if(idx.get("push.apple.timeout")==null) appleTimeout="0";
+		else appleTimeout=idx.get("push.apple.timeout").toString();
 		
-		String sandboxAndroidApiKey= (idx.get("sandbox.android.api.key")).toString();
-		String sandBoxIosCertificatePassword = (idx.get("sandbox.ios.certificate.password")).toString();
+		//StringUtils.defaultString((String)idx.get("push.apple.timeout"),null);
 		
-		String prodAndroidApiKey= (idx.get("production.android.api.key")).toString();
-		String prodBoxIosCertificatePassword = (idx.get("production.ios.certificate.password")).toString();
+		String sandboxAndroidApiKey= StringUtils.defaultString((String)idx.get("sandbox.android.api.key"),null);
+		String sandBoxIosCertificatePassword = StringUtils.defaultString((String)idx.get("sandbox.ios.certificate.password"),null);
+		
+		String prodAndroidApiKey= StringUtils.defaultString((String)idx.get("production.android.api.key"),null);
+		String prodBoxIosCertificatePassword = StringUtils.defaultString((String)idx.get("production.ios.certificate.password"),null);
 		
 		//Houston we have a problem. Here we have to handle the iOS certicates that are files!
 		//String sandBoxIosCertificate = (idx.get("sandbox.ios.certificate")).toString();
@@ -103,6 +121,7 @@ public class Evolution_0_9_0 implements IEvolution {
 			Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD._setValue(sandBoxIosCertificatePassword);
 			Push.PROFILE1_PUSH_SANDBOX_ENABLE._setValue(sandbox);
 			
+			Push.PROFILE1_PUSH_PROFILE_ENABLE.setValue(false);
 			try{
 				Push.PROFILE1_PUSH_PROFILE_ENABLE.setValue(true);
 			}catch (Exception e){
