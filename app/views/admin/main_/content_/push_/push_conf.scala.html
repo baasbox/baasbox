@@ -1,5 +1,5 @@
 <p class="hint">
-    This is the Push Notifications Settings Page. From here you can configure up to three App (AKA Profiles) that can receive Push Notifications from this BaasBox.
+    This is the Push Notifications Settings Page. From here you can configure up to three Apps (AKA Profiles) that can receive Push Notifications from this BaasBox.
 </p>
 <div class="box span11">
 				    <div class="box-header well">
@@ -77,7 +77,7 @@
 											<h4>SANDBOX</h4>
 												<p>{{getSandboxIOSCertificate($index+1).description}}</p>
 												<form name="{{keyName(getSandboxIOSCertificate($index+1).key)}}" id="{{keyName(getSandboxIOSCertificate($index+1).key)}}" method="PUT">
-													<div class="uploaded span7" ng-model="data" data-ng-show="getSandboxIOSCertificate($index+1).value">A file is already present: <strong>{{getSandboxIOSCertificate($index+1).filename}}</strong></div>
+													<div class="uploaded span7" ng-model="data" data-ng-show="getSandboxIOSCertificate($index+1).filename || '' != ''">A file is already present: <strong>{{getSandboxIOSCertificate($index+1).filename}}</strong></div>
 													<input data-no-uniform="true" accept=".p12" type="file" id="{{getSandboxIOSCertificate($index+1).key}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
 													<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting(getSandboxIOSCertificate($index+1))">Upload</button>
 													<span ng-show="getSandboxIOSCertificate($index+1).error!=null" class="error"> {{getSandboxIOSCertificate($index+1).error}} </span>
@@ -91,7 +91,7 @@
 											<h4>PRODUCTION</h4>
 												<p>{{getProductionIOSCertificate($index+1).description}}</p>
 												<form name="{{keyName(getProductionIOSCertificate($index+1).key)}}" id="{{keyName(getProductionIOSCertificate($index+1).key)}}" method="PUT">
-													<div class="uploaded span7" ng-model="data" data-ng-show="getProductionIOSCertificate($index+1).value">A file is already present: <strong>{{getProductionIOSCertificate($index+1).filename}}</strong></div>
+													<div class="uploaded span7" ng-model="data" data-ng-show="getProductionIOSCertificate($index+1).filename || '' != ''">A file is already present: <strong>{{getProductionIOSCertificate($index+1).filename}}</strong></div>
 													<input data-no-uniform="true" accept=".p12" type="file" id="{{getProductionIOSCertificate($index+1).key}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="angular.element(this).scope().setFiles(this)"/>
 													<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting(getProductionIOSCertificate($index+1))">Upload</button>
 													<span ng-show="getProductionIOSCertificate($index+1).error!=null" class="error"> {{getProductionIOSCertificate($index+1).error}} </span>
