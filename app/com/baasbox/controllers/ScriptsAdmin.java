@@ -88,7 +88,7 @@ public class ScriptsAdmin extends Controller{
                 result = ok(res.message);
             }
         } catch (ScriptAlreadyExistsException e) {
-            result = badRequest("Script already exists");
+            result = badRequest(e.getMessage());
         }catch (ScriptException e) {
             result = badRequest(e.getMessage());
         }
