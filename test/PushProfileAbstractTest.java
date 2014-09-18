@@ -216,7 +216,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString result: " + contentAsString(result));
-						assertRoute(result, "error with send, value message is not a String", Status.BAD_REQUEST, "Message MUST be a String", true);
+						assertRoute(result, "error with send, value message is not a String", Status.BAD_REQUEST, "Message MUST be a string", true);
 							
 						// Value profiles different from array
 						

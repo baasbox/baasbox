@@ -562,6 +562,8 @@ public class Admin extends Controller {
 			return badRequest("This configuration value is not editable");
 		}catch (PushInvalidApiKeyException e) {
 		 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());		
+		} catch (NumberFormatException e) {
+			return badRequest(value + " must be a number");
 		} catch (ConfigurationException e) {
 			return badRequest(e.getMessage());
 		}
