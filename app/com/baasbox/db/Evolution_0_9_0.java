@@ -27,6 +27,8 @@ import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
+import com.baasbox.util.ConfigurationFileContainer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -106,18 +108,18 @@ public class Evolution_0_9_0 implements IEvolution {
 		String prodAndroidApiKey= StringUtils.defaultString((String)idx.get("production.android.api.key"),null);
 		String prodBoxIosCertificatePassword = StringUtils.defaultString((String)idx.get("production.ios.certificate.password"),null);
 		
-		//Houston we have a problem. Here we have to handle the iOS certicates that are files!
-		//String sandBoxIosCertificate = (idx.get("sandbox.ios.certificate")).toString();
-		//String prodBoxIosCertificate = (idx.get("production.ios.certificate")).toString();
+		//Houston we have a problem. Here we have to handle the iOS certificates that are files!
+		Object sandBoxIosCertificate = getValueAsFileContainer(idx.get("sandbox.ios.certificate"));
+		Object prodBoxIosCertificate = getValueAsFileContainer(idx.get("production.ios.certificate"));
 		
 		try{
 			//set the new profile1 settings
 			Push.PROFILE1_PRODUCTION_ANDROID_API_KEY._setValue(prodAndroidApiKey);
-			//Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE
+			if(prodBoxIosCertificate != null) Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE._setValue(prodBoxIosCertificate);
 			Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD._setValue(prodBoxIosCertificatePassword);
 			Push.PROFILE1_PUSH_APPLE_TIMEOUT._setValue(appleTimeout);
 			Push.PROFILE1_SANDBOX_ANDROID_API_KEY._setValue(sandboxAndroidApiKey);
-			//Push.PROFILE1_SANDBOX_IOS_CERTIFICATE
+			if (sandBoxIosCertificate != null) Push.PROFILE1_SANDBOX_IOS_CERTIFICATE._setValue(sandBoxIosCertificate);
 			Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD._setValue(sandBoxIosCertificatePassword);
 			Push.PROFILE1_PUSH_SANDBOX_ENABLE._setValue(sandbox);
 			
@@ -153,6 +155,21 @@ public class Evolution_0_9_0 implements IEvolution {
 		}catch (Exception e){
 			throw new RuntimeException(e);
 		}	
+	}
+	
+	//this is needed due iOS certificates migrations
+	private ConfigurationFileContainer getValueAsFileContainer(Object v) {
+		ConfigurationFileContainer result = null;
+		if(v!=null){
+			ObjectMapper om = new ObjectMapper();
+			try {
+				result = om.readValue(v.toString(), ConfigurationFileContainer.class);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return result;
+			}
+		}
+		return result;
 	}
     
 }
