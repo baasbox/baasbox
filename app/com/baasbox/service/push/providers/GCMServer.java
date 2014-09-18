@@ -18,11 +18,13 @@
 
 package com.baasbox.service.push.providers;
 
+import static com.google.android.gcm.server.Constants.JSON_PAYLOAD;
+import static com.google.android.gcm.server.Constants.JSON_REGISTRATION_IDS;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -31,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.simple.JSONValue;
 
 import play.Logger;
@@ -45,13 +46,6 @@ import com.google.android.gcm.server.InvalidRequestException;
 import com.google.android.gcm.server.Message;
 import com.google.android.gcm.server.Sender;
 import com.google.common.collect.ImmutableMap;
-
-import static com.google.android.gcm.server.Constants.GCM_SEND_ENDPOINT;
-import static com.google.android.gcm.server.Constants.JSON_PAYLOAD;
-import static com.google.android.gcm.server.Constants.JSON_REGISTRATION_IDS;
-import static com.google.android.gcm.server.Constants.PARAM_COLLAPSE_KEY;
-import static com.google.android.gcm.server.Constants.PARAM_DELAY_WHILE_IDLE;
-import static com.google.android.gcm.server.Constants.PARAM_TIME_TO_LIVE;
 
 
 public class GCMServer extends Controller implements IPushServer {
