@@ -19,6 +19,7 @@ package com.baasbox.service.storage;
 import java.security.InvalidParameterException;
 import java.util.List;
 
+import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
@@ -46,9 +47,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import play.Logger;
 
 
 public class DocumentService {
@@ -248,4 +251,18 @@ public class DocumentService {
 		od = get(collectionName,rid);
 		return od;
 	}
+
+    public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
+        String rid = null;
+        if (isUUID) {
+            if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
+            ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
+            if (orid == null) throw new RidNotFoundException(id);
+            rid = orid.toString();
+            if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
+        } else {
+            rid = "#"+id;
+        }
+        return rid;
+    }
 }

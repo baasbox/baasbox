@@ -339,6 +339,34 @@ DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.delete
 GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
 
+#scripts
+
+# @tag(baasbox.scripts.invoke)
+GET /scripts/:name                              com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+GET /scripts/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+POST /scripts/:name                             com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+POST /scripts/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+PUT /scripts/:name                              com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+PUT /scripts/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+DELETE /scripts/:name                             com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+DELETE /scripts/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+
+POST /admin/scripts                             com.baasbox.controllers.ScriptsAdmin.create()
+GET  /admin/scripts                             com.baasbox.controllers.ScriptsAdmin.list()
+GET  /admin/scripts/:name                       com.baasbox.controllers.ScriptsAdmin.get(name:String)
+PUT  /admin/scripts/:name                       com.baasbox.controllers.ScriptsAdmin.update(name:String)
+DELETE  /admin/scripts/:name                    com.baasbox.controllers.ScriptsAdmin.delete(name:String)
+DELETE /admin/scripts/:name/drop             com.baasbox.controllers.ScriptsAdmin.drop(name:String)
+
+#GET /admin/stats/logs                           com.baasbox.controllers.Stats.log()
+
 # endpoints switches
 
 GET     /admin/endpoints                                        com.baasbox.controllers.Admin.getPermissionTags
