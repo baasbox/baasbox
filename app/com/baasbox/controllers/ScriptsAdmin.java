@@ -30,14 +30,17 @@ import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
 import com.baasbox.service.scripting.base.ScriptStatus;
+import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import play.Logger;
 import play.libs.EventSource;
 import play.libs.F;
 import play.mvc.*;
+import play.mvc.Http.Context;
 
 import java.io.IOException;
 import java.util.IllegalFormatException;
@@ -115,7 +118,9 @@ public class ScriptsAdmin extends Controller{
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         Result result;
         try {
-            List<ODocument> documents = ScriptingService.list(QueryParams.getParamsFromQueryString(request()));
+        	Context ctx=Http.Context.current.get();
+			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+            List<ODocument> documents = ScriptingService.list(criteria);
             String json = JSONFormats.prepareResponseToJson(documents, JSONFormats.Formats.DOCUMENT);
             result = ok(json);
         } catch (SqlInjectionException e) {
