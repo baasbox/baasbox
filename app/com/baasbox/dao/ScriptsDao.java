@@ -98,7 +98,7 @@ public class ScriptsDao {
 
     private ODocument createPrivileged(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore){
         ODocument doc = makeScript(name, language, code, isLibrary, active, initialStore);
-        doc.save();
+        save(doc);
         return doc;
     }
 
@@ -110,18 +110,18 @@ public class ScriptsDao {
         }
         OTrackedList<String> codeVersions =doc.field(CODE);
         codeVersions.add(0, code);
-        doc.save();
+        save(doc);
         return doc;
     }
 
-
+    //used by the service
     public void revertToLastVersion(ODocument updated) {
         OTrackedList<String> code = updated.<OTrackedList<String>>field(CODE);
         code.remove(0);
-        updated.save();
+        save(updated);
     }
 
-    public ODocument makeScript(String name, String language, String code, boolean isLibrary, boolean active, JsonNode initialStore) {
+    private ODocument makeScript(String name, String language, String code, boolean isLibrary, boolean active, JsonNode initialStore) {
         ODocument doc = new ODocument(MODEL_NAME);
         doc.field(NAME,name);
         doc.field(LANG,language);
@@ -189,7 +189,7 @@ public class ScriptsDao {
 
     public void invalidate(ODocument script) {
         script.field(INVALID,true);
-        script.save();
+        save(script);
     }
 
 }
