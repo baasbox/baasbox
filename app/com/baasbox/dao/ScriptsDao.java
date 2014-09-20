@@ -114,8 +114,8 @@ public class ScriptsDao {
         return doc;
     }
 
-
-    private void revertToLastVersion(ODocument updated) {
+    //used by the service
+    public void revertToLastVersion(ODocument updated) {
         OTrackedList<String> code = updated.<OTrackedList<String>>field(CODE);
         code.remove(0);
         save(updated);
