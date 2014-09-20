@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 /**
  * Created by Andrea Tortorella on 10/06/14.
  */
@@ -161,7 +163,7 @@ public class ScriptingService {
 
             }
         } catch (ScriptEvalException e){
-            if (Logger.isTraceEnabled()) Logger.trace("Script installation failed: deleting");
+            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting");
             updateCacheVersion();
             dao.invalidate(updated);
             dao.revertToLastVersion(updated);
@@ -179,14 +181,14 @@ public class ScriptingService {
     public static ScriptStatus create(JsonNode script) throws ScriptException {
         if (Logger.isTraceEnabled()) Logger.trace("Method start");
 
-        if (Logger.isTraceEnabled()) Logger.trace("Creating script");
+        if (Logger.isDebugEnabled()) Logger.debug("Creating script");
         ScriptsDao dao = ScriptsDao.getInstance();
 
         ODocument doc = createScript(dao,script);
         compile(doc);
-        if (Logger.isTraceEnabled())Logger.trace("Script created");
+        if (Logger.isDebugEnabled())Logger.debug("Script created");
 
-        if (Logger.isTraceEnabled())Logger.trace("Script installing");
+        if (Logger.isDebugEnabled())Logger.debug("Script installing");
         ScriptStatus status;
         ScriptCall installation = ScriptCall.install(doc);
         try {
@@ -194,14 +196,15 @@ public class ScriptingService {
             ScriptResult res = invoke(installation);
             status = res.toScriptStatus();
             if (!status.ok){
-                if (Logger.isTraceEnabled()) Logger.trace("Script installation aborted by the script");
+                if (Logger.isDebugEnabled()) Logger.debug("Script installation aborted by the script");
                 doc.delete();
             }
         } catch (ScriptEvalException e){
-            if (Logger.isTraceEnabled()) Logger.trace("Script installation failed: deleting");
+            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting - " + ExceptionUtils.getStackTrace(e));
             doc.delete();
             throw new ScriptException(e);
         }
+        if (Logger.isTraceEnabled()) Logger.trace("Method end");
         return status;
     }
 
@@ -255,7 +258,7 @@ public class ScriptingService {
     }
 
     public static ScriptResult invoke(ScriptCall call) throws ScriptEvalException{
-        Logger.trace("Invoking script");
+        if (Logger.isDebugEnabled()) Logger.debug("Invoking script: " + call.scriptName);
         MAIN.set(call.scriptName);
         BaasboxScriptEngine engine = call.engine();
         try {
@@ -314,15 +317,15 @@ public class ScriptingService {
      * @throws ScriptEvalException
      */
     private static void compile(ODocument doc) throws ScriptEvalException {
-        if (Logger.isTraceEnabled()) Logger.trace("Start Compile");
+        if (Logger.isDebugEnabled()) Logger.debug("Start Compile");
         ScriptCall compile = ScriptCall.compile(doc);
         try {
             invoke(compile);
-            if (Logger.isTraceEnabled()) Logger.trace("End Compile");
+            if (Logger.isDebugEnabled()) Logger.debug("End Compile");
         } catch (ScriptEvalException e){
-            if (Logger.isErrorEnabled()) Logger.error("Failed Script compilation");
+            Logger.error("Failed Script compilation");
             doc.delete();
-            if (Logger.isTraceEnabled()) Logger.trace("Deleting...");
+            if (Logger.isDebugEnabled()) Logger.debug("Script delete");
             throw e;
         }
     }
