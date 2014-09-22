@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import play.Logger;
@@ -187,6 +188,11 @@ public class Push extends Controller {
 			for(JsonNode usernamesNode : usernamesNodes) {
 				usernames.add(usernamesNode.asText());
 			}	
+			
+			HashSet<String> hs = new HashSet<String>();
+			hs.addAll(usernames);
+			usernames.clear();
+			usernames.addAll(hs);
 		}
 		else {
 			return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
@@ -194,15 +200,19 @@ public class Push extends Controller {
 
 		JsonNode pushProfilesNodes=bodyJson.get("profiles");
 
-
-
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
 			if(!(pushProfilesNodes.isArray())) return badRequest("'profiles' MUST be an Array");
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
-				if(pushProfileNode.isTextual()) return badRequest("Profiles MUST be express as number");	
+				if(pushProfileNode.isTextual()) return badRequest("'profiles' MUST be express as number");	
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
+			
+			HashSet<Integer> hs = new HashSet<Integer>();
+			hs.addAll(pushProfiles);
+			pushProfiles.clear();
+			pushProfiles.addAll(hs);
+			
 		}
 		else {
 			pushProfiles.add(1);
