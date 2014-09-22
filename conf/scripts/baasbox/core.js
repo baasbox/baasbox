@@ -30,6 +30,8 @@ exports.version = '0.9.0';
 
 var Documents = {};
 
+
+
 var log = function(msg){
     var message;
     if(typeof msg === 'string'){
@@ -38,11 +40,39 @@ var log = function(msg){
         message = JSON.stringify(msg);
     }
 
-    _command({resource: 'scripts',
+    _command({resource: 'script',
               name: 'log',
               params: ' '+id+' '+message});
 
 };
+
+
+
+var runInTransaction = function(fn){
+    if(!(typeof fn === 'function'))
+        throw new Error("runInTransaction requires a single function argument");
+    _command({resource: 'db',
+              name: 'transact',
+              callback: fn
+              });
+};
+
+var isInTransaction = function(){
+    return _command({resource: 'db',
+                     name: 'isInTransaction'});
+};
+
+var isAdmin = function(){
+    return _command({resource: 'db',
+                     name: 'isAdmin'});
+};
+
+var runAsAdmin = function(fn) {
+    return _command({resource: 'db',
+                     name: 'switchUser',
+                     callback: fn});
+};
+
 
 Documents.find = function(){
     var coll = null,
@@ -126,6 +156,19 @@ Documents.save = function(){
             }
         });
     }
-}
+};
+
+
+
+
 exports.Documents = Documents;
-exports.log = log
+
+exports.log = log;
+
+exports.runAsAdmin=runAsAdmin;
+
+exports.runInTransaction=runInTransaction;
+
+exports.isAdmin=isAdmin;
+
+exports.isInTransaction=isInTransaction;
