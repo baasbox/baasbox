@@ -279,7 +279,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
-						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, "Profiles MUST be express as number", true);
+						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, "'profiles' MUST be express as number", true);
 						
 					
 					}
