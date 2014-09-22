@@ -188,6 +188,24 @@ function PushConfController($scope){
 		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);
 	}//updateFileSetting
 	
+	$scope.set_color = function(k){
+		switch(k) {
+		case 0:
+	        color="#F2F2F2";
+	        break;
+	    case 1:
+	        color="#F2F2F2"
+	        break;
+	    case 2:
+	    	color="#F2F2F2"
+	    	break;
+	    default:
+	    	color="#F2F2F2";
+	    	break;
+		}
+		return { "background-color": color };
+	}
+	
 	$scope.keyName = function(k){
 		if (k==null) return "";
 		return k.replace(/\./g,'');
