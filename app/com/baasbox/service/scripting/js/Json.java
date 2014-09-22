@@ -18,15 +18,30 @@
 
 package com.baasbox.service.scripting.js;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.MissingNode;
+
+import java.io.IOException;
 
 /**
  * Created by Andrea Tortorella on 23/06/14.
  */
 public class Json {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapperExt MAPPER = new ObjectMapperExt();
 
-    public static ObjectMapper mapper(){
+    public static class ObjectMapperExt  extends ObjectMapper{
+
+        public JsonNode readTreeOrMissing(String in){
+            try {
+                return readTree(in);
+            } catch (IOException e) {
+                return MissingNode.getInstance();
+            }
+        }
+    }
+
+    public static ObjectMapperExt mapper(){
         return MAPPER;
     }
 }

@@ -27,6 +27,7 @@ import com.baasbox.service.scripting.js.Internal;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -34,10 +35,7 @@ import play.Logger;
 import play.libs.EventSource;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -75,6 +73,7 @@ public class ScriptingService {
         ODocument emdedded = new ODocument().fromJSON(data.toString());
         script.field(ScriptsDao.LOCAL_STORAGE,emdedded);
         dao.save(script);
+        dao.save(script);
         return emdedded;
     }
 
@@ -85,49 +84,36 @@ public class ScriptingService {
         return script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
     }
 
-    private static class Ret{
-        ODocument prevValue;
-        ODocument newValue;
-    }
-
-    private static Ret updateStore(String name,JsonCallback updater) throws ScriptException {
+    private static ODocument updateStorageLocked(String name,boolean before,JsonCallback updaterFn) throws ScriptException {
         final ScriptsDao dao = ScriptsDao.getInstance();
-        ODocument script = dao.getByName(name);
+        ODocument script = dao.getByNameLocked(name);
         if (script == null) throw new ScriptException("Script not found");
-        ODocument prevStorage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
-        String s;
-        if (prevStorage!=null){
-            s = prevStorage.toJSON();
-        } else {
-            s = null;
-        }
-        try {
-            JsonNode prev;
-            if (s==null){
-                prev = NullNode.getInstance();
-            } else {
-                prev = Json.mapper().readTree(s);
+        ODocument retScript = before ? script.copy() : script;
 
-            }
-            JsonNode newVal = updater.call(prev);
-            ODocument res = new ODocument().fromJSON(newVal.toString());
-            script.field(ScriptsDao.LOCAL_STORAGE,res);
-            dao.save(script);
-            Ret r = new Ret();
-            r.prevValue=prevStorage;
-            r.newValue=res;
-            return r;
-        } catch (IOException e) {
-            throw new ScriptEvalException("Error converting to json");
-        }
+        ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
+
+        Optional<ODocument> storage1 = Optional.ofNullable(storage);
+
+        JsonNode current = storage1.map(ODocument::toJSON)
+                                .map(Json.mapper()::readTreeOrMissing)
+                                .orElse(NullNode.getInstance());
+        if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
+
+        JsonNode updated = updaterFn.call(current);
+
+        ODocument result = new ODocument().fromJSON(updated.toString());
+        script.field(ScriptsDao.LOCAL_STORAGE,result);
+        dao.save(script);
+
+        return retScript.field(ScriptsDao.LOCAL_STORAGE);
     }
 
     public static ODocument swap(String name,JsonCallback callback) throws ScriptException {
-        return updateStore(name,callback).newValue;
+        return updateStorageLocked(name,false,callback);
     }
 
     public static ODocument trade(String name,JsonCallback updater) throws ScriptException {
-        return updateStore(name,updater).prevValue;
+        return updateStorageLocked(name,true,updater);
     }
 
 
