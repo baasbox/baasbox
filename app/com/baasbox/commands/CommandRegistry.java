@@ -47,6 +47,7 @@ public class CommandRegistry {
                         .put(UsersResource.INSTANCE.name(),         UsersResource.INSTANCE)
                         .put(CollectionsResource.INSTANCE.name(),   CollectionsResource.INSTANCE)
                         .put(MessagingResource.INSTANCE.name(),MessagingResource.INSTANCE)
+                        .put(DBResource.INSTANCE.name(),DBResource.INSTANCE)
                         .build();
 
 

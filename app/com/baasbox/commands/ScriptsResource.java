@@ -45,7 +45,7 @@ class ScriptsResource extends Resource {
 
     @Override
     public String name() {
-        return "scripts";
+        return "script";
     }
 
     @Override
@@ -67,7 +67,7 @@ class ScriptsResource extends Resource {
                        return null;
                    }
                })
-                .put("switchUser", new ScriptCommand() {
+              /*  .put("switchUser", new ScriptCommand() {
                     @Override
                     public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
                         try {
@@ -77,11 +77,11 @@ class ScriptsResource extends Resource {
                             DbHelper.reconnectAsAuthenticatedUser();
                         }
                     }
-                })
+                })*/
                 .put("storage", new ScriptCommand() {
                     @Override
                     public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                        //todo local storage
+
                         return storageCommand(command, callback);
                     }
 
