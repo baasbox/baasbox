@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import play.Logger;
@@ -30,6 +31,7 @@ import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
+
 
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
@@ -64,7 +66,7 @@ public class Push extends Controller {
 		if (bodyJson==null) return badRequest("The body payload cannot be empty");		  
 		JsonNode messageNode=bodyJson.findValue("message");
 		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return badRequest("Message MUST be a string");
+		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -76,7 +78,7 @@ public class Push extends Controller {
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return badRequest("Profiles MUST be an Array");						
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());						
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
@@ -114,7 +116,7 @@ public class Push extends Controller {
 		}
 		catch (PushProfileArrayException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());
@@ -171,7 +173,7 @@ public class Push extends Controller {
 		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
 		JsonNode messageNode=bodyJson.findValue("message");
 		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return badRequest("Message MUST be a string");
+		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -182,11 +184,16 @@ public class Push extends Controller {
 
 		if(!(usernamesNodes==null)){
 
-			if(!(usernamesNodes.isArray())) return badRequest("Users MUST be an Array");
+			if(!(usernamesNodes.isArray())) return status(CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getDescription());
 
 			for(JsonNode usernamesNode : usernamesNodes) {
 				usernames.add(usernamesNode.asText());
 			}	
+			
+			HashSet<String> hs = new HashSet<String>();
+			hs.addAll(usernames);
+			usernames.clear();
+			usernames.addAll(hs);
 		}
 		else {
 			return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
@@ -194,15 +201,19 @@ public class Push extends Controller {
 
 		JsonNode pushProfilesNodes=bodyJson.get("profiles");
 
-
-
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return badRequest("'profiles' MUST be an Array");
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
-				if(pushProfileNode.isTextual()) return badRequest("Profiles MUST be express as number");	
+				if(pushProfileNode.isTextual()) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
+			
+			HashSet<Integer> hs = new HashSet<Integer>();
+			hs.addAll(pushProfiles);
+			pushProfiles.clear();
+			pushProfiles.addAll(hs);
+			
 		}
 		else {
 			pushProfiles.add(1);
@@ -240,7 +251,7 @@ public class Push extends Controller {
 		}
 		catch (PushProfileArrayException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());
