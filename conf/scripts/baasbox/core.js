@@ -47,7 +47,7 @@ var log = function(msg){
 };
 
 
-var DB = function(){};
+var DB = {};
 
 
 DB.runInTransaction = function(fn){
@@ -57,6 +57,10 @@ DB.runInTransaction = function(fn){
               name: 'transact',
               callback: fn
               });
+};
+
+DB.abortTransaction = function(){
+    _command({resource: 'db',name: 'abortTransaction'});
 };
 
 DB.isInTransaction = function(){
@@ -110,7 +114,7 @@ var runAsAdmin = function(fn) {
                      callback: fn});
 };
 
-var Users = function(){};
+var Users = {};
 
 
 Users.find = function(){
@@ -262,7 +266,7 @@ var queryUsers = function(to){
     return ret;
 };
 
-function Push(){}
+var Push ={};
 Object.defineProperty(Push,"OK",{value: 0});
 Object.defineProperty(Push,"ERROR",{value: 2});
 Object.defineProperty(Push,"PARTIAL",{value: 1});

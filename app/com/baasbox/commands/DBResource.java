@@ -32,9 +32,23 @@ class DBResource extends Resource {
             ImmutableMap.of("switchUser", DBResource::switchUser,
                             "transact", DBResource::runInTransaction,
                             "isAdmin",DBResource::isConnectedAsAdmin,
-                            "isInTransaction",DBResource::isInTransaction);
+                            "isInTransaction",DBResource::isInTransaction,
+                            "abortTransaction",DBResource::abortTransation);
 
 
+    private static final ThreadLocal<Boolean> JS_TRANSACTION_RUNNING = new ThreadLocal<Boolean>(){
+        @Override
+        protected Boolean initialValue() {
+            return false;
+        }
+    };
+
+    private static JsonNode abortTransation(JsonNode c,JsonCallback callback) throws CommandException{
+        if (JS_TRANSACTION_RUNNING.get()) {
+            throw new AbortTransaction();
+        }
+        return NullNode.getInstance();
+    }
 
     private static JsonNode switchUser(JsonNode command,JsonCallback callback) throws CommandException {
         if (DbHelper.isInTransaction()) throw new CommandExecutionException(command,"Cannot switch to admin during a transaction");
@@ -51,14 +65,16 @@ class DBResource extends Resource {
     }
 
     private static JsonNode runInTransaction(JsonNode command,JsonCallback callback) throws CommandException{
-        boolean commit = false;
+        boolean commit = true;
         try {
 
             DbHelper.requestTransaction();
-
+            JS_TRANSACTION_RUNNING.set(true);
             JsonNode res = callback.call(NullNode.getInstance());
-            commit = res ==null||res.isNull()||(res.isBoolean()&&res.asBoolean());
-
+            JS_TRANSACTION_RUNNING.set(false);
+            return res;
+        }catch (AbortTransaction t){
+            commit = false;
             return NullNode.getInstance();
         }catch (Exception e){
             commit = false;
