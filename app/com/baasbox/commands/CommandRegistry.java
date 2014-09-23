@@ -22,7 +22,6 @@ import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.commands.exceptions.ResourceNotFoundException;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
@@ -46,7 +45,7 @@ public class CommandRegistry {
                         .put(ScriptsResource.INSTANCE.name(),       ScriptsResource.INSTANCE)
                         .put(UsersResource.INSTANCE.name(),         UsersResource.INSTANCE)
                         .put(CollectionsResource.INSTANCE.name(),   CollectionsResource.INSTANCE)
-                        .put(MessagingResource.INSTANCE.name(),MessagingResource.INSTANCE)
+                        .put(PushResource.INSTANCE.name(), PushResource.INSTANCE)
                         .put(DBResource.INSTANCE.name(),DBResource.INSTANCE)
                         .build();
 

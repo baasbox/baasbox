@@ -20,29 +20,22 @@ package com.baasbox.commands;
 
 
 import com.baasbox.commands.exceptions.CommandException;
-import com.baasbox.commands.exceptions.CommandExecutionException;
-import com.baasbox.commands.exceptions.CommandParsingException;
-import com.baasbox.dao.exception.SqlInjectionException;
-import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
  * Created by Andrea Tortorella on 07/08/14.
  */
-class MessagingResource extends Resource {
-    public static final MessagingResource INSTANCE = new MessagingResource();
+class PushResource extends Resource {
+    public static final PushResource INSTANCE = new PushResource();
 
     @Override
     public String name() {
-        return "messaging";
+        return "push";
     }
 
     @Override
