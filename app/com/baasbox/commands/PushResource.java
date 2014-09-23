@@ -26,9 +26,7 @@ import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.*;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
@@ -99,16 +97,19 @@ class PushResource extends Resource {
         try {
             ps.send(message,users,profiles,body,errors);
             Json.ObjectMapperExt mapper = Json.mapper();
-            ArrayNode resp = mapper.createArrayNode();
-            for (int i=0;i<errors.length;i++){
-                if (errors[i]){
-                    ObjectNode n = mapper.createObjectNode();
-                    n.put("index",i);
-                    n.put("username",users.get(i));
-                    n.put("error",true);
-                }
+            boolean someOk = false;
+            boolean someFail = false;
+            for (boolean error:errors){
+                if (error)someFail=true;
+                else someOk=true;
             }
-            return resp;
+            if (someFail&&someOk){
+                return IntNode.valueOf(1);
+            } else if (someFail){
+                return IntNode.valueOf(2);
+            } else {
+                return IntNode.valueOf(0);
+            }
         } catch (Exception e) {
             throw new CommandExecutionException(command,e.getMessage(),e);
         }

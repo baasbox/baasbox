@@ -117,7 +117,7 @@ Users.find = function(){
     var q = null,
         id = null;
     if(arguments.length < 1) {
-        // pass
+        throw new TypeError("missing parameter");
     } else if(typeof arguments[0] === 'string') {
         id = arguments[0];
     } else if(typeof arguments[0] === 'object'){
@@ -254,12 +254,74 @@ Documents.save = function(){
     }
 };
 
+var queryUsers = function(to){
+    var ret = [];
+    Users.find(to).forEach(function (u){
+      ret.push(u.username);
+    });
+    return ret;
+};
+
+function Push(){}
+Object.defineProperty(Push,"OK",{value: 0});
+Object.defineProperty(Push,"ERROR",{value: 2});
+Object.defineProperty(Push,"PARTIAL",{value: 1});
+Object.defineProperty(Push,"PROFILE_1",{value: 1});
+Object.defineProperty(Push,"PROFILE_2",{value: 2});
+Object.defineProperty(Push,"PROFILE_3",{value: 3});
+
+Push.send = function(){
+    var body,
+        to,
+        profiles=Push.PROFILE_1;
+
+    switch (arguments.length){
+        case 3:
+            profiles = arguments[2];
+        case 2:
+            body = arguments[1];
+            to = arguments[0];
+            break;
+        default:
+            throw new TypeError("missing required parameters");
+    }
+    if(body === null||to===null){
+        throw new TypeError("missing required parameters body and to");
+    }
+    if(typeof body === 'string'){
+        body = {message: body};
+    }
+
+    if(typeof to === 'string'){
+        to = [to];
+    } else if((Object.prototype.toString.apply(to) === '[object Object]')){
+        if(to.username){
+            to=to.username;
+        } else {
+            to = queryUsers(to);
+        }
+    } else if(!(Object.prototype.toString.apply(to) === '[object Array]')){
+        throw new TypeError("wrong to parameter");
+    }
+
+    if(typeof profiles === 'number'){
+        profiles = [profiles];
+    }
+
+    return _command({resource: 'push',
+                     name: 'send',
+                     params:{
+                        'body': body,
+                         'to': to,
+                         'profiles': profiles
+                     }});
+};
 
 
 exports.Documents = Documents;
 exports.Users = Users;
 exports.DB = DB;
-
+exports.Push = Push;
 exports.log = log;
 
 exports.runAsAdmin=runAsAdmin;
