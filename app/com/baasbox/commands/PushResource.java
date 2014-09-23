@@ -20,12 +20,18 @@ package com.baasbox.commands;
 
 
 import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.commands.exceptions.CommandExecutionException;
+import com.baasbox.commands.exceptions.CommandParsingException;
+import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Andrea Tortorella on 07/08/14.
@@ -41,44 +47,70 @@ class PushResource extends Resource {
     @Override
     public Map<String, ScriptCommand> commands() {
         return ImmutableMap.<String,ScriptCommand>builder().
-                put("send", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                        return sendMessageTo(command);
-                    }
-                }).build();
+                put("send", this::sendMessage).build();
     }
 
-    private JsonNode sendMessageTo(JsonNode command) throws CommandException{
-//        JsonNode jsonNode = command.get(ScriptCommand.PARAMS);
-//        if (jsonNode==null||!jsonNode.isObject()){
-//            throw new CommandParsingException(command,"missing parameters");
-//        }
-//        JsonNode to = jsonNode.get("to");
-//        JsonNode content= jsonNode.get("body");
-//        if (to==null||content==null){
-//            throw new CommandParsingException(command,"missing required parameters");
-//        }
-//        PushService ps = new PushService();
-//        if (to.isTextual()&& content.isObject()){
-//            JsonNode message = content.get("message");
-//            if (message!= null&&message.isTextual()){
-//                try {
-//todo implement push with profiles and extra content
-//                    boolean[] msg = ps.send("message", new ArrayList<>(), new ArrayList<>(), null, new boolean[0]);
-//                    //ps.send(message.asText(),to.asText());
-//                    return BooleanNode.getTrue();
-//                } catch (UserNotFoundException e) {
-//                    throw new CommandExecutionException(command,"user: "+to.asText()+"not found");
-//                } catch (SqlInjectionException e) {
-//                    throw new CommandExecutionException(command,e.getMessage(),e);
-//                } catch (IOException e) {
-//                    throw new CommandExecutionException(command,e.getMessage(),e);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-        return BooleanNode.getFalse();
+
+    private JsonNode sendMessage(JsonNode command,JsonCallback callback) throws CommandException{
+        JsonNode params = command.get(ScriptCommand.PARAMS);
+        if (params == null||!params.isObject()){
+            throw new CommandParsingException(command,"missing parameters");
+        }
+
+        JsonNode body = params.get("body");
+        if (body == null||!body.isObject()){
+            throw new CommandParsingException(command,"missing body object parameter");
+        }
+        JsonNode messageNode = body.get("message");
+        if (messageNode==null||!messageNode.isTextual()){
+            throw new CommandParsingException(command,"missing message text parameter");
+        }
+        String message = messageNode.asText();
+
+        List<String> users = new ArrayList<>();
+        JsonNode usersNode = params.get("to");
+        if (usersNode==null|| !usersNode.isArray()){
+            throw new CommandParsingException(command,"missing required to parameter");
+        }
+        ArrayNode usrAry = (ArrayNode)usersNode;
+        usrAry.forEach(j->{
+            if (j==null||!j.isTextual()) return;
+            users.add(j.asText());
+        });
+
+        JsonNode profilesNode = params.get("profiles");
+        List<Integer> profiles;
+        if (profilesNode == null){
+            profiles = Collections.singletonList(1);
+        } else if (profilesNode.isArray()) {
+            ArrayNode pAry = (ArrayNode)profilesNode;
+            profiles = new ArrayList<>();
+            pAry.forEach((j)->{
+                if(j==null||!j.isIntegralNumber()) return;
+                profiles.add(j.asInt());
+            });
+        } else {
+            throw new CommandParsingException(command,"wrong profiles parameter");
+        }
+
+        boolean[] errors = new boolean[users.size()];
+        PushService ps = new PushService();
+
+        try {
+            ps.send(message,users,profiles,body,errors);
+            Json.ObjectMapperExt mapper = Json.mapper();
+            ArrayNode resp = mapper.createArrayNode();
+            for (int i=0;i<errors.length;i++){
+                if (errors[i]){
+                    ObjectNode n = mapper.createObjectNode();
+                    n.put("index",i);
+                    n.put("username",users.get(i));
+                    n.put("error",true);
+                }
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
     }
 }
