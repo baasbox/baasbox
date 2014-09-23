@@ -878,7 +878,7 @@ function updateSetting()
 					////console.debug(data);
 					var error=JSON.parse(data.responseText);
 					var message=error["message"];
-					alert("Error updating settings:" + message);
+					alert("Error updating settings: " + message);
 				},
 				success: function(data)
 				{
@@ -2308,7 +2308,7 @@ function SettingsController($scope){
 					error: function(data)
 					{
 						//console.log(data)
-						alert("Error updating settings:" + data["message"]);
+						alert("Error updating settings: " + data["message"]);
 					},
 					success: function(data)
 					{
@@ -2457,7 +2457,7 @@ function PushSettingsController($scope){
 					{
 						////console.debug(data)
 						jsonResponse=JSON.parse(data.responseText);
-						alert("Error updating settings:" + jsonResponse["message"]);
+						alert("Error updating settings: " + jsonResponse["message"]);
 					},
 					success: function(data)
 					{

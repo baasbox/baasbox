@@ -26,7 +26,6 @@ public class IndexPushConfiguration extends IndexDao {
 	
 		public IndexPushConfiguration() throws IndexNotFoundException {
 		super(indexName);
-		// TODO Auto-generated constructor stub
 	}
 
 }

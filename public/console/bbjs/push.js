@@ -120,10 +120,21 @@ function PushConfController($scope){
 		else return null;
 	}
 	
+	$scope.valueChanged = function(s){
+		_this.$apply(function(scope){
+			s.changed=true;
+		});
+	}
+
+	$scope.isChanged = function(s){
+		if (s) return s.changed
+		return false;
+	}
+	
 	$scope.updateInlineSetting = function(s,newValue){
 		var section="Push";
 		newValue=newValue || s.value
-		console.debug(s.value)
+		//console.debug(s.value)
 		s.error = null;
 		if(newValue.trim()===""){
 			s.error = "Value can't be empty";
@@ -144,13 +155,17 @@ function PushConfController($scope){
 						////console.debug(data)
 						jsonResponse=JSON.parse(data.responseText);
 						alert("Error updating settings:" + jsonResponse["message"]);
+						_this.$apply(function(scope){
+							s.error = jsonResponse["message"];
+						});
 					},
 					success: function(data)
 					{
 						//alert("Setting "+s.key+" saved succesfully")
 						_this.$apply(function(scope){
 							_this.data[s.key].value=newValue;
-						});
+							s.changed = false;
+						});	
 					}
 				});
 	}//updateInlineSetting
@@ -177,16 +192,40 @@ function PushConfController($scope){
 				success: function(){
 					alert("File has been uploaded successfully");
 					$scope.$apply(function(scope){
-						s.filename=$scope.file.name
+						s.filename=$scope.file.name;
+						s.changed = false;
 					});
 				}, //success
 				error: function(data) {
 					alert("There was an error uploading the file.Please check your logs");
+					_this.$apply(function(scope){
+						jsonResponse=JSON.parse(data.responseText);
+						s.error = jsonResponse["message"];
+					});
+					
 					//console.debug(data);
 				}
 		};
 		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);
 	}//updateFileSetting
+	
+	$scope.set_color = function(k){
+		switch(k) {
+		case 0:
+	        color="#F2F2F2";
+	        break;
+	    case 1:
+	        color="#F2F2F2"
+	        break;
+	    case 2:
+	    	color="#F2F2F2"
+	    	break;
+	    default:
+	    	color="#F2F2F2";
+	    	break;
+		}
+		return { "background-color": color };
+	}
 	
 	$scope.keyName = function(k){
 		if (k==null) return "";
@@ -202,6 +241,10 @@ function PushConfController($scope){
 		_this.profile3Enabled=_this.isEnabled(2);
 		_this.profile3Enabled=_this.isEnabled(3);
 	});
+	
+	$scope.editing=function($event){
+		console.log($event);
+	}
 }
 
 
