@@ -19,14 +19,25 @@
 package com.baasbox.service.push.providers;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
 
 import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.exception.BaasBoxPushException;
+import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.google.common.collect.ImmutableMap;
@@ -42,24 +53,79 @@ public class APNServer  implements IPushServer {
 	private String password;
 	private boolean sandbox;
 	private int timeout;
-	private int identifier;
 	private boolean isInit=false;
 
-	APNServer(){
+	public APNServer(){
 		
 	}
 	
-	  public int INCREMENT_ID() {
-	        return ++identifier;
-	    }
-	
-	
-	
 	@Override
-	public  void send(String message, String deviceid) throws PushNotInitializedException{	
+	public boolean send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
 		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
-		if (!isInit) throw new PushNotInitializedException("Configuration not initialized");	
+		if (!isInit) {
+			return true;
+		}
+		
+		
+		
+		JsonNode soundNode=bodyJson.findValue("sound");
+		String sound =null;
+		if (!(soundNode==null)) {
+			if(!(soundNode.isTextual())) throw new PushSoundKeyFormatException("Sound value MUST be a String");
+			sound=soundNode.asText();
+		}
+		
+		JsonNode actionLocKeyNode=bodyJson.findValue("actionLocalizedKey"); 
+		String actionLocKey=null; 
+		
+		if (!(actionLocKeyNode==null)) {
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
+			actionLocKey=actionLocKeyNode.asText();
+		}
+		
+		JsonNode locKeyNode=bodyJson.findValue("localizedKey"); 
+		String locKey=null; 
+		
+		if (!(locKeyNode==null)) {
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
+			locKey=locKeyNode.asText();
+		}
+		
+		JsonNode locArgsNode=bodyJson.get("localizedArguments");
+
+		List<String> locArgs = new ArrayList<String>();
+		if(!(locArgsNode==null)){
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
+			for(JsonNode locArgNode : locArgsNode) {
+				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
+				locArgs.add(locArgNode.toString());
+			}	
+		}
+						
+		JsonNode customDataNodes=bodyJson.get("custom");
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
+			}
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}
+			}
+		}
+				
+		JsonNode badgeNode=bodyJson.findValue("badge");
+		int badge=0;
+		if(!(badgeNode==null)) {
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
+			else badge=badgeNode.asInt();
+		}
+					
 		ApnsService service = null;
+		
 		try{
 			service=getService();
 		} catch (com.notnoop.exceptions.InvalidSSLConfig e) {
@@ -67,7 +133,21 @@ public class APNServer  implements IPushServer {
 			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
 			//icallbackPush.onError(e.getMessage());
 		}
-		String payload = APNS.newPayload().alertBody(message).build();
+		
+		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
+		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
+		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
+	
+		
+		String payload = APNS.newPayload()
+							.alertBody(message)
+							.sound(sound)
+							.actionKey(actionLocKey)
+							.localizedKey(locKey)
+							.localizedArguments(locArgs)
+							.badge(badge)
+							.customFields(customData)
+							.build();
 		if(timeout<=0){
 			try {	
 				service.push(deviceid, payload);	
@@ -78,9 +158,8 @@ public class APNServer  implements IPushServer {
 			}
 		} else {
 			try {
-				EnhancedApnsNotification notification = new EnhancedApnsNotification(INCREMENT_ID(),
-				     Integer.MAX_VALUE, deviceid, payload);
-				service.push(notification);
+				Date expiry = new Date(Long.MAX_VALUE);
+				service.push(deviceid,payload,expiry);
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
 				Logger.error(ExceptionUtils.getStackTrace(e));
@@ -89,6 +168,68 @@ public class APNServer  implements IPushServer {
 				
 		}
 		//icallbackPush.onSuccess();
+		return false;
+	}
+	
+	
+	public static boolean validatePushPayload(JsonNode bodyJson) throws BaasBoxPushException {
+		JsonNode soundNode=bodyJson.findValue("sound");
+		String sound =null;
+		if (!(soundNode==null)) {
+			if(!(soundNode.isTextual())) throw new PushSoundKeyFormatException("Sound value MUST be a String");
+			sound=soundNode.asText();
+		}
+		
+		JsonNode actionLocKeyNode=bodyJson.findValue("actionLocalizedKey"); 
+		String actionLocKey=null; 
+		
+		if (!(actionLocKeyNode==null)) {
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
+			actionLocKey=actionLocKeyNode.asText();
+		}
+		
+		JsonNode locKeyNode=bodyJson.findValue("localizedKey"); 
+		String locKey=null; 
+		
+		if (!(locKeyNode==null)) {
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
+			locKey=locKeyNode.asText();
+		}
+		
+		JsonNode locArgsNode=bodyJson.get("localizedArguments");
+
+		List<String> locArgs = new ArrayList<String>();
+		if(!(locArgsNode==null)){
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
+			for(JsonNode locArgNode : locArgsNode) {
+				if(!locArgNode.isTextual()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
+				locArgs.add(locArgNode.toString());
+			}	
+		}
+						
+		JsonNode customDataNodes=bodyJson.get("custom");
+		
+		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+
+		if(!(customDataNodes==null)){
+			if(customDataNodes.isTextual()) {
+				customData.put("custom",customDataNodes);
+			}
+			else {
+				for(JsonNode customDataNode : customDataNodes) {
+					customData.put("custom", customDataNodes);
+				}
+			}
+		}
+				
+		JsonNode badgeNode=bodyJson.findValue("badge");
+		int badge=0;
+		if(!(badgeNode==null)) {
+			if(!(badgeNode.isNumber())) throw new PushBadgeFormatException("Badge value MUST be a number");
+			else badge=badgeNode.asInt();
+		}
+		
+		return true;
 	}
 		
 		

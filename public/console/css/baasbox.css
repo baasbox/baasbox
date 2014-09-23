@@ -127,6 +127,11 @@ div.setting span.error{
 	padding-left:12px;
 }
 
+div.setting span.warning{
+	color:#e28b22;
+	padding-left:12px;
+}
+
 div.setting div.uploaded{
 	background-color:#aeaeae;
 	padding:3px;

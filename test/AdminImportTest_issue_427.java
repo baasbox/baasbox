@@ -73,7 +73,7 @@ public class AdminImportTest_issue_427 extends AbstractDocumentTest {
 					setMultipartFormData();
 					setAssetFile("/issue_427_No_Push_Messages_after_Migration.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
-					assertTrue(status==200);	
+					assertTrue("Import DB Failed! Status: " + status,status==200);	
 					
 					//check if the certificates have been deployed
 					folder =  Play.application().getFile("certificates");
