@@ -18,10 +18,14 @@
 
 package com.baasbox.configuration;
 
+import java.io.IOException;
+
+import com.baasbox.service.push.PushNotInitializedException;
+
 
 
 public interface IProperties {
-	  public void setValue(final Object iValue);
+	  public void setValue(final Object iValue) throws Exception;
 	  /***
 	   * internal use only, sets the original value bypassing the editable flag and the overridden value
 	   * @param iValue

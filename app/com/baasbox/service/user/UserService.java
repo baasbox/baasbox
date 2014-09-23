@@ -336,7 +336,7 @@ public class UserService {
 				    throw e;
 			    }catch( Exception e ){
 			     DbHelper.rollbackTransaction();
-			      throw new RuntimeException(e);
+			      throw new RuntimeException(ExceptionUtils.getStackTrace(e));
                 }
 			return profile;
 	} //signUp
