@@ -79,7 +79,7 @@ public class APNServer  implements IPushServer {
 		String actionLocKey=null; 
 		
 		if (!(actionLocKeyNode==null)) {
-			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("actionLocalizedKey MUST be a String");
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
 			actionLocKey=actionLocKeyNode.asText();
 		}
 		
@@ -87,7 +87,7 @@ public class APNServer  implements IPushServer {
 		String locKey=null; 
 		
 		if (!(locKeyNode==null)) {
-			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("");
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
 			locKey=locKeyNode.asText();
 		}
 		
@@ -95,9 +95,9 @@ public class APNServer  implements IPushServer {
 
 		List<String> locArgs = new ArrayList<String>();
 		if(!(locArgsNode==null)){
-			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("");		
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
 			for(JsonNode locArgNode : locArgsNode) {
-				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("");
+				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
 				locArgs.add(locArgNode.toString());
 			}	
 		}
@@ -184,7 +184,7 @@ public class APNServer  implements IPushServer {
 		String actionLocKey=null; 
 		
 		if (!(actionLocKeyNode==null)) {
-			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("actionLocalizedKey MUST be a String");
+			if(!(actionLocKeyNode.isTextual())) throw new PushActionLocalizedKeyFormatException("ActionLocalizedKey MUST be a String");
 			actionLocKey=actionLocKeyNode.asText();
 		}
 		
@@ -192,7 +192,7 @@ public class APNServer  implements IPushServer {
 		String locKey=null; 
 		
 		if (!(locKeyNode==null)) {
-			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("");
+			if(!(locKeyNode.isTextual())) throw new PushLocalizedKeyFormatException("LocalizedKey MUST be a String");
 			locKey=locKeyNode.asText();
 		}
 		
@@ -200,9 +200,9 @@ public class APNServer  implements IPushServer {
 
 		List<String> locArgs = new ArrayList<String>();
 		if(!(locArgsNode==null)){
-			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("");		
+			if(!(locArgsNode.isArray())) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");		
 			for(JsonNode locArgNode : locArgsNode) {
-				if(locArgNode.isNumber()) throw new PushLocalizedArgumentsFormatException("");
+				if(!locArgNode.isTextual()) throw new PushLocalizedArgumentsFormatException("LocalizedArguments MUST be an Array of String");
 				locArgs.add(locArgNode.toString());
 			}	
 		}

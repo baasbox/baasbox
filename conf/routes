@@ -164,6 +164,8 @@ DELETE   /admin/follow/:follower/to/:theFollowed	com.baasbox.controllers.Admin.r
 
 # @tag(baasbox.notifications.send)
 POST	/push/message/:username		    com.baasbox.controllers.Push.send(username: String)
+
+# @tag(baasbox.notifications.send)
 POST    /push/message					com.baasbox.controllers.Push.sendUsers()
 
 # @tag(baasbox.notifications.receive)

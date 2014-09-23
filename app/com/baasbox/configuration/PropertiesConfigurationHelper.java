@@ -301,7 +301,7 @@ public class PropertiesConfigurationHelper {
 			if (e.getCause() instanceof PushSwitchException) throw (PushSwitchException) e.getCause();
 			if (e.getCause() instanceof PushNotInitializedException) throw (PushNotInitializedException) e.getCause();
 			if (e.getCause() instanceof PushInvalidApiKeyException) throw (PushInvalidApiKeyException) e.getCause();
-			throw new ConfigurationException ("Invalid key -" +iKey+ "- or value -" +value+"-"  ,e );
+			throw new ConfigurationException ("Invalid key (" +iKey+ ") or value (" +value+")"  ,e );
 		}
 	}	//setByKey
 	
