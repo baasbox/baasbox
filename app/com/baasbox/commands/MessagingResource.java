@@ -25,13 +25,13 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushService;
-import com.baasbox.service.push.providers.PushNotInitializedException;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -57,33 +57,35 @@ class MessagingResource extends Resource {
     }
 
     private JsonNode sendMessageTo(JsonNode command) throws CommandException{
-        JsonNode jsonNode = command.get(ScriptCommand.PARAMS);
-        if (jsonNode==null||!jsonNode.isObject()){
-            throw new CommandParsingException(command,"missing parameters");
-        }
-        JsonNode to = jsonNode.get("to");
-        JsonNode content= jsonNode.get("body");
-        if (to==null||content==null){
-            throw new CommandParsingException(command,"missing required parameters");
-        }
-        PushService ps = new PushService();
-        if (to.isTextual()&& content.isObject()){
-            JsonNode message = content.get("message");
-            if (message.isTextual()){
-                try {
-                    ps.send(message.asText(),to.asText());
-                    return BooleanNode.getTrue();
-                } catch (PushNotInitializedException e) {
-                    throw new CommandExecutionException(command,"push service has not been enabled");
-                } catch (UserNotFoundException e) {
-                    throw new CommandExecutionException(command,"user: "+to.asText()+"not found");
-                } catch (SqlInjectionException e) {
-                    throw new CommandExecutionException(command,e.getMessage(),e);
-                } catch (IOException e) {
-                    throw new CommandExecutionException(command,e.getMessage(),e);
-                }
-            }
-        }
+//        JsonNode jsonNode = command.get(ScriptCommand.PARAMS);
+//        if (jsonNode==null||!jsonNode.isObject()){
+//            throw new CommandParsingException(command,"missing parameters");
+//        }
+//        JsonNode to = jsonNode.get("to");
+//        JsonNode content= jsonNode.get("body");
+//        if (to==null||content==null){
+//            throw new CommandParsingException(command,"missing required parameters");
+//        }
+//        PushService ps = new PushService();
+//        if (to.isTextual()&& content.isObject()){
+//            JsonNode message = content.get("message");
+//            if (message!= null&&message.isTextual()){
+//                try {
+//todo implement push with profiles and extra content
+//                    boolean[] msg = ps.send("message", new ArrayList<>(), new ArrayList<>(), null, new boolean[0]);
+//                    //ps.send(message.asText(),to.asText());
+//                    return BooleanNode.getTrue();
+//                } catch (UserNotFoundException e) {
+//                    throw new CommandExecutionException(command,"user: "+to.asText()+"not found");
+//                } catch (SqlInjectionException e) {
+//                    throw new CommandExecutionException(command,e.getMessage(),e);
+//                } catch (IOException e) {
+//                    throw new CommandExecutionException(command,e.getMessage(),e);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
         return BooleanNode.getFalse();
     }
 }
