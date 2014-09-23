@@ -176,21 +176,6 @@ var GLOBAL=this;
         }
     });
 
-
-    Module.prototype.sudo = function(fn){
-        var that = this;
-        if(!(typeof fn === 'function')){
-            throw new TypeError("sudo requires one function argument");
-        }
-        try {
-            Api.connectAsAdmin();
-            fn.call(that);
-        }finally{
-            Api.connectAsAuthenticatedUser();
-        }
-    };
-    Object.defineProperty(Module.prototype,"sudo",{configurable: false,enumerable: false});
-
     function ModuleRef(id,code) {
         this.dispathTable= {};
         this.code=code;

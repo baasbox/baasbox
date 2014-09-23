@@ -47,8 +47,10 @@ var log = function(msg){
 };
 
 
+var DB = function(){};
 
-var runInTransaction = function(fn){
+
+DB.runInTransaction = function(fn){
     if(!(typeof fn === 'function'))
         throw new Error("runInTransaction requires a single function argument");
     _command({resource: 'db',
@@ -57,9 +59,44 @@ var runInTransaction = function(fn){
               });
 };
 
-var isInTransaction = function(){
+DB.isInTransaction = function(){
     return _command({resource: 'db',
                      name: 'isInTransaction'});
+};
+
+DB.createCollection = function(name){
+    if(! (typeof name === 'string')){
+        throw new TypeError("missing collection name");
+    }
+    return _command({resource: 'collections',
+                     name: 'post',
+                     params: name});
+};
+
+DB.dropCollection = function(name){
+    if(!(typeof name === 'string')) {
+         throw new TypeError("missing collection name");
+    }
+    return _command({resource: 'collections',
+                     name: 'drop',
+                     params: name})
+
+};
+DB.existsCollection = function(name){
+    if(!(typeof name === 'string')){
+        throw new TypeError("missing collection name");
+    }
+    return _command({resource: 'collections',
+                     name: 'exists',
+                     params: name});
+};
+
+DB.ensureCollection = function(name){
+    if(!DB.existsCollection(name)){
+        return DB.createCollection(name);
+    } else {
+        return true;
+    }
 };
 
 var isAdmin = function(){
@@ -72,6 +109,65 @@ var runAsAdmin = function(fn) {
                      name: 'switchUser',
                      callback: fn});
 };
+
+var Users = function(){};
+
+
+Users.find = function(){
+    var q = null,
+        id = null;
+    if(arguments.length < 1) {
+        // pass
+    } else if(typeof arguments[0] === 'string') {
+        id = arguments[0];
+    } else if(typeof arguments[0] === 'object'){
+        q = arguments[0];
+    }
+    if(!!id){
+        return _command({resource: 'users',
+                         name: 'get',
+                         params: {
+                             username: id
+                         } });
+    } else if(!!q) {
+        return _command({resource: 'users',
+                         name: 'list',
+                        params: q});
+    } else {
+        throw new TypeError("you must specify  a username or a query")
+    }
+};
+
+Users.me = function(){
+    return Users.find(context.userName);
+};
+
+Users.save = function(uzr){
+    var upd = {};
+    if(arguments.length == 1 && typeof arguments[0] === 'object') {
+        upd.visibleByFriends = uzr.visibleByFriends;
+        upd.visibleByAnonymousUsers = uzr.visibleByAnonymousUsers;
+        upd.visibleByRegisteredUsers = uzr.visibleByRegisteredUsers;
+        upd.visibleByTheUser = uzr.visibleByTheUser;
+
+        if(isAdmin()) {
+            upd.username = uzr.username;
+
+        } else {
+            upd.username = context.userName;
+        }
+
+        return _command({resource: 'users',
+            name: 'put',
+            params: upd
+        });
+
+    } else {
+        throw new TypeError("you must supply a user to save");
+    }
+};
+
+
 
 
 Documents.find = function(){
@@ -160,15 +256,16 @@ Documents.save = function(){
 
 
 
-
 exports.Documents = Documents;
+exports.Users = Users;
+exports.DB = DB;
 
 exports.log = log;
 
 exports.runAsAdmin=runAsAdmin;
 
-exports.runInTransaction=runInTransaction;
+//exports.runInTransaction=runInTransaction;
 
 exports.isAdmin=isAdmin;
 
-exports.isInTransaction=isInTransaction;
+//exports.isInTransaction=isInTransaction;
