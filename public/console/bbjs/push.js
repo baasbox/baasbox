@@ -121,11 +121,14 @@ function PushConfController($scope){
 	}
 	
 	$scope.valueChanged = function(s){
-		s.changed=true;
+		_this.$apply(function(scope){
+			s.changed=true;
+		});
 	}
 
 	$scope.isChanged = function(s){
-		return s==null?false:s.changed;
+		if (s) return s.changed
+		return false;
 	}
 	
 	$scope.updateInlineSetting = function(s,newValue){
