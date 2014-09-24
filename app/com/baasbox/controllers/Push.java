@@ -32,14 +32,12 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 
-
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushNotInitializedException;
-import com.baasbox.service.push.PushProfileArrayException;
 import com.baasbox.service.push.PushProfileDisabledException;
 import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
@@ -63,10 +61,10 @@ public class Push extends Controller {
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
-		if (bodyJson==null) return badRequest("The body payload cannot be empty");		  
+		if (bodyJson==null) return status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription());		  
 		JsonNode messageNode=bodyJson.findValue("message");
-		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
+		if (messageNode==null) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());	  
+		if(!messageNode.isTextual()) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -111,10 +109,6 @@ public class Push extends Controller {
 			return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
 		}
 		catch (PushProfileInvalidException e) {
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
-		}
-		catch (PushProfileArrayException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
@@ -170,10 +164,10 @@ public class Push extends Controller {
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
-		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		if (bodyJson==null) return status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription());		  
 		JsonNode messageNode=bodyJson.findValue("message");
-		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
+		if (messageNode==null) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());	  
+		if(!messageNode.isTextual()) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -248,10 +242,6 @@ public class Push extends Controller {
 		catch (PushInvalidApiKeyException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
-		}
-		catch (PushProfileArrayException e) {
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());
