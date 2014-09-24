@@ -218,7 +218,37 @@ Documents.remove = function(coll,id){
                          collection: 'collection',
                          id: id
                      }});
-}
+};
+
+Documents.revoke = function(coll,id,permissions){
+    if (! typeof permissions === 'object'){
+        throw new TypeError("invalid permissions")
+    }
+    return _command({resource: 'documents',
+        name: 'revoke',
+        params: {
+            collection: coll,
+            id: id,
+            users: permissions.users,
+            roles: permissions.roles,
+        }});
+};
+
+Documents.grant = function(coll,id,permissions){
+    if (! typeof permissions === 'object'){
+        throw new TypeError("invalid permissions")
+    }
+    return _command({resource: 'documents',
+        name: 'grant',
+        params: {
+            collection: coll,
+            id: id,
+            users: permissions.users,
+            roles: permissions.roles
+        }});
+};
+
+
 
 Documents.save = function(){
     var coll = null,

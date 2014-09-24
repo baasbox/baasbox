@@ -34,6 +34,7 @@ import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -135,7 +136,6 @@ class DocumentsResource extends BaseRestResource {
         }
         return BooleanNode.getTrue();
     }
-
 
     @Override
     protected JsonNode delete(JsonNode command) throws CommandException {
