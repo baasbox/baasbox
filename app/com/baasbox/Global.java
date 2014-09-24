@@ -23,6 +23,7 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import com.baasbox.security.ScriptingSandboxSecutrityManager;
 import play.api.libs.concurrent.Promise;
 import java.io.UnsupportedEncodingException;
 import play.mvc.Results.*;
@@ -65,7 +66,11 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class Global extends GlobalSettings {
-	
+	static {
+        /*Initialize this before anything else to avoid reflection*/
+        ScriptingSandboxSecutrityManager.init();
+    }
+
 	  private static Boolean  justCreated = false;
 
 
