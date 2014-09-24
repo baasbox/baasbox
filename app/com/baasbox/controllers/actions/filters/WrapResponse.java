@@ -19,7 +19,9 @@ package com.baasbox.controllers.actions.filters;
 import java.io.IOException;
 
 import org.apache.commons.lang.StringUtils;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -34,6 +36,7 @@ import play.mvc.Results;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
+
 import play.mvc.SimpleResult;
 import play.libs.F;
 
@@ -47,7 +50,7 @@ public class WrapResponse {
 		result.put("message", error);
 		result.put("resource", request.path());
 		result.put("method", request.method());
-		result.put("request_header", mapper.valueToTree(request.headers()));
+		result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 		setCallIdOnResult(request, result);
 		return result;
