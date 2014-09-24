@@ -96,10 +96,6 @@ public class Push extends Controller {
 		catch (SqlInjectionException e) {
 			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		}
-		catch (InvalidRequestException e){
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
-		}
 		catch (PushNotInitializedException e){
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
@@ -222,10 +218,6 @@ public class Push extends Controller {
 		}
 		catch (SqlInjectionException e) {
 			return badRequest("The supplied name appears invalid (Sql Injection Attack detected)");
-		}
-		catch (InvalidRequestException e){
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
 		}
 		catch (PushNotInitializedException e){
 			Logger.error(e.getMessage());

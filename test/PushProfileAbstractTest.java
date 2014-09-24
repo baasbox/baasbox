@@ -169,7 +169,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
-						assertRoute(result, "error with send, too many profiles", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, too many profiles", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						continueOnFail(true);
 
@@ -206,6 +206,16 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile not supported", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
+
+						// Profile NOT Array of String
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfileNotSupported.json"), play.test.Helpers.POST);
+						result = routeAndCall(request);
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotArrayString request: " + request.getWrappedRequest().headers());
+						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotArrayString result: " + contentAsString(result));
+						assertRoute(result, "error with send, push profile are not an Array of String", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 						
 						//Push with key message different from String
 						
@@ -255,7 +265,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, push profiles invalid", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 							
 						// Users value different from array
 						
@@ -269,7 +279,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, key users invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getDescription(), true);
 						
-						// Profiles value must be expressed in numbers
+						// Profiles value MUST be Array of String
 						
 						request = new FakeRequest("POST", "/push/message");
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
