@@ -24,8 +24,11 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import com.baasbox.security.ScriptingSandboxSecutrityManager;
+
 import play.api.libs.concurrent.Promise;
+
 import java.io.UnsupportedEncodingException;
+
 import play.mvc.Results.*;
 import play.libs.F;
 import play.mvc.*;
@@ -36,6 +39,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -68,7 +73,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 public class Global extends GlobalSettings {
 	static {
         /*Initialize this before anything else to avoid reflection*/
-        //ScriptingSandboxSecutrityManager.init();
+        ScriptingSandboxSecutrityManager.init();
     }
 
 	  private static Boolean  justCreated = false;
@@ -303,7 +308,7 @@ public class Global extends GlobalSettings {
 			result.put("message", error);
 			result.put("resource", request.path());
 			result.put("method", request.method());
-			result.put("request_header", mapper.valueToTree(request.headers()));
+			result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
 			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 			setCallIdOnResult(request, result);
 		return result;
