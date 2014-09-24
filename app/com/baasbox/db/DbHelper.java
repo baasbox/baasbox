@@ -47,6 +47,7 @@ import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.hook.HidePassword;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
@@ -71,6 +72,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -229,7 +231,9 @@ public class DbHelper {
 	 * @return the List of the record retrieved (the command MUST be a select)
 	 */
 	public static List<ODocument> selectCommandExecute(OCommandRequest command, Object[] params){
+		DbHelper.filterOUserPasswords(true);
 		List<ODocument> queryResult = command.execute((Object[])params);
+		DbHelper.filterOUserPasswords(false);
 		return queryResult;
 	}
 	public static Integer sqlCommandExecute(OCommandRequest command, Object[] params){
@@ -237,7 +241,9 @@ public class DbHelper {
 		return updateQueryResult;
 	}
 	public static List<ODocument> commandExecute(OCommandRequest command, Object[] params){
+		  DbHelper.filterOUserPasswords(true);
           List<ODocument> queryResult = command.execute((Object[])params);
+          DbHelper.filterOUserPasswords(false);
           return queryResult;
 	}
 	
@@ -685,4 +691,9 @@ public class DbHelper {
             }
         }
     }
+    
+    public static void filterOUserPasswords(boolean activate){
+    	HooksManager.enableHidePasswordHook(getConnection(), activate);
+    }
+    
 }

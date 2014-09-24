@@ -17,10 +17,8 @@
 package com.baasbox.util;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 
-import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
