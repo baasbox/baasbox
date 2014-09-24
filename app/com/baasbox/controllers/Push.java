@@ -78,7 +78,7 @@ public class Push extends Controller {
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());						
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());						
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
@@ -112,11 +112,11 @@ public class Push extends Controller {
 		}
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (PushProfileArrayException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());
@@ -184,7 +184,7 @@ public class Push extends Controller {
 
 		if(!(usernamesNodes==null)){
 
-			if(!(usernamesNodes.isArray())) return status(CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getDescription());
+			if(!(usernamesNodes.isArray())) return status(CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getDescription());
 
 			for(JsonNode usernamesNode : usernamesNodes) {
 				usernames.add(usernamesNode.asText());
@@ -203,9 +203,9 @@ public class Push extends Controller {
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
-				if(pushProfileNode.isTextual()) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+				if(pushProfileNode.isTextual()) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
 			
@@ -243,7 +243,7 @@ public class Push extends Controller {
 		}
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (PushInvalidApiKeyException e) {
 			Logger.error(e.getMessage());
@@ -251,7 +251,7 @@ public class Push extends Controller {
 		}
 		catch (PushProfileArrayException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());

@@ -177,7 +177,6 @@ public class PushService {
 		
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
-		if (pushProfiles.size()>3) throw new PushProfileArrayException("Too many push profiles");
 		for(Integer pushProfile : pushProfiles) {
 			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
 			if((pushProfile==1) && (!Push.PROFILE1_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 

@@ -169,7 +169,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
-						assertRoute(result, "error with send, too many profiles", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, too many profiles", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 
 						continueOnFail(true);
 
@@ -205,7 +205,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile not supported", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, push profile not supported", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 						
 						//Push with key message different from String
 						
@@ -227,7 +227,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray result: " + contentAsString(result));
-						assertRoute(result, "error with send, value profiles is not an array", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription(), true);
+						assertRoute(result, "error with send, value profiles is not an array", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 						
 					}
 				}
@@ -255,7 +255,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, push profiles invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 							
 						// Users value different from array
 						
@@ -267,7 +267,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
-						assertRoute(result, "error with send, key users invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getDescription(), true);
+						assertRoute(result, "error with send, key users invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getDescription(), true);
 						
 						// Profiles value must be expressed in numbers
 						
@@ -279,7 +279,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles format invalid(profile expressed on String)", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_INVALID.getDescription(), true);
+						assertRoute(result, "error with send, push profiles format invalid(profile expressed on String)", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 						
 					
 					}
