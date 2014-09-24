@@ -1,7 +1,5 @@
 package com.baasbox.security;
 
-import sun.reflect.CallerSensitive;
-
 import java.io.FileDescriptor;
 import java.net.InetAddress;
 import java.security.Permission;

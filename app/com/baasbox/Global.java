@@ -68,7 +68,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 public class Global extends GlobalSettings {
 	static {
         /*Initialize this before anything else to avoid reflection*/
-        ScriptingSandboxSecutrityManager.init();
+        //ScriptingSandboxSecutrityManager.init();
     }
 
 	  private static Boolean  justCreated = false;
