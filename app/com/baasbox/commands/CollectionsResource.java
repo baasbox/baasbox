@@ -73,7 +73,7 @@ class CollectionsResource extends Resource {
                         .build();
 
     private static JsonNode dropCollection(JsonNode command) throws CommandException {
-        isAdmin(command);
+        checkPreconditions(command,true);
         String coll = extractCollectionName(command);
         try {
             CollectionService.drop(coll);
@@ -85,14 +85,18 @@ class CollectionsResource extends Resource {
         }
     }
 
-    private static void isAdmin(JsonNode command) throws CommandExecutionException {
+    private static void checkPreconditions(JsonNode command,boolean nonTransactional) throws CommandExecutionException {
         if (!DbHelper.isConnectedAsAdmin(false)){
             throw new CommandExecutionException(command,"non authorized");
         }
+        if (nonTransactional && DbHelper.isInTransaction()){
+            throw new CommandExecutionException(command,"cannot alter collections during transaction");
+        }
     }
 
+
     private static JsonNode existsCollection(JsonNode command) throws CommandException {
-        isAdmin(command);
+        checkPreconditions(command,false);
         String coll = extractCollectionName(command);
         try {
             boolean res =CollectionService.exists(coll);
@@ -106,7 +110,7 @@ class CollectionsResource extends Resource {
 
 
     private static JsonNode createCollection(JsonNode command) throws CommandException{
-        isAdmin(command);
+        checkPreconditions(command,true);
         String coll = extractCollectionName(command);
         try {
             CollectionService.create(coll);

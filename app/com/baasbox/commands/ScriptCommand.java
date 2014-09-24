@@ -19,6 +19,7 @@
 package com.baasbox.commands;
 
 import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -34,12 +35,16 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * Created by Andrea Tortorella on 30/06/14.
  */
-interface ScriptCommand {
+abstract interface ScriptCommand {
     public static final String NAME= "name";
     public static final String PARAMS="params";
     public static final String RESOURCE = "resource";
     public static final String ID = "mod";
     public static final String MAIN="main";
 
-    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException;
+    public default void validate(JsonNode command) throws CommandParsingException{
+
+    }
+
+    public abstract JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException;
 }

@@ -25,12 +25,20 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import play.Logger;
 
 import java.util.Collections;
@@ -84,6 +92,7 @@ public class ScriptsDao {
         doc.save();
         return doc;
     }
+
 
     public ODocument create(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore) throws ScriptException{
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -192,4 +201,14 @@ public class ScriptsDao {
         save(script);
     }
 
+    public ODocument getByNameLocked(String name) {
+        OIndex idx = db.getMetadata().getIndexManager().getIndex(INDEX);
+        OIdentifiable idf =(OIdentifiable)idx.get(name);
+        if (idf == null){
+            return null;
+        }
+        ODocument doc = db.load(idf.getIdentity(), null, false, false, OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+
+        return doc;
+    }
 }

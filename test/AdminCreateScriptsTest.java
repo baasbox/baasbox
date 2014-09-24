@@ -1,19 +1,13 @@
-import com.baasbox.service.scripting.js.Json;
 import core.AbstractAdminTest;
 import core.TestConfig;
-import junit.framework.Assert;
 import org.apache.http.protocol.HTTP;
-import org.fest.assertions.Assertions;
 import org.junit.Test;
-import play.libs.F;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.test.FakeRequest;
-import play.test.TestBrowser;
 
 import javax.ws.rs.core.MediaType;
 
-import java.io.IOException;
 
 import static play.test.Helpers.*;
 /**
@@ -22,7 +16,7 @@ import static play.test.Helpers.*;
 public class AdminCreateScriptsTest extends AbstractAdminTest {
     @Override
     public String getRouteAddress() {
-        return "/admin/scripts";
+        return "/admin/script";
     }
 
     @Override

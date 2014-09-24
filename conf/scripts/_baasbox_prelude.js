@@ -44,6 +44,35 @@ var GLOBAL=this;
     BaasBoxError.prototype=Object.create(Error.prototype);
     BaasBoxError.prototype.constructor =BaasBoxError;
 
+    function Storage(mod){
+        this.mod = mod;
+    }
+
+    Storage.prototype.get = function(){
+        return this.mod._command({resource: 'script',
+                                  name: 'storage',
+                                  params: { action: 'get'}})
+    };
+    Storage.prototype.set = function(o) {
+        return this.mod._command({resource: 'script',
+                                  name: 'storage',
+                                  params: {action: 'set',
+                                           args: o}
+        });
+    };
+    Storage.prototype.swap = function(f) {
+        return this.mod._command({resource: 'script',
+                                  name: 'storage',
+                                  callback: f,
+                                  params: {action: 'swap'}});
+    };
+    Storage.prototype.swap = function(f) {
+        return this.mod._command({resource: 'script',
+            name: 'storage',
+            callback: f,
+            params: {action: 'trade'}});
+    };
+
     /**
      * A Module as seen from javascript
      * @param name
@@ -83,6 +112,9 @@ var GLOBAL=this;
             }
         }
 
+        Object.defineProperty(this,"storage",{value: new Storage(m),
+                                              configurable: false,
+                                              enumerable: false});
         /**
          * Context property
          */
@@ -118,6 +150,8 @@ var GLOBAL=this;
      });
 
     Module.prototype.BaasBoxError=BaasBoxError;
+
+
     /**
      * The require function
      * allow to load new modules
@@ -141,21 +175,6 @@ var GLOBAL=this;
             Internal.log(JSON.stringify(val));
         }
     });
-
-
-    Module.prototype.sudo = function(fn){
-        var that = this;
-        if(!(typeof fn === 'function')){
-            throw new TypeError("sudo requires one function argument");
-        }
-        try {
-            Api.connectAsAdmin();
-            fn.call(that);
-        }finally{
-            Api.connectAsAuthenticatedUser();
-        }
-    };
-    Object.defineProperty(Module.prototype,"sudo",{configurable: false,enumerable: false});
 
     function ModuleRef(id,code) {
         this.dispathTable= {};
