@@ -70,7 +70,7 @@ public final class ScriptResult {
         if (!Type.OBJECT.equals(type)) return false;
         JsonNode node = (JsonNode)data;
         JsonNode status = node.get("status");
-        if (status == null || !status.isIntegralNumber()) return false;
+        if (status == null || !status.isNumber()) return false;
         JsonNode content = node.get("content");
         if (content == null) return false;
 
