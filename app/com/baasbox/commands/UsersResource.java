@@ -32,6 +32,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushService;
@@ -68,8 +69,58 @@ class UsersResource extends BaseRestResource {
             public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
                 return reactivate(command);
             }
-        });
+        }).put("follow", this::friendshipUpdate);
     }
+
+    protected JsonNode friendshipUpdate(JsonNode command,JsonCallback unused) throws CommandException {
+        JsonNode params = command.get(ScriptCommand.PARAMS);
+        if (params == null) throw new CommandParsingException(command,"missing required parameters");
+        JsonNode from = params.get("from");
+        JsonNode to = params.get("to");
+        JsonNode remove = params.get("remove");
+        if (from==null||!from.isTextual()||
+            to == null||!to.isTextual())
+            throw new CommandParsingException(command,"missing required user");
+        boolean unfollow;
+        if (remove == null){
+            unfollow = true;
+        } else if (remove.isBoolean()){
+            unfollow =remove.asBoolean();
+        } else {
+            throw new CommandParsingException(command,"wrong parameter remove");
+        }
+        if (unfollow){
+            return  doUnfollow(command, from.asText(), to.asText());
+        } else {
+            return doFollow(command, from.asText(), to.asText());
+        }
+    }
+
+    private JsonNode doUnfollow(JsonNode command,String from,String to) throws CommandExecutionException{
+        try {
+            return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
+
+    private JsonNode doFollow(JsonNode command,String from,String to) throws CommandExecutionException{
+        try {
+            ODocument followed = FriendShipService.follow(from, to);
+            String s = JSONFormats.prepareResponseToJson(followed, JSONFormats.Formats.USER);
+            return Json.mapper().readTree(s);
+        } catch (UserNotFoundException e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        } catch (AlreadyFriendsException e) {
+            return NullNode.getInstance();
+        } catch (SqlInjectionException e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
+
+
 
 
     protected JsonNode suspend(JsonNode command) throws CommandException {

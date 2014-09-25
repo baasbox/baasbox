@@ -142,6 +142,47 @@ Users.find = function(){
     }
 };
 
+//todo fix duplication
+Users.follow = function(){
+    var from,to;
+    if(arguments.length>1){
+        if(!isAdmin()) return null;
+        from = arguments[0];
+        to = arguments[1];
+    } else if(arguments.length==1){
+        if(isAdmin()) return null;
+        from = context.userName;
+        to = arguments[0];
+    }
+    _command({resource: 'users',
+              name: 'follow',
+              params: {
+                  from: from,
+                  to: to,
+                  remove: false
+              }});
+};
+
+Users.unfollow = function(){
+    var from,to;
+    if(arguments.length>1){
+        if(!isAdmin()) return null;
+        from = arguments[0];
+        to = arguments[1];
+    } else if(arguments.length==1){
+        if(isAdmin()) return null;
+        from = context.userName;
+        to = arguments[0];
+    }
+    _command({resource: 'users',
+        name: 'follow',
+        params: {
+            from: from,
+            to: to,
+            remove: true
+        }});
+};
+
 Users.create = function(){
     var usr,
         pass,
