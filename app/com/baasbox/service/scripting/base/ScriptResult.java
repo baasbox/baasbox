@@ -18,10 +18,10 @@
 
 package com.baasbox.service.scripting.base;
 
-import com.baasbox.dao.exception.ScriptException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
+ *
  * Created by Andrea Tortorella on 10/06/14.
  */
 public final class ScriptResult {

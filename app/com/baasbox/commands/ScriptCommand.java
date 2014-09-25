@@ -21,7 +21,9 @@ package com.baasbox.commands;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Interface for commands executed from scripting languages.
@@ -35,15 +37,65 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * Created by Andrea Tortorella on 30/06/14.
  */
-abstract interface ScriptCommand {
+public abstract interface ScriptCommand {
     public static final String NAME= "name";
     public static final String PARAMS="params";
     public static final String RESOURCE = "resource";
     public static final String ID = "mod";
     public static final String MAIN="main";
 
-    public default void validate(JsonNode command) throws CommandParsingException{
+    public default void validate(JsonNode command,boolean hasParams) throws CommandParsingException {
+        boolean isObj = command.isObject();
+        if (!isObj)throw new CommandParsingException(command,"command is not an object");
+        JsonNode res = command.get(RESOURCE);
+        if (res==null||!res.isTextual())throw new CommandParsingException(command,"missing required resource");
+        JsonNode name = command.get(NAME);
+        if (name == null||!name.isTextual())throw new CommandParsingException(command,"missing required name");
 
+        if (hasParams){
+            JsonNode p = command.get(PARAMS);
+            if (p==null||!(p.isObject())){
+                throw new CommandParsingException(command,"missing required parameters");
+            }
+        }
+    }
+
+    public default void validate(JsonNode command) throws CommandParsingException{
+        validate(command,false);
+    }
+
+
+    public static  ObjectNode createCommand(String resource,String name){
+        ObjectNode cmd = Json.mapper().createObjectNode();
+        cmd.put(RESOURCE,resource);
+        cmd.put(NAME,name);
+        return cmd;
+    }
+
+    public static ObjectNode createCommand(String resource,String name,ObjectNode params){
+        ObjectNode cmd = Json.mapper().createObjectNode();
+        cmd.put(RESOURCE,resource);
+        cmd.put(NAME,name);
+        cmd.put(PARAMS,params);
+        return cmd;
+    }
+
+    public static ObjectNode createCommandForScript(String resource,String name,String script){
+        ObjectNode cmd = Json.mapper().createObjectNode();
+        cmd.put(RESOURCE,resource);
+        cmd.put(NAME,name);
+        cmd.put(ID,script);
+        return cmd;
+    }
+
+
+    public static ObjectNode createCommandForScript(String resource,String name,String script,ObjectNode params){
+        ObjectNode cmd = Json.mapper().createObjectNode();
+        cmd.put(RESOURCE,resource);
+        cmd.put(NAME,name);
+        cmd.put(ID,script);
+        cmd.put(PARAMS,params);
+        return cmd;
     }
 
     public abstract JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException;
