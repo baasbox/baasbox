@@ -187,8 +187,6 @@ function downloadExportHref(name){
 	}else{
 		return '#';
 	}
-
-
 }
 
 
@@ -1499,6 +1497,9 @@ function setBradCrumb(type)
 	case "#files":
 		sBradCrumb = "Files";
 		break;
+	case "#scripts":
+		sBradCrumb = "Scripts";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
@@ -2176,6 +2177,9 @@ function callMenu(action){
 				$('#assetTable').dataTable().fnAddData(data);
 			}
 		});
+		case "#scripts":
+			loadScriptsPage(action);
+		break;//#scripts
 		case "#files":
 			resetDataTable( $('#fileTable'));
 			loadFilesData();
