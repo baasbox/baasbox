@@ -142,6 +142,47 @@ Users.find = function(){
     }
 };
 
+Users.create = function(){
+    var usr,
+        pass,
+        role,
+        visibleByAnonymousUsers,
+        visibleByRegisteredUsers,
+        visibleByTheUser,
+        visibleByFriends;
+    usr = pass = role = visibleByAnonymousUsers =
+        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = null;
+    switch (arguments.length){
+        case 4:
+            visibleByFriends = arguments[3].visibleByFriends;
+            visibleByRegisteredUsers= arguments[3].visibleByRegisteredUsers;
+            visibleByTheUser = arguments[3].visibleByTheUser;
+            visibleByAnonymousUsers= arguments[3].visibleByAnonymousUsers;
+        case 3:
+            role = arguments[2];
+        case 2:
+            pass = arguments[1];
+            usr = arguments[0];
+            break;
+        case 1:
+            throw new TypeError("missing password");
+            break;
+        default:
+            throw new TypeError("wrong arguments");
+    }
+    if(usr==null|| (!typeof  usr === 'string')) throw new TypeError("username must be a string");
+    if(pass==null||(!typeof pass === 'string')) throw new TypeError("password must be a string");
+    if(role != null && (!typeof  role === 'string')) throw new TypeError("role must be a string");
+    return _command({resource: 'users', name: 'post',
+                     params: {username: usr,
+                              password: pass,
+                              role: role,
+                              visibleByTheUser: visibleByTheUser,
+                              visibleByAnonymousUsers: visibleByAnonymousUsers,
+                              visibleByRegisteredUsers: visibleByRegisteredUsers,
+                              visibleByFriends: visibleByFriends}});
+};
+
 Users.me = function(){
     return Users.find(context.userName);
 };
