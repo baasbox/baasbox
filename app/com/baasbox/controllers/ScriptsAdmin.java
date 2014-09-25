@@ -67,9 +67,14 @@ public class ScriptsAdmin extends Controller{
                 result = badRequest(update.message);
             }
         } catch (ScriptEvalException e) {
+            Logger.error("Evaluation exception: "+e.getMessage(),e);
             result = badRequest(e.getMessage());
         } catch (ScriptException e){
+            Logger.error("Script exception: ",e);
             result = notFound(e.getMessage());
+        } catch (Throwable e){
+            Logger.error("Internal Scripts engine error",e);
+            result = internalServerError(e.getMessage());
         }
         if (Logger.isTraceEnabled()) Logger.trace("End Method");
         return result;

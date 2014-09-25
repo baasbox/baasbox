@@ -39,6 +39,7 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import play.Logger;
 import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
@@ -228,9 +229,12 @@ class DocumentsResource extends BaseRestResource {
     protected JsonNode list(JsonNode command) throws CommandException {
         String collection= getCollectionName(command);
         QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
+
         try {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
+
             String s = JSONFormats.prepareResponseToJson(docs, JSONFormats.Formats.DOCUMENT);
+
             return Json.mapper().readTree(s);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage());

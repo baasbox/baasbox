@@ -68,9 +68,10 @@ public class ScriptInvoker extends Controller{
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
             return internalServerError("script failure "+e.getMessage());
-        } catch (IllegalStateException e){
-            return internalServerError("script returned invalid json response");
         }
+//        catch (IllegalStateException e){
+//            return internalServerError("script returned invalid json response");
+//        }
     }
 
     public static JsonNode serializeRequest(String path,Http.Request request){
