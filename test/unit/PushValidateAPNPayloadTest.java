@@ -157,7 +157,7 @@ public class PushValidateAPNPayloadTest {
 			ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
 			arrayNode.add(10);
 			jNode.put("badge", arrayNode);
-			APNServer.validatePushPayload(jNode);	
+			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
 			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
