@@ -20,7 +20,7 @@
  * Created by Andrea Tortorella on 23/06/14.
  */
 
-Console.log("Loaded baasbox core");
+//Console.log("Loaded baasbox core");
 
 /**
  * Baasbox server version
@@ -191,7 +191,7 @@ Documents.find = function(){
     if(!(typeof coll === 'string')){
         throw new TypeError("you must specify a collection");
     }
-    if(id === null && (typeof q === 'object')){
+    if(id === null ){
         return _command({resource: 'documents',
                          name: 'list',
                          params: {
@@ -202,6 +202,7 @@ Documents.find = function(){
         return _command({resource: 'documents',
                          name: 'get',
                          params:{
+                             collection: coll,
                              id: id
                          }});
     }
@@ -258,7 +259,7 @@ Documents.save = function(){
         obj = arguments[0];
         coll = obj['@class'];
         id = obj['id'];
-    } else if(arguments.length===1 &&
+    } else if(arguments.length===2 &&
               typeof arguments[0]==='string' &&
               typeof arguments[1]==='object'){
         coll = arguments[0];
@@ -281,8 +282,8 @@ Documents.save = function(){
             resource: 'documents',
             name: 'post',
             params: {
-                collection: '',
-                data: {}
+                collection: coll,
+                data: obj
             }
         });
     }
