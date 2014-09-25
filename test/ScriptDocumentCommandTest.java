@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import static play.test.Helpers.*;
 
-public class ScriptCommandTest  {
+public class ScriptDocumentCommandTest {
     private final static String TEST_USER = "script_command_test_user_"+ UUID.randomUUID();
     private final static String TEST_ALT_USER = "script_command_other_"+UUID.randomUUID();
 
