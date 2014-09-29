@@ -83,7 +83,7 @@ class UsersResource extends BaseRestResource {
             throw new CommandParsingException(command,"missing required user");
         boolean unfollow;
         if (remove == null){
-            unfollow = true;
+            unfollow = false;
         } else if (remove.isBoolean()){
             unfollow =remove.asBoolean();
         } else {
