@@ -2375,9 +2375,9 @@ function DBManagerController($scope){
 				newExp.date=dtMatcher[3]+"-"+dtMatcher[2]+"-"+dtMatcher[1]+" "+dtMatcher[4]+":"+dtMatcher[5]+":"+dtMatcher[6]
 				res.push(newExp)
 			}
+			$('#exportTable').dataTable().fnClearTable();
+			$('#exportTable').dataTable().fnAddData(res);
 		});
-		$('#exportTable').dataTable().fnClearTable();
-		$('#exportTable').dataTable().fnAddData(res);
 		$scope.exports = res;
 		return $scope.exports;
 
