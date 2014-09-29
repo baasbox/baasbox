@@ -148,6 +148,8 @@ var GLOBAL=this;
         this.exports=Object.create(null);
         var m = this;
 
+        var bbox = undefined;
+
         this._command = function(command) {
             if (!(typeof command === 'object')) {
                 throw new TypeError("command must be an 'object'");
@@ -183,6 +185,13 @@ var GLOBAL=this;
         Object.defineProperty(this,"storage",{value: new Storage(m),
                                               configurable: false,
                                               enumerable: false});
+
+        Object.defineProperty(this,"Box",{get: function(){
+            if(bbox === undefined) {
+                bbox = Api.require("baasbox.core").module.exports;
+            }
+            return bbox;
+        }});
         /**
          * Context property
          */
@@ -236,7 +245,7 @@ var GLOBAL=this;
         return mod.module.exports;
     };
 
-
+    Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
 
@@ -246,6 +255,7 @@ var GLOBAL=this;
         }
     });
 
+
     function ModuleRef(id,code) {
         this.dispathTable= {};
         this.code=code;
@@ -253,7 +263,6 @@ var GLOBAL=this;
 
         var ref = this;
         this.module = new Module(id);
-
 
         Object.defineProperty(this.module,"id",{configurable: false,writable: false});
         Object.defineProperty(this.module,"_command",{configurable: false,writable: false});
@@ -289,7 +298,7 @@ var GLOBAL=this;
                 return s;
 
             }
-        })
+        });
     }
 
     /**
