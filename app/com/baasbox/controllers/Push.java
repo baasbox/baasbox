@@ -32,14 +32,12 @@ import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 
-
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushNotInitializedException;
-import com.baasbox.service.push.PushProfileArrayException;
 import com.baasbox.service.push.PushProfileDisabledException;
 import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
@@ -63,10 +61,10 @@ public class Push extends Controller {
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
-		if (bodyJson==null) return badRequest("The body payload cannot be empty");		  
+		if (bodyJson==null) return status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription());		  
 		JsonNode messageNode=bodyJson.findValue("message");
-		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
+		if (messageNode==null) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());	  
+		if(!messageNode.isTextual()) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -78,7 +76,7 @@ public class Push extends Controller {
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_PROFILE_ARRAY_EXCEPTION.getDescription());						
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());						
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
@@ -98,10 +96,6 @@ public class Push extends Controller {
 		catch (SqlInjectionException e) {
 			return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 		}
-		catch (InvalidRequestException e){
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
-		}
 		catch (PushNotInitializedException e){
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
@@ -112,11 +106,7 @@ public class Push extends Controller {
 		}
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
-		}
-		catch (PushProfileArrayException e) {
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());
@@ -170,10 +160,10 @@ public class Push extends Controller {
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
-		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		if (bodyJson==null) return status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription());		  
 		JsonNode messageNode=bodyJson.findValue("message");
-		if (messageNode==null) return badRequest("The body payload doesn't contain the 'message' key");	  
-		if(messageNode.isNumber()) return status(CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_FORMAT_INVALID.getDescription());
+		if (messageNode==null) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());	  
+		if(!messageNode.isTextual()) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
@@ -184,7 +174,7 @@ public class Push extends Controller {
 
 		if(!(usernamesNodes==null)){
 
-			if(!(usernamesNodes.isArray())) return status(CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_USERS_ARRAY_EXCEPTION.getDescription());
+			if(!(usernamesNodes.isArray())) return status(CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getDescription());
 
 			for(JsonNode usernamesNode : usernamesNodes) {
 				usernames.add(usernamesNode.asText());
@@ -203,9 +193,9 @@ public class Push extends Controller {
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
-			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			if(!(pushProfilesNodes.isArray())) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 			for(JsonNode pushProfileNode : pushProfilesNodes) {
-				if(pushProfileNode.isTextual()) return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+				if(pushProfileNode.isTextual()) return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 				pushProfiles.add(pushProfileNode.asInt());
 			}	
 			
@@ -229,10 +219,6 @@ public class Push extends Controller {
 		catch (SqlInjectionException e) {
 			return badRequest("The supplied name appears invalid (Sql Injection Attack detected)");
 		}
-		catch (InvalidRequestException e){
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
-		}
 		catch (PushNotInitializedException e){
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
@@ -243,15 +229,11 @@ public class Push extends Controller {
 		}
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
+			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 		}
 		catch (PushInvalidApiKeyException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
-		}
-		catch (PushProfileArrayException e) {
-			Logger.error(e.getMessage());
-			return status(CustomHttpCode.PUSH_PROFILE_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_INVALID.getDescription());
 		}
 		catch (UnknownHostException e){
 			Logger.error(e.getMessage());

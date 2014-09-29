@@ -1499,6 +1499,12 @@ function setBradCrumb(type)
 	case "#files":
 		sBradCrumb = "Files";
 		break;
+	case "#permissions":
+		sBradCrumb = "Api Access";
+		break;		
+	case "#push_conf":
+		sBradCrumb = "Push Settings";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
