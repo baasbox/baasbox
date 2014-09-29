@@ -370,7 +370,7 @@ nav {
 }
 
 .btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover {
-	margin-right:0px;
+	margin-right:-100px;
 }
 
 .well {
