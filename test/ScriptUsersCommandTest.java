@@ -7,18 +7,16 @@ import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import core.TestConfig;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import play.mvc.Result;
+import play.test.FakeRequest;
 
-import javax.management.ObjectName;
+import javax.ws.rs.core.MediaType;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -127,12 +125,30 @@ public class ScriptUsersCommandTest {
         });
     }
 
+    public Result invokeScript(String scriptName,String user,String pass){
+        String endpoint = "/scripts/"+scriptName;
+        FakeRequest put = new FakeRequest(PUT,endpoint);
+        put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+        put.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(user,pass));
+        return routeAndCall(put);
+    }
 
 //    @Test must be run with http context
     public void testUserCanMakeFriends(){
         running(fakeApplication(),()->{
             try {
-                DbHelper.open("1234567890",sTestUser,sTestUser);
+                String scriptName= "makefriends."+UUID.randomUUID();
+                ScriptTestHelpers.loadScript(scriptName,"/scripts/users_make_friends.js");
+
+                String endpoint = "/scripts/"+scriptName;
+                FakeRequest put = new FakeRequest(PUT,endpoint);
+                put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                put.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sTestUser,sTestUser));
+                put.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                Result invoke = routeAndCall(put);
+
+
+                DbHelper.open("1234567890", sTestUser, sTestUser);
                 ObjectNode cmd = mapper.createObjectNode();
                 cmd.put(ScriptCommand.RESOURCE,"users");
                 cmd.put(ScriptCommand.NAME,"follow");
