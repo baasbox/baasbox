@@ -127,7 +127,7 @@ public class ScriptUsersCommandTest {
         });
     }
 
-    
+
 //    @Test must be run with http context
     public void testUserCanMakeFriends(){
         running(fakeApplication(),()->{

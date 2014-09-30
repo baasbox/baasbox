@@ -98,7 +98,9 @@ public class ScriptsAdmin extends Controller{
         } catch (ScriptAlreadyExistsException e) {
             result = badRequest(e.getMessage());
         }catch (ScriptException e) {
-            result = badRequest(e.getMessage());
+            String message = e.getMessage();
+
+            result = badRequest(message==null?"Script error":message);
         }
 
         if (Logger.isTraceEnabled()) Logger.trace("End Method");
