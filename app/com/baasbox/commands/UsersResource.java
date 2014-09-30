@@ -69,8 +69,43 @@ class UsersResource extends BaseRestResource {
             public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
                 return reactivate(command);
             }
-        }).put("follow", this::friendshipUpdate);
+        }).put("follow", this::friendshipUpdate)
+          .put("followers",getFriends(false))
+          .put("following",getFriends(true));
     }
+
+    private ScriptCommand getFriends(boolean following){
+        return (command,unused) ->{
+            JsonNode params = command.get(ScriptCommand.PARAMS);
+            if (params == null) throw new CommandParsingException(command,"missing required parameters");
+            JsonNode user = params.path("user");
+            JsonNode query = params.get("query");
+            if (!user.isTextual()) throw new CommandParsingException(command,"missing required paramter user as string");
+            if (query!=null && !query.isObject()) throw new CommandParsingException(command,"query must be a json object");
+            QueryParams qparams = QueryParams.getParamsFromJson(query);
+            try {
+
+                List<ODocument> res = following ?
+                        FriendShipService.getFollowing(user.asText(), qparams) :
+                        FriendShipService.getFriendsOf(user.asText(), qparams);
+                String s = JSONFormats.prepareResponseToJson(res, JSONFormats.Formats.USER);
+
+                return Json.mapper().readTreeOrMissing(s);
+            } catch (SqlInjectionException | IOException e){
+                throw new CommandExecutionException(command,e.getMessage(),e);
+            }
+        };
+    }
+
+//    private JsonNode followers(JsonNode command, JsonCallback unused) throws CommandException{
+//        try {
+//            List<ODocument> friendsOf = FriendShipService.getFriendsOf(user.asText(), QueryParams.getParamsFromJson(query));
+//            String s = JSONFormats.prepareResponseToJson(friendsOf, JSONFormats.Formats.USER);
+//            return Json.mapper().readTreeOrMissing(s);
+//        } catch (SqlInjectionException | IOException e) {
+//            throw new CommandExecutionException(command,e.getMessage(),e);
+//        }
+//    }
 
     protected JsonNode friendshipUpdate(JsonNode command,JsonCallback unused) throws CommandException {
         JsonNode params = command.get(ScriptCommand.PARAMS);

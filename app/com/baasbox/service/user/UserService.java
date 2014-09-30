@@ -734,6 +734,10 @@ public class UserService {
 		UserDao.getInstance().enableUser(username);
 	}
 
+    public static List<ODocument> getUserProfileByUsernames(List<String> usernames,QueryParams criteria) throws SqlInjectionException {
+        return UserDao.getInstance().getByUsernames(usernames,criteria);
+    }
+
 	public static List<ODocument> getUserProfilebyUsernames(List<String> usernames) throws SqlInjectionException {
 		return UserDao.getInstance().getByUsernames(usernames);
 		

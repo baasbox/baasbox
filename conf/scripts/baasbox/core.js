@@ -142,7 +142,29 @@ Users.find = function(){
     }
 };
 
-//todo fix duplication
+Users.followers = function(us){
+    var user = us||context.userName;
+    var q = arguments.length>1?arguments[1]:null;
+    return _command({resource: 'users',
+                     name: 'followers',
+                     params: {
+                         user: user,
+                         query: q
+                     }});
+};
+
+Users.following = function(us){
+    var user = us||context.userName;
+    var q = arguments.length>1?arguments[1]:null;
+    return _command({resource: 'users',
+                     name: 'following',
+                     params: {
+                         user: user,
+                         query: q
+                     }});
+};
+
+
 Users.follow = function(){
     var from,to;
     if(arguments.length>1){
