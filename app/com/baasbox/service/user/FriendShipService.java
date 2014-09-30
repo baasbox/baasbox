@@ -19,7 +19,14 @@
 package com.baasbox.service.user;
 
 import java.util.List;
+import java.util.Objects;
 
+import com.baasbox.BBConfiguration;
+import com.baasbox.exception.AlreadyFriendsException;
+import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.exception.UserToFollowNotExistsException;
+import com.google.common.base.Strings;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -64,4 +71,50 @@ public class FriendShipService {
 		UserDao udao= UserDao.getInstance();
 		return udao.getCount(criteria);
 	}
+
+    public static boolean unfollow(String from,String to) throws UserNotFoundException,Exception{
+        OUser fromUser = UserService.getOUserByUsername(from);
+        if (fromUser == null){
+            throw new UserNotFoundException("User "+from+" does not exists");
+        }
+        if (!UserService.exists(to)){
+            throw new UserToFollowNotExistsException("User "+to+" does not exists");
+        }
+        String friendshipName = RoleDao.FRIENDS_OF_ROLE+to;
+        boolean areFriends = RoleService.hasRole(fromUser.getName(),friendshipName);
+        if (areFriends) {
+            UserService.removeUserFromRole(fromUser.getName(),friendshipName);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static ODocument follow(String from,String to) throws UserNotFoundException, AlreadyFriendsException,SqlInjectionException,Exception {
+        if (UserService.isInternalUsername(to)){
+            throw new IllegalArgumentException("Cannot follow internal users");
+        }
+
+        if (Objects.equals(from, to)){
+            throw new IllegalArgumentException("User cannot follow himself");
+        }
+        OUser fromUser = UserService.getOUserByUsername(from);
+        if (fromUser == null) {
+             throw new UserNotFoundException("User " + from + " does not exists.");
+        }
+
+        boolean exists = UserService.exists(to);
+        if (!exists){
+            throw new UserToFollowNotExistsException("User "+to+" does not exists.");
+        }
+
+        String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+to;
+        boolean isFriend = RoleService.hasRole(from,friendshipRoleName);
+        if (isFriend){
+            throw new AlreadyFriendsException("User "+fromUser.getName()+ " is already a friend of "+to);
+        }
+        UserService.addUserToRole(fromUser.getName(),friendshipRoleName);
+        ODocument toUser = UserService.getUserProfilebyUsername(to);
+        return toUser;
+    }
 }

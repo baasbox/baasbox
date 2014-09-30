@@ -10,7 +10,9 @@ import javax.ws.rs.core.MediaType;
 
 
 import static play.test.Helpers.*;
+
 /**
+ *
  * Created by Andrea Tortorella on 18/09/14.
  */
 public class AdminCreateScriptsTest extends AbstractAdminTest {
@@ -54,7 +56,7 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
         });
     }
 
-    //@Test fixme currently failing
+    @Test //fixme currently failing
     public void testUpdateScript(){
         running(getFakeApplication(), new Runnable() {
             @Override
@@ -62,8 +64,8 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
                 Result result = routeCreateScript("test.update");
                 assertRoute(result,"testUpdateScript create",Http.Status.CREATED,null,false);
 
-                result = routeUpdateScript("test.update","test.update1");
-                assertRoute(result,"testUpdateScript update",Http.Status.OK,"",false);
+                Result update = routeUpdateScript("test.update","test.update1");
+                assertRoute(update,"testUpdateScript update",Http.Status.OK,"",false);
 
                 result = routeGetScript("test.update");
                 assertRoute(result,"testUpdateScript get",Http.Status.OK,"function(update1){}",true);
@@ -131,11 +133,12 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
     }
 
     private Result routeUpdateScript(String scriptName, String scriptJson) {
-        FakeRequest request = new FakeRequest(PUT,getRouteAddress()+"/"+scriptName);
+        String addr = getRouteAddress()+"/"+scriptName;
+        FakeRequest request = new FakeRequest(PUT,addr);
         request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE)
-                .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
+                .withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC)
                 .withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .withJsonBody(getPayload("/scripts/"+scriptJson+".json"));
+                .withJsonBody(getPayload("/scripts/" + scriptJson + ".json"),PUT);
         Result result = routeAndCall(request);
         return  result;
     }

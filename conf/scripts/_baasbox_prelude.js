@@ -44,6 +44,61 @@ var GLOBAL=this;
     BaasBoxError.prototype=Object.create(Error.prototype);
     BaasBoxError.prototype.constructor =BaasBoxError;
 
+    function HttpServer(){
+        var defaultHandler = function(e){
+            return {status: 404,content: 'not found'};
+        };
+        var customHandler = arguments[0];
+        var mGet = customHandler||defaultHandler;
+        var mPost = customHandler||defaultHandler;
+        var mPut = customHandler||defaultHandler;
+        var mDelete= customHandler||defaultHandler;
+        var self = this;
+        ['Get','Post','Put','Delete'].forEach(function(method){
+           Object.defineProperty(self,"on"+method,{
+                                                   configurable: false,
+                                                   set: function(val){
+                                                       if(val && typeof val ==='function'){
+                                                           self["m"+method]=val;
+                                                       } else{
+                                                           self["m"+method] = defaultHandler;
+                                                       }
+                                                   },
+                                                   get: function(){
+                                                       if(self["m"+method]===defaultHandler){
+                                                           return null;
+                                                       } else{
+                                                           return self["m"+method]
+                                                       }
+                                                   }});
+        });
+
+    }
+    HttpServer.prototype.get = function(f){
+        this.onGet = f;
+        return this;
+    };
+    HttpServer.prototype.post = function(f){
+        this.onPost = f;
+        return this;
+    };
+    HttpServer.prototype.put = function(f){
+        this.onPut = f;
+        return this;
+    };
+    HttpServer.prototype.delete = function(f){
+        this.onDelete = f;
+        return this;
+    };
+    HttpServer.prototype.all = function(f){
+        this.onGet = f;
+        this.onPost=f;
+        this.onPut =f;
+        this.onDelete=f;
+        return this;
+    };
+
+
     function Storage(mod){
         this.mod = mod;
     }
@@ -60,13 +115,15 @@ var GLOBAL=this;
                                            args: o}
         });
     };
+
     Storage.prototype.swap = function(f) {
         return this.mod._command({resource: 'script',
                                   name: 'storage',
                                   callback: f,
                                   params: {action: 'swap'}});
     };
-    Storage.prototype.swap = function(f) {
+
+    Storage.prototype.trade = function(f) {
         return this.mod._command({resource: 'script',
             name: 'storage',
             callback: f,
@@ -91,6 +148,8 @@ var GLOBAL=this;
         this.exports=Object.create(null);
         var m = this;
 
+        var bbox = undefined;
+
         this._command = function(command) {
             if (!(typeof command === 'object')) {
                 throw new TypeError("command must be an 'object'");
@@ -101,20 +160,38 @@ var GLOBAL=this;
                             ? new JsJsonCallback(command.callback,m,JSON)
                             : null;
                 Internal.log("callback: "+ (cb != null));
+                Internal.log("command "+JSON.stringify(command));
                 var resp = Api.execCommand(JSON.stringify(command),cb);
-                if (resp == null) {
+                if (resp === null|| resp === undefined) {
                     return null;
                 }
+
                 return JSON.parse(resp);
             } catch (e){
-                Internal.log(e,"msg");
-                throw new BaasBoxError(JSON.parse(e));
+                Internal.log(e, e.message);
+               // throw new BaasBoxError(JSON.parse(e));
+                throw new Error();
             }
-        }
+        };
+
+        //var bbox = undefined;
+        //Object.defineProperty(this,"Box",{get: function(){
+        //    if(bbox === undefined) {
+        //        bbox =m.prototype.require('baasbox.core');
+        //    }
+        //    return bbox;
+        //}});
 
         Object.defineProperty(this,"storage",{value: new Storage(m),
                                               configurable: false,
                                               enumerable: false});
+
+        Object.defineProperty(this,"Box",{get: function(){
+            if(bbox === undefined) {
+                bbox = Api.require("baasbox.core").module.exports;
+            }
+            return bbox;
+        }});
         /**
          * Context property
          */
@@ -167,14 +244,17 @@ var GLOBAL=this;
         }
         return mod.module.exports;
     };
+
+    Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
+    Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
 
-//    we should remove this in favor of better logging mechaninsm
-    Module.prototype.Console = Object.create({
+     Module.prototype.Console = Object.create({
         log: function(val) {
             Internal.log(JSON.stringify(val));
         }
     });
+
 
     function ModuleRef(id,code) {
         this.dispathTable= {};
@@ -199,7 +279,26 @@ var GLOBAL=this;
                    ref.dispathTable[evt]=handler;
                  }
         });
+        Object.defineProperty(this.module,"http",{
+            configurable: false,
+            writable: false,
+            enumerable: false,
+            value: function(def){
+                var s = new HttpServer(def);
+                ref.module.on('request',function(evt){
+                    var req = evt.data;
+                    switch (req.method){
+                        case 'GET': return s.onGet(req);
+                        case 'POST': return s.onPost(req);
+                        case 'PUT': return s.onPut(req);
+                        case 'DELETE': return s.onDelete(req);
+                        default: return {status: 404,content: 'not found'};
+                    }
+                });
+                return s;
 
+            }
+        });
     }
 
     /**

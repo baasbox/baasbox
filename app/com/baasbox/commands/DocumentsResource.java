@@ -33,12 +33,15 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import play.Logger;
 import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
@@ -114,6 +117,7 @@ class DocumentsResource extends BaseRestResource {
     }
 
     private JsonNode grant(JsonNode command, boolean grant) throws CommandException {
+        validateHasParams(command);
         String coll = getCollectionName(command);
         String id = getDocumentId(command);
 
@@ -139,6 +143,7 @@ class DocumentsResource extends BaseRestResource {
 
     @Override
     protected JsonNode delete(JsonNode command) throws CommandException {
+        validateHasParams(command);
         String coll = getCollectionName(command);
         String id = getDocumentId(command);
         String rid;
@@ -160,6 +165,13 @@ class DocumentsResource extends BaseRestResource {
     }
 
 
+    private void validateHasParams(JsonNode commnand) throws CommandParsingException{
+        if (!commnand.has(ScriptCommand.PARAMS)) {
+            throw new CommandParsingException(commnand,"missing parameters");
+        }
+    }
+
+
     private String getCollectionName(JsonNode command) throws CommandParsingException {
         JsonNode params = command.get(ScriptCommand.PARAMS);
         JsonNode collNode = params.get(COLLECTION);
@@ -171,6 +183,7 @@ class DocumentsResource extends BaseRestResource {
 
     @Override
     protected JsonNode put(JsonNode command) throws CommandException{
+        validateHasParams(command);
         String coll = getCollectionName(command);
         JsonNode data = getData(command);
         String id = getDocumentId(command);
@@ -178,7 +191,9 @@ class DocumentsResource extends BaseRestResource {
             String rid = DocumentService.getRidByString(id, true);
             ODocument doc = DocumentService.update(coll, rid, data);
             String json = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.DOCUMENT);
-            return Json.mapper().readTree(json);
+            ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
+            node.remove("@rid");
+            return node;
         } catch (RidNotFoundException e) {
             throw new CommandExecutionException(command,"document: "+id+" does not exists");
         } catch (UpdateOldVersionException e) {
@@ -198,6 +213,7 @@ class DocumentsResource extends BaseRestResource {
 
     @Override
     protected JsonNode post(JsonNode command) throws CommandException{
+        validateHasParams(command);
         String collection = getCollectionName(command);
         JsonNode data = getData(command);
         try {
@@ -205,8 +221,11 @@ class DocumentsResource extends BaseRestResource {
             if (doc == null){
                 return null;
             }
-            String fmt = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.JSON);
-            return Json.mapper().readTree(fmt);
+            String fmt = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.DOCUMENT);
+            JsonNode node = Json.mapper().readTree(fmt);
+            ObjectNode n =(ObjectNode)node;
+            n.remove("@rid");
+            return n;
         } catch (InvalidCollectionException throwable) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
         } catch (InvalidModelException e) {
@@ -228,16 +247,18 @@ class DocumentsResource extends BaseRestResource {
     protected JsonNode list(JsonNode command) throws CommandException {
         String collection= getCollectionName(command);
         QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
+
         try {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
+
             String s = JSONFormats.prepareResponseToJson(docs, JSONFormats.Formats.DOCUMENT);
-            return Json.mapper().readTree(s);
-        } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
+            lst.forEach((j)->((ObjectNode)j).remove("@rid"));
+            return lst;
+        } catch (SqlInjectionException | IOException e) {
+            throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
         } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"invalid collection: "+collection);
-        } catch (IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"invalid collection: "+collection,e);
         }
     }
 
@@ -253,7 +274,9 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             } else {
                 String s = JSONFormats.prepareResponseToJson(document, JSONFormats.Formats.DOCUMENT);
-                return Json.mapper().readTree(s);
+                ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
+                node.remove("@rid");
+                return node;
             }
         } catch (RidNotFoundException e) {
             return null;

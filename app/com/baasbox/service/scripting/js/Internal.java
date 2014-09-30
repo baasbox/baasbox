@@ -19,6 +19,9 @@
 package com.baasbox.service.scripting.js;
 import play.Logger;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * Created by Andrea Tortorella on 23/06/14.
  */
@@ -26,10 +29,18 @@ public class Internal {
 
     public static void log(String message){
         //todo remove
-        Logger.error(message);
+        Logger.info(message);
     }
 
     public static void log(Object err,String msg){
     //todo remove
+        if (err instanceof Throwable){
+            Throwable t = (Throwable)err;
+            StringWriter w = new StringWriter();
+            t.printStackTrace(new PrintWriter(w));
+            Logger.error(w.getBuffer().toString());
+        }
+        Logger.info(err.getClass().getName());
+        Logger.info(msg);
     }
 }

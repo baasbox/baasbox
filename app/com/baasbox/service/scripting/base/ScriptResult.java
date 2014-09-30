@@ -18,10 +18,10 @@
 
 package com.baasbox.service.scripting.base;
 
-import com.baasbox.dao.exception.ScriptException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
+ *
  * Created by Andrea Tortorella on 10/06/14.
  */
 public final class ScriptResult {
@@ -70,7 +70,7 @@ public final class ScriptResult {
         if (!Type.OBJECT.equals(type)) return false;
         JsonNode node = (JsonNode)data;
         JsonNode status = node.get("status");
-        if (status == null || !status.isIntegralNumber()) return false;
+        if (status == null || !status.isNumber()) return false;
         JsonNode content = node.get("content");
         if (content == null) return false;
 

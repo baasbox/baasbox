@@ -18,15 +18,21 @@
 
 package com.baasbox.service.scripting.js;
 
+import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.*;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.api.scripting.ScriptUtils;
 import jdk.nashorn.internal.runtime.Undefined;
 import play.Logger;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This implements mappings of data to/from javascript
@@ -127,8 +133,9 @@ final class NashornMapper {
         } else if (result instanceof String){
             return new ScriptResult((String)result);
         } else if (result instanceof ScriptObjectMirror){
-            ScriptObjectMirror mirror =((ScriptObjectMirror) result);
-            JsonNode node = convertToJson(mirror);
+            Logger.info("is mirror");
+            //ScriptObjectMirror mirror =((ScriptObjectMirror) result);
+            JsonNode node = convertDeepJson(result);
             if (node != null){
                 return new ScriptResult(node);
             } else {
@@ -139,18 +146,88 @@ final class NashornMapper {
         } else if (result instanceof Undefined){
             return ScriptResult.NULL;
         } else {
-            // todo handle other mirror types
+
             Logger.warn("Mirror: %s, of type: %s",result,result.getClass());
+            throw new RuntimeException(result.getClass().getName());
         }
 
-        return null;
+    }
+
+
+
+    private JsonNode convertDeepJson(Object obj) throws ScriptEvalException{
+        if (obj == null){
+            Logger.debug("null");
+            return NullNode.getInstance();
+        } else if (obj instanceof Boolean){
+            Logger.info("bool");
+            return BooleanNode.valueOf((Boolean) obj);
+        } else if (obj instanceof Undefined){
+            Logger.info("undef");
+            return MissingNode.getInstance();
+        } else if (obj instanceof Number){
+            Logger.info("double");
+            return DoubleNode.valueOf(((Number)obj).doubleValue());
+        } else if (obj instanceof String){
+            Logger.info("string");
+            return TextNode.valueOf((String)obj);
+        } else if (obj instanceof ScriptObjectMirror){
+            Logger.info("mirr");
+            return convertMirror((ScriptObjectMirror)obj);
+        } else {
+            Logger.info("wrong state "+obj.getClass());
+            return MissingNode.getInstance();
+        }
+    }
+
+    private JsonNode convertMirror(ScriptObjectMirror mirror) throws ScriptEvalException{
+        if (mirror == null){
+            Logger.info("NULL");
+            return NullNode.getInstance();
+        } else if (ScriptObjectMirror.isUndefined(mirror)){
+            Logger.info("UNDEF");
+            return MissingNode.getInstance();
+        } else if (mirror.isFunction()){
+            Logger.info("FUNC");
+            return MissingNode.getInstance();
+        } else if (mirror.isArray()){
+            Logger.info("ARY");
+            Collection<Object> values = mirror.values();
+            ArrayNode node = Json.mapper().createArrayNode();
+            for (Object o: values){
+                node.add(convertDeepJson(o));
+            }
+            return node;
+        } else {
+            Logger.info("OBJ");
+            ObjectNode obj = Json.mapper().createObjectNode();
+            Set<Map.Entry<String, Object>> entries = mirror.entrySet();
+            for (Map.Entry<String,Object> e:entries){
+                Object obv = e.getValue();
+                Logger.info("KEY "+e.getKey());
+                JsonNode jsonNode = convertDeepJson(obv);
+                if (jsonNode.isMissingNode()){
+                    continue;
+                }
+                obj.put(e.getKey(),jsonNode);
+            }
+            return obj;
+        }
     }
 
     private JsonNode convertToJson(ScriptObjectMirror value) throws ScriptEvalException {
+
         Object val = mirror.callMember(JSON_STRINGIFY,value);
+        for (String k: value.keySet()){
+            if ("content".equals(k)){
+                Object content = value.get("content");
+                Logger.info("Class: "+content.getClass());
+            }
+        }
         if (!(val instanceof String)){
             // this should usually mean that the returned value is a function
             // but we check for other types
+
             if (value.isFunction()){
                 throw new ScriptEvalException("Functions cannot be returned from handlers");
             }
@@ -158,6 +235,7 @@ final class NashornMapper {
         }
 
         try {
+            Logger.info("String value: "+val);
             return Json.mapper().readTree((String)val);
         } catch (IOException e) {
             throw new ScriptEvalException(e);
