@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public abstract class BaseRestResource extends Resource {
 
-    private final ImmutableMap.Builder<String,ScriptCommand> commands =
+    private final ImmutableMap.Builder<String,ScriptCommand> baseCommands =
             ImmutableMap.<String, ScriptCommand>builder()
                     .put("get", new ScriptCommand() {
                         @Override
@@ -63,6 +63,10 @@ public abstract class BaseRestResource extends Resource {
                         }
                     });
 
+    private final Map<String,ScriptCommand> commands;
+    BaseRestResource(){
+        commands = baseCommands().build();
+    }
     protected abstract JsonNode delete(JsonNode command) throws CommandException;
 
     protected abstract JsonNode put(JsonNode command) throws CommandException;
@@ -74,13 +78,13 @@ public abstract class BaseRestResource extends Resource {
     protected abstract JsonNode get(JsonNode command) throws CommandException;
 
     protected ImmutableMap.Builder<String,ScriptCommand>  baseCommands(){
-        return commands;
+        return baseCommands;
     }
 
 
     @Override
     public final Map<String, ScriptCommand> commands() {
-        return baseCommands().build();
+        return commands;
     }
 
 }

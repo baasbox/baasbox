@@ -19,6 +19,7 @@
 package com.baasbox.commands;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -28,19 +29,27 @@ import com.baasbox.commands.exceptions.CommandNotImplementedException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.exception.AlreadyFriendsException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.scripting.js.Json;
+import com.baasbox.service.user.FriendShipService;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import scala.util.parsing.combinator.testing.Str;
 
 /**
  * Created by Andrea Tortorella on 02/07/14.
@@ -60,8 +69,58 @@ class UsersResource extends BaseRestResource {
             public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
                 return reactivate(command);
             }
-        });
+        }).put("follow", this::friendshipUpdate);
     }
+
+    protected JsonNode friendshipUpdate(JsonNode command,JsonCallback unused) throws CommandException {
+        JsonNode params = command.get(ScriptCommand.PARAMS);
+        if (params == null) throw new CommandParsingException(command,"missing required parameters");
+        JsonNode from = params.get("from");
+        JsonNode to = params.get("to");
+        JsonNode remove = params.get("remove");
+        if (from==null||!from.isTextual()||
+            to == null||!to.isTextual())
+            throw new CommandParsingException(command,"missing required user");
+        boolean unfollow;
+        if (remove == null){
+            unfollow = false;
+        } else if (remove.isBoolean()){
+            unfollow =remove.asBoolean();
+        } else {
+            throw new CommandParsingException(command,"wrong parameter remove");
+        }
+        if (unfollow){
+            return  doUnfollow(command, from.asText(), to.asText());
+        } else {
+            return doFollow(command, from.asText(), to.asText());
+        }
+    }
+
+    private JsonNode doUnfollow(JsonNode command,String from,String to) throws CommandExecutionException{
+        try {
+            return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
+
+    private JsonNode doFollow(JsonNode command,String from,String to) throws CommandExecutionException{
+        try {
+            ODocument followed = FriendShipService.follow(from, to);
+            String s = JSONFormats.prepareResponseToJson(followed, JSONFormats.Formats.USER);
+            return Json.mapper().readTree(s);
+        } catch (UserNotFoundException e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        } catch (AlreadyFriendsException e) {
+            return NullNode.getInstance();
+        } catch (SqlInjectionException e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
+
+
 
 
     protected JsonNode suspend(JsonNode command) throws CommandException {
@@ -125,7 +184,39 @@ class UsersResource extends BaseRestResource {
 
     @Override
     protected JsonNode post(JsonNode command) throws CommandException {
-        throw new CommandNotImplementedException(command,"not implemented");
+        try {
+            JsonNode params = command.get(ScriptCommand.PARAMS);
+            if (params==null||!params.isObject()) throw new CommandParsingException(command,"missing parameters");
+            String username = getUsername(command);
+            JsonNode password = params.get("password");
+            if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
+            JsonNode roleNode = params.get("role");
+            String role;
+            if (roleNode == null){
+                role = DefaultRoles.REGISTERED_USER.getORole().getName();
+            } else if (roleNode.isTextual()){
+                role = roleNode.asText();
+            } else {
+                throw new CommandParsingException(command,"role parameter is not valid");
+            }
+            if (!RoleService.exists(role)){
+                throw new CommandExecutionException(command,"required role does not exists: "+role);
+            }
+            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+            JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+            JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+            JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+
+            ODocument user = UserService.signUp(username, password.asText(),
+                                                new Date(), role,
+                                                anonymousVisible,userVisible,friendsVisible, registeredVisible, false);
+            String userNode = JSONFormats.prepareResponseToJson(user, JSONFormats.Formats.USER);
+            return Json.mapper().readTree(userNode);
+        } catch (InvalidJsonException | IOException e) {
+            throw new CommandExecutionException(command,"invalid json",e);
+        } catch (UserAlreadyExistsException e) {
+            return NullNode.getInstance();
+        }
     }
 
     @Override

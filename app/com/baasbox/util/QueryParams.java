@@ -265,7 +265,7 @@ public class QueryParams implements IQueryParametersKeys{
                 }
                 query.put(k,ary);
             } else {
-                String[] o = {val.toString()};
+                String[] o = {val.asText()};
                 query.put(k,o);
             }
         }

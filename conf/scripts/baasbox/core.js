@@ -20,7 +20,7 @@
  * Created by Andrea Tortorella on 23/06/14.
  */
 
-Console.log("Loaded baasbox core");
+//Console.log("Loaded baasbox core");
 
 /**
  * Baasbox server version
@@ -142,6 +142,88 @@ Users.find = function(){
     }
 };
 
+//todo fix duplication
+Users.follow = function(){
+    var from,to;
+    if(arguments.length>1){
+        if(!isAdmin()) return null;
+        from = arguments[0];
+        to = arguments[1];
+    } else if(arguments.length==1){
+        if(isAdmin()) return null;
+        from = context.userName;
+        to = arguments[0];
+    }
+    _command({resource: 'users',
+              name: 'follow',
+              params: {
+                  from: from,
+                  to: to,
+                  remove: false
+              }});
+};
+
+Users.unfollow = function(){
+    var from,to;
+    if(arguments.length>1){
+        if(!isAdmin()) return null;
+        from = arguments[0];
+        to = arguments[1];
+    } else if(arguments.length==1){
+        if(isAdmin()) return null;
+        from = context.userName;
+        to = arguments[0];
+    }
+    _command({resource: 'users',
+        name: 'follow',
+        params: {
+            from: from,
+            to: to,
+            remove: true
+        }});
+};
+
+Users.create = function(){
+    var usr,
+        pass,
+        role,
+        visibleByAnonymousUsers,
+        visibleByRegisteredUsers,
+        visibleByTheUser,
+        visibleByFriends;
+    usr = pass = role = visibleByAnonymousUsers =
+        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = null;
+    switch (arguments.length){
+        case 4:
+            visibleByFriends = arguments[3].visibleByFriends;
+            visibleByRegisteredUsers= arguments[3].visibleByRegisteredUsers;
+            visibleByTheUser = arguments[3].visibleByTheUser;
+            visibleByAnonymousUsers= arguments[3].visibleByAnonymousUsers;
+        case 3:
+            role = arguments[2];
+        case 2:
+            pass = arguments[1];
+            usr = arguments[0];
+            break;
+        case 1:
+            throw new TypeError("missing password");
+            break;
+        default:
+            throw new TypeError("wrong arguments");
+    }
+    if(usr==null|| (!typeof  usr === 'string')) throw new TypeError("username must be a string");
+    if(pass==null||(!typeof pass === 'string')) throw new TypeError("password must be a string");
+    if(role != null && (!typeof  role === 'string')) throw new TypeError("role must be a string");
+    return _command({resource: 'users', name: 'post',
+                     params: {username: usr,
+                              password: pass,
+                              role: role,
+                              visibleByTheUser: visibleByTheUser,
+                              visibleByAnonymousUsers: visibleByAnonymousUsers,
+                              visibleByRegisteredUsers: visibleByRegisteredUsers,
+                              visibleByFriends: visibleByFriends}});
+};
+
 Users.me = function(){
     return Users.find(context.userName);
 };
@@ -191,7 +273,7 @@ Documents.find = function(){
     if(!(typeof coll === 'string')){
         throw new TypeError("you must specify a collection");
     }
-    if(id === null && (typeof q === 'object')){
+    if(id === null ){
         return _command({resource: 'documents',
                          name: 'list',
                          params: {
@@ -202,6 +284,7 @@ Documents.find = function(){
         return _command({resource: 'documents',
                          name: 'get',
                          params:{
+                             collection: coll,
                              id: id
                          }});
     }
@@ -258,7 +341,7 @@ Documents.save = function(){
         obj = arguments[0];
         coll = obj['@class'];
         id = obj['id'];
-    } else if(arguments.length===1 &&
+    } else if(arguments.length===2 &&
               typeof arguments[0]==='string' &&
               typeof arguments[1]==='object'){
         coll = arguments[0];
@@ -281,8 +364,8 @@ Documents.save = function(){
             resource: 'documents',
             name: 'post',
             params: {
-                collection: '',
-                data: {}
+                collection: coll,
+                data: obj
             }
         });
     }
