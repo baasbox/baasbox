@@ -65,38 +65,7 @@ public abstract interface ScriptCommand {
     }
 
 
-    public static  ObjectNode createCommand(String resource,String name){
-        ObjectNode cmd = Json.mapper().createObjectNode();
-        cmd.put(RESOURCE,resource);
-        cmd.put(NAME,name);
-        return cmd;
-    }
 
-    public static ObjectNode createCommand(String resource,String name,ObjectNode params){
-        ObjectNode cmd = Json.mapper().createObjectNode();
-        cmd.put(RESOURCE,resource);
-        cmd.put(NAME,name);
-        cmd.put(PARAMS,params);
-        return cmd;
-    }
-
-    public static ObjectNode createCommandForScript(String resource,String name,String script){
-        ObjectNode cmd = Json.mapper().createObjectNode();
-        cmd.put(RESOURCE,resource);
-        cmd.put(NAME,name);
-        cmd.put(ID,script);
-        return cmd;
-    }
-
-
-    public static ObjectNode createCommandForScript(String resource,String name,String script,ObjectNode params){
-        ObjectNode cmd = Json.mapper().createObjectNode();
-        cmd.put(RESOURCE,resource);
-        cmd.put(NAME,name);
-        cmd.put(ID,script);
-        cmd.put(PARAMS,params);
-        return cmd;
-    }
 
     public abstract JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException;
 }

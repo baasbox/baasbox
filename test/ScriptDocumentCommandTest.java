@@ -4,6 +4,7 @@
 
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.ScriptCommand;
+import com.baasbox.commands.ScriptCommands;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
@@ -128,7 +129,7 @@ public class ScriptDocumentCommandTest {
                 DbHelper.open("1234567890",TEST_ALT_USER,TEST_ALT_USER);
                 ObjectNode coll = MAPPER.createObjectNode();
                 coll.put("collection",TEST_COLLECTION);
-                ObjectNode cmd = ScriptCommand.createCommand("documents", "list",coll);
+                ObjectNode cmd = ScriptCommands.createCommand("documents", "list",coll);
                 JsonNode exec = CommandRegistry.execute(cmd, null);
                 assertNotNull(exec);
                 assertTrue(exec.isArray());
@@ -145,7 +146,7 @@ public class ScriptDocumentCommandTest {
                 params.put("collection",TEST_COLLECTION);
                 params.put("id", sGenIds.get(0));
                 params.put("users",users);
-                ObjectNode grant = ScriptCommand.createCommand("documents","grant",params);
+                ObjectNode grant = ScriptCommands.createCommand("documents","grant",params);
                 JsonNode node =CommandRegistry.execute(grant, null);
                 assertNotNull(node);
                 assertTrue(node.isBoolean());
@@ -163,7 +164,7 @@ public class ScriptDocumentCommandTest {
                 DbHelper.close(DbHelper.getConnection());
 
                 DbHelper.open("1234567890",TEST_USER,TEST_USER);
-                ObjectNode revoke = ScriptCommand.createCommand("documents","revoke",params);
+                ObjectNode revoke = ScriptCommands.createCommand("documents", "revoke", params);
                 JsonNode revoked =CommandRegistry.execute(revoke, null);
                 assertNotNull(revoked);
                 assertTrue(revoked.isBoolean());
@@ -278,7 +279,7 @@ public class ScriptDocumentCommandTest {
                 doc.put("fresh","fresh");
                 params.put("collection",TEST_COLLECTION);
                 params.put("data",doc);
-                ObjectNode cmd = ScriptCommand.createCommand("documents", "post", params);
+                ObjectNode cmd = ScriptCommands.createCommand("documents", "post", params);
 
                 JsonNode exec = CommandRegistry.execute(cmd, null);
                 assertNotNull(exec);
