@@ -154,7 +154,7 @@ Users.follow = function(){
         from = context.userName;
         to = arguments[0];
     }
-    _command({resource: 'users',
+    return _command({resource: 'users',
               name: 'follow',
               params: {
                   from: from,
@@ -174,7 +174,7 @@ Users.unfollow = function(){
         from = context.userName;
         to = arguments[0];
     }
-    _command({resource: 'users',
+    return _command({resource: 'users',
         name: 'follow',
         params: {
             from: from,

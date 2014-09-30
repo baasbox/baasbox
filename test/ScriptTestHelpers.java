@@ -24,7 +24,7 @@ import static org.junit.Assert.fail;
  */
 public class ScriptTestHelpers {
 
-    private void createScript(String name,String source){
+    public static void createScript(String name,String source){
         try {
             DbHelper.open("1234567890","admin","admin");
             ScriptingService.create(ScriptTestHelpers.loadScript(name, source));
