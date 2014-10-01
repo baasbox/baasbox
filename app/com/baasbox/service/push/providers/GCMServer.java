@@ -127,15 +127,12 @@ public class GCMServer extends Controller implements IPushServer {
 
 	public static boolean validatePushPayload(JsonNode bodyJson) throws BaasBoxPushException {
 		JsonNode collapse_KeyNode=bodyJson.findValue("collapse_key"); 
-		String collapse_key=null; 
 
 		if(!(collapse_KeyNode==null)) {
 			if(!(collapse_KeyNode.isTextual())) throw new PushCollapseKeyFormatException("Collapse_key MUST be a String");
-			collapse_key=collapse_KeyNode.asText();
 		}
 
 		JsonNode timeToLiveNode=bodyJson.findValue("time_to_live");
-		int time_to_live = 0;
 
 		if(!(timeToLiveNode==null)) {
 			if(!(timeToLiveNode.isNumber())) throw new PushTimeToLiveFormatException("Time_to_live MUST be a positive number or equal zero");
