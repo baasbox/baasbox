@@ -34,6 +34,7 @@ import java.util.Map;
 abstract class Resource {
 //todo discuss better naming this behaves more as a namespace
 
+
     public abstract String name();
 
     public abstract Map<String,ScriptCommand> commands();
