@@ -243,6 +243,10 @@ public class Push extends Controller {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
 		}	
+		catch(IOException e){
+			Logger.error(e.getMessage());
+			return badRequest(e.getMessage());
+		}
 		catch(PushSoundKeyFormatException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
