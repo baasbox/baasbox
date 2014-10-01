@@ -112,10 +112,10 @@ public class Push extends Controller {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 		}
-		catch (IOException e) {
+		catch (InvalidRequestException e) {
 			Logger.error(e.getMessage());
-			return badRequest(e.getMessage());
-		}
+			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
+		}		
 		catch(PushSoundKeyFormatException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
@@ -239,7 +239,11 @@ public class Push extends Controller {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 		}
-		catch (IOException e) {
+		catch (InvalidRequestException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
+		}	
+		catch(IOException e){
 			Logger.error(e.getMessage());
 			return badRequest(e.getMessage());
 		}
