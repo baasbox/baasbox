@@ -44,10 +44,10 @@ public enum CustomHttpCode {
 			PUSH_TIME_TO_LIVE_FORMAT_INVALID(40030,400,"Time_to_live MUST be a positive number or equal zero","error"),
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
-			PUSH_HOST_UNREACHABLE(50302,503,"Could not resolve host. HINT: check your internet connection","error"),
+			PUSH_HOST_UNREACHABLE(50302,503,"The server cannot resolve the host name. HINT: check your internet connection.","error"),
 			PUSH_INVALID_REQUEST(50303,503,"Could not send push notifications. HINT: Check your API Key(Google), it's possible that push service aren't enabled in Google Play Developer Console","error"),
 			PUSH_INVALID_APIKEY(50304,503,"Could not save API KEY. HINT: Check your API Key, it's possible that push service aren't enabled in the Google Play Developer Console","error"),
-			PUSH_PROFILE_DISABLED(50305,503,"Push profile disabled, one or more profile are disabled","error"),
+			PUSH_PROFILE_DISABLED(50305,503,"Push app disabled, one or more app are disabled","error"),
 			PUSH_SWITCH_EXCEPTION(50306,503,"Cannot switch, because settings for the selected mode are missing","error"),
 
 			;
