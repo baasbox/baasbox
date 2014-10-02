@@ -8,13 +8,13 @@
     <div class="box-content" id="push_conf" ng-controller="PushConfController">
 		<ul class="nav nav-tabs" id="pushSettingsTab">
 			<li class="active" data-rel="tooltip" title="App 1">
-				<a href="#push_profile_1">App nr. 1 (Default)</a>
+				<a href="#push_profile_1">App #1 (Default)</a>
 			</li>
 			<li data-rel="tooltip" title="App 2">
-				<a href="#push_profile_2">App nr. 2</a>
+				<a href="#push_profile_2">App #2</a>
 			</li>
 			<li  data-rel="tooltip" title="App 3">
-				<a href="#push_profile_3">App nr. 3</a>
+				<a href="#push_profile_3">App #3</a>
 			</li>
 		</ul>
 		<div id="pushSettingsTabContent" class="tab-content ">
@@ -56,7 +56,7 @@
 				<div class="span1">&nbsp;</div>
 				<div class="box span7"  >
 					<div  class="box-header well" ng-style="set_color($index)">
-						<h2><i class="icon-file"></i> App nr. {{$index+1}} <span ng-show="$index == 0"">(Default)</span> Settings</h2>
+						<h2><i class="icon-file"></i> App #{{$index+1}} <span ng-show="$index == 0"">(Default)</span> Settings</h2>
 					</div>
 					<div class="box-content">
 										
