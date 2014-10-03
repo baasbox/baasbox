@@ -1,48 +1,29 @@
-<div id="scripts" ng-controller="ScriptsController" class="box span11">
-
-    <div class="row-fluid box-content">
-        <div class="span11">
-            <div class="btn-toolbar">
-                <div class="btn-group">
-                    <a href="#" class="btn btn-default" ng-click="createNew()"><i class="icon icon-add"></i>New</a>
-                    <a href="#" class="btn btn-default" ng-click="saveScript()"><i class="icon icon-save"></i>Save</a>
-                    <a href="#" class="btn btn-default"><i class="icon icon-remove"></i>Delete</a>
-                </div>
-                <div>
-                    <div ng-hide="editTitleEnabled">
-                        {{currentScript.name}} <a href="#" ng-click="editTitle()"><i class="icon icon-edit"></i></a>
-                    </div>
-                    <div ng-show="editTitleEnabled">
-                        <input ng-model="tempTitle">
-                        <a href="#" ng-click="setTitle()"><i class="icon icon-save"></i></a>
-                        <a href="#" ng-click="abortTitle()"><i class="icon icon-cancel"></i></a>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-        <div class="span2">
-        <ul>
-            <li ng-repeat="script in data">
-                <a href="" ng-click="setScript($index)">{{script.name}}</a>
-            </li>
-        </ul>
-        </div>
-        <div class="span9">
-            <div bb-ace="{mode:'javascript', theme:'monokai'}" ng-model="currentScript.buff"></div>
-            <div>
-                <div class="input-append">
-                    <input type="text" ng-model="logFilter">
-                    <button class="btn" type="button" ng-click="toggleLogs()">
-                        {{ logEnabled && 'pause' || 'resume' }}
-                    </button>
-                </div>
-                <ul>
-                    <li ng-repeat="line in log">
-                      {{line}}
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+			<div id="scripts" ng-controller="ScriptsController">
+				<p class="hint">These are your installed Plugins.</p>
+				<!-- scripts  -->
+				<div class="box span4">
+					<div data-rel="tooltip" title="Installed Plugins" class="box-header well" data-original-title>
+						<h2><i class="icon icon-darkgray icon-archive"></i> Installed Plugins</h2>
+					</div>
+					<div class="box-content">
+						<ul class="plugin list">
+							<li ng-repeat="script in data.data" class="plugin item" ng-class="{activated:script.active,deactivated:!script.active}">
+								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
+								<div></div>                          
+								<span class="plugin action""><span ng-show="!script.active">Activate</span><span ng-show="script.active">Deactivate</span> </span> | <span class="plugin action" > Edit </span>  | <span class="plugin action" > Remove </span>  <span class="plugin version" ></span>                                 
+							</li>
+						</ul>
+					</div> <!-- box-content -->
+				</div><!-- box span4 -->
+				
+				<!-- code -->
+				<div class="box span7" ng-repeat="script in data.data" >
+					<div data-rel="tooltip" title="Code" class="box-header well" data-original-title>
+						<h2><i class="icon icon-darkgray icon-script"></i> {{script.name}}</h2>
+					</div>
+					<div class="box-content">
+						<pre id="plugin-code" class="js" js-code-highlight>{{script.code[0]}}</pre>
+					</div> <!-- box-content -->
+				</div><!-- box span7 -->
+				
+			</div>

@@ -1,6 +1,7 @@
 function loadScriptsPage(scopeName){
    	//load scripts
-	BBRoutes.com.baasbox.controllers.Admin.getConfiguration("Push").ajax({
+	
+	BBRoutes.com.baasbox.controllers.ScriptsAdmin.list().ajax({
 		success: function(data) {
 			applySuccessMenu(scopeName,data);
 		}
@@ -8,10 +9,18 @@ function loadScriptsPage(scopeName){
 }
 
 
-function ScriptController($scope){
+function ScriptsController($scope){
 	var _this = $scope;
-	_this.data={};
-	_this.data.isLoaded=false;
 }
 
-
+angular.module('console', [])
+	.directive('jsCodeHighlight', function($rootScope){
+	    return {
+	        restrict: 'A',
+	        scope:false,
+	        link: function(scope,elm,attrs){
+	        	elm.html(scope.script.code[0]);
+	            elm.snippet("javascript",{style:"whitengrey"});
+	        }
+	    }
+	});

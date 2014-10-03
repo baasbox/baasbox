@@ -1374,6 +1374,7 @@ function make_base_auth(user, password) {
 
 function setup(){
 
+	
 	setupAjax();
 	setupMenu();
 	setupTables();
@@ -1498,7 +1499,8 @@ function setBradCrumb(type)
 		sBradCrumb = "Files";
 		break;
 	case "#scripts":
-		sBradCrumb = "Scripts";
+		sBradCrumb = "Plugins";
+		break;
 	case "#permissions":
 		sBradCrumb = "Api Access";
 		break;		
