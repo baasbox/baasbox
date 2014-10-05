@@ -2,7 +2,7 @@
 @import helper._
 @import com.baasbox.controllers.routes._
 <!DOCTYPE html>
-<html ng-app lang="en">
+<html ng-app="console" lang="en">
 <head>
 	<!--
 		Template derived from Charisma v1.0.0 by Muhammad Usman
@@ -28,6 +28,8 @@
 	<link href="css/bootstrap-responsive.css" rel="stylesheet">
 	<link href="css/charisma-app.css" rel="stylesheet">
 	<link href="css/social-buttons.css" rel="stylesheet">
+	<link href='css/baasbox.css' rel='stylesheet'>
+	<link rel="stylesheet" type="text/css" href="css/baasbox-jsnippet.css" />
 
 
 	<!-- The HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -38,7 +40,6 @@
 	<!-- The fav icon -->
 	<link type="image/x-icon" rel="shortcut icon" href="favicon.ico">
 	<link type="image/x-icon" rel="icon" href="favicon.ico" />
-	<link href='css/baasbox.css' rel='stylesheet'>
 </head>
 
 <body>
@@ -121,6 +122,9 @@
 	<script src="js/jquery.flot.resize.min.js"></script>
 	<!-- chart libraries end -->
 
+	<!-- code snippet highlight -->
+	<script type="text/javascript" src="js/jquery.snippet.min.js"></script> 
+	
 	<!-- select or dropdown enhancer -->
 	<script src="js/jquery.chosen.min.js"></script>
 	<!-- checkbox, radio, and file input styler -->
@@ -150,6 +154,7 @@
 	<!-- BaasBox  -->
 	<script type="text/javascript" src="@com.baasbox.controllers.routes.AllRoutes.javascriptRoutes"></script>
 	<script type="text/javascript" src="bbjs/push.js"></script>
+	<script type="text/javascript" src="bbjs/scripts.js"></script>
 	<script type="text/javascript" src="bbjs/baasboxgui.js"></script>
 	<script type="text/javascript" src="bbjs/tour.js"></script>
 	<script type="text/javascript" src="bbjs/whatsnew-tour.js"></script>

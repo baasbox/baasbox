@@ -187,8 +187,6 @@ function downloadExportHref(name){
 	}else{
 		return '#';
 	}
-
-
 }
 
 
@@ -1376,6 +1374,7 @@ function make_base_auth(user, password) {
 
 function setup(){
 
+	
 	setupAjax();
 	setupMenu();
 	setupTables();
@@ -1498,6 +1497,9 @@ function setBradCrumb(type)
 		break;
 	case "#files":
 		sBradCrumb = "Files";
+		break;
+	case "#scripts":
+		sBradCrumb = "Plugins";
 		break;
 	case "#permissions":
 		sBradCrumb = "Api Access";
@@ -2182,6 +2184,9 @@ function callMenu(action){
 				$('#assetTable').dataTable().fnAddData(data);
 			}
 		});
+		case "#scripts":
+			loadScriptsPage(action);
+		break;//#scripts
 		case "#files":
 			resetDataTable( $('#fileTable'));
 			loadFilesData();
