@@ -127,7 +127,7 @@ public class ScriptUsersCommandTest {
         });
     }
 
-    public Result invokeScript(String scriptName,String user,String pass){
+    public static Result invokeScript(String scriptName,String user,String pass){
         String endpoint = "/scripts/"+scriptName;
         FakeRequest put = new FakeRequest(PUT,endpoint);
         put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);

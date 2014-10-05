@@ -96,7 +96,7 @@ class CollectionsResource extends Resource {
 
 
     private static JsonNode existsCollection(JsonNode command) throws CommandException {
-        checkPreconditions(command,false);
+//        checkPreconditions(command,false);
         String coll = extractCollectionName(command);
         try {
             boolean res =CollectionService.exists(coll);
