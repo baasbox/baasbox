@@ -246,7 +246,7 @@ var GLOBAL=this;
     };
 
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
-    Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
+    //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
 
      Module.prototype.Console = Object.create({

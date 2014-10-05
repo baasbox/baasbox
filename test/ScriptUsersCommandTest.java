@@ -7,11 +7,13 @@ import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import core.AbstractTest;
 import core.TestConfig;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import play.api.mvc.SimpleResult;
 import play.mvc.Result;
 import play.test.FakeRequest;
 
@@ -125,7 +127,7 @@ public class ScriptUsersCommandTest {
         });
     }
 
-    public Result invokeScript(String scriptName,String user,String pass){
+    public static Result invokeScript(String scriptName,String user,String pass){
         String endpoint = "/scripts/"+scriptName;
         FakeRequest put = new FakeRequest(PUT,endpoint);
         put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
@@ -133,35 +135,39 @@ public class ScriptUsersCommandTest {
         return routeAndCall(put);
     }
 
-//    @Test must be run with http context
+    @Test
     public void testUserCanMakeFriends(){
         running(fakeApplication(),()->{
             try {
                 String scriptName= "makefriends."+UUID.randomUUID();
-                ScriptTestHelpers.loadScript(scriptName,"/scripts/users_make_friends.js");
+                ScriptTestHelpers.createScript(scriptName, "/scripts/user_make_friends.js");
 
-                String endpoint = "/scripts/"+scriptName;
+                ObjectNode user = mapper.createObjectNode();
+                user.put("toFollow",sRandUsers.first());
+
+                String endpoint = "/script/"+scriptName;
                 FakeRequest put = new FakeRequest(PUT,endpoint);
                 put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
                 put.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sTestUser,sTestUser));
                 put.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                put.withJsonBody(user,PUT);
                 Result invoke = routeAndCall(put);
+                String s = contentAsString(invoke);
+                JsonNode body = mapper.readTreeOrMissing(s);
+                assertEquals("ok",body.get("result").asText());
+                assertEquals(sRandUsers.first(),body.path("data").path("user").path("name").asText());
+                assertNotNull(body.path("data").path("user").path("visibleByFriends"));
 
+                FakeRequest delete = new FakeRequest(DELETE,endpoint);
+                delete.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                delete.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sTestUser,sTestUser));
+                delete.withHeader(HTTP.CONTENT_TYPE,MediaType.APPLICATION_JSON);
+                delete.withJsonBody(user,DELETE);
+                Result dinvoke = routeAndCall(delete);
+                String ds = contentAsString(dinvoke);
 
-                DbHelper.open("1234567890", sTestUser, sTestUser);
-                ObjectNode cmd = mapper.createObjectNode();
-                cmd.put(ScriptCommand.RESOURCE,"users");
-                cmd.put(ScriptCommand.NAME,"follow");
-                ObjectNode params = mapper.createObjectNode();
-                params.put("from",sTestUser);
-                params.put("to",sRandUsers.first());
-                cmd.put(ScriptCommand.PARAMS,params);
-                JsonNode exec = CommandRegistry.execute(cmd,null);
-                assertNotNull(exec);
-                fail(exec.toString());
-                assertTrue(exec.isObject());
-                assertEquals(sRandUsers.first(),exec.path("user").path("name").asText());
-                assertNotNull(exec.get("visibleByFriends"));
+                JsonNode dbody = mapper.readTreeOrMissing(ds);
+                assertTrue(dbody.path("data").asBoolean(false));
 
             }catch (Throwable e){
                 fail(ExceptionUtils.getFullStackTrace(e));
@@ -170,4 +176,5 @@ public class ScriptUsersCommandTest {
             }
         });
     }
+
 }

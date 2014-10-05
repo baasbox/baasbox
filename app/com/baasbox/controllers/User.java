@@ -692,7 +692,13 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	  public static Result following (String username){
 		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
-		  return getFollowing(username);
+          try {
+              List<ODocument> following = FriendShipService.getFollowing(username, QueryParams.getParamsFromQueryString(request().queryString()));
+              return ok(prepareResponseToJson(following));
+          } catch (SqlInjectionException e) {
+              return internalServerError(ExceptionUtils.getFullStackTrace(e));
+          }
+//          return getFollowing(username);
 	  }
 	  
 

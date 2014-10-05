@@ -20,6 +20,7 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
 
+import com.baasbox.dao.exception.InvalidCriteriaException;
 import play.Logger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -84,8 +85,7 @@ public class UserDao extends NodeDao  {
 		OrientGraph db = DbHelper.getOrientGraphConnection();
 		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
 		OUser user=null;
-		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new 
-				String[]{DefaultRoles.REGISTERED_USER.toString()}); 
+		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{DefaultRoles.REGISTERED_USER.toString()});
 		else {
 			ORole orole = RoleDao.getRole(role);
 			if (orole==null) throw new InvalidParameterException("Role " + role + " does not exists");
@@ -115,7 +115,34 @@ public class UserDao extends NodeDao  {
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 		return result;
 	}
-	
+
+    public List<ODocument> getByUsernames(List<String> usernames,QueryParams query) throws SqlInjectionException {
+        if (query == null){
+            query = QueryParams.getInstance().where("user.name in ?").params(new Object[]{usernames});
+        } else {
+            String where = query.getWhere();
+            if (where==null){
+                query = QueryParams.getInstance().where("user.name in ?").params(new Object[]{usernames});
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(where).append(" AND ( user.name in ? )");
+                Object[] newParams;
+                Object[] params = query.getParams();
+                if (params == null){
+                    newParams = new Object[]{usernames};
+                } else {
+                    newParams = new Object[params.length+1];
+                    System.arraycopy(params,0,newParams,0,params.length);
+                    newParams[newParams.length-1]=new Object[]{usernames};
+                }
+                query.where(sb.toString());
+                query.params(newParams);
+            }
+        }
+        List<ODocument> resultList = super.get(query);
+        return resultList;
+    }
+
 	public List<ODocument> getByUsernames(List<String> usernames) throws SqlInjectionException{
 		QueryParams criteria = QueryParams.getInstance().where("user.name in ?").params(new Object [] {usernames});
 		List<ODocument> resultList= super.get(criteria);
