@@ -35,18 +35,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import play.Logger;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * {resource: 'documents',
@@ -100,6 +100,7 @@ class DocumentsResource extends BaseRestResource {
     private static final String COLLECTION = "collection";
     private static final String QUERY = "query";
     private static final String DATA = "data";
+    private static final String AUTHOR = "author";
 
     @Override
     protected ImmutableMap.Builder<String, ScriptCommand> baseCommands() {
@@ -122,10 +123,16 @@ class DocumentsResource extends BaseRestResource {
         String id = getDocumentId(command);
 
         try {
-            String rid = DocumentService.getRidByString(id,true);
-            alterGrants(command,coll,rid,true,grant);
-            alterGrants(command,coll,rid,false,grant);
+            try {
+                String rid = DocumentService.getRidByString(id, true);
+                alterGrants(command, coll, rid, true, grant);
+                alterGrants(command, coll, rid, false, grant);
+            } catch (Exception e){
+                Logger.error("error",e);
+                throw  e;
+            }
         } catch (UserNotFoundException e) {
+
             throw new CommandExecutionException(command,"user not found exception");
         } catch (DocumentNotFoundException e) {
             throw new CommandExecutionException(command,"document not found exception");
@@ -190,7 +197,7 @@ class DocumentsResource extends BaseRestResource {
         try {
             String rid = DocumentService.getRidByString(id, true);
             ODocument doc = DocumentService.update(coll, rid, data);
-            String json = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.DOCUMENT);
+            String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT);
             ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
             node.remove("@rid");
             return node;
@@ -216,15 +223,20 @@ class DocumentsResource extends BaseRestResource {
         validateHasParams(command);
         String collection = getCollectionName(command);
         JsonNode data = getData(command);
+        String authorOverride = getAuthorOverride(command);
+
         try {
-            ODocument doc = DocumentService.create(collection, data);
+           ODocument doc =
+                    DocumentService.create(collection, data);
+//                    DocumentService.createOnBehalf(collection,authorOverride,data);
             if (doc == null){
                 return null;
             }
-            String fmt = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.DOCUMENT);
+            doc.detach();
+            String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT);
             JsonNode node = Json.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
-            n.remove("@rid");
+//            n.remove("@rid");
             return n;
         } catch (InvalidCollectionException throwable) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
@@ -233,6 +245,17 @@ class DocumentsResource extends BaseRestResource {
         } catch (Throwable e) {
             throw new CommandExecutionException(command,"error creating document: "+e.getMessage());
         }
+    }
+
+    private String getAuthorOverride(JsonNode command) throws CommandParsingException{
+        JsonNode node = command.get(ScriptCommand.PARAMS).get(AUTHOR);
+        if (node != null && !node.isTextual()){
+            throw new CommandParsingException(command,"author must be a string");
+
+        } else if (node != null){
+            return node.asText();
+        }
+        return null;
     }
 
     private JsonNode getData(JsonNode command) throws CommandParsingException {
@@ -251,7 +274,7 @@ class DocumentsResource extends BaseRestResource {
         try {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
-            String s = JSONFormats.prepareResponseToJson(docs, JSONFormats.Formats.DOCUMENT);
+            String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT);
             ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
             lst.forEach((j)->((ObjectNode)j).remove("@rid"));
             return lst;
@@ -273,7 +296,7 @@ class DocumentsResource extends BaseRestResource {
             if (document == null){
                 return null;
             } else {
-                String s = JSONFormats.prepareResponseToJson(document, JSONFormats.Formats.DOCUMENT);
+                String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT);
                 ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
                 node.remove("@rid");
                 return node;

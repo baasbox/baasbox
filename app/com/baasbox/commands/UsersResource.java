@@ -88,10 +88,10 @@ class UsersResource extends BaseRestResource {
                 List<ODocument> res = following ?
                         FriendShipService.getFollowing(user.asText(), qparams) :
                         FriendShipService.getFriendsOf(user.asText(), qparams);
-                String s = JSONFormats.prepareResponseToJson(res, JSONFormats.Formats.USER);
+                String s = JSONFormats.prepareDocToJson(res, JSONFormats.Formats.USER);
 
                 return Json.mapper().readTreeOrMissing(s);
-            } catch (SqlInjectionException | IOException e){
+            } catch (SqlInjectionException e){
                 throw new CommandExecutionException(command,e.getMessage(),e);
             }
         };
@@ -142,7 +142,7 @@ class UsersResource extends BaseRestResource {
     private JsonNode doFollow(JsonNode command,String from,String to) throws CommandExecutionException{
         try {
             ODocument followed = FriendShipService.follow(from, to);
-            String s = JSONFormats.prepareResponseToJson(followed, JSONFormats.Formats.USER);
+            String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
             return Json.mapper().readTree(s);
         } catch (UserNotFoundException e) {
             throw new CommandExecutionException(command,e.getMessage(),e);
@@ -210,7 +210,7 @@ class UsersResource extends BaseRestResource {
         JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
         try {
             ODocument doc = UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
-            String s = JSONFormats.prepareResponseToJson(doc, JSONFormats.Formats.USER);
+            String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
             return Json.mapper().readTree(s);
         } catch (Exception e) {
             throw new CommandExecutionException(command,"Error updating user: "+e.getMessage());
@@ -245,7 +245,7 @@ class UsersResource extends BaseRestResource {
             ODocument user = UserService.signUp(username, password.asText(),
                                                 new Date(), role,
                                                 anonymousVisible,userVisible,friendsVisible, registeredVisible, false);
-            String userNode = JSONFormats.prepareResponseToJson(user, JSONFormats.Formats.USER);
+            String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
             return Json.mapper().readTree(userNode);
         } catch (InvalidJsonException | IOException e) {
             throw new CommandExecutionException(command,"invalid json",e);
@@ -260,7 +260,7 @@ class UsersResource extends BaseRestResource {
         QueryParams qp = QueryParams.getParamsFromJson(paramsNode);
         try {
             List<ODocument> users = UserService.getUsers(qp, true);
-            String response = JSONFormats.prepareResponseToJson(users, JSONFormats.Formats.USER);
+            String response = JSONFormats.prepareDocToJson(users, JSONFormats.Formats.USER);
             return Json.mapper().readTree(response);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command, "error executing command: " + e.getMessage());
@@ -278,7 +278,7 @@ class UsersResource extends BaseRestResource {
             if (doc == null){
                 return NullNode.getInstance();
             }
-            String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
+            String resp = JSONFormats.prepareDocToJson(doc,JSONFormats.Formats.USER);
             return Json.mapper().readTree(resp);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
