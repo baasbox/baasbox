@@ -368,10 +368,10 @@ POST /admin/plugin                             com.baasbox.controllers.ScriptsAd
 GET  /admin/plugin                             com.baasbox.controllers.ScriptsAdmin.list()
 GET  /admin/plugin/:name                       com.baasbox.controllers.ScriptsAdmin.get(name:String)
 PUT  /admin/plugin/:name                       com.baasbox.controllers.ScriptsAdmin.update(name:String)
-DELETE  /admin/plugin/:name/last                    com.baasbox.controllers.ScriptsAdmin.delete(name:String)
-DELETE /admin/plugin/:name           com.baasbox.controllers.ScriptsAdmin.drop(name:String)
-PUT /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.activate(name: String,activate:Boolean ?=true)
-DELETE /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.activate(name: String,activate:Boolean ?=false)
+DELETE  /admin/plugin/:name/last               com.baasbox.controllers.ScriptsAdmin.delete(name:String)
+DELETE /admin/plugin/:name					   com.baasbox.controllers.ScriptsAdmin.drop(name:String)
+PUT /admin/plugin/:name/active                 com.baasbox.controllers.ScriptsAdmin.activate(name: String)
+DELETE /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.deactivate(name: String)
 
 
 #GET /admin/stats/logs                           com.baasbox.controllers.Stats.log()
