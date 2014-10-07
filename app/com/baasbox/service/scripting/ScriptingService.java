@@ -205,14 +205,20 @@ public class ScriptingService {
         return script;
     }
 
-    public static ODocument get(String name,boolean onlyvalid) throws ScriptException {
+    public static ODocument get(String name,boolean onlyvalid,boolean active) throws ScriptException {
         ScriptsDao dao = ScriptsDao.getInstance();
         ODocument script = dao.getByName(name);
-        if (script!=null && onlyvalid &&script.<Boolean>field(ScriptsDao.INVALID)){
-            throw new ScriptException("Script is in invalid state");
+        if (script != null){
+            if (onlyvalid && script.<Boolean>field(ScriptsDao.INVALID)){
+                throw new ScriptException("Script is in invalid state");
+            }
+            if (active && !(script.<Boolean>field(ScriptsDao.ACTIVE))){
+                throw new ScriptEvalException("Script is not active");
+            }
         }
         return script;
     }
+
     /**
      * Deletes a script object with name
      * @param name
@@ -241,6 +247,17 @@ public class ScriptingService {
         updateCacheVersion();
         ScriptsDao dao = ScriptsDao.getInstance();
         return dao.delete(name);
+    }
+
+
+    public static Boolean activate(String name, boolean activate) {
+        updateCacheVersion();
+        ScriptsDao dao = ScriptsDao.getInstance();
+        ODocument doc = dao.getByName(name);
+        if (doc == null){
+            return null;
+        }
+        return dao.activate(doc,activate);
     }
 
     public static ScriptResult invoke(ScriptCall call) throws ScriptEvalException{
@@ -349,4 +366,5 @@ public class ScriptingService {
     public static String main() {
         return MAIN.get();
     }
+
 }

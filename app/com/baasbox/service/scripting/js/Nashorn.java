@@ -28,6 +28,7 @@ import jdk.nashorn.api.scripting.NashornException;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.runtime.ECMAErrors;
 import jdk.nashorn.internal.runtime.ECMAException;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import play.Logger;
 
 import javax.script.ScriptEngine;
@@ -102,6 +103,7 @@ class Nashorn {
                 Throwable cause = err.getCause();
                 NashornException exc =((NashornException) err);
                 String scriptStack = NashornException.getScriptStackString(exc);
+                scriptStack = ExceptionUtils.getFullStackTrace(exc);
                 int columnNumber = exc.getColumnNumber();
                 int lineNumber = exc.getLineNumber();
                 String fileName = exc.getFileName();
@@ -109,7 +111,7 @@ class Nashorn {
                 String errorMessage = String.format("ScriptError: '%s' at: <%s>%d:%d\n%s",message,fileName,lineNumber,columnNumber,scriptStack);
                 throw new ScriptEvalException(errorMessage,err);
             }
-            throw new ScriptEvalException(err.getMessage(),err);
+            throw new ScriptEvalException(ExceptionUtils.getFullStackTrace(err),err);
         }
     }
 
@@ -141,7 +143,7 @@ class Nashorn {
     }
 
     private ScriptObjectMirror loadUserModule(String name) throws com.baasbox.dao.exception.ScriptException {
-        ODocument doc = ScriptingService.get(name,true);
+        ODocument doc = ScriptingService.get(name,true,true);
         if (doc == null){
             return null;
         }

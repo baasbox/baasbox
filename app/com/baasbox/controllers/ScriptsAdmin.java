@@ -52,6 +52,20 @@ import java.util.List;
 @With({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class ScriptsAdmin extends Controller{
 
+    public static Result activate(String name,boolean activate){
+        if (Logger.isTraceEnabled()) Logger.trace("Start Method");
+        Boolean s =ScriptingService.activate(name, activate);
+        Result res = null;
+        if (s ==null){
+            res = notFound("Script: "+name+" does not exists");
+        } else if (s){
+            res = ok("Script: "+name+(activate? " is now active":" is no longer active"));
+        } else {
+            res = ok("Script already "+name+(activate? " active":" deactivated"));
+        }
+        if (Logger.isTraceEnabled()) Logger.trace("End Method");
+        return res;
+    }
 
     @BodyParser.Of(BodyParser.Json.class)
     public static Result update(String name){
