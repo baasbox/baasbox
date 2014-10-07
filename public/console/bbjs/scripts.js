@@ -31,6 +31,24 @@ function ScriptsController($scope){
 		});
 	}
 	
+	$scope.activate=function(index){
+		var name=$scope.data.data[index].name;
+		BBRoutes.com.baasbox.controllers.ScriptsAdmin.activate(name).ajax({
+			success: function(data) {
+				$scope.reload();
+			}
+		});
+	}//$scope.activate()
+
+	$scope.deactivate=function(index){
+		var name=$scope.data.data[index].name;
+		BBRoutes.com.baasbox.controllers.ScriptsAdmin.deactivate(name).ajax({
+			success: function(data) {
+				$scope.reload();
+			}
+		});
+	}//$scope.deactivate()
+	
 	$scope.remove=function(index){
 		var name=$scope.data.data[index].name;
 		if (confirm("This will permanently delete the plugin from the server. Are you sure?")){
