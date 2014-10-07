@@ -1,13 +1,16 @@
-			<div id="scripts" ng-controller="ScriptsController">
+			<div id="scripts" ng-controller="ScriptsController" ng-init="selected=0">
 				<p class="hint">These are your installed Plugins.</p>
 				<!-- scripts  -->
 				<div class="box span4">
 					<div data-rel="tooltip" title="Installed Plugins" class="box-header well" data-original-title>
 						<h2><i class="icon icon-darkgray icon-archive"></i> Installed Plugins</h2>
+						<div class="box-icon">
+							<a href="#" id="btnReloadExports" ng-click="reload()" title="Reload plugins list" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
+						</div>
 					</div>
 					<div class="box-content">
 						<ul class="plugin list">
-							<li ng-repeat="script in data.data" class="plugin item" ng-class="{activated:script.active,deactivated:!script.active}">
+							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:selected.item==$index}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
 								<span class="plugin action""><span ng-show="!script.active">Activate</span><span ng-show="script.active">Deactivate</span> </span> | <span class="plugin action" > Edit </span>  | <span class="plugin action" > Remove </span>  <span class="plugin version" ></span>                                 
@@ -17,12 +20,12 @@
 				</div><!-- box span4 -->
 				
 				<!-- code -->
-				<div class="box span7" ng-repeat="script in data.data" >
+				<div  class="box span7"  >
 					<div data-rel="tooltip" title="Code" class="box-header well" data-original-title>
-						<h2><i class="icon icon-darkgray icon-script"></i> {{script.name}}</h2>
+						<h2><i class="icon icon-darkgray icon-script"></i><span ng-bind="data.data[getSelectedItem()].name"></span> </h2>
 					</div>
 					<div class="box-content">
-						<pre id="plugin-code" class="js" js-code-highlight>{{script.code[0]}}</pre>
+						<pre id="plugin-code" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()].code[0]"></pre>
 					</div> <!-- box-content -->
 				</div><!-- box span7 -->
 				
