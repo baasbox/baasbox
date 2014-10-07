@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import play.Logger;
 import play.libs.EventSource;
 import play.libs.F;
@@ -54,7 +55,7 @@ public class ScriptInvoker extends Controller{
     public static Result invoke(String name,String path){
         ODocument serv = null;
         try {
-            serv = ScriptingService.get(name, true);
+            serv = ScriptingService.get(name, true,true);
         } catch (ScriptException e) {
            return status(503,"Script is in an invalid state");
         }
@@ -67,7 +68,8 @@ public class ScriptInvoker extends Controller{
             ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
-            return internalServerError("script failure "+e.getMessage());
+            Logger.error("Error evaluating script",e);
+            return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
         }
 //        catch (IllegalStateException e){
 //            return internalServerError("script returned invalid json response");

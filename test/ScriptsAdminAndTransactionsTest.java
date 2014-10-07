@@ -28,7 +28,7 @@ import java.util.UUID;
 /**
  * Created by eto on 05/10/14.
  */
-public class ScriptsCanSwitchToAdminTest   {
+public class ScriptsAdminAndTransactionsTest {
     private final static String USER = "user_test_script_sudo-"+ UUID.randomUUID();
     private final static String TEST_SUDO = "test.sudo-"+UUID.randomUUID();
 
