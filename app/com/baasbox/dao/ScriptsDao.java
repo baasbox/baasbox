@@ -215,6 +215,7 @@ public class ScriptsDao {
     public boolean activate(ODocument script, boolean activate) {
         boolean current =script.<Boolean>field(ACTIVE);
         script.field(ACTIVE,activate);
+        script.save();
         return current!=activate;
     }
 }
