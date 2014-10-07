@@ -1,3 +1,6 @@
+import com.baasbox.dao.ScriptsDao;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import core.AbstractAdminTest;
 import core.TestConfig;
 import org.apache.http.protocol.HTTP;
@@ -9,6 +12,8 @@ import play.test.FakeRequest;
 import javax.ws.rs.core.MediaType;
 
 
+import java.util.UUID;
+
 import static play.test.Helpers.*;
 
 /**
@@ -18,7 +23,7 @@ import static play.test.Helpers.*;
 public class AdminCreateScriptsTest extends AbstractAdminTest {
     @Override
     public String getRouteAddress() {
-        return "/admin/script";
+        return "/admin/plugin";
     }
 
     @Override
@@ -37,37 +42,39 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
             @Override
             public void run() {
                 Result result;
-                result = routeGetScript("test.create");
+                String e = "test.create"+UUID.randomUUID();
+                result = routeGetScript(e);
                 assertRoute(result, "testRouteGetScript. NoScript", Http.Status.NOT_FOUND, "", true);
 
-                result = routeCreateScript("test.create");
+                result = routeCreateScript(e,"test.create");
                 assertRoute(result,"testRouteGetScript. Create",Http.Status.CREATED,"",true);
 
-                result = routeGetScript("test.create");
+                result = routeGetScript(e);
                 assertRoute(result,"testRouteGetScript. Get",Http.Status.OK,"on('install',function(e){})",true);
 
-                result = routeDeleteScript("test.create");
+                result = routeDeleteScript(e);
                 assertRoute(result,"testRouteGetScript. Delete",Http.Status.OK,"",true);
 
-                result = routeGetScript("test.create");
+                result = routeGetScript(e);
                 assertRoute(result,"testRouteGetScript. Deleted",Http.Status.NOT_FOUND,"",true);
 
             }
         });
     }
 
-    @Test //fixme currently failing
+    @Test //
     public void testUpdateScript(){
         running(getFakeApplication(), new Runnable() {
             @Override
             public void run() {
-                Result result = routeCreateScript("test.update");
+                String ep = "test.update"+ UUID.randomUUID();
+                Result result = routeCreateScript(ep,"test.update");
                 assertRoute(result,"testUpdateScript create",Http.Status.CREATED,null,false);
 
-                Result update = routeUpdateScript("test.update","test.update1");
+                Result update = routeUpdateScript(ep,"test.update1");
                 assertRoute(update,"testUpdateScript update",Http.Status.OK,"",false);
 
-                result = routeGetScript("test.update");
+                result = routeGetScript(ep);
                 assertRoute(result,"testUpdateScript get",Http.Status.OK,"function(update1){}",true);
             }
         });
@@ -79,16 +86,17 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
         running(getFakeApplication(), new Runnable() {
             @Override
             public void run() {
-                Result create =routeCreateScript("test.create");
+                String s = "test.create"+UUID.randomUUID();
+                Result create =routeCreateScript(s,"test.create");
                 assertRoute(create, "testRouteCreateScript", Http.Status.CREATED, null, false);
 
-                create = routeCreateScript("test.create");
-                assertRoute(create,"testRouteCreateScript",Http.Status.BAD_REQUEST,"Script test.create already exists",true);
+                create = routeCreateScript(s,"test.create");
+                assertRoute(create,"testRouteCreateScript",Http.Status.BAD_REQUEST,"Script "+s+" already exists",true);
 
-                Result delete = routeDeleteScript("test.create");
+                Result delete = routeDeleteScript(s);
                 assertRoute(delete,"testRouteCreateScript. Delete",Http.Status.OK,null,false);
 
-                delete = routeDeleteScript("test.create");
+                delete = routeDeleteScript(s);
                 assertRoute(delete,"testRouteCreateScript. Delete",Http.Status.NOT_FOUND,null,false);
             }
         });
@@ -100,7 +108,7 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
             @Override
             public void run() {
                 Result result;
-                result = routeCreateScript("baasbox.forbidden");
+                result = routeCreateScript("baasbox.forbidden"+UUID.randomUUID(),"baasbox.forbidden");
                 assertRoute(result,"testRouteCreateReservedScript",Http.Status.BAD_REQUEST,null,false);
             }
         });
@@ -122,12 +130,16 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
         return result;
      }
 
-    private Result routeCreateScript(String name){
+    private Result routeCreateScript(String name,String script){
+        JsonNode payload = getPayload("/scripts/" + script + ".json");
+        ObjectNode o = (ObjectNode)payload;
+        o.put(ScriptsDao.NAME,name);
+
         FakeRequest request = new FakeRequest(getMethod(),getRouteAddress());
         request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE)
                          .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
                          .withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                         .withJsonBody(getPayload("/scripts/"+name+".json"));
+                         .withJsonBody(o);
         Result result = routeAndCall(request);
         return  result;
     }

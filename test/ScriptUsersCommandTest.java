@@ -128,7 +128,7 @@ public class ScriptUsersCommandTest {
     }
 
     public static Result invokeScript(String scriptName,String user,String pass){
-        String endpoint = "/scripts/"+scriptName;
+        String endpoint = "/plugin/"+scriptName;
         FakeRequest put = new FakeRequest(PUT,endpoint);
         put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
         put.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(user,pass));
@@ -145,7 +145,7 @@ public class ScriptUsersCommandTest {
                 ObjectNode user = mapper.createObjectNode();
                 user.put("toFollow",sRandUsers.first());
 
-                String endpoint = "/script/"+scriptName;
+                String endpoint = "/plugin/"+scriptName;
                 FakeRequest put = new FakeRequest(PUT,endpoint);
                 put.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
                 put.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sTestUser,sTestUser));
