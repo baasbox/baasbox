@@ -167,10 +167,10 @@ var GLOBAL=this;
                 }
 
                 return JSON.parse(resp);
-            } catch (e){
+            }
+            catch (e){
                 Internal.log(e, e.message);
-               // throw new BaasBoxError(JSON.parse(e));
-                throw new Error();
+                throw e;
             }
         };
 

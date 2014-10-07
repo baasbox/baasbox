@@ -3,6 +3,7 @@ import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import core.TestConfig;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -14,8 +15,7 @@ import play.test.FakeRequest;
 import java.util.Date;
 import java.util.UUID;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static play.test.Helpers.*;
 
 /**
@@ -53,28 +53,31 @@ public class ScriptsAdminAndTransactionsTest {
         });
     }
 
-    //@Test
-//    public void canRunCodeTransactionally(){
-//        running(fakeApplication(),()->{
-//            try {
-//                ObjectMapper mapper = Json.mapper();
-//                String operation = "normal";
-//                ObjectNode node =mapper.createObjectNode();
-//                node.put("collection",TEST_COLLECTION);
-//                node.put("op",operation);
-//
-//                FakeRequest req = new FakeRequest(POST,"/plugin/"+TEST_TRANSACT);
-//                req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-//                req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(USER,USER));
-//                req =req.withJsonBody(node);
-//                Result res = routeAndCall(req);
-//                String content = contentAsString(res);
-//                fail(content);
-//            }catch (Throwable e){
-//                fail(ExceptionUtils.getStackTrace(e));
-//            }
-//        });
-//    }
+    @Test
+    public void canRunCodeTransactionally(){
+        running(fakeApplication(),()->{
+            try {
+                ObjectMapper mapper = Json.mapper();
+                String operation = "normal";
+                ObjectNode node =mapper.createObjectNode();
+                node.put("collection",TEST_COLLECTION);
+                node.put("op",operation);
+
+                FakeRequest req = new FakeRequest(POST,"/plugin/"+TEST_TRANSACT);
+                req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(USER,USER));
+                req =req.withJsonBody(node);
+                Result res = routeAndCall(req);
+                String content = contentAsString(res);
+                JsonNode response = mapper.readTree(content);
+                assertEquals(TEST_COLLECTION,response.get("data").get("@class").asText());
+                assertNotNull(response.get("data").get("id"));
+
+            }catch (Throwable e){
+                fail(ExceptionUtils.getStackTrace(e));
+            }
+        });
+    }
     @Test
     public void testCanUserSwitchToAdmin(){
         running(fakeApplication(),()->{
