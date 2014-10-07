@@ -53,8 +53,16 @@ public class JSONFormats {
 		DocumentCutter cutter=new DocumentCutter(doc);
 		return cutter.getCuttedDoc();
 	}
-	
-	public static String prepareResponseToJson(ODocument doc, JSONFormats.Formats format){
+
+    public static String prepareDocToJson(ODocument doc,JSONFormats.Formats format){
+        return doc.toJSON(format.toString());
+    }
+
+    public static String prepareDocToJson(List<ODocument> docs,JSONFormats.Formats format){
+        return OJSONWriter.listToJSON(docs,format.toString());
+    }
+
+    public static String prepareResponseToJson(ODocument doc, JSONFormats.Formats format){
 		return JSONFormats.cutBaasBoxFields(doc).toJSON(format.toString());
 	}
 	
