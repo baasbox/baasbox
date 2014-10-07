@@ -18,7 +18,7 @@ import static play.test.Helpers.*;
 public class AdminCreateScriptsTest extends AbstractAdminTest {
     @Override
     public String getRouteAddress() {
-        return "/admin/script";
+        return "/admin/plugin";
     }
 
     @Override
