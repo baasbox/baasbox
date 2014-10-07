@@ -77,50 +77,6 @@ public class ScriptDocumentCommandTest {
     }
 
 
-    //@Test uses http context so cannot be run in isolation?
-    public void testSwitchUser(){
-        running(fakeApplication(),
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-
-                            DbHelper.open("1234567890",TEST_USER,TEST_USER);
-                            ObjectNode cmd = MAPPER.createObjectNode();
-                            cmd.put(ScriptCommand.RESOURCE,"db");
-                            cmd.put(ScriptCommand.MAIN,"gen");
-                            cmd.put(ScriptCommand.ID,"gen");
-                            cmd.put(ScriptCommand.NAME,"isAdmin");
-
-                            JsonNode exec = CommandRegistry.execute(cmd, null);
-                            assertTrue(exec.isBoolean());
-                            assertFalse(exec.asBoolean());
-
-                            ObjectNode su = MAPPER.createObjectNode();
-                            su.put(ScriptCommand.RESOURCE,"db");
-                            su.put(ScriptCommand.ID, "gen");
-                            su.put(ScriptCommand.MAIN, "gen");
-                            su.put(ScriptCommand.NAME, "switchUser");
-
-                            JsonNode res = CommandRegistry.execute(su, (js) -> {
-                                boolean connectedAsAdmin = DbHelper.isConnectedAsAdmin(false);
-
-                                return BooleanNode.valueOf(connectedAsAdmin);
-                            });
-
-                            assertNotNull(res);
-                            assertTrue(res.isBoolean());
-                            assertTrue(res.asBoolean());
-
-                        } catch (Throwable e) {
-                            fail(ExceptionUtils.getFullStackTrace(e));
-                        } finally {
-                            DbHelper.close(DbHelper.getConnection());
-                        }
-                    }
-                });
-
-    }
 
     @Test
     public void testGrantAndRevoke(){
