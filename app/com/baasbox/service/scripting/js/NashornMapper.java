@@ -154,28 +154,31 @@ final class NashornMapper {
     }
 
 
+    private JsonNode convertNumber(Number number){
+        if (number instanceof Long||number instanceof Integer){
+            return LongNode.valueOf(number.longValue());
+        } else if (number instanceof Double||number instanceof Float){
+            return DoubleNode.valueOf(number.doubleValue());
+        } else {
+            return LongNode.valueOf(number.longValue());
+        }
+    }
 
     private JsonNode convertDeepJson(Object obj) throws ScriptEvalException{
         if (obj == null){
-            Logger.debug("null");
             return NullNode.getInstance();
         } else if (obj instanceof Boolean){
-            Logger.info("bool");
             return BooleanNode.valueOf((Boolean) obj);
         } else if (obj instanceof Undefined){
-            Logger.info("undef");
             return MissingNode.getInstance();
         } else if (obj instanceof Number){
-            Logger.info("double");
-            return DoubleNode.valueOf(((Number)obj).doubleValue());
+            return convertNumber((Number)obj);
+
         } else if (obj instanceof String){
-            Logger.info("string");
             return TextNode.valueOf((String)obj);
         } else if (obj instanceof ScriptObjectMirror){
-            Logger.info("mirr");
             return convertMirror((ScriptObjectMirror)obj);
         } else {
-            Logger.info("wrong state "+obj.getClass());
             return MissingNode.getInstance();
         }
     }
