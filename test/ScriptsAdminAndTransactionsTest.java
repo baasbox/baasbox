@@ -1,3 +1,24 @@
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.POST;
+import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+
+import java.util.Date;
+import java.util.UUID;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import play.mvc.Result;
+import play.test.FakeRequest;
+
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
@@ -5,18 +26,8 @@ import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import core.TestConfig;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import play.mvc.Result;
-import play.test.FakeRequest;
-
-import java.util.Date;
-import java.util.UUID;
-
-import static org.junit.Assert.*;
-import static play.test.Helpers.*;
 
 /**
  * Created by eto on 05/10/14.
@@ -64,6 +75,7 @@ public class ScriptsAdminAndTransactionsTest {
                 node.put("op",operation);
 
                 FakeRequest req = new FakeRequest(POST,"/plugin/"+TEST_TRANSACT);
+
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
                 req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(USER,USER));
                 req =req.withJsonBody(node);
@@ -73,11 +85,16 @@ public class ScriptsAdminAndTransactionsTest {
                 assertEquals(TEST_COLLECTION,response.get("data").get("@class").asText());
                 assertNotNull(response.get("data").get("id"));
 
+
             }catch (Throwable e){
                 fail(ExceptionUtils.getStackTrace(e));
             }
         });
     }
+
+
+
+
     @Test
     public void testCanUserSwitchToAdmin(){
         running(fakeApplication(),()->{

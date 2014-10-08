@@ -52,7 +52,7 @@ import java.util.List;
 @With({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class ScriptsAdmin extends Controller{
 
-    public static Result activate(String name,boolean activate){
+    private static Result _activate(String name,boolean activate){
         if (Logger.isTraceEnabled()) Logger.trace("Start Method");
         Boolean s =ScriptingService.activate(name, activate);
         Result res = null;
@@ -66,6 +66,15 @@ public class ScriptsAdmin extends Controller{
         if (Logger.isTraceEnabled()) Logger.trace("End Method");
         return res;
     }
+    
+    public static Result activate(String name){
+    	return _activate(name,true);
+    }
+    
+    public static Result deactivate(String name){
+    	return _activate(name,false);
+    }
+    
 
     @BodyParser.Of(BodyParser.Json.class)
     public static Result update(String name){
