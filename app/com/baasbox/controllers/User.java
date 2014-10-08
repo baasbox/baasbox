@@ -693,7 +693,9 @@ public class User extends Controller {
 	  public static Result following (String username){
 		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
           try {
-              List<ODocument> following = FriendShipService.getFollowing(username, QueryParams.getParamsFromQueryString(request().queryString()));
+              Context ctx=Http.Context.current.get();
+              QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+              List<ODocument> following = FriendShipService.getFollowing(username, criteria);
               return ok(prepareResponseToJson(following));
           } catch (SqlInjectionException e) {
               return internalServerError(ExceptionUtils.getFullStackTrace(e));

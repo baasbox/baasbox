@@ -121,7 +121,7 @@ public class UserDao extends NodeDao  {
             query = QueryParams.getInstance().where("user.name in ?").params(new Object[]{usernames});
         } else {
             String where = query.getWhere();
-            if (where==null){
+            if (where==null|| where.isEmpty()){
                 query = QueryParams.getInstance().where("user.name in ?").params(new Object[]{usernames});
             } else {
                 StringBuilder sb = new StringBuilder();
