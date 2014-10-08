@@ -24,15 +24,8 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import com.baasbox.security.ScriptingSandboxSecutrityManager;
-
-import play.api.libs.concurrent.Promise;
-
-import java.io.UnsupportedEncodingException;
-
-import play.mvc.Results.*;
 import play.libs.F;
 import play.mvc.*;
-import play.mvc.Http.*;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -205,7 +198,6 @@ public class Global extends GlobalSettings {
     	//activate metrics
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
-    	
     	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";

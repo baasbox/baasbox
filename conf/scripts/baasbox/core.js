@@ -30,6 +30,40 @@ exports.version = '0.9.0';
 
 var Documents = {};
 
+var WS = {};
+var wsRequest = function(method,url,body,params,headers){
+    return _command({resource: 'script',
+                     name: 'ws',
+                     params: {
+                         url: url,
+                         method: method,
+                         params: params,
+                         headers: headers,
+                         body: body
+                     }});
+};
+
+WS.post = function(url,body,opts){
+    opts =opts||{};
+    return wsRequest('post',url,body,opts.params,opts.headers);
+};
+
+WS.get = function(url,opts){
+    opts=opts||{};
+    return wsRequest('get',url,null,opts.params,opts.headers);
+};
+
+WS.put = function(url,body,opts){
+    opts = opts||{};
+    return wsRequest('put',url,body,opts.params,opts.headers);
+};
+
+
+WS.delete = function(url,opts){
+    opts = opts||{};
+    return wsRequest('delete',url,null,opts.params,opts.headers);
+};
+
 
 
 var log = function(msg){
@@ -487,6 +521,7 @@ exports.Documents = Documents;
 exports.Users = Users;
 exports.DB = DB;
 exports.Push = Push;
+exports.WS= WS;
 exports.log = log;
 
 exports.runAsAdmin=runAsAdmin;

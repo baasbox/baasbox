@@ -22,6 +22,8 @@ import static org.junit.Assert.*;
 public class ScriptStorageTest {
     private static final String SCRIPT = "test.storage-"+ UUID.randomUUID();
     private static final String SERIALIZE = "test.serialize-"+UUID.randomUUID();
+    private static final String CALLWS = "test.callws-"+UUID.randomUUID();
+
 
     @BeforeClass
     public static void init(){
@@ -30,6 +32,7 @@ public class ScriptStorageTest {
                 DbHelper.open("1234567890", "admin", "admin");
                 ScriptTestHelpers.createScript(SCRIPT, "scripts/local_storage_test.js");
                 ScriptTestHelpers.createScript(SERIALIZE,"scripts/serialize_test.js");
+                ScriptTestHelpers.createScript(CALLWS,"scripts/call_external.js");
             } catch (Exception e) {
                 fail(ExceptionUtils.getStackTrace(e));
             } finally {
@@ -38,6 +41,23 @@ public class ScriptStorageTest {
         });
     }
 
+
+    @Test
+    public void externalCall(){
+        running(fakeApplication(),()->{
+            try {
+                FakeRequest req = new FakeRequest(GET,"/plugin/"+ CALLWS);
+                req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
+                        .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+                Result res = routeAndCall(req);
+                JsonNode result = Json.mapper().readTree(contentAsString(res));
+                fail(result.toString());
+
+            }catch (Exception e){
+                fail(ExceptionUtils.getStackTrace(e));
+            }
+        });
+    }
     @Test
     public void serializationTest(){
         running(fakeApplication(),()->{
@@ -55,8 +75,8 @@ public class ScriptStorageTest {
                 assertTrue(data.path("ary").isArray());
                 assertTrue(data.path("no").isNull());
                 assertTrue(data.path("date").asText().startsWith(Year.now().toString()));
-                assertEquals("custom",data.path("custom").path("val").asText());
-                
+                assertEquals("custom", data.path("custom").path("val").asText());
+
             }catch (Exception e){
                 fail(ExceptionUtils.getStackTrace(e));
             }

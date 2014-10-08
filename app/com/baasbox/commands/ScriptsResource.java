@@ -67,34 +67,25 @@ class ScriptsResource extends Resource {
                        return null;
                    }
                })
-              /*  .put("switchUser", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                        try {
-                            DbHelper.reconnectAsAdmin();
-                            return callback.call(NullNode.getInstance());
-                        } finally {
-                            DbHelper.reconnectAsAuthenticatedUser();
-                        }
-                    }
-                })*/
-                .put("storage", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-
-                        return storageCommand(command, callback);
-                    }
-
-                })
+                .put("ws", ScriptsResource::wsCall)
+                .put("storage", ScriptsResource::storageCommand)
                 .put("event", new ScriptCommand() {
-                                @Override
-                                public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                                    // todo publish pubic json event for streaming
-                                    return null;
-                                }
+                    @Override
+                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
+                        // todo publish pubic json event for streaming
+                        return null;
+                    }
 
                 })
                 .build();
+
+    private static JsonNode wsCall(JsonNode command,JsonCallback callback) throws CommandException{
+        try {
+            return ScriptingService.callJsonSync(command.get(ScriptCommand.PARAMS));
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
 
     private static JsonNode storageCommand(JsonNode command, JsonCallback callback) throws CommandException {
         JsonNode moduleId = command.get(ScriptCommand.ID);

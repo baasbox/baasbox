@@ -19,26 +19,25 @@
 package com.baasbox.service.scripting;
 
 import com.baasbox.dao.ScriptsDao;
-import com.baasbox.dao.exception.InvalidScriptException;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.service.webservices.HttpClientService;
 import com.baasbox.service.scripting.base.*;
-import com.baasbox.service.scripting.js.Internal;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import play.Logger;
 import play.libs.EventSource;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import play.libs.WS;
 
 /**
  * Created by Andrea Tortorella on 10/06/14.
@@ -347,6 +346,71 @@ public class ScriptingService {
         boolean active = activeNode == null?false:activeNode.asBoolean();
         ODocument doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
         return doc;
+    }
+
+
+    public static JsonNode callJsonSync(JsonNode req) throws Exception{
+        return callJsonSync(req.get("url").asText(),
+                req.get("method").asText(),
+                mapJson(req.get("params")),
+                mapJson(req.get("headers")),
+                req.get("body"));
+    }
+
+
+    private static Map<String,List<String>> mapJson(JsonNode node){
+        if (node == null){
+            return null;
+        }
+        if (node.isObject()){
+            Map<String,List<String>> ret = new LinkedHashMap<>();
+            node.fieldNames().forEachRemaining((field)->{
+                JsonNode jsonNode = node.get(field);
+                List<String> cur = ret.get(field);
+                if (cur == null){
+                    cur = new LinkedList<>();
+                    ret.put(field, cur);
+                }
+                append(cur, jsonNode);
+            });
+            return ret;
+        }
+        return null;
+    }
+
+    private static void append(List<String> list,JsonNode node){
+        if (node==null||node.isNull()||node.isMissingNode()||node.isObject()) return;
+        if (node.isValueNode()) list.add(node.asText());
+        if (node.isArray()){
+            node.forEach((n)->{
+                if (n!=null && (!n.isNull()) && (!n.isMissingNode()) &&n.isValueNode())list.add(n.toString());
+            });
+        }
+    }
+
+    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
+        try {
+            ObjectNode node = Json.mapper().createObjectNode();
+            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
+
+            int status = resp.getStatus();
+            node.put("status",status);
+
+            String header = resp.getHeader("Content-Type");
+            if (header==null ||  header.startsWith("text")){
+                node.put("body",resp.getBody());
+            } else if (header.startsWith("application/json")){
+                node.put("body",resp.asJson());
+            } else {
+                node.put("body",resp.getBody());
+            }
+
+            return node;
+        } catch (Exception e) {
+            Logger.error("failed to connect: "+e.getMessage());
+            throw e;
+        }
+
     }
 
 
