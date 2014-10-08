@@ -12,6 +12,7 @@ function loadScriptsPage(scopeName){
 function ScriptsController($scope){
 	$scope.selected=0;
 	$scope.data={};
+	$scope.showStorage=false;
 	
 	$scope.selectItem = function(s){
 		$scope.selected=s;
@@ -26,6 +27,7 @@ function ScriptsController($scope){
 			success: function(data) {
 				$scope.$apply(function(){
 					$scope.data=data;
+					$scope.selected=0;
 				});
 			}
 		});
@@ -60,6 +62,14 @@ function ScriptsController($scope){
 		}
 	}//$scope.remove()
 	
+	$scope.toggleStorageView=function(){
+		$scope.showStorage = !$scope.showStorage;
+	}
+	
+	$scope.getShowStorage=function(){
+		return $scope.showStorage;
+	}
+	
 }
 
 /*
@@ -76,6 +86,8 @@ angular.module('console', [])
 	    }
 	});
 */
+
+angular.module("console", ['ui.ace']);
 
 angular.module('console', [])
 	.directive('snippet', ['$timeout', '$interpolate', function($timeout, $interpolate) {

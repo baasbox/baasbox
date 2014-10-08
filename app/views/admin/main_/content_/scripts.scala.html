@@ -1,19 +1,24 @@
 			<div id="scripts" ng-controller="ScriptsController" ng-init="">
 				<p class="hint">These are your installed Plugins.</p>
-				<!-- scripts  -->
+				
+				<div class="span11">
+					<a href="#" id="newPlugin" class="btn btn-primary btn-action">New...</a>
+				</div>
+				
+				<!-- plugins  -->
 				<div class="box span4">
 					<div data-rel="tooltip" title="Installed Plugins" class="box-header well" data-original-title>
 						<h2><i class="icon icon-darkgray icon-archive"></i> Installed Plugins</h2>
 						<div class="box-icon">
-							<a href="#" id="btnReloadExports" ng-click="reload()" title="Reload plugins list" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
+							<a href="#" id="btnReloadPlugins" ng-click="reload()" title="Reload plugins list" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
 						</div>
 					</div>
 					<div class="box-content">
 						<ul class="plugin list">
-							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:selected.item==$index}">
+							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:getSelectedItem()==$index,invalid:script._invalid}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
-								<span class="plugin action""><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> </span> | <span class="plugin action" > Edit </span>  | <span class="plugin action" > Remove </span>  <span class="plugin version" ></span>                                 
+								<span class="plugin action""><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> </span> | <span class="plugin action" > Edit </span>  | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>                                 
 							</li>
 						</ul>
 					</div> <!-- box-content -->
@@ -23,10 +28,21 @@
 				<div  class="box span7"  >
 					<div data-rel="tooltip" title="Code" class="box-header well" data-original-title>
 						<h2><i class="icon icon-darkgray icon-script"></i><span ng-bind="data.data[getSelectedItem()].name"></span> </h2>
+						<div class="box-icon">
+							<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
+						</div>
 					</div>
+					<div ng-show="getShowStorage()" class="box-content">
+						<pre id="plugin-storage" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()]._storage"></pre>
+					</div> <!-- box-content -->
 					<div class="box-content">
 						<pre id="plugin-code" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()].code[0]"></pre>
 					</div> <!-- box-content -->
 				</div><!-- box span7 -->
-				
+			
+				<!-- Editor -->	
+				<div class="span11">
+					<div class="editor" style="height: 200px;" ui-ace ng-model="data.data[getSelectedItem()].code[0]"></div>
+				</div>
 			</div>
+			
