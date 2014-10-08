@@ -50,22 +50,44 @@ var log = function(msg){
 var DB = {};
 
 
-DB.runInTransaction = function(fn){
-    if(!(typeof fn === 'function'))
-        throw new Error("runInTransaction requires a single function argument");
-    _command({resource: 'db',
-              name: 'transact',
-              callback: fn
-              });
-};
-
-DB.abortTransaction = function(){
-    _command({resource: 'db',name: 'abortTransaction'});
-};
-
 DB.isInTransaction = function(){
     return _command({resource: 'db',
                      name: 'isInTransaction'});
+};
+
+DB.beginTransaction = function(){
+  _command({resource: 'db', name:'beginTransaction'});
+};
+
+DB.commit = function(){
+    _command({resource: 'db', name: 'commitTransaction'});
+};
+
+DB.rollback = function(){
+    _command({resource: 'db', name: 'rollbackTransaction'});
+    return null;
+};
+
+var ABORT  = Object.create(null);
+
+DB.runInTransaction = function(fn){
+    try {
+        DB.beginTransaction();
+        var r =fn(ABORT);
+        if(DB.isInTransaction()) {
+            if (r === ABORT) {
+                DB.rollback();
+            } else {
+                DB.commit();
+            }
+        }
+        return r;
+    } catch (x){
+        if (DB.isInTransaction()){
+            DB.rollback();
+        }
+        throw x;
+    }
 };
 
 DB.createCollection = function(name){
@@ -358,17 +380,20 @@ Documents.grant = function(coll,id,permissions){
 Documents.save = function(){
     var coll = null,
         obj = null,
-        id = null;
+        id = null,
+        author = null;
     if(arguments.length===1 && typeof arguments[0] === 'object'){
         obj = arguments[0];
         coll = obj['@class'];
         id = obj['id'];
+        author = obj['_author'];
     } else if(arguments.length===2 &&
               typeof arguments[0]==='string' &&
               typeof arguments[1]==='object'){
         coll = arguments[0];
         obj = arguments[1];
         id = obj['id'];
+        author=obj['_author'];
     }
     if(!(obj && coll)){
         throw new TypeError("Invalid arguments");
@@ -387,6 +412,7 @@ Documents.save = function(){
             name: 'post',
             params: {
                 collection: coll,
+                author: author,
                 data: obj
             }
         });

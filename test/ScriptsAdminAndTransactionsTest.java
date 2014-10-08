@@ -1,3 +1,6 @@
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static play.test.Helpers.POST;
@@ -61,7 +64,7 @@ public class ScriptsAdminAndTransactionsTest {
         });
     }
 
-   @Test
+    @Test
     public void canRunCodeTransactionally(){
         running(fakeApplication(),()->{
             try {
@@ -72,20 +75,27 @@ public class ScriptsAdminAndTransactionsTest {
                 node.put("op",operation);
 
                 FakeRequest req = new FakeRequest(POST,"/plugin/"+TEST_TRANSACT);
-               req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
-               req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(USER,USER));
+
+                req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+                req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(USER,USER));
                 req =req.withJsonBody(node);
                 Result res = routeAndCall(req);
                 String content = contentAsString(res);
-                fail(content);
+                JsonNode response = mapper.readTree(content);
+                assertEquals(TEST_COLLECTION,response.get("data").get("@class").asText());
+                assertNotNull(response.get("data").get("id"));
+
+
             }catch (Throwable e){
                 fail(ExceptionUtils.getStackTrace(e));
             }
         });
     }
 
-   /*
-   @Test
+
+
+
+    @Test
     public void testCanUserSwitchToAdmin(){
         running(fakeApplication(),()->{
             try {
@@ -106,7 +116,7 @@ public class ScriptsAdminAndTransactionsTest {
             }
         });
     }
-*/
+
 
 
 

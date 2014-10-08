@@ -105,8 +105,10 @@ public class DocumentService {
 	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
+
 		return doc;
 	}
+
 
 	public static ODocument get(String collectionName,String rid,PartsParser parser) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException, InvalidCriteriaException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
@@ -166,7 +168,7 @@ public class DocumentService {
 	public static ODocument get(String rid) {
 		GenericDao dao = GenericDao.getInstance();
 		ODocument doc=dao.get(rid);
-		return doc;
+     	return doc;
 	}
 
 	/**
@@ -204,7 +206,7 @@ public class DocumentService {
 		if (role==null) throw new RoleNotFoundException(rolename);
 		ODocument doc = get(collectionName, rid);
 		if (doc==null) throw new DocumentNotFoundException(rid);
-		return PermissionsHelper.grant(doc, permission, role);
+        return PermissionsHelper.grant(doc, permission, role);
 	}
 
 	public static ODocument revokePermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws  IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, RoleNotFoundException {

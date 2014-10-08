@@ -1,11 +1,13 @@
 package com.baasbox.commands;
 
+import ch.qos.logback.classic.db.DBHelper;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,24 +31,41 @@ class DBResource extends Resource {
     }
 
     public static final Map<String,ScriptCommand> COMMANDS =
-            ImmutableMap.of("switchUser", DBResource::switchUser,
-                            "transact", DBResource::runInTransaction,
-                            "isAdmin",DBResource::isConnectedAsAdmin,
-                            "isInTransaction",DBResource::isInTransaction,
-                            "abortTransaction",DBResource::abortTransation);
+            ImmutableMap.<String,ScriptCommand>builder()
+                        .put("switchUser", DBResource::switchUser)
+                        .put("isAdmin",DBResource::isConnectedAsAdmin)
+                        .put("beginTransaction",DBResource::beginTransaction)
+                        .put("isInTransaction",DBResource::isInTransaction)
+                        .put("commitTransaction",DBResource::commitTransaction)
+                        .put("rollbackTransaction",DBResource::rollbackTransaction).build();
+
+//            ImmutableMap.of("switchUser", DBResource::switchUser,
+//                            "transact", DBResource::runInTransaction,
+//                            "isAdmin",DBResource::isConnectedAsAdmin,
+//                            "isInTransaction",DBResource::isInTransaction,
+//                            "abortTransaction",DBResource::abortTransation);
 
 
-    private static final ThreadLocal<Boolean> JS_TRANSACTION_RUNNING = new ThreadLocal<Boolean>(){
-        @Override
-        protected Boolean initialValue() {
-            return false;
-        }
-    };
 
-    private static JsonNode abortTransation(JsonNode c,JsonCallback callback) throws CommandException{
-        if (JS_TRANSACTION_RUNNING.get()) {
-            throw new AbortTransaction();
-        }
+//    private static final ThreadLocal<Boolean> JS_TRANSACTION_RUNNING = new ThreadLocal<Boolean>(){
+//        @Override
+//        protected Boolean initialValue() {
+//            return false;
+//        }
+//    };
+
+    private static JsonNode beginTransaction(JsonNode c,JsonCallback callback) throws CommandException{
+        DbHelper.requestTransaction();
+        return NullNode.getInstance();
+    }
+
+    private static JsonNode rollbackTransaction(JsonNode c,JsonCallback callback) throws CommandException{
+        DbHelper.rollbackTransaction();
+        return NullNode.getInstance();
+    }
+
+    private static JsonNode commitTransaction(JsonNode command,JsonCallback callback) throws CommandException {
+        DbHelper.commitTransaction();
         return NullNode.getInstance();
     }
 
@@ -64,29 +83,29 @@ class DBResource extends Resource {
         return BooleanNode.valueOf(DbHelper.isConnectedAsAdmin(true));
     }
 
-    private static JsonNode runInTransaction(JsonNode command,JsonCallback callback) throws CommandException{
-        boolean commit = true;
-        try {
-
-            DbHelper.requestTransaction();
-            JS_TRANSACTION_RUNNING.set(true);
-            JsonNode res = callback.call(NullNode.getInstance());
-            JS_TRANSACTION_RUNNING.set(false);
-            return res;
-        }catch (AbortTransaction t){
-            commit = false;
-            return NullNode.getInstance();
-        }catch (Exception e){
-            commit = false;
-            throw new CommandExecutionException(command,e.getMessage(),e);
-        } finally {
-            if (commit){
-                DbHelper.commitTransaction();
-            } else {
-                DbHelper.rollbackTransaction();
-            }
-        }
-    }
+//    private static JsonNode runInTransaction(JsonNode command,JsonCallback callback) throws CommandException{
+//        boolean commit = true;
+//        try {
+//
+//            DbHelper.requestTransaction();
+//            JS_TRANSACTION_RUNNING.set(true);
+//            JsonNode res = callback.call(NullNode.getInstance());
+//            JS_TRANSACTION_RUNNING.set(false);
+//            return res;
+//        }catch (AbortTransaction t){
+//            commit = false;
+//            return NullNode.getInstance();
+//        }catch (Exception e){
+//            commit = false;
+//            throw new CommandExecutionException(command,e.getMessage(),e);
+//        } finally {
+//            if (commit){
+//                DbHelper.commitTransaction();
+//            } else {
+//                DbHelper.rollbackTransaction();
+//            }
+//        }
+//    }
 
     private static JsonNode isInTransaction(JsonNode command,JsonCallback callback) throws CommandException {
         return BooleanNode.valueOf(DbHelper.isInTransaction());
