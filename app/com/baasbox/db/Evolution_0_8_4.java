@@ -33,10 +33,10 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class Evolution_0_9_0 implements IEvolution {
-	private String version="0.9.0";
+public class Evolution_0_8_4 implements IEvolution {
+	private String version="0.8.4";
 	
-	public Evolution_0_9_0() {}
+	public Evolution_0_8_4() {}
 
 	@Override
 	public String getFinalVersion() {
