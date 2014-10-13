@@ -42,7 +42,7 @@
 			
 				<!-- Editor -->	
 				<div class="span11">
-					<div class="editor" ng-show="currentScript" style="height: 200px;" ui-ace="{mode: 'javascript',theme: 'solarized_light'}" ng-model="currentScript.buffer"></div>
+					<div class="editor" ng-show="currentScript" style="height: 200px;" ui-ace="{mode: 'javascript',theme: 'solarized_light',require: ['ace/ext/language_tools'],advanced:{enableSnippets: true,enableBasicAutocompletion: true,enableLiveAutocompletion: true}}" ng-model="currentScript.buffer"></div>
 					<div class="editor-buttons" ng-show="currentScript"><span ng-click="saveScript()">Save</span> <span ng-click="discardEdits()"> Discard </span><span ng-click="closeEditor()"> Close </span></div>
 				</div>
 			</div>
