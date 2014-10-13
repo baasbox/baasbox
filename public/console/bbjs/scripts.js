@@ -32,10 +32,17 @@ function ScriptsController($scope,prompt){
 
 	var onNewScript = function(resp){
 		if(validateName(resp)){
-			$scope.currentScript ={buffer: "/* script: "+resp+" */"};
+			$scope.currentScript ={buffer: "/* script: "+resp+" */\n"};
 		} else {
 			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
 		}
+	};
+
+	var onUpdateSucces = function(){
+		$scope.currentScript.buffer = undefined;
+		$scope.currentScript = null;
+		$scope.selected= 0;
+		$scope.reload();
 	};
 
 	var postScript = function(script){
@@ -54,8 +61,7 @@ function ScriptsController($scope,prompt){
 				console.log(data);
 			},
 			success: function(data){
-
-				console.log(data);
+				onUpdateSucces();
 			}
 		});
 	};
@@ -72,7 +78,7 @@ function ScriptsController($scope,prompt){
 				console.log(data);
 			},
 			success: function(data){
-				console.log(data);
+				onUpdateSucces();
 			}
 		});
 
@@ -97,20 +103,29 @@ function ScriptsController($scope,prompt){
 	};
 
 	$scope.discardEdits = function(){
-		$scope.currentScript = null;
+		var scr = $scope.currentScript;
+		if (scr.code){
+			scr.buffer=scr.code[0];
+		} else {
+			scr.buffer = "/* script: "+scr.name+" */\n";
+		}
+		$scope.currentScript = scr;
+
 	};
 
 	$scope.selectItem = function(s){
 		$scope.selected=s;
 	};
-	
+
+	$scope.closeEditor = function(){
+		$scope.currentScript.buffer = undefined;
+		$scope.currentScript = null;
+	};
+
 	$scope.getSelectedItem = function(){
 		return $scope.selected;
 	};
 
-	$scope.discardEdits = function(){
-		console.log("Discarding");
-	};
 
 	$scope.saveScript = function(){
 		if(!$scope.currentScript) return;
