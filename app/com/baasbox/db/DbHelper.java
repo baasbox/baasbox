@@ -47,7 +47,6 @@ import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
-import com.baasbox.db.hook.HidePassword;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
@@ -72,8 +71,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -177,7 +176,9 @@ public class DbHelper {
 		}
 		//patch for issue #469
 		if (StringUtils.isEmpty(criteria.getWhere())){
-			ret += " where 1=1";
+			final OUser user = getConnection().getUser();
+			if (user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) 
+				 ret += " where 1=1";
 		}
 		if (!StringUtils.isEmpty(criteria.getGroupBy())){
 			ret += " group by ( " + criteria.getGroupBy() + " )";
