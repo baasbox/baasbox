@@ -51,8 +51,8 @@ public class Link extends Controller{
 			ODocument link = LinkService.createLink(sourceId, destId, edgeName);
 			toReturn = (ODocument)link.getRecord().copy();
 			//toReturn.detach();
-			toReturn.field("out",((ODocument)(link.field("out"))).field("_node"));
-			toReturn.field("in",((ODocument)(link.field("in"))).field("_node"));
+			toReturn.field("out",(ODocument)((ODocument)(link.field("out"))).field("_node"));
+			toReturn.field("in",(ODocument)((ODocument)(link.field("in"))).field("_node"));
 		}catch (DocumentNotFoundException e){
 			return badRequest("Source or Destination record was not found. Hint: do you have the read grant on them? Or ids are not valid");
 		}

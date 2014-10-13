@@ -1,0 +1,138 @@
+<p class="hint">
+    This is the Push Notifications Settings Page. From here you can configure up to three Apps (AKA Profiles) that can receive Push Notifications from this BaasBox.
+</p>
+<div class="box span11">
+    <div class="box-header well">
+        <h2><i class="icon-envelope"></i> Push Notifications Settings</h2>
+    </div>
+    <div class="box-content" id="push_conf" ng-controller="PushConfController">
+		<ul class="nav nav-tabs" id="pushSettingsTab">
+			<li class="active" data-rel="tooltip" title="App 1">
+				<a href="#push_profile_1">App #1 (Default)</a>
+			</li>
+			<li data-rel="tooltip" title="App 2">
+				<a href="#push_profile_2">App #2</a>
+			</li>
+			<li  data-rel="tooltip" title="App 3">
+				<a href="#push_profile_3">App #3</a>
+			</li>
+		</ul>
+		<div id="pushSettingsTabContent" class="tab-content ">
+			<div data-ng-repeat="i in [1,2,3]" class="tab-pane" ng-class="{active:$index==0}" id="push_profile_{{$index+1}}">
+		   	<div class="span4 box">
+
+			    	<div class="box-content">
+						<div class="controls">
+							The Push Notifications for this App are 
+								<strong>
+									<span ng-show="!isEnabled($index+1)">DISABLED</span>
+									<span ng-show="isEnabled($index+1)">ENABLED</span>
+								</strong>
+								<br />
+								<div ng-show="!isEnabled($index+1)">	
+									<button ng-click="updateInlineSetting(getEnableKey($index+1),'true')" type="button" class="btn btn-success" >Enable Push</button>
+								</div>
+								<div ng-show="isEnabled($index+1)">
+									<button ng-click="updateInlineSetting(getEnableKey($index+1),'false')" type="button" class="btn btn-danger">Disable Push</button>
+								</div>
+												
+								<div style="clear:both"></div>
+								<br />
+					  		Environment selected is 
+								<strong>
+									<span class="red" ng-show="!isSandbox($index+1)">PRODUCTION</span>
+									<span ng-show="isSandbox($index+1)">SANDBOX</span>
+								</strong>
+								<br />
+								<div ng-show="!isSandbox($index+1)">	
+									<button ng-click="updateInlineSetting(getSandboxKey($index+1),'true')" type="button" class="btn btn-success" >Enable SANDBOX</button>
+								</div>
+								<div ng-show="isSandbox($index+1)">
+									<button ng-click="updateInlineSetting(getSandboxKey($index+1),'false')" type="button" class="btn btn-danger">GO TO PRODUCTION</button>
+								</div>
+						</div><!-- controls -->
+					</div><!-- box-content -->
+				</div><!-- span4 box -->
+				<div class="span1">&nbsp;</div>
+				<div class="box span7"  >
+					<div  class="box-header well" ng-style="set_color($index)">
+						<h2><i class="icon-file"></i> App #{{$index+1}} <span ng-show="$index == 0"">(Default)</span> Settings</h2>
+					</div>
+					<div class="box-content">
+										
+							<div class="settings android">
+								<h3>Android</h3>
+								<div class="setting">
+									<h4>SANDBOX</h4>
+									<p>{{getSandboxAndroidKey($index+1).description}}</p>
+									<div class="control-group" ng-class="{warning: isChanged(getSandboxAndroidKey($index+1))}">
+										<input ng-change="valueChanged(getSandboxAndroidKey($index+1))"  type="text" ng-model="getSandboxAndroidKey($index+1).value"/>
+										<button type="button" ng-click="updateInlineSetting(getSandboxAndroidKey($index+1))" class="btn btn-primary save">Save</button>
+										<span ng-show="getSandboxAndroidKey($index+1).error!=null" class="error"> {{getSandboxAndroidKey($index+1).error}} </span>
+									</div>
+								</div>
+								<div class="setting">
+									<h4>PRODUCTION</h4>
+									<p>{{getProductionAndroidKey($index+1).description}}</p>
+									<div class="control-group" ng-class="{warning: isChanged(getProductionAndroidKey($index+1))}">
+										<input ng-change="valueChanged(getProductionAndroidKey($index+1))"   type="text" ng-model="getProductionAndroidKey($index+1).value"/>
+										<button type="button" ng-click="updateInlineSetting(getProductionAndroidKey($index+1))" class="btn btn-primary save">Save</button>
+										<span ng-show="getProductionAndroidKey($index+1).error!=null" class="error"> {{getProductionAndroidKey($index+1).error}} </span>
+									</div>
+								</div>
+							</div> <!-- Android Settings -->
+		
+							<div class="settings ios">
+								<h3>iOS</h3>
+								<div class="setting">
+									<p>{{getIOSTimeout($index+1).description}}</p>
+									<div class="control-group" ng-class="{warning: isChanged(getIOSTimeout($index+1))}">
+										<input ng-change="valueChanged(getIOSTimeout($index+1))"  type="text" ng-model="getIOSTimeout($index+1).value"/>
+										<button type="button" ng-click="updateInlineSetting(getIOSTimeout($index+1))" class="btn btn-primary save">Save</button>
+										<span ng-show="ggetIOSTimeout($index+1).error!=null" class="error"> {{getIOSTimeout($index+1).error}} </span>
+									</div>
+									<h4>SANDBOX</h4>
+										<p>{{getSandboxIOSCertificate($index+1).description}}</p>
+										<form name="{{keyName(getSandboxIOSCertificate($index+1).key)}}" id="{{keyName(getSandboxIOSCertificate($index+1).key)}}" method="PUT">
+											<div class="uploaded span7" ng-model="data" data-ng-show="getSandboxIOSCertificate($index+1).filename || '' != ''">A file is already present: <strong>{{getSandboxIOSCertificate($index+1).filename}}</strong></div>
+											<div class="control-group" ng-class="{warning: isChanged(getSandboxIOSCertificate($index+1))}">
+												<input   data-no-uniform="true" accept=".p12" type="file" id="{{getSandboxIOSCertificate($index+1).key}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="$(this).parent('.control-group').addClass('warning');angular.element(this).scope().setFiles(this); angular.element(this).scope().valueChanged(angular.element(this).scope().getSandboxIOSCertificate({{$index+1}}))"/>
+												<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting(getSandboxIOSCertificate($index+1))">Upload</button>
+												<span ng-show="getSandboxIOSCertificate($index+1).error!=null" class="error"> {{getSandboxIOSCertificate($index+1).error}} </span>
+												<span ng-show="isChanged(getSandboxIOSCertificate($index+1))" class="warning"> You have not uploaded this file yet </span>											
+											</div>
+										</form>
+										<p>{{getSandboxIOSCertificatePassword($index+1).description}}</p>
+										<div class="control-group" ng-class="{warning: isChanged(getSandboxIOSCertificatePassword($index+1))}">
+											<input ng-change="valueChanged(getSandboxIOSCertificatePassword($index+1))"  type="text" ng-model="getSandboxIOSCertificatePassword($index+1).value"/>
+											<button type="button" ng-click="updateInlineSetting(getSandboxIOSCertificatePassword($index+1))" class="btn btn-primary save">Save</button>
+											<span ng-show="getSandboxIOSCertificatePassword($index+1).error!=null" class="error"> {{getSandboxIOSCertificatePassword($index+1).error}} </span>
+										</div>
+								</div>
+								<div class="setting">
+									<h4>PRODUCTION</h4>
+										<p>{{getProductionIOSCertificate($index+1).description}}</p>
+										<form name="{{keyName(getProductionIOSCertificate($index+1).key)}}" id="{{keyName(getProductionIOSCertificate($index+1).key)}}" method="PUT">
+											<div class="uploaded span7" ng-model="data" data-ng-show="getProductionIOSCertificate($index+1).filename || '' != ''">A file is already present: <strong>{{getProductionIOSCertificate($index+1).filename}}</strong></div>
+											<div class="control-group" ng-class="{warning: isChanged(getProductionIOSCertificate($index+1))}">
+												<input  data-no-uniform="true" accept=".p12" type="file" id="{{getProductionIOSCertificate($index+1).key}}-file" class="input-xlarge" ng-model-instant name="file"  onchange="$(this).parent('.control-group').addClass('warning');angular.element(this).scope().setFiles(this);angular.element(this).scope().valueChanged(angular.element(this).scope().getProductionIOSCertificate({{$index+1}}))"/>
+												<button type="button" class="btn btn-primary upload" ng-click="updateFileSetting(getProductionIOSCertificate($index+1))">Upload</button>
+												<span ng-show="getProductionIOSCertificate($index+1).error!=null" class="error"> {{getProductionIOSCertificate($index+1).error}} </span>
+												<span ng-show="isChanged(getProductionIOSCertificate($index+1))" class="warning"> You have not uploaded this file yet </span>
+											</div>
+										</form>
+										<p>{{getProductionIOSCertificatePassword($index+1).description}}</p>
+										<div class="control-group" ng-class="{warning: isChanged(getProductionIOSCertificatePassword($index+1))}">
+											<input ng-change="valueChanged(getProductionIOSCertificatePassword($index+1))"  type="text" ng-model="getProductionIOSCertificatePassword($index+1).value"/>
+											<button type="button" ng-click="updateInlineSetting(getProductionIOSCertificatePassword($index+1))" class="btn btn-primary save">Save</button>
+											<span ng-show="getProductionIOSCertificatePassword($index+1).error!=null" class="error"> {{getProductionIOSCertificatePassword($index+1).error}} </span>
+										</div>
+								</div>
+							</div> <!-- iOS Settings -->
+						
+					</div><!-- box-content-->
+				</div><!-- box span7 -->
+			</div><!-- tabpane --><!-- ng-repeat --><!-- id push_profile_n -->
+		</div><!-- pushSettingsTabContent -->
+    </div><!-- box content -->
+</div>

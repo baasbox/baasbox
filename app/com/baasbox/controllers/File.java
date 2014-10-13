@@ -191,7 +191,7 @@ public class File extends Controller {
 				InputStream is = new FileInputStream(fileContent);
 		    	/* extract file metadata and content */
 		    	try{
-		    	    BodyContentHandler contenthandler = new BodyContentHandler();
+		    	    BodyContentHandler contenthandler = new BodyContentHandler(-1);
 		    		//DefaultHandler contenthandler = new DefaultHandler();
 			        Metadata metadata = new Metadata();
 			        metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
@@ -237,6 +237,7 @@ public class File extends Controller {
 		    	}catch ( JsonProcessingException e) {
 		    		throw new Exception ("Error parsing acl field. HINTS: is it a valid JSON string?", e);
 				}catch (Throwable e){
+					Logger.error("Error parsing uploaded file",e);
 		    		throw new Exception ("Error parsing uploaded file", e);
 		    	} finally{
 		    		if (is != null) is.close();

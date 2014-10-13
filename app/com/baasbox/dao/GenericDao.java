@@ -99,7 +99,7 @@ public class GenericDao {
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		return result;
 	}
@@ -113,6 +113,7 @@ public class GenericDao {
 	public void executeCommand(String commandString, Object[] params) {
 		ODatabaseRecordTx db =  DbHelper.getConnection();
 		OCommandRequest command=db.command(new OCommandSQL(commandString));
+		//Logger.debug("########## is in transaction??  : " + db.getTransaction().isActive());
 		command.execute(params);
 	}
 	

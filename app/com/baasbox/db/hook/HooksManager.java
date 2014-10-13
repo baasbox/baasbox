@@ -37,13 +37,10 @@ public class HooksManager {
 		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
 		boolean register=true;
-		//OrientDB 1.7: Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
-		//Iterator<ORecordHook> it =hooks.keySet().iterator();
-		
-		//OrientDB 1.6:
-		Set<ORecordHook> hooks = db.getHooks();
-		Iterator<ORecordHook> it = hooks.iterator();
-		
+		//OrientDB 1.7: 
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		Iterator<ORecordHook> it =hooks.keySet().iterator();
+
 		while (it.hasNext()){		
 			if (it.next() instanceof BaasBoxHook) {
 				if (Logger.isDebugEnabled()) Logger.debug("BaasBox hooks already registerd for this connection");
@@ -54,6 +51,7 @@ public class HooksManager {
 		if (register){
 			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... start");
 			db.registerHook(Audit.getIstance(),HOOK_POSITION.REGULAR);
+			db.registerHook(HidePassword.getIstance(),HOOK_POSITION.LAST);
 			if (Logger.isDebugEnabled()) Logger.debug("Registering BaasBox hooks... done");
 		}
 		if (Logger.isDebugEnabled()) Logger.debug("Hooks: "+ db.getHooks());
@@ -66,13 +64,9 @@ public class HooksManager {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
 		if (Logger.isDebugEnabled()) Logger.debug("unregistering hooks...");
-		//OrientDB 1.7: Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
-		//List hs = IteratorUtils.toList(hooks.keySet().iterator());
-		
-		//OrientDB 1.6:
-		Set<ORecordHook> hooks = db.getHooks();
-		List hs = IteratorUtils.toList(hooks.iterator());
-		
+		//OrientDB 1.7: 
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		List hs = IteratorUtils.toList(hooks.keySet().iterator());
 		Iterator<ORecordHook> it =hs.iterator();
 		while (it.hasNext()){
 			ORecordHook h = it.next();
@@ -83,6 +77,19 @@ public class HooksManager {
 		}
 				
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-
+	}
+	
+	public static void enableHidePasswordHook(ODatabaseRecordTx db,boolean enable){
+		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
+		List hs = IteratorUtils.toList(hooks.keySet().iterator());
+		Iterator<ORecordHook> it =hs.iterator();
+		while (it.hasNext()){
+			ORecordHook h = it.next();
+			if (h instanceof HidePassword) {
+				if (Logger.isDebugEnabled()) Logger.debug("Enable: "+ enable+ " " + ((BaasBoxHook) h).getHookName() + " hook");
+				((HidePassword) h).enable(enable);
+				break;
+			}
+		}
 	}
 }

@@ -16,11 +16,19 @@ import com.google.code.regexp.Pattern;
 public class PartParserTest {
 
 	PartsLexer parser = new PartsLexer();
-	Pattern fieldOrArray = Pattern.compile("^(?<name>[a-zA-Z0-9]+)(\\[(?<arrayIndex>(0|(?!0)\\d+))\\])?$");
+	Pattern fieldOrArray = Pattern.compile("^(?<name>(\\w+))(\\[(?<arrayIndex>(0|(?!0)\\d+))\\])?$");
 	
 	@Test
 	public void testFieldRegex(){
 		String field = "field";
+		Matcher m = fieldOrArray.matcher(field);
+		assertTrue(m.matches());
+		assertEquals(field,m.group("name"));
+	}
+	
+	@Test
+	public void testFieldUnderscoreRegex(){
+		String field = "_field";
 		Matcher m = fieldOrArray.matcher(field);
 		assertTrue(m.matches());
 		assertEquals(field,m.group("name"));
@@ -49,6 +57,32 @@ public class PartParserTest {
 		}catch(Exception pve){
 			assertTrue(pve instanceof PartValidationException);
 			assertTrue(pve.getMessage().toLowerCase().indexOf("unrecognized")>-1);
+		}
+		
+	}
+	
+	@Test
+	public void testPrivateFieldId() throws Exception{
+		try{
+			String field = ".id";
+			parser.parse(field, 1);
+			fail();
+		}catch(Exception pve){
+			assertTrue(pve instanceof PartValidationException);
+			assertTrue(pve.getMessage().toLowerCase().indexOf("private")>-1);
+		}
+		
+	}
+	
+	@Test
+	public void testPrivateFieldUnderscore() throws Exception{
+		try{
+			String field = "._audit";
+			parser.parse(field, 1);
+			fail();
+		}catch(Exception pve){
+			assertTrue(pve instanceof PartValidationException);
+			assertTrue(pve.getMessage().toLowerCase().indexOf("private")>-1);
 		}
 		
 	}

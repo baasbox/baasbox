@@ -47,7 +47,7 @@
 			content: "To exit from the console, click the 'Logout' item of the main menu.<br>"
 		});		
 		generalTour.addStep({
-			element: ".navbar-inner a:contains('Version')", 
+			element: ".navbar-inner #currentVersion", 
 			placement: "bottom",
 			title: "That's all", 
 			content: "This rapid tour is finished. Now you are encouraged to explore each item of the menu, see the related tours, read the online documentation and build your first BAASBOX powered App.<br>"

@@ -16,9 +16,8 @@ String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-var userDataArray;
+
 var roleDataArray;
-var documentDataArray;
 var settingDataArray;
 var settingPwdDataArray;
 var settingImgDataArray;
@@ -27,7 +26,7 @@ var settingSectionChanged;
 var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
-var dbCollectionsCache = [];
+
 
 $(document).ready(function(){
 	setup();
@@ -51,25 +50,16 @@ function changeTopBarLink(bbId){
 
 function refreshCollectionCache(arr,fun){
 
-	if(arr){
-		dbCollectionsCache = arr;
-		if(fun){
-			var args = [].slice.call(dbCollectionsCache, 0)
-			fun(dbCollectionsCache)
-		}
-	}else{
 		BBRoutes.com.baasbox.controllers.Admin.getDBStatistics().ajax({
 			success: function(data) {
 				data = data["data"];
-				dbCollectionsCache = data["data"]["collections_details"];
-				//console.debug(dbCollectionsCache,[].slice.call(dbCollectionsCache, 0));
+				collectionNames = data["data"]["collections_details"];
 				if(fun){
-					fun(dbCollectionsCache)
+					fun(collectionNames)
 				}
 
 			}
 		});
-	}
 }
 
 //see http://codeaid.net/javascript/convert-size-in-bytes-to-human-readable-format-(javascript)
@@ -130,22 +120,17 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("dropping your db","please wait...")
+	freezeConsole("Deleting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
-				error: function(data)
-				{
+				error: function(data)	{
 					unfreezeConsole();
 					alert(JSON.parse(data.responseText)["message"]);
 				},
-				success: function(data)
-				{
+				success: function(data){
 					unfreezeConsole();
 					callMenu('#dashboard');
-
-
 				}
-
 			})
 }
 
@@ -157,7 +142,6 @@ $('a.deleteCollection').live('click',function(e){
 				alert(JSON.parse(data.responseText)["message"]);
 			},
 			success: function(data){
-				dbCollectionsCache = null;
 				callMenu('#collections');
 			}
 		});
@@ -269,11 +253,11 @@ $(".btn-action").live("click", function() {
 	var parameters = $(this).attr("parameters");
 
 	switch (action)	{
-        case "enable":
+    case "enable":
             if(!confirm("Do you want to enable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(true,parameters);
             break;
-        case "disable":
+    case "disable":
             if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(false,parameters);
             break;
@@ -894,7 +878,7 @@ function updateSetting()
 					////console.debug(data);
 					var error=JSON.parse(data.responseText);
 					var message=error["message"];
-					alert("Error updating settings:" + message);
+					alert("Error updating settings: " + message);
 				},
 				success: function(data)
 				{
@@ -1126,7 +1110,6 @@ $('.btn-NewCollectionCommit').click(function(e){
 				success: function(data)
 				{
 					$('#newCollectionModal').modal('hide');
-					dbCollectionsCache = null;
 					loadCollectionsTable();
 				}
 			})
@@ -1136,14 +1119,6 @@ $('.btn-ChangePwdCommit').click(function(e){
 
 	var oldPassword = $("#oldpassword").val();
 	var newPassword = $("#newpassword").val();
-
-	if($("#password").val() != oldPassword)
-	{
-        $("#errorCPwd").removeClass("hide");
-		return;
-	}
-	else
-		$("#errorCPwd").addClass("hide");
 
 	if(newPassword != $("#retypenewpassword").val())
 	{
@@ -1172,7 +1147,6 @@ $('.btn-ChangePwdCommit').click(function(e){
 				},
 				success: function(data)
 				{
-					sessionStorage.password = newPassword;
 					$('#changePwdModal').modal('hide');
 				}
 			})
@@ -1209,7 +1183,6 @@ $('.btn-ChangePwdUserCommit').click(function(e){
             },
             success: function(data)
             {
-                sessionStorage.password = txtPwd;
                 $('#changePwdUserModal').modal('hide');
             }
         })
@@ -1263,9 +1236,7 @@ $('#importDbForm').on('submit',function(){
 				unfreezeConsole();
 				BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 						function() {
-							sessionStorage.up="";
-							sessionStorage.appcode="";
-							sessionStorage.sessionToken="";
+							sessionStorage.clear();
 							location.reload();
 						});
 			}, //success
@@ -1410,18 +1381,34 @@ function setup(){
 	setupTables();
 	setupSelects();
 
+	$('.iphone-toggle').iphoneStyle(
+			{resizeHandle: false,
+		      resizeContainer: false,
+		      checkedLabel:"PIPPO"}
+			);
+	
 	$('.logout').click(function(e){
 		BBRoutes.com.baasbox.controllers.User.logoutWithoutDevice().ajax({}).always(
 				function() {
-					sessionStorage.up="";
-					sessionStorage.appcode="";
-					sessionStorage.sessionToken="";
+					sessionStorage.clear();
 					location.reload();
 				});
 	});
 
-	if (sessionStorage.up && sessionStorage.up!="") {
-		tryToLogin();
+	if (sessionStorage.sessionToken && sessionStorage.sessionToken !="") {
+		BBRoutes.com.baasbox.controllers.User.getCurrentUser().ajax({
+	        success: function(data){
+	        	var scope=$("#loggedIn").scope();
+				scope.$apply(function(){
+					scope.loggedIn=true;
+				});
+				sessionStorage.up ="yep";
+				$('a[href="'+sessionStorage.latestMenu+'"]')[0].click();
+	        },
+	        error: function(data){
+	        	sessionStorage.sessionToken="";
+	        }
+	    });
 	}
 }
 
@@ -1475,7 +1462,7 @@ function getActionButton(action, actionType,parameters){
         labelName="disable";
         break;
     }
-	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
+	var actionButton = "<a title='" + tooltip + "' data-rel='tooltip' class='btn "+ classType +" btn-action btn-mini' action='"+ action +"' actionType='"+ actionType +"' parameters='"+ parameters +"' href='#'><i class='"+ iconType +"'></i> "+ labelName +"</a>";
 	return actionButton;
 }
 
@@ -1511,6 +1498,12 @@ function setBradCrumb(type)
 		break;
 	case "#files":
 		sBradCrumb = "Files";
+		break;
+	case "#permissions":
+		sBradCrumb = "Api Access";
+		break;		
+	case "#push_conf":
+		sBradCrumb = "Push Settings";
 		break;
 	}
 
@@ -1655,7 +1648,7 @@ function setupTables(){
                   return "<span class='label "+classStyle+"'>"+text+"</span> ";
             }},
             {"mData":"endpoint",mRender: function(data,type,full){
-                console.log(JSON.stringify(data));
+                //console.log(JSON.stringify(data));
                 if(data.status){
 
                 }
@@ -1664,38 +1657,7 @@ function setupTables(){
         "bRetrieve": true,
         "bDestroy": true
     }).makeEditable();
-	$('#userTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
-            var html = data;
-            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
-               html = getActionButton("followers","user",data)+"&nbsp;"+html;
-            }
-            return html;
-        }},
-		               {"mData": "user.roles.0.name"},
-		               {"mData": "signUpDate","sDefaultContent":""},
-		               {"mData": "user.status","mRender": function ( data, type, full ) {
-		            	   var classStyle="label-success"
-		            		   if (data!="ACTIVE") classStyle="label-important";
-		            	   var htmlReturn="<span class='label "+classStyle+"'>"+data+"</span> ";
-		            	   return htmlReturn;
-		               }
-		               },
-		               {"mData": "user", "mRender": function ( data, type, full ) {
-		            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
-                               var _active = data.status == "ACTIVE";
-                               return '<div class="btn-group">'+ getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);+"</div>"// +" "+ getActionButton("delete","user",data);
-                           }
-		            	   return "No action available";
-		               }
-		               }],
-		               "bRetrieve": true,
-		               "bDestroy":true
-	} ).makeEditable();
+	$('#userTable').dataTable( ).makeEditable();
 
 	$('#settingsTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
@@ -1714,8 +1676,13 @@ function setupTables(){
 		               }
 		               }],
 
-		               "bRetrieve": true,
-		               "bDestroy":false
+           "bRetrieve": true,
+           "bDestroy":false,
+           "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+        	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+        	          $(nRow).attr( 'style',"display:none" );
+        	    }
+        	}
 	} ).makeEditable();
 
 	$('#settingsPwdTable').dataTable( {
@@ -1733,9 +1700,13 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+       "bRetrieve": true,
+       "bDestroy":false,
+       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+    	    if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+    	          $(nRow).attr( 'style',"display:none" );
+    	    }
+    	}
 	} ).makeEditable();
 
 	$('#settingsImgTable').dataTable( {
@@ -1753,29 +1724,15 @@ function setupTables(){
 		            	   else return "";
 		               }
 		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
+	       "bRetrieve": true,
+	       "bDestroy":false,
+	       "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+	    	   if ( !aData["editable"] && aData["value"]=="--HIDDEN--" )  {
+	    	          $(nRow).attr( 'style',"display:none" );
+	    	    }
+	    	}
 	} ).makeEditable();
 
-	$('#settingsPushTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [ {"mData": "key"},
-		               {"mData": "description"},
-		               {"mData": "value", "mRender":function ( data, type, full ) {
-		            	   return $('<div/>').text(data).html();
-		               }
-		               },
-		               {"mData": "key", "mRender": function ( data, type, full ) {
-		            	   if (full.editable) return getActionButton("edit","setting",data);
-		            	   else return "";		               }
-		               }],
-
-		               "bRetrieve": true,
-		               "bDestroy":false
-	} ).makeEditable();
 
 	$('#exportTable').dataTable( {
 		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
@@ -1795,63 +1752,12 @@ function setupTables(){
 		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 		"aoColumns": [ {"mData": "name"},
 		               {"mData":"records"},
-		               {"mData":null,"mRender":function(data,type,full){return "<div class=\"btn-group\"><a class=\"btn btn-danger deleteCollection\">Delete...</a>"}}],
+		               {"mData":null,"mRender":function(data,type,full){return "<a class=\"btn btn-mini btn-danger deleteCollection\">Delete...</a>"}}],
 		               "bRetrieve": true,
 		               "bDestroy":true
 	} ).makeEditable();
 
-	$('#documentTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) 	{
-//    	    			console.log("DATA: "+data);
-                        var datetime = data.split("T");
-    	    			return "<span style='font-family:Courier'>"+datetime[0]+"<br/>"+datetime[1]+"</span>";
-						}
-					   },
-					   {"mData": "id", sWidth:"280px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		               {"mData": "_author"},
-		               {"mData": "@rid","mRender": function ( data, type, full ) 	{
-		            	   var obj=JSON.parse(JSON.stringify(full));
-		            	   delete obj["@rid"];
-		            	   delete obj["@class"];
-		            	   delete obj["@version"];
-						   delete obj["id"];
-						   delete obj["_author"];
-						   delete obj["_creation_date"];
-		            	   return "<pre>" + JSON.stringify(obj, undefined, 2) + "</pre>";
-						},bSortable:false
-		               },
-		               {"mData": "id","mRender": function ( data, type, full ) {
-							var obj=JSON.parse(JSON.stringify(full));
-		            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
-		            	},bSortable:false,bSearchable:false
-		               }
-		               ],
-//                       "sAjaxSource": "fake",
-//                       "fnServerData": function(sSource,aoData,fnCallback,oSettings) {
-//                           val = $("#selectCollection").val();
-//                          var callback = fnCallback;
-//
-//                           if(val != null) {
-//                               BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-//                                  data: {orderBy: "name asc"},
-//                                   success: function (data) {
-//                                       console.log(typeof data["data"]);
-//                                       callback({"aaData":data["data"]});
-//                                   }
-//                               });
-//                           }
-//                        },
-//                        "bProcessing": true,
-//                       "bServerSide": true,
-		               "bRetrieve": true,
-		               "bDestroy":true
-	} ).makeEditable();
+	$('#documentTable').dataTable().makeEditable();
 	$('#btnReloadDocuments').click(function(){
 		$("#selectCollection").trigger("change");
 	});
@@ -1907,69 +1813,22 @@ function setupTables(){
 		              "bDestroy":true
 	} ).makeEditable();
 
-	$('#fileTable').dataTable( {
-		"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
-		"sPaginationType": "bootstrap",
-		"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
-		"aoColumns": [
-		              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  return getFileIcon(obj["contentType"],obj["id"]);
-		              }},
-					   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
-			 				return "<span style='font-family:Courier'>"+data+"</span>";
-						}
-					   },
-		              {"mData": "id", "mRender": function ( data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-		            	  if(obj["attachedData"] != undefined)
-		            	  {
-		            		  return "<pre>" + JSON.stringify(obj["attachedData"],undefined,2) + "</pre>";
-		            	  }
-		            	  else
-		            	  {
-		            		  return "";
-		            	  }
-		              },bSortable:false},
-		              {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return  bytesToSize(obj["contentLength"],'KB');
-		              }},
-		         /*     {"mData": "id", "mRender": function (data, type, full ) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return obj["contentType"];
-		              }},*/
-		              {"mData": "id", sWidth:"210px","mRender": function (data, type, full) {
-		            	  var obj=JSON.parse(JSON.stringify(full));
-	            		  return "<a href='/file/" + obj["id"] + "?download=true&X-BB-SESSION="+escape(sessionStorage.sessionToken)+"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode) +"' target='_new'>"+ obj["fileName"] +"</a>";
-		              }},
-		              {"mData": "id", "mRender": function (data) {
-		            	  return getActionButton("delete","file",data);
-		              }}
-		              ],
-		              "bRetrieve": true,
-		              "bDestroy":true
-	} ).makeEditable();
+	$('#fileTable').dataTable().makeEditable();
 
 } //setupTables()
 
 function setupSelects(){
 
 	$("#selectCollection").chosen().change(function(){
-		val=$("#selectCollection").val();
-		BBRoutes.com.baasbox.controllers.Document.getDocuments(val).ajax({
-			data: {orderBy: "name asc"},
-			success: function(data) {
-				data=data["data"];
-				var scope=$("#documents").scope();
-				scope.$apply(function(){
-					scope.collectionName=val;
-				});
-				$('#documentTable').dataTable().fnClearTable();
-				$('#documentTable').dataTable().fnAddData(data);
-				documentDataArray=data;
-			}
-		})//BBRoutes.com.baasbox.controllers.Document.getDocuments
+		if ($('#selectCollection').has('option').length>0){
+			val=$("#selectCollection").val();
+			//console.log('collName length ' + $('#selectCollection').has('option').length);
+			loadDocumentsData(val);   
+			var scope=$("#documents").scope();
+			scope.$apply(function(){
+				scope.collectionName=val;
+			});
+		}//dropdown option has not been selected yet
 	});//selectCollection
 }
 
@@ -2029,7 +1888,9 @@ function applySuccessMenu(action,data){
 	scope.$apply(function(){
 		scope.data=data;
 	});
-
+	sessionStorage.latestMenu=action;
+	console.log(action);
+	console.log(scope);
 }//applySuccessMenu
 
 function reloadFollowing(user){
@@ -2075,19 +1936,11 @@ function callMenu(action){
 				$('#roleTable').dataTable().fnAddData(roleDataArray);
 			}
 		});
-		break;//#users
+		break;//#roles
 	case "#users":
-		BBRoutes.com.baasbox.controllers.Admin.getUsers().ajax({
-			data: {orderBy: "user.name asc"},
-			success: function(data) {
-				userDataArray = data["data"];
-				//console.debug("Admin.getUsers success:");
-				//console.debug(data);
-				applySuccessMenu(action,userDataArray);
-				$('#userTable').dataTable().fnClearTable();
-				$('#userTable').dataTable().fnAddData(userDataArray);
-			}
-		});
+		resetDataTable( $('#userTable'));
+		loadUsersData();
+		applySuccessMenu(action,userDataArray);
 		break;//#users
 	case "#dashboard":
 		BBRoutes.com.baasbox.controllers.Admin.getLatestVersion().ajax({
@@ -2144,8 +1997,10 @@ function callMenu(action){
 					limit: 5,
 					errormsg: "Unable to retrieve latest news"
 				});
+				data["os"]["os_name"]=data["os"]["os_name"]=="N/A"?"cloud":data["os"]["os_name"];
 				var serverPlatform=getPlatform(data["os"]["os_name"]);
-				$('#platformNameNews').text(data["os"]["os_name"]);
+				var serverPlatformLabel=data["os"]["os_name"]=="cloud"?"BaasBox as a Service": "BaasBox on " + data["os"]["os_name"] 
+				$('#platformNameNews').text(serverPlatformLabel);
 				$('#platformNewsTab').rssfeed('http://www.baasbox.com/tag/'+serverPlatform+'/feed/?' + $.param(platformSpecificFeed,true),
 						{
 					header: false,
@@ -2285,18 +2140,15 @@ function callMenu(action){
 			$('#collectionTable').dataTable().fnClearTable();
 			$('#collectionTable').dataTable().fnAddData(collections);
 		}
-		if(dbCollectionsCache){
-				collections = dbCollectionsCache;
-				ref(collections)
-		}else{
-			refreshCollectionCache(null,function(dd){
-				collections = dd;
-				ref(collections)
-			});
-		}
+
+		refreshCollectionCache(null,function(dd){
+			collections = dd;
+			ref(collections)
+		});
+
 		break;//#collections
 	case "#documents":
-        $('#documentTable').dataTable().fnClearTable();
+		resetDataTable( $('#documentTable'));
 		BBRoutes.com.baasbox.controllers.Admin.getCollections().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2318,7 +2170,7 @@ function callMenu(action){
 			}
 		});
 		break; //#documents
-	case "#assets":
+		case "#assets":
 		BBRoutes.com.baasbox.controllers.Asset.getAll().ajax({
 			data: {orderBy: "name asc"},
 			success: function(data) {
@@ -2331,16 +2183,9 @@ function callMenu(action){
 			}
 		});
 		case "#files":
-		BBRoutes.com.baasbox.controllers.File.getAllFile().ajax({
-			data: {orderBy: "_creation_date asc"},
-			success: function(data) {
-				data=data["data"];
-				applySuccessMenu(action,data);
-				$('#fileTable').dataTable().fnClearTable();
-				$('#fileTable').dataTable().fnAddData(data);
-				$.trim($('#fuFile').val(""));
-			}
-		});
+			resetDataTable( $('#fileTable'));
+			loadFilesData();
+			applySuccessMenu(action,filesDataArray);
 		break;//#files
         case "#permissions":
             BBRoutes.com.baasbox.controllers.Admin.getPermissionTags().ajax({
@@ -2357,8 +2202,13 @@ function callMenu(action){
                 }
             });
             break;
+        case "#push_conf":
+        	loadPushSettings(action);
+            break;
 	}
 }//callMenu
+
+//PushConfController is defined into the push.js file
 
 function PermissionsController($scope){}
 
@@ -2382,17 +2232,19 @@ function tryToLogin(user, pass,appCode){
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
 			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+			$('#password').val('');
 			//console.debug("login success");
 			//console.debug("data received: ");
 			//console.debug(data);
 			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-			callMenu("#dashboard");
 			//refresh the sessiontoken every 5 minutes
 			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
 			var scope=$("#loggedIn").scope();
 			scope.$apply(function(){
 				scope.loggedIn=true;
 			});
+			sessionStorage.up ="yep";
+			callMenu("#dashboard");
 		},
 		error: function() {
 			$("#errorLogin").removeClass("hide");
@@ -2462,7 +2314,7 @@ function SettingsController($scope){
 					error: function(data)
 					{
 						//console.log(data)
-						alert("Error updating settings:" + data["message"]);
+						alert("Error updating settings: " + data["message"]);
 					},
 					success: function(data)
 					{
@@ -2488,15 +2340,15 @@ function SettingsController($scope){
 			var value = toModify.token;
 
 			updateSettings(key,value,function(){
-				console.log("saving token")
+				//console.log("saving token")
 				var key2 = "social."+name+".secret"
 				var value2 = toModify.secret;
 				updateSettings(key2,value2,function(){
-					console.log("saving secret")
+					//console.log("saving secret")
 					var key3 = "social."+name+".enabled"
 					var value3 = "true";
 					updateSettings(key3,value3,function(){
-						console.log("enabling")
+						//console.log("enabling")
 						$scope.sociallogins[name].saved = true;
 					});
 
@@ -2529,9 +2381,9 @@ function DBManagerController($scope){
 				newExp.date=dtMatcher[3]+"-"+dtMatcher[2]+"-"+dtMatcher[1]+" "+dtMatcher[4]+":"+dtMatcher[5]+":"+dtMatcher[6]
 				res.push(newExp)
 			}
+			$('#exportTable').dataTable().fnClearTable();
+			$('#exportTable').dataTable().fnAddData(res);
 		});
-		$('#exportTable').dataTable().fnClearTable();
-		$('#exportTable').dataTable().fnAddData(res);
 		$scope.exports = res;
 		return $scope.exports;
 
@@ -2571,11 +2423,12 @@ function PushSettingsController($scope){
 					type:'PUT',
 					contentType:'application/json',
 					url: url,
-					data:JSON.stringify({value:"true"}),
+					data:JSON.stringify({value:""+enable+""}),
 					error: function(data)
 					{
-						////console.debug(data)
-						alert("Error updating sandbox mode:" + data["message"]);
+						//console.debug(data)
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating sandbox mode:" + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
@@ -2609,7 +2462,8 @@ function PushSettingsController($scope){
 					error: function(data)
 					{
 						////console.debug(data)
-						alert("Error updating settings:" + data["message"]);
+						jsonResponse=JSON.parse(data.responseText);
+						alert("Error updating settings: " + jsonResponse["message"]);
 					},
 					success: function(data)
 					{
@@ -2672,6 +2526,18 @@ function DashboardController($scope) {
 		}
 		return tot;
 	}
+	
+	$scope.alertThreshold = function(){
+		if ($scope.data){
+			var maxSize = $scope.data.db.datafile_freespace;
+			var currentSize = $scope.data.db.physical_size;
+			var percAlert = $scope.data.db.size_threshold_percentage;
+			var percRemainSize = 100-(100*currentSize/maxSize);
+			if (percRemainSize < 0) return 2;
+			if (percRemainSize < percAlert) return 1;
+			if (percRemainSize > percAlert) return 0;
+		}else return 0;
+	}
 
 	$scope.formatSize = function(size){
 		return bytesToSize(size,2);
@@ -2697,6 +2563,10 @@ function getPlatform(os){
 	function  isSolaris(OS) {
 		return (OS.indexOf("sunos") >= 0);
 	}
+	
+	function  isCloudService(OS) {
+		return (OS.indexOf("cloud") >= 0);
+	}
 
 	os = os.toLowerCase();
 	if (isWindows(os)) {
@@ -2707,6 +2577,8 @@ function getPlatform(os){
 		return "unix,linux";
 	} else if (isSolaris(os)) {
 		return "solaris,unix";
+	}else if (isCloudService(os)) {
+		return "service";
 	} else {
 		return "other";
 	}

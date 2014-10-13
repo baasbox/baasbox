@@ -20,6 +20,7 @@
 import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.PUT;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
@@ -75,6 +76,20 @@ public class UserGetCurrentTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_DEFAULT_ENC);
 					result = routeAndCall(request);
 					assertRoute(result, "RouteOK BaasBox user", Status.FORBIDDEN, null, false);
+					
+					//registered user
+					String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
+					String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
+					
+					// Test update user
+					request = new FakeRequest("GET", "/user");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteGetCurrentUser - registered - username", Status.OK, "name\":\""+sFakeUser+"\"", true);
+					assertRoute(result, "testRouteGetCurrentUser - registered - role", Status.OK, "roles\":[{\"name\":\"registered\"}", true);
+					
 				}
 			}
 		);		

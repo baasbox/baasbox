@@ -50,9 +50,11 @@ import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
+import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.util.FileSystemPathUtil;
 
 public class DbManagerService {
 	public static final String backupDir = BBConfiguration.getDBBackupDir();
@@ -76,7 +78,7 @@ public class DbManagerService {
 			}
 		}
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
-		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),appcode);
+		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),FileSystemPathUtil.escapeName(appcode));
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
 				Duration.create(2, TimeUnit.SECONDS),

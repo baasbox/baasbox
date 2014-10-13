@@ -96,6 +96,7 @@ public abstract class NodeDao  {
 	}
 
 	public Integer updateByQuery(String query) throws InvalidCriteriaException{
+		if (Logger.isDebugEnabled()) Logger.debug("Update query: " + query);
 		OCommandRequest command = db.command(new OCommandSQL(
 				query
 				));
@@ -105,7 +106,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		return records;
 	}
@@ -119,14 +120,14 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}	
 		return list;
 	}
 	
 	public ODocument create() throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
+		OrientGraph db = DbHelper.getOrientGraphConnection();
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
@@ -179,7 +180,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}catch (StringIndexOutOfBoundsException e){
 			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
 		}catch (IndexOutOfBoundsException e){
@@ -274,7 +275,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();
@@ -290,7 +291,7 @@ public abstract class NodeDao  {
 	
 	public void delete(ORID rid) throws Throwable{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		OrientGraphNoTx db = DbHelper.getOrientGraphConnection();
+		OrientGraph db = DbHelper.getOrientGraphConnection();
 		//retrieve the vertex associated to this node
 		try{
 			DbHelper.requestTransaction();

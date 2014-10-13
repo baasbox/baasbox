@@ -8,13 +8,52 @@
 					</div>
 					<div class="box-content">
 						<ul class="nav nav-tabs" id="systemStatTab">
-							<li class="active" data-rel="tooltip" title="System memory statistics"><a href="#memory">Memory</a></li>
-							<li data-rel="tooltip" title="Operating System information" ><a href="#os">OS</a></li>
-							<li data-rel="tooltip" title="JVM information"><a href="#java">Java</a></li>
-							<li data-rel="tooltip" title="Database information"><a href="#db">Database</a></li>
+							<li class="active" data-rel="tooltip" title="Database information"><a href="#db">Database</a></li>
+							<li ng-show="data.memory.max_allocable_memory!=0" data-rel="tooltip" title="System memory statistics"><a href="#memory">Memory</a></li>
+							<li ng-show="data.os.os_name!='N/A'" data-rel="tooltip" title="Operating System information" ><a href="#os">OS</a></li>
+							<li ng-show="data.os.os_name!='N/A'" data-rel="tooltip" title="JVM information"><a href="#java">Java</a></li>
+							
 						</ul>
-						<div id="systemStatTabContent" class="tab-content">
-							<div class="tab-pane active" id="memory">
+							
+						<div id="systemStatTabContent" class="tab-content ">
+							<div class="tab-pane active" id="db">
+								<ul class="dashboard-list">
+									<li>
+										<a href="#">
+											<i class="icon32 icon-black icon-note"></i>
+											<span class="blue">Version</span>                              
+											<span class="green"  style="width:50% !important"> OrientDB {{data.db.properties.version}}</span>                                    
+										</a>
+									</li>
+									<li ng-show="data.db.properties.path!='N/A'">
+										<a href="#">
+											<i class="icon32 icon-black icon-treeview-corner"></i>
+											<span class="blue">Path</span>                             
+											<span class="green" style="width:50% !important" >{{data.db.properties.path}}</span>                                    
+										</a>
+									</li>											
+									<li>
+										<a href="#">
+											<i class="icon32 icon-black icon-copy"></i>
+											<span class="blue">Max Size</span>                             
+											<span class="green"  style="width:50% !important" >{{formatSize(data.db.datafile_freespace)}}</span>                                    
+										</a>
+									</li>
+									<li>
+										<a href="#">
+											<i class="icon32 icon-black icon-save"></i>
+											<span class="blue">DB Size</span>                             
+											<span ng-class="{green:alertThreshold()==0,red:alertThreshold()==2,yellow:alertThreshold()==1}" style="width:50% !important" >{{formatSize(data.db.physical_size)}}</span>
+											<i ng-show="alertThreshold()==1" title="The database reached {{data.db.size_threshold_percentage}}% of the current limit ({{formatSize(data.db.datafile_freespace)}})" class="icon icon-color icon-alert"></i>
+											<i ng-show="alertThreshold()==2" title="The database has exceeded the maximum allowed size ({{formatSize(data.db.datafile_freespace)}})." class="icon icon-color icon-remove"></i>                          
+										</a>
+									</li>
+									<span class="red" ng-show="alertThreshold()==2">The database has exceeded the maximum allowed size ({{formatSize(data.db.datafile_freespace)}}).<br/>BaasBox <strong>will continue to work</strong>, but consider to <strong>upgrade</strong> the storage size.</span>
+									<span class="yellow" ng-show="alertThreshold()==1">The database reached {{100-data.db.size_threshold_percentage}}% of the current limit ({{formatSize(data.db.datafile_freespace)}}).<br/>Please consider to <strong>upgrade</strong> the storage size.</span>
+								</ul>
+						</div><!-- DB Pane-->
+						
+							<div class="tab-pane" id="memory" ng-show="data.memory.max_allocable_memory!=0">
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
@@ -45,7 +84,7 @@
 										</li>																				
 									</ul>
 							</div><!-- Memory Pane-->
-							<div class="tab-pane" id="os">
+							<div class="tab-pane" id="os" ng-show="data.os.os_name!='N/A'" >
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
@@ -85,7 +124,7 @@
 										</li>										
 									</ul>
 							</div><!-- os Pane-->
-							<div class="tab-pane" id="java">
+							<div class="tab-pane" id="java" ng-show="data.os.os_name!='N/A'">
 									<ul class="dashboard-list">
 										<li>
 											<a href="#">
@@ -119,39 +158,6 @@
 							</div><!-- java Pane-->	
 							
 							
-							<div class="tab-pane" id="db">
-									<ul class="dashboard-list">
-										<li>
-											<a href="#">
-												<i class="icon32 icon-black icon-note"></i>
-												<span class="blue">Version</span>                              
-												<span class="green"  style="width:50% !important"> OrientDB {{data.db.properties.version}}</span>                                    
-											</a>
-										</li>
-										<li>
-											<a href="#">
-												<i class="icon32 icon-black icon-treeview-corner"></i>
-												<span class="blue">Path</span>                             
-												<span class="green" style="width:50% !important" >{{data.db.properties.path}}</span>                                    
-											</a>
-										</li>											
-										<li>
-											<a href="#">
-												<i class="icon32 icon-black icon-copy"></i>
-												<span class="blue">Data Size</span>                             
-												<span class="green" style="width:50% !important" >{{formatSize(data.db.size)}}</span>                                    
-											</a>
-										</li>
-										<li>
-											<a href="#">
-												<i class="icon32 icon-black icon-save"></i>
-												<span class="blue">DB Size</span>                             
-												<span class="green" style="width:50% !important" >{{formatSize(data.db.physical_size)}}</span>                                    
-											</a>
-										</li>
-										
-									</ul>
-							</div><!-- Stats Pane-->
 							
 							
 							

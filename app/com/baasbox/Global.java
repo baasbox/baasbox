@@ -23,11 +23,27 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import play.api.libs.concurrent.Promise;
+
+import java.io.UnsupportedEncodingException;
+
+import play.mvc.Results.*;
+import play.libs.F;
+import play.mvc.*;
+import play.mvc.Http.*;
+
+
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 
 import play.Application;
 import play.Configuration;
@@ -201,7 +217,7 @@ public class Global extends GlobalSettings {
 	    
 	    //write the Welcome Message
 	    info("");
-	    info("To login into the amministration console go to http://" + address +":" + port + "/console");
+	    info("To login into the administration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin AppCode: " + BBConfiguration.getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended");
@@ -296,7 +312,7 @@ public class Global extends GlobalSettings {
 			result.put("message", error);
 			result.put("resource", request.path());
 			result.put("method", request.method());
-			result.put("request_header", mapper.valueToTree(request.headers()));
+			result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
 			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 			setCallIdOnResult(request, result);
 		return result;
