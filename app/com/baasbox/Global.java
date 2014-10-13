@@ -23,27 +23,11 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import play.api.libs.concurrent.Promise;
-
-import java.io.UnsupportedEncodingException;
-
-import play.mvc.Results.*;
-import play.libs.F;
-import play.mvc.*;
-import play.mvc.Http.*;
-
-
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 
 import play.Application;
 import play.Configuration;
@@ -65,6 +49,7 @@ import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
@@ -151,7 +136,28 @@ public class Global extends GlobalSettings {
 	    ODatabaseRecordTx db =null;
 	    try{
 	    	server = OServerMain.create();
-	    	server.startup();
+	    	 server.startup(
+	    			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+	    			   + "<orient-server>"
+	    			   + "<network>"
+	    			   + "<protocols>"
+	    			   + "<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>"
+	    			   + "</protocols>"
+	    			   + "<listeners>"
+	    			   + "<listener ip-address=\"0.0.0.0\" port-range=\"2424-2430\" protocol=\"binary\"/>"
+	    			   + "</listeners>"
+	    			   + "</network>"
+	    			   + "<users>"
+	    			   + "<user name=\"root\" password=\"ThisIsA_TEST\" resources=\"*\"/>"
+	    			   + "</users>"
+	    			   + "<properties>"
+	    			   + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"debug\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"fine\"/>"
+	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
+	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
+	    			   + "</properties>" + "</orient-server>");
+	    			  server.activate();
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
