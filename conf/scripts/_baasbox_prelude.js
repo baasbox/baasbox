@@ -252,6 +252,7 @@ var GLOBAL=this;
      Module.prototype.Console = Object.create({
         log: function(val) {
             Internal.log(JSON.stringify(val));
+            _command({resource:'script',name:'log',params:{id: 'foo',message: val.toString()}});
         }
     });
 

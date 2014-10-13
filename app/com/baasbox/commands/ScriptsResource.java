@@ -30,7 +30,9 @@ import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.stats.StatsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -55,29 +57,30 @@ class ScriptsResource extends Resource {
 
 
     private static  final Map<String,ScriptCommand> COMMANDS= ImmutableMap.<String,ScriptCommand>builder()
-               .put("log", new ScriptCommand() {
-                   @Override
-                   public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                       JsonNode idOfTheModule = command.get(ScriptCommand.ID);
-                       JsonNode par = command.get(ScriptCommand.PARAMS);
-                       if (idOfTheModule == null) {
-                           throw new CommandParsingException(command, "module id is null");
-                       }
-                       StatsService.publish("scripts",StatsService.obtainMessage("scripts",idOfTheModule.asText(),par));
-                       return null;
-                   }
-               })
+               .put("log",ScriptsResource::log )
                 .put("ws", ScriptsResource::wsCall)
                 .put("storage", ScriptsResource::storageCommand)
-                .put("event", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                        // todo publish pubic json event for streaming
-                        return null;
-                    }
-
-                })
+                .put("event", ScriptsResource::event)
                 .build();
+
+
+    private static JsonNode event(JsonNode command,JsonCallback callback) throws CommandException{
+        //todo implement public events?
+        return NullNode.getInstance();
+    }
+
+    private static JsonNode log(JsonNode command,JsonCallback callback) throws CommandException {
+        JsonNode idOfTheModule = command.get(ScriptCommand.ID);
+        JsonNode par = command.get(ScriptCommand.PARAMS);
+        if (idOfTheModule ==null){
+            throw new CommandParsingException(command,"module id is missing");
+        }
+        ObjectNode message = Json.mapper().createObjectNode();
+        message.put("message",par);
+        message.put("script",idOfTheModule);
+        int publish = StatsService.publish(StatsService.StatType.SCRIPT, message);
+        return IntNode.valueOf(publish);
+    }
 
     private static JsonNode wsCall(JsonNode command,JsonCallback callback) throws CommandException{
         try {
