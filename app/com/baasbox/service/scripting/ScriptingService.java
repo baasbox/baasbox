@@ -123,6 +123,7 @@ public class ScriptingService {
     }
 
     public static ScriptStatus update(String name,JsonNode code) throws ScriptException{
+        if (code == null) throw new ScriptException("missing code");
         JsonNode codeNode = code.get(ScriptsDao.CODE);
         if (codeNode == null|| !codeNode.isTextual()){
             throw new ScriptException("missing code");

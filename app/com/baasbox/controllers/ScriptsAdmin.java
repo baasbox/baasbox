@@ -82,7 +82,9 @@ public class ScriptsAdmin extends Controller{
         Http.Request req = request();
         Result result;
         JsonNode body = req.body().asJson();
+
         try {
+
             ScriptStatus update = ScriptingService.update(name, body);
             if (update.ok){
                 result = ok(update.message);
