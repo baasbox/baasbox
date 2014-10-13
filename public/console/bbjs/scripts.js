@@ -183,6 +183,39 @@ function ScriptsController($scope,prompt){
 	$scope.getShowStorage=function(){
 		return $scope.showStorage;
 	}
+
+	var evtSource = null;
+	var connectLogger = function(f){
+		var url = "/admin/plugin/logs";
+		url+='?X-BB-SESSION=' + sessionStorage.sessionToken;
+		url+='&X-BAASBOX-APPCODE='+escape($('#login').scope().appcode);
+		console.log("Connecting: "+url);
+		var source = new EventSource(url);
+		console.log("Connected: "+source);
+		source.onmessage = f;
+		return source;
+	};
+
+	$scope.logEnabled = false;
+	$scope.logs = [];
+
+	$scope.toggleLogs = function(){
+		if($scope.logEnabled) {
+			$scope.logEnabled = false;
+			evtSource.close();
+			evtSource =null;
+		} else{
+			$scope.logEnabled = true;
+			evtSource = connectLogger(function(e){
+				console.log(e);
+				$scope.$apply(function(){
+					console.log(e);
+					var d = e.data;
+					$scope.logs.push(d);
+				})
+			});
+		}
+	}
 	
 }
 
