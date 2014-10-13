@@ -2,7 +2,7 @@
 				<p class="hint">These are your installed Plugins.</p>
 				
 				<div class="span11">
-					<a href="#" id="newPlugin" class="btn btn-primary btn-action">New...</a>
+					<a href="#" id="newPlugin" class="btn btn-primary btn-action" ng-click="newScript()">New...</a>
 				</div>
 				
 				<!-- plugins  -->
@@ -18,7 +18,7 @@
 							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:getSelectedItem()==$index,invalid:script._invalid}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
-								<span class="plugin action""><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> </span> | <span class="plugin action" > Edit </span>  | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>                                 
+								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="edit()" class="plugin action" > Edit </span>  | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
 							</li>
 						</ul>
 					</div> <!-- box-content -->
@@ -42,7 +42,8 @@
 			
 				<!-- Editor -->	
 				<div class="span11">
-					<div class="editor" style="height: 200px;" ui-ace ng-model="data.data[getSelectedItem()].code[0]"></div>
+					<div class="editor" ng-show="currentScript" style="height: 200px;" ui-ace="{mode: 'javascript',theme: 'solarized_light'}" ng-model="currentScript.buffer"></div>
+					<div class="editor-buttons"><span ng-click="saveScript()">Save</span> <span ng-click="discardEdits()"> Discard </span></div>
 				</div>
 			</div>
 			

@@ -9,18 +9,117 @@ function loadScriptsPage(scopeName){
 }
 
 
-function ScriptsController($scope){
+function ScriptsController($scope,prompt){
+	// private helpers
+	var VALID_NAME = /^([a-z][a-z0-9]*)\.[a-z][a-z0-9]*$/i;
+	var noop = function(){};
+	var validateName = function(name){
+		var r = VALID_NAME.exec(name);
+		var idx;
+		if(r&& r[1] !== 'baasbox'){
+			var ary = $scope.data.data;
+			var l = ary.length;
+			for(idx = 0;idx<l;idx++){
+				if(ary[idx].name == name){
+					return false;
+				}
+			}
+			return true;
+		} else{
+			return false;
+		}
+	};
+
+	var onNewScript = function(resp){
+		if(validateName(resp)){
+			$scope.currentScript ={buffer: "/* script: "+resp+" */"};
+		} else {
+			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
+		}
+	};
+
+	var postScript = function(script){
+		var toSend = JSON.stringify({
+			name: script.name,
+			code: script.buffer,
+			active: true,
+			lang: 'javascript'
+		});
+		BBRoutes.com.baasbox.controllers.ScriptsAdmin.create().ajax({
+			data: toSend,
+			contentType: "application/json",
+			processData: false,
+
+			error: function(data){
+				console.log(data);
+			},
+			success: function(data){
+
+				console.log(data);
+			}
+		});
+	};
+
+	var updateScript = function(script){
+		var toSend = JSON.stringify({
+			code: script.buffer
+		});
+		BBRoutes.com.baasbox.controllers.ScriptsAdmin.update(script.name).ajax({
+			data: toSend,
+			contentType: "application/json",
+			processData: false,
+			error: function(data){
+				console.log(data);
+			},
+			success: function(data){
+				console.log(data);
+			}
+		});
+
+	};
+
 	$scope.selected=0;
 	$scope.data={};
+	$scope.currentScript = null;
 	$scope.showStorage=false;
-	
+
+	$scope.newScript = function(){
+		prompt("Script name","").then(
+			onNewScript,
+			noop);
+	};
+
+
+	$scope.edit = function(){
+		var scr = $scope.data.data[$scope.selected];
+		scr.buffer = scr.buffer||scr.code[0];
+		$scope.currentScript = scr;
+	};
+
+	$scope.discardEdits = function(){
+		$scope.currentScript = null;
+	};
+
 	$scope.selectItem = function(s){
 		$scope.selected=s;
-	}
+	};
 	
 	$scope.getSelectedItem = function(){
 		return $scope.selected;
-	}
+	};
+
+	$scope.discardEdits = function(){
+		console.log("Discarding");
+	};
+
+	$scope.saveScript = function(){
+		if(!$scope.currentScript) return;
+		if($scope.currentScript.code){
+			updateScript($scope.currentScript);
+		} else{
+			postScript($scope.currentScript);
+		}
+	};
 	
 	$scope.reload=function(){
 		BBRoutes.com.baasbox.controllers.ScriptsAdmin.list().ajax({
@@ -31,7 +130,7 @@ function ScriptsController($scope){
 				});
 			}
 		});
-	}
+	};
 	
 	$scope.activate=function(index){
 		var name=$scope.data.data[index].name;
@@ -87,7 +186,7 @@ angular.module('console', [])
 	});
 */
 
-angular.module("console", ['ui.ace']);
+
 
 angular.module('console', [])
 	.directive('snippet', ['$timeout', '$interpolate', function($timeout, $interpolate) {
