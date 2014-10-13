@@ -364,6 +364,7 @@ DELETE /plugin/:name                             com.baasbox.controllers.ScriptI
 # @tag(baasbox.scripts.invoke)
 DELETE /plugin/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
 
+GET /admin/plugin/logs                         com.baasbox.controllers.StatsService.openLogger()
 POST /admin/plugin                             com.baasbox.controllers.ScriptsAdmin.create()
 GET  /admin/plugin                             com.baasbox.controllers.ScriptsAdmin.list()
 GET  /admin/plugin/:name                       com.baasbox.controllers.ScriptsAdmin.get(name:String)

@@ -34,6 +34,7 @@ import play.Logger;
 import play.libs.EventSource;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -301,18 +302,6 @@ public class ScriptingService {
 //            connectedLogListeners.put(name,logs);
 //        }
 //    }
-//
-//    public static void connectLogListener(String name, EventSource current) {
-//        List<EventSource> logs = connectedLogListeners.get(name);
-//        if (logs == null) {
-//            logs = new ArrayList<EventSource>();
-//        }
-//        logs.add(current);
-//        if (Logger.isTraceEnabled()) Logger.trace("Connected to: "+name);
-//        current.sendData("start");
-//        connectedLogListeners.put(name,logs);
-//    }
-
 
     /**
      * Compiles a script without emitting any event
