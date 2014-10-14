@@ -197,7 +197,7 @@ public class Evolution_0_9_0 implements IEvolution {
                 "create property _BB_Script.active boolean;" ,
                 "alter property _BB_Script.active mandatory=true;" ,
                 "alter property _BB_Script.active notnull=true;" ,
-                "create property _BB_Script._store embedded;" ,
+                "create property _BB_Script._storage embedded;" ,
                 "create property _BB_Script._creation_date datetime;" ,
                 "create property _BB_Script._invalid boolean;" ,
                 "alter property _BB_Script._invalid mandatory=true;" ,

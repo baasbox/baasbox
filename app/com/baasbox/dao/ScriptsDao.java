@@ -55,7 +55,7 @@ public class ScriptsDao {
     public static final String CODE= "code";
     public static final String LANG= "lang";
     public static final String LIB= "library";
-    public static final String LOCAL_STORAGE= "_store";
+    public static final String LOCAL_STORAGE= "_storage";
     public static final String INVALID = "_invalid";
     public static final String DATE ="_creation_date";
     public static final String ACTIVE = "active";

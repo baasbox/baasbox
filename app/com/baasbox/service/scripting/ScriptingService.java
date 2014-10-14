@@ -86,26 +86,32 @@ public class ScriptingService {
 
     private static ODocument updateStorageLocked(String name,boolean before,JsonCallback updaterFn) throws ScriptException {
         final ScriptsDao dao = ScriptsDao.getInstance();
-        ODocument script = dao.getByNameLocked(name);
-        if (script == null) throw new ScriptException("Script not found");
-        ODocument retScript = before ? script.copy() : script;
+        ODocument script = null;
+        try {
+            script = dao.getByNameLocked(name);
+            if (script == null) throw new ScriptException("Script not found");
+            ODocument retScript = before ? script.copy() : script;
 
-        ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
+            ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
 
-        Optional<ODocument> storage1 = Optional.ofNullable(storage);
+            Optional<ODocument> storage1 = Optional.ofNullable(storage);
 
-        JsonNode current = storage1.map(ODocument::toJSON)
-                                .map(Json.mapper()::readTreeOrMissing)
-                                .orElse(NullNode.getInstance());
-        if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
+            JsonNode current = storage1.map(ODocument::toJSON)
+                    .map(Json.mapper()::readTreeOrMissing)
+                    .orElse(NullNode.getInstance());
+            if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
 
-        JsonNode updated = updaterFn.call(current);
+            JsonNode updated = updaterFn.call(current);
 
-        ODocument result = new ODocument().fromJSON(updated.toString());
-        script.field(ScriptsDao.LOCAL_STORAGE,result);
-        dao.save(script);
-
-        return retScript.field(ScriptsDao.LOCAL_STORAGE);
+            ODocument result = new ODocument().fromJSON(updated.toString());
+            script.field(ScriptsDao.LOCAL_STORAGE, result);
+            dao.save(script);
+            return retScript.field(ScriptsDao.LOCAL_STORAGE);
+        } finally {
+            if (script != null) {
+                script.unlock();
+            }
+        }
     }
 
     public static ODocument swap(String name,JsonCallback callback) throws ScriptException {

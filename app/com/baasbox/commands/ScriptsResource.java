@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -67,14 +68,15 @@ class ScriptsResource extends Resource {
     }
 
     private static JsonNode log(JsonNode command,JsonCallback callback) throws CommandException {
-        JsonNode idOfTheModule = command.get(ScriptCommand.ID);
+        JsonNode idOfTheModule = command.get(ScriptCommand.MAIN);
         JsonNode par = command.get(ScriptCommand.PARAMS);
         if (idOfTheModule ==null){
-            throw new CommandParsingException(command,"module id is missing");
+            idOfTheModule =command.get(ScriptCommand.ID);
         }
         ObjectNode message = Json.mapper().createObjectNode();
         message.put("message",par);
         message.put("script",idOfTheModule);
+        message.put("date",new Date().toString());
         int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
         return IntNode.valueOf(publish);
     }
