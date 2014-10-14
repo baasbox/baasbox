@@ -41,7 +41,13 @@
 						ng-model="currentScript.buffer">
 					</div>
 					<div ng-show="showStorage" class="box-content">
-						<pre id="plugin-storage" class="js" js-code-highlight ng-bind="currentScript._storage"></pre>
+						<div ng-show="currentScript"
+							readonly="true"
+							style="height: 100px"
+							ui-ace="{mode: 'json',theme: 'solarized_dark',showGutter:false,useWrapMode:false}"
+							ng-model="storageFormatted">
+
+						</div>
 					</div>
 					<div class="form-actions" ng-show="editMode">
 						<button type="submit" ng-click="saveScript()" class="btn btn-primary btn-small">Save</button>

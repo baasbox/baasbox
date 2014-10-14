@@ -40,6 +40,15 @@ function ScriptsController($scope,prompt){
 		}
 	};
 
+	var setStorageFormatted = function(){
+		if($scope.currentScript && $scope.currentScript._storage){
+			return angular.toJson($scope.currentScript._storage,true);
+			//return JSON.stringify($scope.currentScript._storage);
+		} else{
+			return "";
+		}
+	};
+
 	var onUpdateSucces = function(){
 		$scope.currentScript.buffer = undefined;
 		$scope.currentScript = null;
@@ -101,24 +110,7 @@ function ScriptsController($scope,prompt){
 			noop);
 	};
 
-
-	//$scope.edit = function(s){
-	//	$scope.selected = s;
-	//	var scr = $scope.data.data[$scope.selected];
-	//	scr.buffer = scr.buffer||scr.code[0];
-	//	$scope.currentScript = scr;
-	//};
-    //
-	//$scope.discardEdits = function(){
-	//	var scr = $scope.currentScript;
-	//	if (scr.code){
-	//		scr.buffer=scr.code[0];
-	//	} else {
-	//		scr.buffer = "/* script: "+scr.name+" */\n";
-	//	}
-	//	$scope.currentScript = scr;
-    //
-	//};
+	$scope.storageFormatted="";
 
 	$scope.toggleEdit = function(){
 		$scope.editMode = !$scope.editMode;
@@ -127,6 +119,9 @@ function ScriptsController($scope,prompt){
 
 	$scope.toggleStorageView=function(){
 		$scope.showStorage = !$scope.showStorage;
+		if($scope.showStorage){
+			$scope.storageFormatted = setStorageFormatted();
+		}
 	}
 
 	$scope.selectItem = function(index){
@@ -136,7 +131,9 @@ function ScriptsController($scope,prompt){
 		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
 		$scope.currentScript = scr;
+		//$scope.storageFormatted = setStorageFormatted();
 	};
+
 
 	$scope.closeEditor = function(){
 		$scope.currentScript.buffer = undefined;
