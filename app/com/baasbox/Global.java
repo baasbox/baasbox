@@ -25,6 +25,7 @@ import static play.mvc.Results.notFound;
 
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -139,6 +140,23 @@ public class Global extends GlobalSettings {
 	    	 server.startup(
 	    			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 	    			   + "<orient-server>"
+	    			   + " <handlers>"
+	    			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
+	    			   + " <parameters>"
+	    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+	    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
+	    	           + "     <parameter name=\"configuration.db.default\""
+	    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
+	    	           + "     <parameter name=\"configuration.hazelcast\" value=\"conf/hazelcast.xml\"/>"
+	    	           + "     <parameter name=\"conflict.resolver.impl\""
+	    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
+
+	    	           + "     <!-- PARTITIONING STRATEGIES -->"
+	    	           + "     <parameter name=\"sharding.strategy.round-robin\""
+	    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
+	    	           + " </parameters>"
+	    	           + " </handler>"
+	    	           + " </handlers>"
 	    			   + "<network>"
 	    			   + "<protocols>"
 	    			   + "<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>"
@@ -148,12 +166,14 @@ public class Global extends GlobalSettings {
 	    			   + "</listeners>"
 	    			   + "</network>"
 	    			   + "<users>"
-	    			   + "<user name=\"root\" password=\"ThisIsA_TEST\" resources=\"*\"/>"
+	    			   + (StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? "": "<user name=\"root\" password=\""+BBConfiguration.getRootPassword()+"\" resources=\"*\"/>")
 	    			   + "</users>"
 	    			   + "<properties>"
 	    			   + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
 	    			   + "<entry name=\"log.console.level\" value=\"debug\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"fine\"/>"
+	    			   + "<entry value=\"./db\" name=\"server.database.path\" />"
+	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
 	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
 	    			   + "</properties>" + "</orient-server>");
