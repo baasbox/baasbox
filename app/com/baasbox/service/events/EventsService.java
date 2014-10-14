@@ -1,10 +1,10 @@
 package com.baasbox.service.events;
 
+import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
-import play.Logger;
-import play.libs.EventSource;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -13,14 +13,14 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class EventsService {
 
-    private static final ConcurrentHashMap<EventSource,EventSource> DEFAULT = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<EventSource,EventSource> DEFAULT = new EmptyConcurrentMap<>();
 
     public static enum StatType{
         SCRIPT,
         ALL,
     }
 
-    private final static ConcurrentHashMap<StatType,ConcurrentHashMap<EventSource,EventSource>> STATS_CHANNELS =
+    private final static ConcurrentMap<StatType,ConcurrentMap<EventSource,EventSource>> STATS_CHANNELS =
             new ConcurrentHashMap<>();
 
     public static void addListener(StatType channel,EventSource src){
@@ -29,14 +29,26 @@ public class EventsService {
             if (listeners == null){
                 listeners = new ConcurrentHashMap<EventSource, EventSource>();
             }
+
             listeners.putIfAbsent(src,src);
             return listeners;
         });
     }
 
+    public static void removeLogListener(EventSource src){
+        removeListener(StatType.SCRIPT,src);
+    }
+
+    public static void addLogListener(EventSource src){
+        addListener(StatType.SCRIPT,src);
+    }
+
     public static void removeListener(StatType channel,EventSource src){
         STATS_CHANNELS.computeIfPresent(channel,(ch,listeners)->{
-            listeners.remove(src);
+            EventSource removed = listeners.remove(src);
+            if(removed!=null){
+                removed.close();
+            }
             if (listeners.isEmpty()){
                 return null;
             }
@@ -51,28 +63,18 @@ public class EventsService {
         }
         LongAdder a= new LongAdder();
 
+
         STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
-            Logger.info("DATA: "+message.toString());
             e.sendData(message.toString());
             a.increment();
+
         });
 
         STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{
             e.sendData(message.toString());
             a.increment();
+
         });
         return a.intValue();
     }
-
-//    public static JsonNode obtainMessage(String name, String type, JsonNode message) {
-//        return null;
-//    }
-//
-//    public static void publish(JsonNode message){
-//        publish(null,message);
-//    }
-//
-//    public static void publish(String name, JsonNode message) {
-//
-//    }
 }

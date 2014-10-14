@@ -25,9 +25,10 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.events.EventsService;
+import com.baasbox.service.events.EventSource;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import play.libs.EventSource;
+import play.Logger;
 import play.mvc.Result;
 
 import java.util.Set;
@@ -41,42 +42,44 @@ import static play.mvc.Results.ok;
 public class EventsController {
 
     public static Result openLogger(){
-        SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
-        boolean okCredentials = sessionTokenAccess.setCredential(ctx());
-        if (!okCredentials){
-            return CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
-        } else {
-            String username =(String) ctx().args.get("username");
-            if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
-                    username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
-                return forbidden("The user "+username+" cannot acces via REST");
-            }
-        }
-        String appcode=(String)ctx().args.get("appcode");
-        String username=(String)ctx().args.get("username");
-        String password=(String)ctx().args.get("password");
         try {
-            DbHelper.open(appcode,username,password);
-            OUser user = DbHelper.getConnection().getUser();
-            Set<ORole> roles = user.getRoles();
-            if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
-                return forbidden("Logs can only be read by administrators");
-            }
-        }catch (InvalidAppCodeException e){
-            return badRequest(e.getMessage());
-        } finally {
-            DbHelper.close(DbHelper.getConnection());
-        }
+            if (Logger.isTraceEnabled())Logger.trace("Method start");
 
-        return ok(new EventSource() {
-            @Override
-            public void onConnected() {
-                onDisconnected(() -> {
-                    EventsService.removeListener(EventsService.StatType.SCRIPT, this);
-                });
-                EventsService.addListener(EventsService.StatType.SCRIPT, this);
-//                sendData("{\"message\": \"start\"}");
+            SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
+            boolean okCredentials = sessionTokenAccess.setCredential(ctx());
+            if (!okCredentials) {
+                return CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
+            } else {
+                String username = (String) ctx().args.get("username");
+                if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
+                        username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
+                    return forbidden("The user " + username + " cannot acces via REST");
+                }
             }
-        });
+            String appcode = (String) ctx().args.get("appcode");
+            String username = (String) ctx().args.get("username");
+            String password = (String) ctx().args.get("password");
+            try {
+                DbHelper.open(appcode, username, password);
+                OUser user = DbHelper.getConnection().getUser();
+                Set<ORole> roles = user.getRoles();
+                if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
+                    return forbidden("Logs can only be read by administrators");
+                }
+            } catch (InvalidAppCodeException e) {
+                return badRequest(e.getMessage());
+            } finally {
+                DbHelper.close(DbHelper.getConnection());
+            }
+
+            return ok(EventSource.source((eventSource) -> {
+
+                eventSource.onDisconnected(() -> EventsService.removeLogListener(eventSource));
+                EventsService.addLogListener(eventSource);
+
+            }));
+        } finally {
+            if (Logger.isTraceEnabled()) Logger.trace("Method end");
+        }
     }
 }
