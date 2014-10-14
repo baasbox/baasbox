@@ -46,6 +46,8 @@ public interface IBBConfigurationKeys {
 	public static final String DB_SIZE_THRESHOLD = "baasbox.db.size";
 	public static final String DB_ALERT_THRESHOLD = "baasbox.db.alert";
 	
+	public static final String SOCIAL_MOCK = "baasbox.social.mock";
+	
 	@Deprecated
 	public static final String REALM = "authorization.basic.realm";
 }

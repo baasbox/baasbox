@@ -90,7 +90,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
-	private static String prepareResponseToJson(ODocument doc){
+	static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
