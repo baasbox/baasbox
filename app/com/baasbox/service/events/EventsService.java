@@ -1,19 +1,17 @@
-package com.baasbox.service.stats;
+package com.baasbox.service.events;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import play.Logger;
 import play.libs.EventSource;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.LongAccumulator;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Stub service for sse connections
  * Created by Andrea Tortorella on 12/09/14.
  */
-public class StatsService {
+public class EventsService {
 
     private static final ConcurrentHashMap<EventSource,EventSource> DEFAULT = new ConcurrentHashMap<>();
 

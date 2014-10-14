@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2014.
+ *
+ * BaasBox - info@baasbox.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.baasbox.controllers;
 
 import com.baasbox.BBConfiguration;
@@ -6,24 +24,21 @@ import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.security.SessionKeys;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.baasbox.service.events.EventsService;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import org.apache.commons.lang.StringUtils;
 import play.libs.EventSource;
-import play.mvc.Http;
 import play.mvc.Result;
 
 import java.util.Set;
 
-import static play.mvc.Results.ok;
 import static play.mvc.Controller.*;
+import static play.mvc.Results.ok;
 
 /**
  * Created by eto on 13/10/14.
  */
-public class StatsService {
+public class EventsController {
 
     public static Result openLogger(){
         SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
@@ -57,9 +72,9 @@ public class StatsService {
             @Override
             public void onConnected() {
                 onDisconnected(() -> {
-                    com.baasbox.service.stats.StatsService.removeListener(com.baasbox.service.stats.StatsService.StatType.SCRIPT, this);
+                    EventsService.removeListener(EventsService.StatType.SCRIPT, this);
                 });
-                com.baasbox.service.stats.StatsService.addListener(com.baasbox.service.stats.StatsService.StatType.SCRIPT, this);
+                EventsService.addListener(EventsService.StatType.SCRIPT, this);
 //                sendData("{\"message\": \"start\"}");
             }
         });

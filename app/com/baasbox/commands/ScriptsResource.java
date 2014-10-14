@@ -22,13 +22,10 @@ import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.ScriptException;
-import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Internal;
 import com.baasbox.service.scripting.js.Json;
-import com.baasbox.service.stats.StatsService;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.baasbox.service.events.EventsService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -78,7 +75,7 @@ class ScriptsResource extends Resource {
         ObjectNode message = Json.mapper().createObjectNode();
         message.put("message",par);
         message.put("script",idOfTheModule);
-        int publish = StatsService.publish(StatsService.StatType.SCRIPT, message);
+        int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
         return IntNode.valueOf(publish);
     }
 
