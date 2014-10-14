@@ -11,7 +11,7 @@ function loadScriptsPage(scopeName){
 
 function ScriptsController($scope,prompt){
 	// private helpers
-	var VALID_NAME = /^([a-z][a-z0-9]*)\.[a-z][a-z0-9]*$/i;
+	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
 	var noop = function(){};
 	var validateName = function(name){
 		var r = VALID_NAME.exec(name);
