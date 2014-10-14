@@ -76,7 +76,7 @@ var log = function(msg){
 
     _command({resource: 'script',
               name: 'log',
-              params: ' '+id+' '+message});
+              params: message});
 
 };
 

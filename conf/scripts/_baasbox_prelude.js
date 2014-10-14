@@ -174,14 +174,6 @@ var GLOBAL=this;
             }
         };
 
-        //var bbox = undefined;
-        //Object.defineProperty(this,"Box",{get: function(){
-        //    if(bbox === undefined) {
-        //        bbox =m.prototype.require('baasbox.core');
-        //    }
-        //    return bbox;
-        //}});
-
         Object.defineProperty(this,"storage",{value: new Storage(m),
                                               configurable: false,
                                               enumerable: false});
@@ -249,12 +241,12 @@ var GLOBAL=this;
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
 
-     Module.prototype.Console = Object.create({
-        log: function(val) {
-            Internal.log(JSON.stringify(val));
-            _command({resource:'script',name:'log',params:{id: 'foo',message: val.toString()}});
-        }
-    });
+    // Module.prototype.Console = Object.create({
+    //    log: function(val) {
+    //        Internal.log(JSON.stringify(val));
+    //        _command({resource:'script',name:'log',params:{id: 'foo',message: val.toString()}});
+    //    }
+    //});
 
 
     function ModuleRef(id,code) {

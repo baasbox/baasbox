@@ -6,7 +6,7 @@
 				</div>
 				
 				<!-- plugins  -->
-				<div class="box span4">
+				<div class="box span3">
 					<div data-rel="tooltip" title="Installed Plugins" class="box-header well" data-original-title>
 						<h2><i class="icon icon-darkgray icon-archive"></i> Installed Plugins</h2>
 						<div class="box-icon">
@@ -15,16 +15,59 @@
 					</div>
 					<div class="box-content">
 						<ul class="plugin list">
-							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:getSelectedItem()==$index,invalid:script._invalid}">
+							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
-								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="edit()" class="plugin action" > Edit </span>  | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
+								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
 							</li>
 						</ul>
 					</div> <!-- box-content -->
-				</div><!-- box span4 -->
-				
+				</div><!-- box span3 -->
+				<div class="box span8">
+					<div class="box-header well" data-original-title>
+						<h2><i class="icon icon-darkgray icon-script"></i><span>{{currentScript.name}}</span></h2>
+						<div class="box-icon">
+							<a href="#" id="btnToggleEdit" ng-click="toggleEdit()" title="Edit/View mode" class="btn btn-setting btn-round"><i class="icon-edit"></i></a>
+						</div>
+						<div class="box-icon">
+							<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
+						</div>
+
+					</div>
+					<div class="editor box-content" ng-show="currentScript"
+						readonly="{{!editMode}}"
+						style="height: 300px;"
+						ui-ace="{mode: 'javascript',theme: 'solarized_light',require: ['ace/ext/language_tools'],advanced:{enableSnippets: true,enableBasicAutocompletion: true,enableLiveAutocompletion: true}}"
+						ng-model="currentScript.buffer">
+					</div>
+					<div ng-show="showStorage" class="box-content">
+						<pre id="plugin-storage" class="js" js-code-highlight ng-bind="currentScript._storage"></pre>
+					</div>
+					<div class="form-actions" ng-show="editMode">
+						<button type="submit" ng-click="saveScript()" class="btn btn-primary btn-small">Save</button>
+						<button type="reset" ng-click="closeEditor()" class="btn btn-small">Cancel</button>
+					</div>
+
+				</div>
+				<div class="span3">&nbsp;</div>
+				<div class="box span8">
+					<div class="box-header well">
+						<h2><i class="icon icon-darkgray icon-list"></i><span>Logs</span></h2>
+						<div class="box-icon">
+							<a href="#" id="btnToggleLogs" ng-click="toggleLogs()" title="Show/Hide logger" class="btn btn-setting btn-round"><i class="icon-eye-open"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+					<ul ng-show="logEnabled" class="dashboard-list">
+						<li ng-repeat="line in logs"
+							style="line-height: 13px; padding: 1px 0;margin-top: 2px;">
+							<span>{{line.date}}</span>&nbsp;<span>[{{line.script}}]:</span>&nbsp;<span>{{line.message}}</span>
+						</li>
+					</ul>
+					</div>
+				</div>
 				<!-- code -->
+				<!--
 				<div  class="box span7"  >
 					<div data-rel="tooltip" title="Code" class="box-header well" data-original-title>
 						<h2><i class="icon icon-darkgray icon-script"></i><span ng-bind="data.data[getSelectedItem()].name"></span> </h2>
@@ -34,15 +77,13 @@
 					</div>
 					<div ng-show="getShowStorage()" class="box-content">
 						<pre id="plugin-storage" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()]._storage"></pre>
-					</div> <!-- box-content -->
+					</div>
 					<div class="box-content">
 						<pre id="plugin-code" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()].code[0]"></pre>
-					</div> <!-- box-content -->
-				</div><!-- box span7 -->
-			
-				<!-- Editor -->	
+					</div>
+				</div>
+
 				<div class="span11">
-					<div class="editor" ng-show="currentScript" style="height: 200px;" ui-ace="{mode: 'javascript',theme: 'solarized_light',require: ['ace/ext/language_tools'],advanced:{enableSnippets: true,enableBasicAutocompletion: true,enableLiveAutocompletion: true}}" ng-model="currentScript.buffer"></div>
 					<div class="editor-buttons" ng-show="currentScript"><span ng-click="saveScript()">Save</span> <span ng-click="discardEdits()"> Discard </span><span ng-click="closeEditor()"> Close </span></div>
 				</div>
 				<div>
@@ -53,5 +94,6 @@
 						</li>
 					</ul>
 				</div>
+				-->
 			</div>
 			

@@ -8,7 +8,6 @@ function loadScriptsPage(scopeName){
 	});
 }
 
-
 function ScriptsController($scope,prompt){
 	// private helpers
 	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
@@ -32,7 +31,10 @@ function ScriptsController($scope,prompt){
 
 	var onNewScript = function(resp){
 		if(validateName(resp)){
-			$scope.currentScript ={buffer: "/* script: "+resp+" */\n"};
+			$scope.currentScript ={buffer: "/* script: "+resp+" */\n", name: resp};
+			$scope.selected=-1;
+			$scope.editMode=true;
+			$scope.showStorage=false;
 		} else {
 			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
 		}
@@ -41,7 +43,9 @@ function ScriptsController($scope,prompt){
 	var onUpdateSucces = function(){
 		$scope.currentScript.buffer = undefined;
 		$scope.currentScript = null;
-		$scope.selected= 0;
+		$scope.selected= -1;
+		$scope.editMode=false;
+		$scope.showStorage=false;
 		$scope.reload();
 	};
 
@@ -84,10 +88,12 @@ function ScriptsController($scope,prompt){
 
 	};
 
-	$scope.selected=0;
+
 	$scope.data={};
 	$scope.currentScript = null;
 	$scope.showStorage=false;
+	$scope.selected = -1;
+	$scope.editMode = false;
 
 	$scope.newScript = function(){
 		prompt("Script name","").then(
@@ -96,35 +102,53 @@ function ScriptsController($scope,prompt){
 	};
 
 
-	$scope.edit = function(){
-		var scr = $scope.data.data[$scope.selected];
+	//$scope.edit = function(s){
+	//	$scope.selected = s;
+	//	var scr = $scope.data.data[$scope.selected];
+	//	scr.buffer = scr.buffer||scr.code[0];
+	//	$scope.currentScript = scr;
+	//};
+    //
+	//$scope.discardEdits = function(){
+	//	var scr = $scope.currentScript;
+	//	if (scr.code){
+	//		scr.buffer=scr.code[0];
+	//	} else {
+	//		scr.buffer = "/* script: "+scr.name+" */\n";
+	//	}
+	//	$scope.currentScript = scr;
+    //
+	//};
+
+	$scope.toggleEdit = function(){
+		$scope.editMode = !$scope.editMode;
+	};
+
+
+	$scope.toggleStorageView=function(){
+		$scope.showStorage = !$scope.showStorage;
+	}
+
+	$scope.selectItem = function(index){
+		$scope.selected=index;
+		$scope.editMode=false;
+		$scope.showStorage=false;
+		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
 		$scope.currentScript = scr;
-	};
-
-	$scope.discardEdits = function(){
-		var scr = $scope.currentScript;
-		if (scr.code){
-			scr.buffer=scr.code[0];
-		} else {
-			scr.buffer = "/* script: "+scr.name+" */\n";
-		}
-		$scope.currentScript = scr;
-
-	};
-
-	$scope.selectItem = function(s){
-		$scope.selected=s;
 	};
 
 	$scope.closeEditor = function(){
 		$scope.currentScript.buffer = undefined;
 		$scope.currentScript = null;
+		$scope.editMode=false;
+		$scope.showStorage=false;
+		$scope.selected=-1;
 	};
 
-	$scope.getSelectedItem = function(){
-		return $scope.selected;
-	};
+	//$scope.getSelectedItem = function(){
+	//	return $scope.selected;
+	//};
 
 
 	$scope.saveScript = function(){
@@ -141,7 +165,13 @@ function ScriptsController($scope,prompt){
 			success: function(data) {
 				$scope.$apply(function(){
 					$scope.data=data;
-					$scope.selected=0;
+					$scope.selected=-1;
+					if($scope.currentScript){
+						$scope.currentScript.buffer = undefined;
+					}
+					$scope.currentScript = undefined;
+					$scope.editMode = false;
+					$scope.showStorage = false;
 				});
 			}
 		});
@@ -175,35 +205,30 @@ function ScriptsController($scope,prompt){
 			});
 		}
 	}//$scope.remove()
-	
-	$scope.toggleStorageView=function(){
-		$scope.showStorage = !$scope.showStorage;
-	}
-	
-	$scope.getShowStorage=function(){
-		return $scope.showStorage;
-	}
+
+
+	/// logging
 
 	var evtSource = null;
 	var connectLogger = function(f){
 		var url = "/admin/plugin/logs";
 		url+='?X-BB-SESSION=' + sessionStorage.sessionToken;
 		url+='&X-BAASBOX-APPCODE='+escape($('#login').scope().appcode);
-		console.log("Connecting: "+url);
 		var source = new EventSource(url);
-		console.log("Connected: "+source);
 		source.addEventListener('message',f);
 		return source;
 	};
 
 	$scope.logEnabled = false;
 	$scope.logs = [];
+	$scope.maxLogSize = 40;
 
 	$scope.toggleLogs = function(){
 		if($scope.logEnabled) {
 			$scope.logEnabled = false;
 			evtSource.close();
 			evtSource =null;
+			$scope.logs.splice(0,$scope.logs.length);
 		} else{
 			$scope.logEnabled = true;
 			evtSource = connectLogger(function(e){
@@ -213,7 +238,9 @@ function ScriptsController($scope,prompt){
 
 				$scope.$apply(function(){
 					console.log(data);
-					$scope.logs.push(data);
+					$scope.logs.unshift(data);
+					if($scope.logs.length<$scope.maxLogSize) return;
+					Array.prototype.splice.call($scope.logs,$scope.maxLogSize,($scope.logs.length-$scope.maxLogSize));
 				})
 			});
 		}
