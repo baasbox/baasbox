@@ -60,7 +60,7 @@ public class StatsService {
                     com.baasbox.service.stats.StatsService.removeListener(com.baasbox.service.stats.StatsService.StatType.SCRIPT, this);
                 });
                 com.baasbox.service.stats.StatsService.addListener(com.baasbox.service.stats.StatsService.StatType.SCRIPT, this);
-                sendData("{\"message\": \"start\"}");
+//                sendData("{\"message\": \"start\"}");
             }
         });
     }

@@ -49,7 +49,7 @@
 					<button class="btn" ng-click="toggleLogs()">{{logEnabled && 'pause logs' || 'resume logs'}}</button>
 					<ul ng-show="logEnabled">
 						<li ng-repeat="line in logs">
-							{{line}}
+							<span>{{line.script}}&nbsp;:</span><span>{{line.message}}</span>
 						</li>
 					</ul>
 				</div>

@@ -192,7 +192,7 @@ function ScriptsController($scope,prompt){
 		console.log("Connecting: "+url);
 		var source = new EventSource(url);
 		console.log("Connected: "+source);
-		source.onmessage = f;
+		source.addEventListener('message',f);
 		return source;
 	};
 
@@ -207,11 +207,13 @@ function ScriptsController($scope,prompt){
 		} else{
 			$scope.logEnabled = true;
 			evtSource = connectLogger(function(e){
-				console.log(e);
+				console.log(e.data);
+				var data = JSON.parse(e.data.split('\\').join(''));
+
+
 				$scope.$apply(function(){
-					console.log(e);
-					var d = e.data;
-					$scope.logs.push(d);
+					console.log(data);
+					$scope.logs.push(data);
 				})
 			});
 		}
