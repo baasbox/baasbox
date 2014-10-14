@@ -44,6 +44,7 @@ import play.Logger;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Created by Andrea Tortorella on 10/06/14.
@@ -60,6 +61,7 @@ public class ScriptsDao {
     public static final String ACTIVE = "active";
 
 
+    private static final Pattern VALID_NAME_PATTERN = Pattern.compile("([a-zA-Z_][a-zA-Z_0-9]*)(\\.([a-zA-Z][a-zA-Z_0-9]*))+");
     private static final String INDEX =MODEL_NAME+"."+NAME;
 
     private final ODatabaseRecordTx db;
@@ -163,11 +165,16 @@ public class ScriptsDao {
         return getAll(QueryParams.getInstance());
     }
 
+
     public static void checkValidName(String name) throws ScriptException{
-        if (name == null||name.trim().length()==0){
+        if (name== null||name.trim().length()==0){
             throw new InvalidScriptException("Script must have non empty name");
-        } else if (isInternalName(name)){
-            throw new InvalidScriptException("Script names cannot begine with 'baasbox'");
+        }
+        if (!VALID_NAME_PATTERN.matcher(name).matches()){
+            throw new InvalidScriptException("Script names must be composed of letters numbers and underscores, and cannot start with numbers. Script must have at least one namespace part. Valid example: mynamespace.myscript");
+        }
+        if (isInternalName(name)){
+            throw new InvalidScriptException("User scripts cannot belong to 'baasbox' namespace");
         }
     }
 
