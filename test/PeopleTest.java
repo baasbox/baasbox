@@ -77,4 +77,26 @@ public class PeopleTest extends AbstractRouteHeaderTest{
 			}
 		);		
 	}
+	
+	@Test
+	public void testRoutePeopleFields()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress() + "?fields=user.name");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					assertRoute(result, "RouteOK Admin user", Status.OK, null, false);
+					
+				}
+			}
+		);		
+	}
+	
 }

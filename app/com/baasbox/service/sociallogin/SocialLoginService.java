@@ -204,7 +204,7 @@ public abstract class SocialLoginService {
 	public abstract  UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
 
 	public static SocialLoginService by(String socialNetwork,String appcode) {
-		if (BBConfiguration.getSocialMock()) return new FacebookLoginServiceMock(appcode);
+		if (BBConfiguration.getSocialMock()) return new SocialLoginServiceMock(socialNetwork,appcode);
 
 		if(socialNetwork.equals("facebook")){
 			return new FacebookLoginService(appcode);
