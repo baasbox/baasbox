@@ -182,7 +182,7 @@ public class Social extends Controller{
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			ObjectNode on = Json.newObject();
 			if(existingUser!=null){
-				on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(existingUser)).get("user"));
+				on.put("user", Json.parse( User.prepareResponseToJson(existingUser)).get("user"));
 			}
 			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			return ok(on);
@@ -196,13 +196,14 @@ public class Social extends Controller{
 				if(result.getAdditionalData()!=null && !result.getAdditionalData().isEmpty()){
 					privateData = Json.toJson(result.getAdditionalData());
 				}
-				ODocument profile = UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
+				UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
+				ODocument profile=UserService.getUserProfilebyUsername(username);
 				UserService.addSocialLoginTokens(profile,result);
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 				ObjectNode on = Json.newObject();
 				if(profile!=null){
-					on.put("user", Json.parse( User.prepareResponseToJsonUserInfo(profile)).get("user"));
+					on = (ObjectNode)Json.parse( User.prepareResponseToJson(profile));
 				}
 				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
