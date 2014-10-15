@@ -1,32 +1,36 @@
 package com.baasbox.service.sociallogin;
 
-import java.util.Random;
 import java.util.UUID;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.types.resources.selectors.Date;
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import play.Logger;
-import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
-public class FacebookLoginServiceMock extends SocialLoginService {
+public class SocialLoginServiceMock extends SocialLoginService {
 
-	public static final String PREFIX = "fb_";
-	public static final String SOCIAL = "facebook";
+	public   String PREFIX = "";
+	public   String SOCIAL = "";
 	
-	public FacebookLoginServiceMock(String appcode) {
-		super(SOCIAL,appcode);
-	}
 
+	public SocialLoginServiceMock(String socialNetworkName, String appcode) {
+		super(socialNetworkName,appcode);
+		this.SOCIAL=socialNetworkName;
+		if(socialNetwork.equals("facebook")){
+			this.PREFIX=FacebookLoginService.PREFIX;
+		}else if(socialNetwork.equals("github")){
+			this.PREFIX=GithubLoginService.PREFIX;
+		}else if(socialNetwork.equals("google")){
+			this.PREFIX=GooglePlusLoginService.PREFIX;
+		}
+		this.PREFIX=this.PREFIX + "_mock_";
+	}
+	
 	@Override
 	public Class<? extends Api> provider() {
 		return MockApi.class;
@@ -66,7 +70,7 @@ public class FacebookLoginServiceMock extends SocialLoginService {
 		ui.addData("email",ui.getUsername() + "@example.com");
 		ui.addData("gender","M");
 		ui.addData("personalUrl","http://www.example.com/" + ui.getUsername());		
-		ui.addData("name","Mario Rossi Mock " + System.currentTimeMillis());
+		ui.addData("name","John Doe Mock " + System.currentTimeMillis());
 		ui.setFrom(SOCIAL + "_mock");
 		return ui;
 	}
