@@ -161,11 +161,16 @@ public class PushService {
 			GCMServer gcmServer = new GCMServer();
 			gcmServer.setConfiguration(getPushParameters(pushProfile));
 			
-			if(iosToken.size()>0) withError[i++]=apnServer.send(message, iosToken, bodyJson);
-		
+			if(iosToken.size()>0) {
+				for(List<String> thousandUsersApple : Lists.partition(iosToken, 1000)){
+					withError[i]=apnServer.send(message, thousandUsersApple, bodyJson);
+				}
+				i++;
+			}
+			
 			if(androidToken.size()>0) {
-				for(List<String> thousandUsers: Lists.partition(androidToken,1000)){ //needed for the GCM sending limit
-					withError[i]=gcmServer.send(message, thousandUsers, bodyJson);
+				for(List<String> thousandUsersAndroid: Lists.partition(androidToken,1000)){ //needed for the GCM sending limit
+					withError[i]=gcmServer.send(message, thousandUsersAndroid, bodyJson);
 				}
 				i++;
 			}
