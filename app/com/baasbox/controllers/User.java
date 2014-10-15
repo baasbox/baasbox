@@ -105,13 +105,15 @@ public class User extends Controller {
 		try {
 			for (ODocument doc : listOfDoc){
 				doc.detach();
-				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
-				if (roles.size()>1){
-					Iterator<OIdentifiable> it = roles.iterator();
-					while (it.hasNext()){
-						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-					        it.remove();
-					    }
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
 					}
 				}
 			}

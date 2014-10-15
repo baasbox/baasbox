@@ -50,6 +50,7 @@ public class Evolution_0_8_4 implements IEvolution {
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
 			multiPushProfileSettings(db);
+			exposeSocialId(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -170,6 +171,25 @@ public class Evolution_0_8_4 implements IEvolution {
 			}
 		}
 		return result;
+	}
+	
+	
+	/***
+	 * expose some attributes when users logged in via social network
+	 * @param db
+	 */
+	private void exposeSocialId(ODatabaseRecordTx db) {
+		//take all users and expose their generated flag
+		//remove permission for registered users to system attributes
+		//put the signupdate in user system info
+		DbHelper.execMultiLineCommands(db, true, new String [] 
+				{
+					"update _bb_user set generated = system.generated_username;",
+					"update _bb_user set system._allowRead = [];",
+					"update _bb_user set system.signUpDate=signUpDate;"
+				} 
+		);
+		
 	}
     
 }
