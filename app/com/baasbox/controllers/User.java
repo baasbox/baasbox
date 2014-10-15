@@ -90,7 +90,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
-	private static String prepareResponseToJson(ODocument doc){
+	static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
@@ -105,13 +105,15 @@ public class User extends Controller {
 		try {
 			for (ODocument doc : listOfDoc){
 				doc.detach();
-				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
-				if (roles.size()>1){
-					Iterator<OIdentifiable> it = roles.iterator();
-					while (it.hasNext()){
-						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-					        it.remove();
-					    }
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
 					}
 				}
 			}

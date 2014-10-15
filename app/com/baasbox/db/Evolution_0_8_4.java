@@ -18,19 +18,29 @@
 
 package com.baasbox.db;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang.StringUtils;
 
 import play.Logger;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.configuration.index.IndexPushConfiguration;
+import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Evolution_0_8_4 implements IEvolution {
@@ -50,6 +60,7 @@ public class Evolution_0_8_4 implements IEvolution {
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
 			multiPushProfileSettings(db);
+			exposeSocialId(db);
 		}catch (Throwable e){
 			Logger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
@@ -170,6 +181,52 @@ public class Evolution_0_8_4 implements IEvolution {
 			}
 		}
 		return result;
+	}
+	
+	
+	/***
+	 * expose some attributes when users logged in via social network
+	 * @param db
+	 * @throws DocumentNotFoundException 
+	 * @throws InvalidModelException 
+	 */
+	private void exposeSocialId(ODatabaseRecordTx db) throws InvalidModelException, DocumentNotFoundException {
+		//take all users and expose their generated flag
+		//remove permission for registered users to system attributes
+		//put the signupdate in user system info
+		//put the _social data structure into the visiblyByRegisteredUsers attribute
+		DbHelper.execMultiLineCommands(db, true, new String [] 
+				{
+					"update _bb_user set generated = system.generated_username;",
+					"update _bb_user set system._allowRead = [];",
+					"update _bb_user set system.signUpDate=signUpDate;"
+				} 
+		);
+		Logger.info("...moving social ids. This can take several minutes....");
+		Object listOfUser=DbHelper.genericSQLStatementExecute("select @rid,system.sso_tokens as social_network from _bb_user where system.sso_tokens is not null", new String[]{""});
+		for (Object doc: (List)listOfUser){
+			ODocument odoc = (ODocument)doc;
+			ORID rid=odoc.field("rid");
+			ODocument sn=odoc.field("social_network");
+			UserDao udao= UserDao.getInstance();
+			ODocument profile = udao.get(rid);
+			
+			ODocument registeredUserProp = profile.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+			if (registeredUserProp==null) registeredUserProp=new ODocument(UserDao.USER_ATTRIBUTES_CLASS);
+			
+			Map socialdata=registeredUserProp.field("_social");
+			if(socialdata == null){
+				socialdata = new HashMap<String,ODocument>();
+			}
+			for (int i=0;i<sn.fields();i++){
+				String socialNetwork = sn.fieldNames()[i];
+				ODocument socialInfo = (ODocument)sn.fieldValues()[i];
+				socialdata.put(socialNetwork, (ODocument)new ODocument().fromJSON("{\"id\":\""+ socialInfo.field("id") +"\"}"));
+			}
+			registeredUserProp.field("_social",socialdata);
+			registeredUserProp.save();
+			profile.save();
+		}
 	}
     
 }
