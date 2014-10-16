@@ -396,6 +396,15 @@ img.companylogo {
 	margin-left:53px;
 }
 
-.log-list {
+.logLine {
+    line-height: 12px;
+    padding: 1px 0 !important;
+    margin-top: 2px !important;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    color: #696a63;
+}
 
+.errorBoxText {
+    margin: 8px;
+    color: #F00;
 }

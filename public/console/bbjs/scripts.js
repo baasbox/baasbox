@@ -33,7 +33,7 @@ function ScriptsController($scope,prompt){
 		if(validateName(resp)){
 			$scope.currentScript ={buffer: "/* script: "+resp+" */\n", name: resp};
 			$scope.selected=-1;
-			$scope.editMode=true;
+			setEditMode(true);
 			$scope.showStorage=false;
 		} else {
 			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
@@ -53,9 +53,33 @@ function ScriptsController($scope,prompt){
 		$scope.currentScript.buffer = undefined;
 		$scope.currentScript = null;
 		$scope.selected= -1;
-		$scope.editMode=false;
+		setEditMode(false);
 		$scope.showStorage=false;
 		$scope.reload();
+	};
+
+
+	var setEditMode = function(mode){
+		$scope.editMode = mode;
+		$scope.aceEditMode.theme = mode?'solarized_dark':'crimson_editor';
+	};
+
+	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
+	var parseError = function(text){
+		var x =EXTRACT_ERROR.exec(text);
+		if(x && x[1]){
+			console.log(x[1]);
+			return x[1];
+		}
+		return "Unknown error";
+	};
+
+	var pubblishError = function(data){
+		var e = $.parseJSON(data.responseText);
+		var error= parseError(e.message);
+		$scope.$apply(function(){
+			$scope.lastError = error;
+		});
 	};
 
 	var postScript = function(script){
@@ -70,12 +94,8 @@ function ScriptsController($scope,prompt){
 			contentType: "application/json",
 			processData: false,
 
-			error: function(data){
-				console.log(data);
-			},
-			success: function(data){
-				onUpdateSucces();
-			}
+			error: pubblishError,
+			success: onUpdateSucces
 		});
 	};
 
@@ -87,15 +107,19 @@ function ScriptsController($scope,prompt){
 			data: toSend,
 			contentType: "application/json",
 			processData: false,
-			error: function(data){
-				console.log(data);
-			},
-			success: function(data){
-				onUpdateSucces();
-			}
+			error: pubblishError,
+			success: onUpdateSucces
 		});
 
 	};
+
+	$scope.aceEditMode = {mode: 'javascript',
+						  theme: 'crimson_editor',
+						  require: ['ace/ext/language_tools'],
+						  advanced:{enableSnippets: true,
+							  		enableBasicAutocompletion: true,
+							  		enableLiveAutocompletion: true}};
+
 
 
 	$scope.data={};
@@ -103,6 +127,7 @@ function ScriptsController($scope,prompt){
 	$scope.showStorage=false;
 	$scope.selected = -1;
 	$scope.editMode = false;
+	$scope.lastError = null;
 
 	$scope.newScript = function(){
 		prompt("Script name","").then(
@@ -112,8 +137,10 @@ function ScriptsController($scope,prompt){
 
 	$scope.storageFormatted="";
 
+
 	$scope.toggleEdit = function(){
-		$scope.editMode = !$scope.editMode;
+		setEditMode(!$scope.editMode);
+
 	};
 
 
@@ -126,7 +153,7 @@ function ScriptsController($scope,prompt){
 
 	$scope.selectItem = function(index){
 		$scope.selected=index;
-		$scope.editMode=false;
+		setEditMode(false);
 		$scope.showStorage=false;
 		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
@@ -136,11 +163,14 @@ function ScriptsController($scope,prompt){
 
 
 	$scope.closeEditor = function(){
-		$scope.currentScript.buffer = undefined;
+		if($scope.currentScript) {
+			$scope.currentScript.buffer = undefined;
+		}
 		$scope.currentScript = null;
-		$scope.editMode=false;
+		setEditMode(false);
 		$scope.showStorage=false;
 		$scope.selected=-1;
+		$scope.lastError=null;
 	};
 
 	//$scope.getSelectedItem = function(){
@@ -162,13 +192,8 @@ function ScriptsController($scope,prompt){
 			success: function(data) {
 				$scope.$apply(function(){
 					$scope.data=data;
-					$scope.selected=-1;
-					if($scope.currentScript){
-						$scope.currentScript.buffer = undefined;
-					}
-					$scope.currentScript = undefined;
-					$scope.editMode = false;
-					$scope.showStorage = false;
+					$scope.closeEditor();
+
 				});
 			}
 		});
@@ -261,7 +286,7 @@ angular.module('console', [])
 */
 
 
-
+/*
 angular.module('console', [])
 	.directive('snippet', ['$timeout', '$interpolate', function($timeout, $interpolate) {
 		return {
@@ -277,3 +302,4 @@ angular.module('console', [])
 	        }
 	    };
 	}]);
+	*/
