@@ -9,9 +9,13 @@ function loadScriptsPage(scopeName){
 }
 
 function ScriptsController($scope,prompt){
+
 	// private helpers
 	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
+	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
+
 	var noop = function(){};
+
 	var validateName = function(name){
 		var r = VALID_NAME.exec(name);
 		var idx;
@@ -43,7 +47,6 @@ function ScriptsController($scope,prompt){
 	var setStorageFormatted = function(){
 		if($scope.currentScript && $scope.currentScript._storage){
 			return angular.toJson($scope.currentScript._storage,true);
-			//return JSON.stringify($scope.currentScript._storage);
 		} else{
 			return "";
 		}
@@ -64,7 +67,6 @@ function ScriptsController($scope,prompt){
 		$scope.aceEditMode.theme = mode?'solarized_dark':'crimson_editor';
 	};
 
-	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
 	var parseError = function(text){
 		var x =EXTRACT_ERROR.exec(text);
 		if(x && x[1]){
@@ -119,15 +121,18 @@ function ScriptsController($scope,prompt){
 						  advanced:{enableSnippets: true,
 							  		enableBasicAutocompletion: true,
 							  		enableLiveAutocompletion: true}};
-
-
-
 	$scope.data={};
 	$scope.currentScript = null;
 	$scope.showStorage=false;
 	$scope.selected = -1;
 	$scope.editMode = false;
 	$scope.lastError = null;
+	$scope.storageFormatted="";
+
+	$scope.logEnabled = false;
+	$scope.logs = [];
+	$scope.maxLogSize = 40;
+
 
 	$scope.newScript = function(){
 		prompt("Script name","").then(
@@ -135,21 +140,17 @@ function ScriptsController($scope,prompt){
 			noop);
 	};
 
-	$scope.storageFormatted="";
-
-
 	$scope.toggleEdit = function(){
 		setEditMode(!$scope.editMode);
 
 	};
-
 
 	$scope.toggleStorageView=function(){
 		$scope.showStorage = !$scope.showStorage;
 		if($scope.showStorage){
 			$scope.storageFormatted = setStorageFormatted();
 		}
-	}
+	};
 
 	$scope.selectItem = function(index){
 		$scope.selected=index;
@@ -158,7 +159,6 @@ function ScriptsController($scope,prompt){
 		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
 		$scope.currentScript = scr;
-		//$scope.storageFormatted = setStorageFormatted();
 	};
 
 
@@ -173,11 +173,6 @@ function ScriptsController($scope,prompt){
 		$scope.lastError=null;
 	};
 
-	//$scope.getSelectedItem = function(){
-	//	return $scope.selected;
-	//};
-
-
 	$scope.saveScript = function(){
 		if(!$scope.currentScript) return;
 		if($scope.currentScript.code){
@@ -186,7 +181,9 @@ function ScriptsController($scope,prompt){
 			postScript($scope.currentScript);
 		}
 	};
-	
+
+
+	///---- menu functions
 	$scope.reload=function(){
 		BBRoutes.com.baasbox.controllers.ScriptsAdmin.list().ajax({
 			success: function(data) {
@@ -229,9 +226,10 @@ function ScriptsController($scope,prompt){
 	}//$scope.remove()
 
 
-	/// logging
+	///---- logging system
 
 	var evtSource = null;
+
 	var connectLogger = function(f){
 		var url = "/admin/plugin/logs";
 		url+='?X-BB-SESSION=' + sessionStorage.sessionToken;
@@ -240,10 +238,6 @@ function ScriptsController($scope,prompt){
 		source.addEventListener('message',f);
 		return source;
 	};
-
-	$scope.logEnabled = false;
-	$scope.logs = [];
-	$scope.maxLogSize = 40;
 
 	$scope.toggleLogs = function(){
 		if($scope.logEnabled) {
@@ -269,37 +263,3 @@ function ScriptsController($scope,prompt){
 	}
 	
 }
-
-/*
-angular.module('console', [])
-	.directive('jsCodeHighlight', function($rootScope){
-	    return {
-	        restrict: 'A',
-	        scope:false,
-	        link: function(scope,elm,attrs){
-	        	console.log("direttiva!");
-	        	//elm.html(scope.script.code[0]);
-	            elm.snippet("javascript",{style:"whitengrey"});
-	        }
-	    }
-	});
-*/
-
-
-/*
-angular.module('console', [])
-	.directive('snippet', ['$timeout', '$interpolate', function($timeout, $interpolate) {
-		return {
-	        restrict: 'E',
-	        template:'<pre><code ng-transclude></code></pre>',
-	        replace:true,
-	        transclude:true,
-	        link:function(scope, elm, attrs){             
-	            var tmp =  $interpolate(elm.find('code').text())(scope);
-	             $timeout(function() {                
-	                elm.find('code').html(hljs.highlightAuto(tmp).value);
-	              }, 0);
-	        }
-	    };
-	}]);
-	*/
