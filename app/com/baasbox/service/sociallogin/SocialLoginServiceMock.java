@@ -17,7 +17,9 @@ public class SocialLoginServiceMock extends SocialLoginService {
 	public   String PREFIX = "";
 	public   String SOCIAL = "";
 	
-
+	private String secret="";
+	private String token="";
+	
 	public SocialLoginServiceMock(String socialNetworkName, String appcode) {
 		super(socialNetworkName,appcode);
 		this.SOCIAL=socialNetworkName;
@@ -65,8 +67,8 @@ public class SocialLoginServiceMock extends SocialLoginService {
 	public UserInfo extractUserInfo(Response r) throws BaasBoxSocialException {
 		if (Logger.isDebugEnabled()) Logger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
-		ui.setId("mockid_" + UUID.randomUUID());
-		ui.setUsername("mockusername_" + UUID.randomUUID());
+		ui.setId("mockid_" + this.token);
+		ui.setUsername("mockusername_" + this.token);
 		ui.addData("email",ui.getUsername() + "@example.com");
 		ui.addData("gender","M");
 		ui.addData("personalUrl","http://www.example.com/" + ui.getUsername());		
@@ -97,7 +99,9 @@ public class SocialLoginServiceMock extends SocialLoginService {
 	
 	@Override
 	public UserInfo getUserInfo(Token accessToken) throws BaasBoxSocialException{
-
+		this.secret=accessToken.getSecret();
+		this.token=accessToken.getToken();
+		
 		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
 
 		this.service.signRequest(accessToken, request);

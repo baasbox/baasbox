@@ -182,7 +182,7 @@ public class Social extends Controller{
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			ObjectNode on = Json.newObject();
 			if(existingUser!=null){
-				on.put("user", Json.parse( User.prepareResponseToJson(existingUser)).get("user"));
+				on.put("user", Json.parse( User.prepareResponseToJson(existingUser)));
 			}
 			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			return ok(on);
