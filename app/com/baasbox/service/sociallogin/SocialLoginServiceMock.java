@@ -70,7 +70,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 		ui.setId("mockid_" + this.token);
 		ui.setUsername("mockusername_" + this.token);
 		ui.addData("email",ui.getUsername() + "@example.com");
-		ui.addData("gender","M");
+		ui.addData("gender","male");
 		ui.addData("personalUrl","http://www.example.com/" + ui.getUsername());		
 		ui.addData("name","John Doe Mock " + System.currentTimeMillis());
 		ui.setFrom(SOCIAL + "_mock");
