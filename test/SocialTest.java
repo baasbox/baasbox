@@ -4,6 +4,7 @@ import static play.test.Helpers.running;
 
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import play.Logger;
@@ -91,6 +92,20 @@ public class SocialTest extends AbstractTest {
 							result = routeAndCall(request);
 							assertRoute(result, "testSocial - cannot update their _social fields", 200, "\"_social\":{\"facebook\":{\"id\":\"mockid", true);
 							
+						//the social user logins again using the same social token and .... it has to be the same user
+						//this test tests the login using social network
+							node = updatePayloadFieldValue("/socialSignup.json", "oauth_token", o_token);
+							request = new FakeRequest(getMethod(), getRouteAddress());
+							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request = request.withJsonBody(node, getMethod());
+							result = routeAndCall(request);						
+							assertRoute(result, "testSocial - check user no rid", 200, "\"user\":{\"name\":", true);
+							
+							body = play.test.Helpers.contentAsString(result);
+							jsonRes = Json.parse(body);
+							token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
+							String usernameCheck = jsonRes.get("data").get("user").get("name").textValue();
+							Assert.assertTrue("Usernames must be equal. Username first time: " + username + ", username second time: " + usernameCheck, username.equals(usernameCheck));
 						
 					}
 				}
