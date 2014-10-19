@@ -1,7 +1,5 @@
 package com.baasbox.service.sociallogin;
 
-import java.util.UUID;
-
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -9,11 +7,15 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
 import play.Logger;
+import play.Play;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
 
 public class SocialLoginServiceMock extends SocialLoginService {
-
+	
+	private static String port = (Play.isTest())?System.getProperty("testserver.port", "3333"):System.getProperty("http.port", "9000");
+	private static String mockUrl = "http://localhost"+port;
+	
 	public   String PREFIX = "";
 	public   String SOCIAL = "";
 	
@@ -45,7 +47,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	public String userInfoUrl() {
-		return "http://www.example.com";
+		return mockUrl;
 	}
 
 	@Override
@@ -84,7 +86,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	protected String getValidationURL(String token) {
-		return "http://www.example.com";
+		return mockUrl;
 	}
 
 	@Override
@@ -105,7 +107,12 @@ public class SocialLoginServiceMock extends SocialLoginService {
 		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
 
 		this.service.signRequest(accessToken, request);
-		Response response = request.send();
+		Response response = null;
+		try {
+			response = request.send();
+		}catch(Exception e){
+			//swallow
+		}
 		return extractUserInfo(response);
 	}
 }
