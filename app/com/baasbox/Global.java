@@ -141,7 +141,7 @@ public class Global extends GlobalSettings {
 	    			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 	    			   + "<orient-server>"
 	    			   + " <handlers>"
-	    			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
+	    /*			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
 	    			   + " <parameters>"
 	    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
 	    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
@@ -155,7 +155,7 @@ public class Global extends GlobalSettings {
 	    	           + "     <parameter name=\"sharding.strategy.round-robin\""
 	    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
 	    	           + " </parameters>"
-	    	           + " </handler>"
+	    	           + " </handler>"*/
 	    	           + " </handlers>"
 	    			   + "<network>"
 	    			   + "<protocols>"
@@ -169,9 +169,9 @@ public class Global extends GlobalSettings {
 	    			   + (StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? "": "<user name=\"root\" password=\""+BBConfiguration.getRootPassword()+"\" resources=\"*\"/>")
 	    			   + "</users>"
 	    			   + "<properties>"
-	    			   + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
-	    			   + "<entry name=\"log.console.level\" value=\"debug\"/>"
-	    			   + "<entry name=\"log.file.level\" value=\"fine\"/>"
+	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"info\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
 	    			   + "<entry value=\"./db\" name=\"server.database.path\" />"
 	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
