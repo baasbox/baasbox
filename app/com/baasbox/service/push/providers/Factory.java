@@ -18,6 +18,10 @@
 
 package com.baasbox.service.push.providers;
 
+import java.util.HashMap;
+
+import com.baasbox.BBConfiguration;
+
 
 public class Factory {
 	public enum VendorOS{
@@ -45,6 +49,9 @@ public class Factory {
 		ANDROID_API_KEY,APPLE_TIMEOUT,IOS_CERTIFICATE,IOS_CERTIFICATE_PASSWORD,IOS_SANDBOX
 	}
 	public static IPushServer getIstance(VendorOS vendor){
+		if (BBConfiguration.getPushMock()){
+			return new PushProviderMock();
+		}
 		switch (vendor) {
 			case IOS:
 				return new APNServer();
@@ -52,6 +59,13 @@ public class Factory {
 				return new GCMServer();
 		}
 		return null;
+	}
+	
+	public static HashMap<VendorOS,IPushServer> getAllIstances(){
+		HashMap<VendorOS,IPushServer> ret = new HashMap<VendorOS,IPushServer>();
+		ret.put(VendorOS.IOS,BBConfiguration.getPushMock()?new PushProviderMock():new APNServer());
+		ret.put(VendorOS.ANDROID,BBConfiguration.getPushMock()?new PushProviderMock():new GCMServer());
+		return ret;
 	}
 }
 

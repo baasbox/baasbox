@@ -19,8 +19,8 @@
 package com.baasbox.service.push;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +29,6 @@ import play.Logger;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.providers.APNServer;
@@ -38,10 +37,9 @@ import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.service.push.providers.Factory.VendorOS;
 import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.service.push.providers.IPushServer;
+import com.baasbox.service.push.providers.PushProviderAbstract;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.android.gcm.server.InvalidRequestException;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -155,10 +153,12 @@ public class PushService {
 		}//for (String username : usernames)
 		int i=0;
 		for(Integer pushProfile : pushProfiles) {
-			APNServer apnServer = new APNServer();
+			HashMap<Factory.VendorOS,IPushServer> allVendors= Factory.getAllIstances();
+			
+			APNServer apnServer = (APNServer)allVendors.get(VendorOS.IOS);
 			apnServer.setConfiguration(getPushParameters(pushProfile));
 			
-			GCMServer gcmServer = new GCMServer();
+			GCMServer gcmServer = (GCMServer)allVendors.get(VendorOS.ANDROID);
 			gcmServer.setConfiguration(getPushParameters(pushProfile));
 			
 			if(iosToken.size()>0) {

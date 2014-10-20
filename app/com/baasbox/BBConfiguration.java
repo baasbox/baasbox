@@ -90,6 +90,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return Boolean.valueOf(configuration.getString(SOCIAL_MOCK));
 	}
 	
+	public static Boolean getPushMock(){
+		return Boolean.valueOf(configuration.getString(PUSH_MOCK));
+	}
+	
 	public static String getAPPCODE() {
 		return configuration.getString(APP_CODE);
 	}
