@@ -48,7 +48,7 @@ import com.notnoop.apns.EnhancedApnsNotification;
 import com.notnoop.exceptions.NetworkIOException;
 
 
-public class APNServer  implements IPushServer {
+public class APNServer  extends PushProviderAbstract {
 	
 	private String certificate;
 	private String password;
@@ -56,7 +56,7 @@ public class APNServer  implements IPushServer {
 	private int timeout;
 	private boolean isInit=false;
 
-	public APNServer(){
+	APNServer(){
 		
 	}
 	
