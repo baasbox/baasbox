@@ -193,29 +193,6 @@ public class PushService {
 	
 		return true;
 	}
-	
-	public boolean validateUser(List<Integer> pushProfiles, VendorOS vendor) throws PushProfileInvalidException, PushProfileDisabledException, PushNotInitializedException {
-		for(Integer pushProfile : pushProfiles) {
-			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
-			switch(vendor) {
-				case IOS:
-					if(pushProfile==1) {
-						if(Push.PROFILE1_PUSH_SANDBOX_ENABLE.getValueAsBoolean()){
-							if((Push.PROFILE1_SANDBOX_IOS_CERTIFICATE.getValue()==null) && (Push.PROFILE1_SANDBOX_IOS_CERTIFICATE_PASSWORD.getValue().equals(""))){
-								throw new PushNotInitializedException("Configuration not initialized");
-							}
-						}
-						else if((Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE.getValue()==null) && (Push.PROFILE1_PRODUCTION_IOS_CERTIFICATE_PASSWORD.getValue().equals(""))){
-							throw new PushNotInitializedException("Configuration not initialized");
-						}
-					}
-			}
-
-			if((pushProfile==2) && (!Push.PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
-			if((pushProfile==3) && (!Push.PROFILE3_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
-		}
-		return true;
-	}
 
 	
 	/*public void sendAll(String message) throws PushNotInitializedException, UserNotFoundException, SqlInjectionException{		 			
