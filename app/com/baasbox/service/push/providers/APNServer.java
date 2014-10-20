@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.Logger;
+import views.html.defaultpages.badRequest;
 
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.exception.BaasBoxPushException;
@@ -154,6 +155,7 @@ public class APNServer  implements IPushServer {
 			} catch (NetworkIOException e) {
 					Logger.error("Error sending push notification");
 					Logger.error(ExceptionUtils.getStackTrace(e));
+					throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
 					//icallbackPush.onError(e.getMessage());
 			}
 		} else {
@@ -163,6 +165,7 @@ public class APNServer  implements IPushServer {
 			} catch (NetworkIOException e) {
 				Logger.error("Error sending enhanced push notification");
 				Logger.error(ExceptionUtils.getStackTrace(e));
+				throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
 				//icallbackPush.onError(e.getMessage());
 			}
 				
