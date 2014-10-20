@@ -117,6 +117,7 @@ public class PushService {
 	public boolean[] send(String message, List<String> usernames, List<Integer> pushProfiles, JsonNode bodyJson, boolean[] withError) throws Exception{
 		List<String> iosToken = new ArrayList<String>();
 		List<String> androidToken = new ArrayList<String>();
+		com.baasbox.db.DbHelper.reconnectAsAdmin();
 		for(String username : usernames) {
 			if (Logger.isDebugEnabled()) Logger.debug("Try to send a message (" + message + ") to " + username);
 			UserDao udao = UserDao.getInstance();
@@ -176,6 +177,7 @@ public class PushService {
 			}
 				
 		}
+		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
 		return withError;
 		
 	}//send
