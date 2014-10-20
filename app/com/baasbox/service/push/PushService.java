@@ -156,10 +156,10 @@ public class PushService {
 		for(Integer pushProfile : pushProfiles) {
 			HashMap<Factory.VendorOS,IPushServer> allVendors= Factory.getAllIstances();
 			
-			APNServer apnServer = (APNServer)allVendors.get(VendorOS.IOS);
+			IPushServer apnServer =  allVendors.get(VendorOS.IOS);
 			apnServer.setConfiguration(getPushParameters(pushProfile));
 			
-			GCMServer gcmServer = (GCMServer)allVendors.get(VendorOS.ANDROID);
+			IPushServer gcmServer =  allVendors.get(VendorOS.ANDROID);
 			gcmServer.setConfiguration(getPushParameters(pushProfile));
 			
 			if(iosToken.size()>0) {

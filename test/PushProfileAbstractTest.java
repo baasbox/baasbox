@@ -19,6 +19,7 @@ import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.Admin;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.service.push.providers.GCMServer;
@@ -154,6 +155,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 				{
 					public void run() 
 					{
+						
 						String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
 						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
 
