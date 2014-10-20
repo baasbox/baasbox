@@ -146,14 +146,5 @@ public class FacebookLoginService extends SocialLoginService{
 			throw new RuntimeException("There was an error invoking validation on facebook token");
 		}
 	}
-
-
-
-	
-
-	
-	
-	
-	
 	
 }
