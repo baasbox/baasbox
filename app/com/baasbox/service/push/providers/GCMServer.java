@@ -36,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONValue;
 
 import play.Logger;
-import play.mvc.Controller;
 
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.service.push.PushNotInitializedException;
@@ -48,13 +47,13 @@ import com.google.android.gcm.server.Sender;
 import com.google.common.collect.ImmutableMap;
 
 
-public class GCMServer extends Controller implements IPushServer {
+public class GCMServer extends PushProviderAbstract {
 
 	private String apikey;
 	private boolean isInit = false;
 	private final static int MAX_TIME_TO_LIVE=2419200;  //4 WEEKS
 
-	public GCMServer() {
+	GCMServer() {
 
 	}
 
@@ -194,6 +193,7 @@ public class GCMServer extends Controller implements IPushServer {
 
 
 	}
+
 
 
 }
