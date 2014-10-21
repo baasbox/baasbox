@@ -87,11 +87,7 @@ public class Push extends Controller {
 		boolean[] withError=new boolean[6];
 		PushService ps=new PushService();
 		try{
-			if(!ps.verifyPushMockStatus()){
-				if(ps.validate(pushProfiles)) 
-					withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
-			}
-			else withError=ps.send(message,usernames,pushProfiles,bodyJson,withError);
+				if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
 		}
 		catch (UserNotFoundException e) {
 			Logger.error("Username not found " + username, e);
@@ -215,10 +211,7 @@ public class Push extends Controller {
 		boolean[] withError=new boolean[6];
 		PushService ps=new PushService();
 		try{
-			if(!ps.verifyPushMockStatus()) {
-				if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
-			}
-			else withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
+			if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
 		}
 		catch (UserNotFoundException e) {
 			return notFound("Username not found");

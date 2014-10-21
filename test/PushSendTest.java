@@ -110,7 +110,7 @@ public class PushSendTest extends AbstractTest {
 					assertRoute(result,"testSendPushWithOldApi - ok", 200, null, true);
 					
 				    //send push notifications with new API			
-					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", sFakeUser);
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
 					request = new FakeRequest("POST", "/push/message");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));

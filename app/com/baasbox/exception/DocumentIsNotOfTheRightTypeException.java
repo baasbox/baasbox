@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class DocumentIsNotOfTheRightTypeException extends Exception {
+public class DocumentIsNotOfTheRightTypeException extends BaasBoxException {
 
 	public DocumentIsNotOfTheRightTypeException() {
 		// TODO Auto-generated constructor stub

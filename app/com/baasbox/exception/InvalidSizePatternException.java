@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class InvalidSizePatternException extends Exception {
+public class InvalidSizePatternException extends BaasBoxException {
 
 	public InvalidSizePatternException() {
 		// TODO Auto-generated constructor stub
