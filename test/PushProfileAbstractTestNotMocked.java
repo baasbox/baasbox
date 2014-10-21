@@ -6,6 +6,7 @@ import static play.test.Helpers.PUT;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
@@ -23,6 +24,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.Admin;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.service.push.providers.GCMServer;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import core.AbstractTest;
 import core.TestConfig;
@@ -117,17 +119,17 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
+						request = request.withJsonBody(getPayload("/pushNewApiPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles disabled", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
+						assertRoute(result, "error with send, push profiles disabled, without profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						// Profile not enabled, with profile specified in Payload
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
+						request = request.withJsonBody(getPayload("/pushNewApiPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
@@ -135,15 +137,7 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 
 						continueOnFail(true);
 
-						// Profile not enabled, without profile specified in Payload
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled, without profile specified in Payload", getProfile1DisabledReturnCode(), null, true);
+
 					
 
 					}
