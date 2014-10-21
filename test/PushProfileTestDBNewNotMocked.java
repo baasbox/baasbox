@@ -9,16 +9,16 @@ import play.test.FakeRequest;
 import core.TestConfig;
 
 
-public class PushProfileTestDBNew extends PushProfileAbstractTestMocked {
+public class PushProfileTestDBNewNotMocked extends PushProfileAbstractTestNotMocked {
 
-	public PushProfileTestDBNew() {}
+	public PushProfileTestDBNewNotMocked() {}
 
 	@Before
 	public void beforeTest(){
 		//import db
 		running
 		(
-			getFakeApplication(), 
+			getFakeApplicationWithDefaultConf(), 
 			new Runnable() 
 			{
 				public void run() 
