@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -46,11 +47,6 @@ import javax.ws.rs.core.MediaType;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.fluentlenium.adapter.FluentTest;
 import org.hamcrest.CoreMatchers;
 import org.json.JSONArray;
@@ -64,17 +60,21 @@ import org.junit.rules.ErrorCollector;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
 import play.Configuration;
 import play.Logger;
 import play.Play;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 public abstract class AbstractTest extends FluentTest
 {
@@ -455,6 +455,15 @@ public abstract class AbstractTest extends FluentTest
 		JsonNode node = getPayload(sPayload);
 		((ObjectNode)node).put(sFieldName, sValue);
 
+		return node;
+	}
+	
+	protected JsonNode updatePayloadFieldValue(String sPayload, String sFieldName, String[] values)
+	{
+		JsonNode node = getPayload(sPayload);
+		ObjectMapper mapper = new ObjectMapper();
+		ArrayNode array = mapper.valueToTree(Arrays.asList(values));
+		((ObjectNode)node).putArray(sFieldName).addAll(array);
 		return node;
 	}
 	
