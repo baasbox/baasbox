@@ -2,10 +2,17 @@ import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
+import javax.ws.rs.core.MediaType;
+
+import org.apache.http.protocol.HTTP;
+import org.codehaus.jettison.json.JSONArray;
 import org.junit.Test;
 
+import com.baasbox.BBConfiguration;
+import com.baasbox.configuration.Push;
 import com.baasbox.security.SessionKeys;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -14,6 +21,7 @@ import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
+import scala.Array;
 import core.AbstractTest;
 import core.TestConfig;
 
@@ -22,7 +30,7 @@ public class PushSendTest extends AbstractTest {
 
 	
 	@Test
-	public void PushViewLoginInfo(){
+	public void PushSend(){
 		running
 		(
 			getFakeApplication(), 
@@ -71,7 +79,7 @@ public class PushSendTest extends AbstractTest {
 					assertRoute(result, "testPush - login_info in system", 200, "\"s\":{\"login_info\"", true);
 					
 					//users cannot access to system properties belonging to other users
-					
+	
 					String sFakeUserNotAccess = "testpushuser_" + UUID.randomUUID();
 					// Prepare test user
 					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUserNotAccess);
@@ -89,16 +97,27 @@ public class PushSendTest extends AbstractTest {
 					Logger.debug("URL to check signupdate in system: " + url);
 					request = new FakeRequest("GET",url);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, "passw1"));
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
 					result = routeAndCall(request);		
 					assertRoute(result, "testPush - no access to system attribute by other users", 200, "s\":null", true);
-					
-					request = new FakeRequest("POST","/push/message/"+sFakeUser);
+				    
+				    //send push notifications with old API
+				    request = new FakeRequest("POST","/push/message/"+sFakeUser);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, "passw1"));
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
 					request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), "POST");
 					result = routeAndCall(request);
-					assertRoute(result,"testSendPush - ok", 200, null, true);
+					assertRoute(result,"testSendPushWithOldApi - ok", 200, null, true);
+					
+				    //send push notifications with new API			
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", sFakeUser);
+					request = new FakeRequest("POST", "/push/message");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, null, true);
+					
 				}
 			}
 		);
