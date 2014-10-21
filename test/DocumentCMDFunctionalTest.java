@@ -351,6 +351,14 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					result = routeAndCall(request);
 					assertRoute(result, "testAccessDocumentsWithoutAuth.get_all", Status.OK, "\"result\":\"ok\",\"data\":[{\"", true);
 
+					//since the resource is now available to anonymous users, it should be visible to registered users too issue #195
+					
+					String fakeUsername=createNewUser("registeredUser");
+					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/" + sUUID);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(fakeUsername+":passw1"));
+					result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsFromRegisteredUser", Status.OK, "\"result\":\"ok\",\"data\":{\"", true);
 					
 					//Admin revokes  the grant to the document
 					request = new FakeRequest(DELETE, getRouteAddress(sFakeCollection) + "/" + sUUID + "/read/role/anonymous");
@@ -626,7 +634,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		}
 		catch (Exception ex)
 		{
-			Assert.fail("Cannot get _author value: " + ex.getMessage());
+			Assert.fail("Cannot get _creation_date value: " + ex.getMessage());
 		}
 		
 		return sRet;

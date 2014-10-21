@@ -29,12 +29,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -65,6 +59,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
@@ -77,6 +72,9 @@ import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -84,12 +82,11 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
-	private static String prepareResponseToJson(ODocument doc){
+	static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
@@ -104,13 +101,15 @@ public class User extends Controller {
 		try {
 			for (ODocument doc : listOfDoc){
 				doc.detach();
-				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
-				if (roles.size()>1){
-					Iterator<OIdentifiable> it = roles.iterator();
-					while (it.hasNext()){
-						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-					        it.remove();
-					    }
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
 					}
 				}
 			}
@@ -204,7 +203,12 @@ public class User extends Controller {
 		  //try to signup new user
 		  ODocument profile = null;
 		  try {
-			  profile = UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+			  UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+	          //due to issue 412, we have to reload the profile
+			  profile=UserService.getUserProfilebyUsername(username);
+		  } catch (InvalidJsonException e){
+			  if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+			  return badRequest("One or more profile sections is not a valid JSON object");
 		  } catch (UserAlreadyExistsException e){
 			  if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
 			  return badRequest(username + " already exists");
@@ -305,7 +309,7 @@ public class User extends Controller {
 	  		  return badRequest(e.getMessage());
 	  	  } catch (Exception e) {
 	  		  Logger.warn("resetPasswordStep1", e);
-	  		  return internalServerError(e.getMessage());
+	  		  return internalServerError(ExceptionUtils.getFullStackTrace(e));
 	  	  }
 	  	  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	  	  return ok();
@@ -735,7 +739,7 @@ public class User extends Controller {
 				 return ok(prepareResponseToJson(followers));
 			 }
 		  }catch(Exception e){
-			 return internalServerError(e.getMessage()); 
+			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
 		  }
 	}
 	  
@@ -746,7 +750,7 @@ public class User extends Controller {
 		  try{
 			 me = UserService.getOUserByUsername(currentUsername);
 		  }catch(Exception e){
-			 return internalServerError(e.getMessage()); 
+			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
 		  }
 		  if(UserService.exists(toUnfollowUsername)){
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;

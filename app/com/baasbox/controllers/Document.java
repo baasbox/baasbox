@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 
 import play.Logger;
 import play.mvc.BodyParser;
@@ -47,6 +46,7 @@ import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.query.MissingNodeException;
@@ -58,6 +58,7 @@ import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -155,7 +156,6 @@ public class Document extends Controller {
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result queryDocument(String collectionName,String id,boolean isUUID,String parts){
-
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
 		} else{
@@ -164,14 +164,19 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 			ODocument doc;
 			try {
+				
 				String[] tokens = parts.split("/");
 				List<Part> queryParts = new ArrayList<Part>();
 				PartsLexer pp = new PartsLexer();
 				
 				try{
 				for (int i = 0; i < tokens.length; i++) {
-					String p = tokens[i];
-					queryParts.add(pp.parse(p, i+1));
+					try{
+						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
+						queryParts.add(pp.parse(p, i+1));
+					}catch(Exception e){
+						return badRequest("Unable to decode parts");
+					}
 				}
 				}catch(PartValidationException pve){
 					return badRequest(pve.getMessage());
@@ -265,7 +270,12 @@ public class Document extends Controller {
 				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
 				return notFound(e.getMessage());
-			}catch (Throwable e){
+			}catch (InvalidJsonException e){
+				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
+			}catch (UpdateOldVersionException e){
+				return badRequest(ExceptionUtils.getMessage(e));
+			}
+			catch (Throwable e){
 				Logger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
@@ -330,9 +340,12 @@ public class Document extends Controller {
 				List<Part> objParts = new ArrayList<Part>();
 				for (int i = 0; i < tokens.length; i++) {
 					try{
-						objParts.add(lexer.parse(tokens[i], i+1));
+						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
+						objParts.add(lexer.parse(p, i+1));
 					}catch(PartValidationException pve){
 						return badRequest(pve.getMessage());
+					}catch(Exception e){
+						return badRequest("Unable to parse document parts");
 					}
 				}
 				PartsParser pp = new PartsParser(objParts);

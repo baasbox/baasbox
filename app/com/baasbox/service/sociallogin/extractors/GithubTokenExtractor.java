@@ -44,7 +44,7 @@ public class GithubTokenExtractor implements AccessTokenExtractor
 		else 
 		{
 			throw new OAuthException(
-					"Cannot extract an acces token. Response was: " + response);
+					"Cannot extract an access token. Response was: " + response);
 		}
 	}
 }

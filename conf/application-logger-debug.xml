@@ -1,0 +1,121 @@
+<configuration>
+<!-- This file is useful for debug purpose. To enable it just run BaasBox as:
+./start -Dlogger.resource=application-logger-debug.xml
+
+See: https://www.playframework.com/documentation/2.2.x/SettingsLogger
+
+ -->
+ <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
+  
+  		<!-- log only the info level-->
+		  <appender name="FILE_ONLY_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+			      <evaluator> 
+			        <expression>level==INFO</expression>
+			      </evaluator>
+			      <OnMismatch>DENY</OnMismatch>
+			      <OnMatch>ACCEPT</OnMatch>
+			    </filter> 
+			     <file>${application.home}/logs/application.log</file>
+			     <encoder>
+			       <pattern>%date - %-5level - %message %n</pattern>
+			     </encoder>
+			     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/application.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
+		   </appender>
+		   
+		   <appender name="STDOUT_ONLY_INFO" class="ch.qos.logback.core.ConsoleAppender">
+			<filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+		      <evaluator> 
+		        <expression>level==INFO</expression>
+		      </evaluator>
+		      <OnMismatch>DENY</OnMismatch>
+		      <OnMatch>ACCEPT</OnMatch>
+		    </filter> 
+		    <encoder>
+		      <pattern>%date - %coloredLevel - %message %n</pattern>
+		    </encoder>
+		  </appender>
+		  
+  <!-- log all but info level, it's slow so it's active only for debug purpose-->
+		  <appender name="FILE_BUT_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+			  <filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+			      <evaluator> 
+			        <expression>level==INFO</expression>
+			      </evaluator>
+			      <OnMismatch>ACCEPT</OnMismatch>
+			      <OnMatch>DENY</OnMatch>
+			    </filter> 
+			     <file>${application.home}/logs/application.log</file>
+			     <encoder>
+			       <pattern>%date - %-5level - %logger: %t  %message %n%rootException</pattern>
+			     </encoder>
+			     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/application.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
+		   </appender>
+		
+		  <appender name="STDOUT_BUT_INFO" class="ch.qos.logback.core.ConsoleAppender">
+			<filter class="ch.qos.logback.core.filter.EvaluatorFilter">      
+		      <evaluator> 
+		        <expression>level==INFO</expression>
+		      </evaluator>
+		      <OnMismatch>ACCEPT</OnMismatch>
+		      <OnMatch>DENY</OnMatch>
+		    </filter> 
+		    <encoder>
+		      <pattern>%date - %coloredLevel - %logger: %t  %message %n%rootException</pattern> 
+		    </encoder>
+		  </appender>
+		  
+		  <appender name="AKKA_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+     			<file>${application.home}/logs/akka.log</file>
+     			<encoder>
+       				<pattern>%date - %-5level - %logger: %t  %message %n%rootException</pattern>
+     			</encoder>
+     			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/akka.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
+   		</appender>
+		  
+    <!-- ACCESS LOG -->
+		  <appender name="ACCESS_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+     			<file>${application.home}/logs/access.log</file>
+     			<encoder>
+       				<pattern>%t - %m%n</pattern>
+     			</encoder>
+     			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            		<fileNamePattern>${application.home}/logs/access.%d{yyyy-MM-dd}.log.zip</fileNamePattern>
+            		<maxHistory>30</maxHistory>
+        		</rollingPolicy>
+   			</appender>
+		  
+		  <logger name="com.baasbox.accesslog" level="info" additivity="false">
+    		<appender-ref ref="ACCESS_LOG_FILE" />
+  		  </logger>
+  		      
+  <!-- these are overridden by application.conf (when in dev)-->  
+  <logger name="play" level="INFO" />
+  <logger name="application" level="DEBUG" />
+
+  <logger name="akka" level="DEBUG" >
+  	<appender-ref ref="AKKA_LOG_FILE" />
+  	<appender-ref ref="STDOUT_ONLY_INFO" />
+    <appender-ref ref="STDOUT_BUT_INFO" />
+    <appender-ref ref="FILE_ONLY_INFO" />
+    <appender-ref ref="FILE_BUT_INFO" />
+  </logger>
+
+  <root level="ERROR">
+    <appender-ref ref="STDOUT_ONLY_INFO" />
+    <appender-ref ref="STDOUT_BUT_INFO" />
+    <appender-ref ref="FILE_ONLY_INFO" />
+    <appender-ref ref="FILE_BUT_INFO" />
+  </root>
+  
+ 
+</configuration>

@@ -22,6 +22,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import play.Logger;
+
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
@@ -50,18 +52,23 @@ public class LinkDao {
 	private LinkDao(){}
 	
 	public ODocument createLink(String sourceId, String destId,String edgeName) throws DocumentNotFoundException {
-		OrientVertex sourceVertex = StorageUtils.getNodeVertex(sourceId);
-		OrientVertex destVertex = StorageUtils.getNodeVertex(destId);
-		UUID token = UUID.randomUUID();
-		OrientEdge edge = (OrientEdge)sourceVertex.addEdge(edgeName, destVertex);
-		edge.getRecord().field(BaasBoxPrivateFields.ID.toString(),token.toString());
-		edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
-		edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
-		edge.save();
-		
-		
-		//TODO: when we will support transactions, this will have to be changed 
-		edge.getGraph().commit();
+		DbHelper.requestTransaction();
+		OrientEdge edge = null;
+		try{
+			OrientVertex sourceVertex = StorageUtils.getNodeVertex(sourceId);
+			OrientVertex destVertex = StorageUtils.getNodeVertex(destId);
+			UUID token = UUID.randomUUID();
+			edge = (OrientEdge)sourceVertex.addEdge(edgeName, destVertex);
+			edge.getRecord().field(BaasBoxPrivateFields.ID.toString(),token.toString());
+			edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
+			edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
+			edge.save();
+			DbHelper.commitTransaction();
+		}catch (DocumentNotFoundException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}
+		//edge.getGraph().commit();
 		return edge.getRecord();
 	}
 	

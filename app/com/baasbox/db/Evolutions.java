@@ -35,6 +35,7 @@ public class Evolutions {
 	 * @param fromVersion
 	 */
 	public static void performEvolutions(ODatabaseRecordTx db,String fromVersion){
+		preEvolutionTasks(db);
 		Evolutions evs=new Evolutions();
 		Collection<IEvolution> evolutions = evs.getEvolutionsFromVersion(fromVersion);
 		Logger.info("Found " + evolutions.size() + " evolutions to apply");
@@ -44,6 +45,19 @@ public class Evolutions {
 			Logger.info("Applying evolution to " + ev.getFinalVersion());
 			ev.evolve(db);
 		}
+		postEvolutionTasks(db);
+	}
+	
+	private static void  preEvolutionTasks(ODatabaseRecordTx db){
+		Logger.info("Performing pre-evolutions tasks....");
+		//nothing todo at the moment
+		Logger.info("...end");
+	}
+	
+	private static void  postEvolutionTasks(ODatabaseRecordTx db){
+		Logger.info("Performing post-evolutions tasks....");
+		//nothing todo here at the moment
+		Logger.info("...end");
 	}
 	
 	public Evolutions(){
@@ -56,6 +70,10 @@ public class Evolutions {
 		ev= (IEvolution)new Evolution_0_8_0();
 		me.put(ev.getFinalVersion(), ev);
 		ev= (IEvolution)new Evolution_0_8_1();
+		me.put(ev.getFinalVersion(), ev);
+		ev= (IEvolution)new Evolution_0_8_3();
+		me.put(ev.getFinalVersion(), ev);
+		ev= (IEvolution)new Evolution_0_8_4();
 		me.put(ev.getFinalVersion(), ev);
 	}
 	

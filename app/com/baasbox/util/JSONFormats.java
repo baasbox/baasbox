@@ -17,10 +17,8 @@
 package com.baasbox.util;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 
-import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -53,11 +51,14 @@ public class JSONFormats {
 
 	public static ODocument cutBaasBoxFields(ODocument doc){
 		DocumentCutter cutter=new DocumentCutter(doc);
-		return cutter.getCuttedDoc();
+		ODocument ret = cutter.getCuttedDoc();
+		return ret;
 	}
 	
 	public static String prepareResponseToJson(ODocument doc, JSONFormats.Formats format){
-		return JSONFormats.cutBaasBoxFields(doc).toJSON(format.toString());
+		 ODocument retDoc = JSONFormats.cutBaasBoxFields(doc);
+		 String ret = retDoc.toJSON(format.toString());
+		return ret;
 	}
 	
 	public static String prepareResponseToJson(List<ODocument> listOfDoc,JSONFormats.Formats format) throws IOException{

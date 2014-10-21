@@ -21,6 +21,7 @@ package com.baasbox.controllers;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -265,4 +266,53 @@ public class Root extends Controller {
 				return badRequest("The form was submitted without a multipart file field.");
 			}
 		}
+		
+		//DB size and alert thresholds
+		/**
+		 * /root/configuration (POST)
+		 * 
+		 * this method allows to set (or override) just two configuration parameter (at the moment)
+		 * the db size Threshold in bytes:
+		 * 		baasbox.db.size 
+		 * A percentage needed by the console to show alerts on dashboard when DB size is near the defined Threshold
+		 * 		baasbox.db.alert
+		 * 
+		 * @return a 200 OK with the new values
+		 */
+		@With({RootCredentialWrapFilter.class})
+		public static Result overrideConfiguration(){
+			Http.RequestBody body = request().body();
+			JsonNode bodyJson= body.asJson();
+			JsonNode newDBAlert = bodyJson.get(BBConfiguration.DB_ALERT_THRESHOLD);
+			JsonNode newDBSize = bodyJson.get(BBConfiguration.DB_SIZE_THRESHOLD);
+			try{
+				if (newDBAlert!=null && !newDBAlert.isInt() && newDBAlert.asInt()<1) throw new IllegalArgumentException(BBConfiguration.DB_ALERT_THRESHOLD + " must be a positive integer value");
+				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0) throw new IllegalArgumentException(BBConfiguration.DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
+			}catch (Throwable e){
+				return badRequest(e.getMessage());
+			}
+			if (newDBAlert!=null) BBConfiguration.setDBAlertThreshold(newDBAlert.asInt());
+			if (newDBSize!=null) BBConfiguration.setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
+			HashMap returnMap = new HashMap();
+			returnMap.put(BBConfiguration.DB_ALERT_THRESHOLD, BBConfiguration.getDBAlertThreshold());
+			returnMap.put(BBConfiguration.DB_SIZE_THRESHOLD, BBConfiguration.getDBSizeThreshold());
+			try {
+				return ok(new ObjectMapper().writeValueAsString(returnMap));
+			} catch (JsonProcessingException e) {
+				return internalServerError(e.getMessage());
+			}
+		}
+		
+		@With({RootCredentialWrapFilter.class})
+		public static Result getOverridableConfiguration(){
+			HashMap returnMap = new HashMap();
+			returnMap.put(BBConfiguration.DB_ALERT_THRESHOLD, BBConfiguration.getDBAlertThreshold());
+			returnMap.put(BBConfiguration.DB_SIZE_THRESHOLD, BBConfiguration.getDBSizeThreshold());
+			try {
+				return ok(new ObjectMapper().writeValueAsString(returnMap));
+			} catch (JsonProcessingException e) {
+				return internalServerError(e.getMessage());
+			}
+		}
+		
 }
