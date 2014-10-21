@@ -122,6 +122,11 @@ public abstract class AbstractTest extends FluentTest
 	protected static TestServer getTestServer(){
 		return testServer(TestConfig.SERVER_PORT,getFakeApplication());
 	}
+	
+	protected static TestServer getTestServerWithDefaultConf(){
+		return testServer(TestConfig.SERVER_PORT,getFakeApplicationWithDefaultConf());
+	}
+	
 	protected  static Configuration additionalConfigurations=null;
 	static{
 	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf"));
