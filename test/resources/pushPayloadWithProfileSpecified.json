@@ -1,4 +1,5 @@
 {
   "message":"test",
-  "profiles":[3]
+  "profiles":[3],
+  "users":["test"]
 }

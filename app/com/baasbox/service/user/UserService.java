@@ -53,13 +53,13 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -433,7 +433,7 @@ public class UserService {
 		}
 	}//updateProfile with role
 
-	public static void changePasswordCurrentUser(String newPassword) {
+	public static void changePasswordCurrentUser(String newPassword) throws OpenTransactionException {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
@@ -441,7 +441,7 @@ public class UserService {
 		//DbHelper.removeConnectionFromPool();
 	}
 	
-	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException {
+	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException, OpenTransactionException {
 		ODatabaseRecordTx db=DbHelper.getConnection();
 		db = DbHelper.reconnectAsAdmin();
 		UserDao udao=UserDao.getInstance();
@@ -673,7 +673,7 @@ public class UserService {
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {});
 	}
 	
-	public static void addUserToRole(String username,String role){
+	public static void addUserToRole(String username,String role) throws OpenTransactionException{
 		boolean admin = true;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
@@ -690,7 +690,7 @@ public class UserService {
 		
 	}
 	
-	public static void removeUserFromRole(String username,String role){
+	public static void removeUserFromRole(String username,String role) throws OpenTransactionException{
 		boolean admin = false;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
@@ -725,16 +725,16 @@ public class UserService {
 	
 	
 	
-	public static void disableUser(String username) throws UserNotFoundException{
+	public static void disableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		UserDao.getInstance().disableUser(username);
 	}
 
-	public static void disableCurrentUser() throws UserNotFoundException{
+	public static void disableCurrentUser() throws UserNotFoundException, OpenTransactionException{
 		String username = DbHelper.currentUsername();
 		disableUser(username);
 	}
 	
-	public static void enableUser(String username) throws UserNotFoundException{
+	public static void enableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		UserDao.getInstance().enableUser(username);
 	}
 

@@ -167,7 +167,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
@@ -263,7 +263,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
+						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));

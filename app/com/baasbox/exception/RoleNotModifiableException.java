@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class RoleNotModifiableException extends Exception {
+public class RoleNotModifiableException extends BaasBoxException {
 
 	public RoleNotModifiableException() {
 		// TODO Auto-generated constructor stub

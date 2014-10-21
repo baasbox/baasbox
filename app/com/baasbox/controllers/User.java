@@ -29,12 +29,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -66,6 +60,7 @@ import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
@@ -77,15 +72,16 @@ import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
@@ -506,7 +502,12 @@ public class User extends Controller {
 			  return badRequest("The old password does not match with the current one");
 		  }	  
 
-		  UserService.changePasswordCurrentUser(newPassword);
+		  try {
+			UserService.changePasswordCurrentUser(newPassword);
+		  } catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+		  }
 		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok();
 	  }	  
@@ -622,6 +623,9 @@ public class User extends Controller {
 				UserService.disableCurrentUser();
 			} catch (UserNotFoundException e) {
 				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
 			}
 		  return ok();
 	  }
@@ -644,7 +648,12 @@ public class User extends Controller {
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
 			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
 			if(!alreadyFriendOf){
-				UserService.addUserToRole(me.getName(), friendshipRoleName);
+				try {
+					UserService.addUserToRole(me.getName(), friendshipRoleName);
+				} catch (OpenTransactionException e) {
+					Logger.error (ExceptionUtils.getFullStackTrace(e));
+					throw new RuntimeException(e);
+				}
 				ODocument userToFollowObject;
 				try {
 					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
@@ -747,7 +756,12 @@ public class User extends Controller {
 			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
 			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
 			if(alreadyFriendOf){
-				UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				try {
+					UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
+				} catch (OpenTransactionException e) {
+					Logger.error (ExceptionUtils.getFullStackTrace(e));
+					throw new RuntimeException(e);
+				}
 				return ok();
 		  	}else{
 		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);
