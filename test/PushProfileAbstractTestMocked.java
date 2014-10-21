@@ -27,7 +27,7 @@ import com.baasbox.service.push.providers.GCMServer;
 import core.AbstractTest;
 import core.TestConfig;
 
-public abstract class PushProfileAbstractTest extends AbstractTest {
+public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 	private List<String> profiles;
 
 	{
@@ -59,13 +59,7 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
 						assertRoute(result, "configuration missing for the selected profile ("+profile1+")", getProfile1DisabledReturnCode(), null, false);
 
-						
-
-
-
 					}
-
-
 				}
 				);
 	}
@@ -97,8 +91,10 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 		);
 	}
 
+	
+	
 	@Test
-	public void PushProfileMocked(){
+	public void PushProfileMockedOldApi(){
 		running
 		(
 				getFakeApplication(), 
@@ -171,6 +167,29 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray request: " + request.getWrappedRequest().headers());
 						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, value profiles is not an array", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
+					}
+				}
+				);
+	}
+	
+	
+	
+	
+	@Test
+	public void PushProfileMockedNewApi(){
+		running
+		(
+				getFakeApplication(), 
+				new Runnable() 	{
+					public void run() 	{
+						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
+						FakeRequest request;
+						Result result;
+			
+						continueOnFail(true);
+						
+						String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();
+
 
 						//START TEST FOR NEW API
 
@@ -210,133 +229,6 @@ public abstract class PushProfileAbstractTest extends AbstractTest {
 		);
 	}
 	
-	
-	
-
-	@Test
-	public void PushProfileNotMocked(){
-		running
-		(
-				getFakeApplication(), 
-				new Runnable() 	{
-					public void run() 	{
-
-						String sFakeUser = new AdminUserFunctionalTest().routeCreateNewUser();						
-						
-						//OLD API
-						
-						String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
-						Result result;
-						FakeRequest request = new FakeRequest("POST", "/push/message/"+sFakeUser);
-
-						// Send Push, with profiles disabled
-
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles disabled", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
-						
-						// Profile not enabled, with profile specified in Payload
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled, with profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
-
-						continueOnFail(true);
-
-						// Profile not enabled, without profile specified in Payload
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled, without profile specified in Payload", getProfile1DisabledReturnCode(), null, true);
-
-						continueOnFail(true);
-						
-						//END OLD API
-						
-						
-						
-						//NEW API
-								
-						// Send Push, with profiles disabled
-						request = new FakeRequest("POST", "/push/message");
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profiles disabled", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
-
-						// Profile not enabled, with profile specified in Payload
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled, with profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
-
-						continueOnFail(true);
-
-						// Profile not enabled, without profile specified in Payload
-						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-						request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), play.test.Helpers.POST);
-						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
-						assertRoute(result, "error with send, push profile disabled, without profile specified in Payload", getProfile1DisabledReturnCode(), null, true);
-					
-						//Profile is disabled, so it's possible to switch mode
-						for(String listprofile : profiles){
-							request = new FakeRequest("PUT", "/admin/configuration/Push/"+listprofile+".push.sandbox.enable");
-							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-							request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-							request = request.withJsonBody(getPayload("/pushDisableSandbox.json"), getMethod());
-							result = routeAndCall(request);
-							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
-							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode result: " + contentAsString(result));
-							assertRoute(result, "switch sandbox for ("+listprofile+") disabled ", Status.OK, null, true);	
-						}
-						
-						//Enable profile which is disabled but configuration missing
-						for(String profile : profiles){
-							request = new FakeRequest("PUT", "/admin/configuration/Push/"+profile+".push.profile.enable");
-							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-							request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-							request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
-							result = routeAndCall(request);
-							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
-							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
-							assertRoute(result, "configuration missing for the selected profile ("+profile+")", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_CONFIG_INVALID.getDescription(), true);
-
-						}
-					
-					}
-				}
-				);
-	}
-
-
-
 
 
 
