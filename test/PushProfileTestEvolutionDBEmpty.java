@@ -12,7 +12,7 @@ import play.test.TestBrowser;
 import core.TestConfig;
 
 
-public class PushProfileTestEvolutionDBEmpty extends PushProfileAbstractTest {
+public class PushProfileTestEvolutionDBEmpty extends PushProfileAbstractTestMocked {
 
 	public PushProfileTestEvolutionDBEmpty() {}
 

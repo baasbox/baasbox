@@ -115,6 +115,10 @@ public abstract class AbstractTest extends FluentTest
 		return fakeApplication(additionalConfigurations.asMap());
 	}
 	
+	protected static FakeApplication getFakeApplicationWithDefaultConf(){
+		return fakeApplication();
+	}
+	
 	protected static TestServer getTestServer(){
 		return testServer(TestConfig.SERVER_PORT,getFakeApplication());
 	}

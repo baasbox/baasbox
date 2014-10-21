@@ -197,6 +197,7 @@ public class PushService {
 	}
 
 	public boolean isMocked(){
+		if (BBConfiguration.getPushMock()) Logger.warn("PushService is Mocked!!");
 		return BBConfiguration.getPushMock();
 	}
 	
