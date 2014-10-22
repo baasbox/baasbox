@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class UserNotFoundException extends Exception {
+public class UserNotFoundException extends BaasBoxException {
 
 	public UserNotFoundException() {
 		// TODO Auto-generated constructor stub

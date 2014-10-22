@@ -68,6 +68,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.RoleAlreadyExistsException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
@@ -76,7 +77,6 @@ import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
-import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
@@ -92,7 +92,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -452,8 +451,11 @@ public class Admin extends Controller {
 		try{
 			UserService.changePassword(username, password);
 		} catch (UserNotFoundException e) {
-		    Logger.error("Username not found " + username, e);
+		    Logger.debug("Username not found " + username, e);
 		    return notFound("Username not found");
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok();	
@@ -750,6 +752,9 @@ public class Admin extends Controller {
 			UserService.disableUser(username);
 		} catch (UserNotFoundException e) {
 			return badRequest(e.getMessage());
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		return ok();
 	}
@@ -768,6 +773,9 @@ public class Admin extends Controller {
 			UserService.enableUser(username);
 		} catch (UserNotFoundException e) {
 			return badRequest(e.getMessage());
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		return ok();
 	}

@@ -16,7 +16,7 @@
  */
 package com.baasbox.exception;
 
-public class InvalidAppCodeException extends Exception {
+public class InvalidAppCodeException extends BaasBoxException {
 
 	public InvalidAppCodeException() {
 		super();

@@ -12,9 +12,9 @@ import play.test.TestBrowser;
 import core.TestConfig;
 
 
-public class PushProfileTestEvolutionDBFull extends PushProfileAbstractTest {
+public class PushProfileTestEvolutionDBEmptyMocked extends PushProfileAbstractTestMocked {
 
-	public PushProfileTestEvolutionDBFull() {}
+	public PushProfileTestEvolutionDBEmptyMocked() {}
 
 	@Before
 	public void beforeTest(){
@@ -28,7 +28,7 @@ public class PushProfileTestEvolutionDBFull extends PushProfileAbstractTest {
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					setMultipartFormData();
-					setAssetFile("/BB_export_083_push_test.zip", "application/zip");
+					setAssetFile("/BB_export_083_push_test_empty.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333/admin/db/import", POST,new HashMap<String,String>());
 					assertTrue(status==200);	
 				}//invoke
@@ -38,7 +38,7 @@ public class PushProfileTestEvolutionDBFull extends PushProfileAbstractTest {
 
 	@Override
 	protected int getProfile1DisabledReturnCode() {
-		return 200;
+		return 503;
 	}
 
 	@Override

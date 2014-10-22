@@ -16,7 +16,7 @@
  */
 package com.baasbox.exception;
 
-public class AssetNotFoundException extends Exception {
+public class AssetNotFoundException extends BaasBoxException {
 
 	public AssetNotFoundException() {
 		super();

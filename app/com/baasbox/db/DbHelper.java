@@ -47,7 +47,6 @@ import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.SqlInjectionException;
-import com.baasbox.db.hook.HidePassword;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
@@ -72,7 +71,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -133,7 +131,7 @@ public class DbHelper {
 		if (Logger.isDebugEnabled()) Logger.debug("Request Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()){
-			if (Logger.isDebugEnabled()) Logger.debug("Begin transaction");
+			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
 			db.begin();
 		}
 		tranCount.set(tranCount.get().intValue()+1);
@@ -144,6 +142,7 @@ public class DbHelper {
 		if (Logger.isDebugEnabled()) Logger.debug("Commit Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()){
+
 			if (Logger.isDebugEnabled()) Logger.debug("Commit transaction");
 			tranCount.set(tranCount.get().intValue()-1);
 			if (tranCount.get()<0) throw new RuntimeException("Commit without transaction!");
@@ -153,6 +152,7 @@ public class DbHelper {
 			}	
 		}else throw new NoTransactionException("There is no open transaction to commit");
 		if (Logger.isDebugEnabled()) Logger.debug("Commit Transaction: transaction count -after-: " + tranCount.get());
+
 	}
 
 	public static void rollbackTransaction(){
@@ -362,6 +362,7 @@ public class DbHelper {
         return excludeInternal ? isAdminRole && !BBConfiguration.getBaasBoxAdminUsername().equals(user.getName()) : isAdminRole;
     }
 
+
 	public static ODatabaseRecordTx reconnectAsAdmin (){
 		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to admin context within an open transaction");
 		getConnection().close();
@@ -453,6 +454,7 @@ public class DbHelper {
 
 	public static void populateDB() throws IOException{
 		ODatabaseRecordTx db = getConnection();
+		//DO NOT DELETE THE FOLLOWING LINE!
 		OrientGraphNoTx dbg =  new OrientGraphNoTx(getODatabaseDocumentTxConnection()); 
 		Logger.info("Populating the db...");
 		InputStream is;
