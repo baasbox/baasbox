@@ -248,8 +248,11 @@ function ScriptsController($scope,prompt){
 		} else{
 			$scope.logEnabled = true;
 			evtSource = connectLogger(function(e){
-				console.log(e.data);
-				var data = JSON.parse(e.data.split('\\').join(''));
+				//console.log(e.data);
+				var temp = e.data;//.split('\n').join('');
+				temp=temp.replace(/\\"/g,'"');
+				console.log(temp);
+				var data = JSON.parse(temp);
 
 
 				$scope.$apply(function(){

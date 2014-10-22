@@ -72,6 +72,7 @@ public class EventsController {
                 DbHelper.close(DbHelper.getConnection());
             }
 
+            response().setContentType("text/event-stream");
             return ok(EventSource.source((eventSource) -> {
 
                 eventSource.onDisconnected(() -> EventsService.removeLogListener(eventSource));

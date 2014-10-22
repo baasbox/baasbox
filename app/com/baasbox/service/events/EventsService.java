@@ -1,7 +1,9 @@
 package com.baasbox.service.events;
 
+import com.baasbox.service.scripting.js.Json;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
+import play.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -63,6 +65,7 @@ public class EventsService {
         }
         LongAdder a= new LongAdder();
 
+        Logger.debug(message.toString());
 
         STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
             e.sendData(message.toString());
