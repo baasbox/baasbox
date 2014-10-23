@@ -37,6 +37,9 @@ public class ScriptTestHelpers {
         }
     }
 
+    public static String randomScriptName(){
+        return "script.test"+UUID.randomUUID().toString().replace("-","_");
+    }
 
 
     public static JsonNode loadScript(String name,String source){

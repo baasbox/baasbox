@@ -20,9 +20,9 @@ import static org.junit.Assert.*;
  * Created by eto on 08/10/14.
  */
 public class ScriptStorageTest {
-    private static final String SCRIPT = "test.storage-"+ UUID.randomUUID();
-    private static final String SERIALIZE = "test.serialize-"+UUID.randomUUID();
-    private static final String CALLWS = "test.callws-"+UUID.randomUUID();
+    private static final String SCRIPT = "test.storage_"+ ScriptTestHelpers.randomScriptName();
+    private static final String SERIALIZE = "test.serialize_"+ScriptTestHelpers.randomScriptName();
+    private static final String CALLWS = "test.callws_"+ScriptTestHelpers.randomScriptName();
 
 
     @BeforeClass
@@ -130,7 +130,7 @@ public class ScriptStorageTest {
                 s = contentAsString(res);
                 resp =Json.mapper().readTree(s);
 
-                assertEquals(1,resp.path("data").path("_store").path("val").asInt());
+                assertEquals(1,resp.path("data").path("_storage").path("val").asInt());
 
             }catch (Exception e){
                 fail(ExceptionUtils.getStackTrace(e));

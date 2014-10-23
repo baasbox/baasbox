@@ -106,7 +106,8 @@ public class ScriptingService {
             ODocument result = new ODocument().fromJSON(updated.toString());
             script.field(ScriptsDao.LOCAL_STORAGE, result);
             dao.save(script);
-            return retScript.field(ScriptsDao.LOCAL_STORAGE);
+            ODocument field = retScript.field(ScriptsDao.LOCAL_STORAGE);
+            return field;
         } finally {
             if (script != null) {
                 script.unlock();

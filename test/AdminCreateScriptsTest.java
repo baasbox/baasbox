@@ -42,7 +42,7 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
             @Override
             public void run() {
                 Result result;
-                String e = "test.create"+UUID.randomUUID();
+                String e = "test.create"+ScriptTestHelpers.randomScriptName();
                 result = routeGetScript(e);
                 assertRoute(result, "testRouteGetScript. NoScript", Http.Status.NOT_FOUND, "", true);
 
@@ -67,7 +67,7 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
         running(getFakeApplication(), new Runnable() {
             @Override
             public void run() {
-                String ep = "test.update"+ UUID.randomUUID();
+                String ep = "test.update"+ ScriptTestHelpers.randomScriptName();
                 Result result = routeCreateScript(ep,"test.update");
                 assertRoute(result,"testUpdateScript create",Http.Status.CREATED,null,false);
 
@@ -86,7 +86,7 @@ public class AdminCreateScriptsTest extends AbstractAdminTest {
         running(getFakeApplication(), new Runnable() {
             @Override
             public void run() {
-                String s = "test.create"+UUID.randomUUID();
+                String s = "test.create"+ScriptTestHelpers.randomScriptName();
                 Result create =routeCreateScript(s,"test.create");
                 assertRoute(create, "testRouteCreateScript", Http.Status.CREATED, null, false);
 
