@@ -21,6 +21,9 @@ public interface IBBConfigurationKeys {
 	public static final String ADMIN_PASSWORD = "orient.baasbox.admin_password";
 	public static final String ANONYMOUS_USERNAME = "orient.baasbox.user";
 	public static final String ANONYMOUS_PASSWORD = "orient.baasbox.password";
+	public static final String ORIENT_ENABLE_REMOTE_CONNECTION = "orient.listener.enable";
+	public static final String ORIENT_LISTENING_PORTS = "orient.listener.ports";
+	public static final String ORIENT_LISTENING_ADDRESS = "orient.listener.address";
 	public static final String ROOT_PASSWORD = "baasbox.root.password";
 	public static final String CAPTURE_METRICS = "baasbox.metrics.activate";
 	

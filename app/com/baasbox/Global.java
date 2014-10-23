@@ -23,6 +23,7 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -137,47 +138,8 @@ public class Global extends GlobalSettings {
 	    ODatabaseRecordTx db =null;
 	    try{
 	    	server = OServerMain.create();
-	    	 server.startup(
-	    			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-	    			   + "<orient-server>"
-	    			   + " <handlers>"
-	    /*			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
-	    			   + " <parameters>"
-	    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
-	    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
-	    	           + "     <parameter name=\"configuration.db.default\""
-	    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
-	    	           + "     <parameter name=\"configuration.hazelcast\" value=\"conf/hazelcast.xml\"/>"
-	    	           + "     <parameter name=\"conflict.resolver.impl\""
-	    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
-
-	    	           + "     <!-- PARTITIONING STRATEGIES -->"
-	    	           + "     <parameter name=\"sharding.strategy.round-robin\""
-	    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
-	    	           + " </parameters>"
-	    	           + " </handler>"*/
-	    	           + " </handlers>"
-	    			   + "<network>"
-	    			   + "<protocols>"
-	    			   + "<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>"
-	    			   + "</protocols>"
-	    			   + "<listeners>"
-	    			   + "<listener ip-address=\"0.0.0.0\" port-range=\"2424-2430\" protocol=\"binary\"/>"
-	    			   + "</listeners>"
-	    			   + "</network>"
-	    			   + "<users>"
-	    			   + (StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? "": "<user name=\"root\" password=\""+BBConfiguration.getRootPassword()+"\" resources=\"*\"/>")
-	    			   + "</users>"
-	    			   + "<properties>"
-	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
-	    			   + "<entry name=\"log.console.level\" value=\"info\"/>"
-	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
-	    			   + "<entry value=\"./db\" name=\"server.database.path\" />"
-	    			 
-	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
-	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
-	    			   + "</properties>" + "</orient-server>");
-	    			  server.activate();
+	    	server.startup(getOrientConfString());
+	    	server.activate();
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
@@ -249,6 +211,53 @@ public class Global extends GlobalSettings {
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
 	  }
+
+	private String getOrientConfString() {
+		String toReturn=
+ 			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+	    			   + "<orient-server>"
+	    			   + " <handlers>"
+	    /*			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
+	    			   + " <parameters>"
+	    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+	    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
+	    	           + "     <parameter name=\"configuration.db.default\""
+	    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
+	    	           + "     <parameter name=\"configuration.hazelcast\" value=\"conf/hazelcast.xml\"/>"
+	    	           + "     <parameter name=\"conflict.resolver.impl\""
+	    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
+
+	    	           + "     <!-- PARTITIONING STRATEGIES -->"
+	    	           + "     <parameter name=\"sharding.strategy.round-robin\""
+	    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
+	    	           + " </parameters>"
+	    	           + " </handler>"*/
+	    	           + " </handlers>"
+		
+	    			   + "<network>"
+	    			   + "<protocols>"
+	    			   + (BBConfiguration.getOrientEnableRemoteConnection()?"<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>":"")
+	    			   + "</protocols>"
+	    			   + "<listeners>"
+					   + (BBConfiguration.getOrientEnableRemoteConnection()?"<listener ip-address=\""+BBConfiguration.getOrientListeningAddress()+"\" port-range=\""+BBConfiguration.getOrientListeningPorts()+"\" protocol=\"binary\"/>":"")
+					   + "</listeners>"
+	    			   + "</network>"
+	    			   + "<users>"
+	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getRootPassword())+"\" resources=\"*\"/>"
+	    			   + "</users>"
+	    			   + "<properties>"
+	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"info\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
+	    			   + "<entry value=\"./db\" name=\"server.database.path\" />"
+	    			 
+	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
+	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
+	    			   + "</properties>" + 
+	    			   "</orient-server>";
+		Logger.debug(toReturn);
+		return toReturn;
+	}
 
 	private void overrideSettings() {
 		info ("Override settings...");

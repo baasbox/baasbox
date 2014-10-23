@@ -155,4 +155,18 @@ public class BBConfiguration implements IBBConfigurationKeys {
 			isDBSizeThresholdOverridden=true;
 	    }
 	}
+	
+	public static Boolean getOrientEnableRemoteConnection() {
+		return configuration.getBoolean(ORIENT_ENABLE_REMOTE_CONNECTION);
+	}
+
+	public static String getOrientListeningPorts() {
+		return configuration.getString(ORIENT_LISTENING_PORTS);
+	}
+
+	public static String getOrientListeningAddress() {
+		return configuration.getString(ORIENT_LISTENING_ADDRESS);
+	}
+
+	
 }
