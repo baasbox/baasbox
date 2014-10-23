@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class OperationDisabledException extends Exception {
+public class OperationDisabledException extends BaasBoxException {
 
 	public OperationDisabledException() {
 		// TODO Auto-generated constructor stub

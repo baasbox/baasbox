@@ -19,7 +19,7 @@
 package com.baasbox.exception;
 
 @SuppressWarnings("serial")
-public class IndexNotFoundException extends Exception {
+public class IndexNotFoundException extends BaasBoxException {
 
 	public IndexNotFoundException() {
 		// TODO Auto-generated constructor stub

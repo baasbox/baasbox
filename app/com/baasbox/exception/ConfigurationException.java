@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class ConfigurationException extends Exception {
+public class ConfigurationException extends BaasBoxException {
 
 	public ConfigurationException() {
 		// TODO Auto-generated constructor stub

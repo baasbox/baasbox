@@ -19,7 +19,7 @@
 package com.baasbox.exception;
 
 @SuppressWarnings("serial")
-public class RoleNotFoundException extends Exception {
+public class RoleNotFoundException extends BaasBoxException {
 
 	private boolean inehrited=false;
 	public RoleNotFoundException() {

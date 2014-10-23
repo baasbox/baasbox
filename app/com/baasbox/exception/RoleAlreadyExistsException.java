@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class RoleAlreadyExistsException extends Exception {
+public class RoleAlreadyExistsException extends BaasBoxException {
 
 	public RoleAlreadyExistsException() {
 		// TODO Auto-generated constructor stub
