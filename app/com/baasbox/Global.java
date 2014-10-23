@@ -249,7 +249,7 @@ public class Global extends GlobalSettings {
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
 	    			   + "<entry name=\"log.console.level\" value=\"info\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
-	    			   + "<entry value=\"./db\" name=\"server.database.path\" />"
+	    			   + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
 	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
 	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"

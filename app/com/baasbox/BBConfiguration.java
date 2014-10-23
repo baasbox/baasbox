@@ -16,6 +16,7 @@
  */
 package com.baasbox;
 
+import java.io.File;
 import java.math.BigInteger;
 
 import org.apache.commons.lang.BooleanUtils;
@@ -80,8 +81,12 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
-	public static String getDBDir(){
+	public static String getDBFullPath(){
 		return configuration.getString(DB_PATH);
+	}
+	
+	public static String getDBDir(){
+		return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
 	}
 	
 	public static Boolean getWrapResponse(){

@@ -110,12 +110,12 @@ public class DbHelper {
 	private static final String fetchPlan = "*:?";
 
 	public static BigInteger getDBTotalSize(){
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBDir()));
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBFullPath()));
 	}
 	
 	public static BigInteger getDBStorageFreeSpace(){
 		if (BBConfiguration.getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getDBSizeThreshold();
-		return BigInteger.valueOf(new File(BBConfiguration.getDBDir()).getFreeSpace());
+		return BigInteger.valueOf(new File(BBConfiguration.getDBFullPath()).getFreeSpace());
 	}
 	
 		
@@ -344,10 +344,10 @@ public class DbHelper {
 		if(dbFreeze.get()){
 			throw new ShuttingDownDBException();
 		}
-		String databaseName=BBConfiguration.getDBDir();
+		String databaseName=BBConfiguration.getDBFullPath();
 		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
-		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir());
+		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBFullPath());
 		conn.open(username,password);
 		HooksManager.registerAll(getConnection());
 		
