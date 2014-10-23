@@ -14,6 +14,8 @@ function ScriptsController($scope,prompt){
 	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
 	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
 
+	var wasInEditMode = null;
+
 	var noop = function(){};
 
 	var validateName = function(name){
@@ -53,8 +55,15 @@ function ScriptsController($scope,prompt){
 	};
 
 	var onUpdateSucces = function(){
+		wasInEditMode = $scope.selected;
+		if(wasInEditMode == -1){
+			//this is a new script
+			// so we record it's name
+			wasInEditMode = $scope.currentScript.name;
+		}
 		$scope.currentScript.buffer = undefined;
 		$scope.currentScript = null;
+
 		$scope.selected= -1;
 		setEditMode(false);
 		$scope.showStorage=false;
@@ -190,6 +199,21 @@ function ScriptsController($scope,prompt){
 				$scope.$apply(function(){
 					$scope.data=data;
 					$scope.closeEditor();
+					if(wasInEditMode!== null){
+						if(typeof  wasInEditMode === 'string'){
+							var idx = 0;
+							for(idx;idx<data.data.length;idx++){
+								if(data.data[idx].name === wasInEditMode){
+									break;
+								}
+							}
+							$scope.selectItem(idx);
+						} else {
+							$scope.selectItem(wasInEditMode);
+							wasInEditMode = null;
+						}
+					}
+
 
 				});
 			}
