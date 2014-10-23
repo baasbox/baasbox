@@ -34,6 +34,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
@@ -165,6 +166,8 @@ class UsersResource extends BaseRestResource {
             UserService.disableUser(username);
         } catch (UserNotFoundException e) {
             throw new CommandExecutionException(command,"User "+username+" does not exists");
+        } catch (OpenTransactionException e){
+            throw new CommandExecutionException(command,"Transaction still open during suspend");
         }
         return BooleanNode.getTrue();
     }
@@ -190,6 +193,8 @@ class UsersResource extends BaseRestResource {
             UserService.enableUser(username);
         } catch (UserNotFoundException e) {
             throw new CommandExecutionException(command,"user "+username+ " does not exists");
+        } catch (OpenTransactionException e){
+            throw new CommandExecutionException(command,"transaction still open while altering user status");
         }
         return BooleanNode.getTrue();
     }

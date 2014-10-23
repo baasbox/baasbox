@@ -369,6 +369,14 @@ nav {
 	margin-right:-755px;
 }
 
+.deleteExport{
+	margin-right:0px !important;
+} 
+
+.downloadExport{
+	margin-right:0px !important;
+} 
+
 .btn-group > .btn, .btn-group > .dropdown-menu, .btn-group > .popover {
 	margin-right:-100px;
 }

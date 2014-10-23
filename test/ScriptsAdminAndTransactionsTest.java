@@ -34,8 +34,8 @@ import core.TestConfig;
  */
 public class ScriptsAdminAndTransactionsTest {
     private final static String USER = "user_test_script_sudo-"+ UUID.randomUUID();
-    private final static String TEST_SUDO = "test.sudo-"+UUID.randomUUID();
-    private final static String TEST_TRANSACT= "test.transactions-"+UUID.randomUUID();
+    private final static String TEST_SUDO = "test.sudo."+UUID.randomUUID();
+    private final static String TEST_TRANSACT= "test.transactions."+UUID.randomUUID();
     private static final String TEST_COLLECTION=  "script-transaction-collection-"+UUID.randomUUID();
 
     private static void createUser(){

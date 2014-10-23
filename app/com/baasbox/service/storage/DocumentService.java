@@ -63,6 +63,7 @@ public class DocumentService {
 	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
+
 		ODocument doc = dao.create();
 		try	{
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));

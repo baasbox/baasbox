@@ -29,6 +29,8 @@ public class BBConfiguration implements IBBConfigurationKeys {
 
 	public static Configuration configuration = Play.application().configuration();
 	private static Boolean computeMetrics;
+	private static Boolean pushMock;;
+	
 	//this is a percentage needed by the console to show alerts on dashboard when DB size is near the defined Threshold
 	private static Integer dbAlertThreshold=Integer.valueOf(10); 
 	private static boolean isDBAlertThresholdOverridden=false; 
@@ -86,6 +88,15 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
 	}
 	
+	public static Boolean getSocialMock(){
+		return Boolean.valueOf(configuration.getString(SOCIAL_MOCK));
+	}
+	
+	public static Boolean getPushMock(){
+		if (pushMock==null) pushMock=	BooleanUtils.isTrue(configuration.getBoolean(PUSH_MOCK));
+		return pushMock;
+	}
+	
 	public static String getAPPCODE() {
 		return configuration.getString(APP_CODE);
 	}
@@ -113,6 +124,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	public static void overrideConfigurationComputeMetrics(boolean computeMetrics) {
 		BBConfiguration.computeMetrics = computeMetrics;
+	}
+	
+	//used by tests
+	public static void _overrideConfigurationPushMock(boolean pushMock) {
+		BBConfiguration.pushMock = pushMock;
 	}
 	
 	//DB Size Thresholds and Alerts

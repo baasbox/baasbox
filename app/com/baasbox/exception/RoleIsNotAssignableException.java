@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class RoleIsNotAssignableException extends Exception {
+public class RoleIsNotAssignableException extends BaasBoxException {
 
 	public RoleIsNotAssignableException() {
 		// TODO Auto-generated constructor stub

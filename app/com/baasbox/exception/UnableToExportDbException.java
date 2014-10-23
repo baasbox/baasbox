@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class UnableToExportDbException extends Exception {
+public class UnableToExportDbException extends BaasBoxException {
 	
 	
 	private static final long serialVersionUID = 5409549692932520619L;
