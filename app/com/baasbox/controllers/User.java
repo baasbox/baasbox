@@ -634,9 +634,7 @@ public class User extends Controller {
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result follow(String toFollowUsername){
-//		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-//				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-//			  		return badRequest("Cannot follow internal users");
+
 		  String currentUsername = DbHelper.currentUsername();
 
           try{
@@ -644,8 +642,6 @@ public class User extends Controller {
 		  }catch(Exception e){
 			 return internalServerError(e.getMessage()); 
 		  }
-//<<<<<<< HEAD
-
           try {
               ODocument followed = FriendShipService.follow(currentUsername, toFollowUsername);
               return created(prepareResponseToJson(followed));
@@ -663,33 +659,6 @@ public class User extends Controller {
               return internalServerError(e.getMessage());
           }
 
-//=======
-//		  if(UserService.exists(toFollowUsername)){
-//			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
-//			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
-//			if(!alreadyFriendOf){
-//				try {
-//					UserService.addUserToRole(me.getName(), friendshipRoleName);
-//				} catch (OpenTransactionException e) {
-//					Logger.error (ExceptionUtils.getFullStackTrace(e));
-//					throw new RuntimeException(e);
-//				}
-//				ODocument userToFollowObject;
-//				try {
-//					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
-//				} catch (SqlInjectionException e) {
-//					return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
-//				}
-//				return created(prepareResponseToJson(userToFollowObject));
-//			}else{
-//				return badRequest("User "+me.getName()+" is already a friend of "+toFollowUsername);
-//			}
-//
-//
-//		  }else{
-//			  return notFound("User "+toFollowUsername+" does not exists.");
-//		  }
-//>>>>>>> master
 	  }
 	  
 	  
@@ -739,44 +708,13 @@ public class User extends Controller {
           } catch (SqlInjectionException e) {
               return internalServerError(ExceptionUtils.getFullStackTrace(e));
           }
-//          return getFollowing(username);
 	  }
-	  
 
-/**
- * Returns the people followed by the given user
- * @param username
- * @return
- */
-	private static Result getFollowing(String username) {
-		  OUser me = null;
-		  try{
-			
-			 me = UserService.getOUserByUsername(username);
-			 Set<ORole> roles = me.getRoles();
-			 List<String> usernames = new ArrayList<String>();
-			 for (ORole oRole : roles) {
-				  
-				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
-					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
-				}
-			 }
-			 if(usernames.isEmpty()){
-				 return ok(prepareResponseToJson(new ArrayList<ODocument>()));
-			 }else{
-				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
-				 return ok(prepareResponseToJson(followers));
-			 }
-		  }catch(Exception e){
-			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
-		  }
-	}
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result unfollow(String toUnfollowUsername){
-//		  OUser me = null;
 		  String currentUsername = DbHelper.currentUsername();
-//<<<<<<< HEAD
+
           try {
               boolean success = FriendShipService.unfollow(currentUsername,toUnfollowUsername);
               if (success){
@@ -789,31 +727,6 @@ public class User extends Controller {
           } catch (Exception e) {
               return internalServerError(e.getMessage());
           }
-//=======
-//		  try{
-//			 me = UserService.getOUserByUsername(currentUsername);
-//		  }catch(Exception e){
-//			 return internalServerError(ExceptionUtils.getFullStackTrace(e));
-//		  }
-//		  if(UserService.exists(toUnfollowUsername)){
-//			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
-//			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
-//			if(alreadyFriendOf){
-//				try {
-//					UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
-//				} catch (OpenTransactionException e) {
-//					Logger.error (ExceptionUtils.getFullStackTrace(e));
-//					throw new RuntimeException(e);
-//				}
-//				return ok();
-//		  	}else{
-//		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);
-//		  	}
-//
-//		  }else{
-//			  return notFound("User "+me.getName()+" does not exists.");
-//		  }
-//>>>>>>> master
 	  }
 
 }
