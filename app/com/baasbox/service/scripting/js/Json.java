@@ -18,6 +18,8 @@
 
 package com.baasbox.service.scripting.js;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;
@@ -41,6 +43,13 @@ public class Json {
         }
     }
 
+    public static String prettyPrinted(JsonNode value){
+        try {
+            return mapper().writerWithDefaultPrettyPrinter().writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            return "";
+        }
+    }
     public static ObjectMapperExt mapper(){
         return MAPPER;
     }

@@ -139,7 +139,7 @@ public class ScriptUsersCommandTest {
     public void testUserCanMakeFriends(){
         running(fakeApplication(),()->{
             try {
-                String scriptName= "makefriends."+UUID.randomUUID();
+                String scriptName= "makefriends."+ScriptTestHelpers.randomScriptName();
                 ScriptTestHelpers.createScript(scriptName, "/scripts/user_make_friends.js");
 
                 ObjectNode user = mapper.createObjectNode();

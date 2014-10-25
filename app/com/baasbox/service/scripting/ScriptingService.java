@@ -19,26 +19,26 @@
 package com.baasbox.service.scripting;
 
 import com.baasbox.dao.ScriptsDao;
-import com.baasbox.dao.exception.InvalidScriptException;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.service.webservices.HttpClientService;
 import com.baasbox.service.scripting.base.*;
-import com.baasbox.service.scripting.js.Internal;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import play.Logger;
 import play.libs.EventSource;
 
-import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import play.libs.WS;
 
 /**
  * Created by Andrea Tortorella on 10/06/14.
@@ -86,26 +86,33 @@ public class ScriptingService {
 
     private static ODocument updateStorageLocked(String name,boolean before,JsonCallback updaterFn) throws ScriptException {
         final ScriptsDao dao = ScriptsDao.getInstance();
-        ODocument script = dao.getByNameLocked(name);
-        if (script == null) throw new ScriptException("Script not found");
-        ODocument retScript = before ? script.copy() : script;
+        ODocument script = null;
+        try {
+            script = dao.getByNameLocked(name);
+            if (script == null) throw new ScriptException("Script not found");
+            ODocument retScript = before ? script.copy() : script;
 
-        ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
+            ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
 
-        Optional<ODocument> storage1 = Optional.ofNullable(storage);
+            Optional<ODocument> storage1 = Optional.ofNullable(storage);
 
-        JsonNode current = storage1.map(ODocument::toJSON)
-                                .map(Json.mapper()::readTreeOrMissing)
-                                .orElse(NullNode.getInstance());
-        if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
+            JsonNode current = storage1.map(ODocument::toJSON)
+                    .map(Json.mapper()::readTreeOrMissing)
+                    .orElse(NullNode.getInstance());
+            if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
 
-        JsonNode updated = updaterFn.call(current);
+            JsonNode updated = updaterFn.call(current);
 
-        ODocument result = new ODocument().fromJSON(updated.toString());
-        script.field(ScriptsDao.LOCAL_STORAGE,result);
-        dao.save(script);
-
-        return retScript.field(ScriptsDao.LOCAL_STORAGE);
+            ODocument result = new ODocument().fromJSON(updated.toString());
+            script.field(ScriptsDao.LOCAL_STORAGE, result);
+            dao.save(script);
+            ODocument field = retScript.field(ScriptsDao.LOCAL_STORAGE);
+            return field;
+        } finally {
+            if (script != null) {
+                script.unlock();
+            }
+        }
     }
 
     public static ODocument swap(String name,JsonCallback callback) throws ScriptException {
@@ -124,6 +131,7 @@ public class ScriptingService {
     }
 
     public static ScriptStatus update(String name,JsonNode code) throws ScriptException{
+        if (code == null) throw new ScriptException("missing code");
         JsonNode codeNode = code.get(ScriptsDao.CODE);
         if (codeNode == null|| !codeNode.isTextual()){
             throw new ScriptException("missing code");
@@ -301,18 +309,6 @@ public class ScriptingService {
 //            connectedLogListeners.put(name,logs);
 //        }
 //    }
-//
-//    public static void connectLogListener(String name, EventSource current) {
-//        List<EventSource> logs = connectedLogListeners.get(name);
-//        if (logs == null) {
-//            logs = new ArrayList<EventSource>();
-//        }
-//        logs.add(current);
-//        if (Logger.isTraceEnabled()) Logger.trace("Connected to: "+name);
-//        current.sendData("start");
-//        connectedLogListeners.put(name,logs);
-//    }
-
 
     /**
      * Compiles a script without emitting any event
@@ -347,6 +343,71 @@ public class ScriptingService {
         boolean active = activeNode == null?false:activeNode.asBoolean();
         ODocument doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
         return doc;
+    }
+
+
+    public static JsonNode callJsonSync(JsonNode req) throws Exception{
+        return callJsonSync(req.get("url").asText(),
+                req.get("method").asText(),
+                mapJson(req.get("params")),
+                mapJson(req.get("headers")),
+                req.get("body"));
+    }
+
+
+    private static Map<String,List<String>> mapJson(JsonNode node){
+        if (node == null){
+            return null;
+        }
+        if (node.isObject()){
+            Map<String,List<String>> ret = new LinkedHashMap<>();
+            node.fieldNames().forEachRemaining((field)->{
+                JsonNode jsonNode = node.get(field);
+                List<String> cur = ret.get(field);
+                if (cur == null){
+                    cur = new LinkedList<>();
+                    ret.put(field, cur);
+                }
+                append(cur, jsonNode);
+            });
+            return ret;
+        }
+        return null;
+    }
+
+    private static void append(List<String> list,JsonNode node){
+        if (node==null||node.isNull()||node.isMissingNode()||node.isObject()) return;
+        if (node.isValueNode()) list.add(node.asText());
+        if (node.isArray()){
+            node.forEach((n)->{
+                if (n!=null && (!n.isNull()) && (!n.isMissingNode()) &&n.isValueNode())list.add(n.toString());
+            });
+        }
+    }
+
+    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
+        try {
+            ObjectNode node = Json.mapper().createObjectNode();
+            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
+
+            int status = resp.getStatus();
+            node.put("status",status);
+
+            String header = resp.getHeader("Content-Type");
+            if (header==null ||  header.startsWith("text")){
+                node.put("body",resp.getBody());
+            } else if (header.startsWith("application/json")){
+                node.put("body",resp.asJson());
+            } else {
+                node.put("body",resp.getBody());
+            }
+
+            return node;
+        } catch (Exception e) {
+            Logger.error("failed to connect: "+e.getMessage());
+            throw e;
+        }
+
     }
 
 

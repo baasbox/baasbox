@@ -16,6 +16,7 @@ import play.Play;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.UUID;
 
 import static org.junit.Assert.fail;
 
@@ -36,6 +37,9 @@ public class ScriptTestHelpers {
         }
     }
 
+    public static String randomScriptName(){
+        return "script.test"+UUID.randomUUID().toString().replace("-","_");
+    }
 
 
     public static JsonNode loadScript(String name,String source){

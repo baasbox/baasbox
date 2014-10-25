@@ -30,12 +30,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
@@ -65,6 +59,12 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+
+import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
+import com.baasbox.exception.PasswordRecoveryException;
+import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.user.FriendShipService;
@@ -74,20 +74,21 @@ import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
-	private static String prepareResponseToJson(ODocument doc){
+	static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
@@ -102,13 +103,15 @@ public class User extends Controller {
 		try {
 			for (ODocument doc : listOfDoc){
 				doc.detach();
-				OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
-				if (roles.size()>1){
-					Iterator<OIdentifiable> it = roles.iterator();
-					while (it.hasNext()){
-						if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-					        it.remove();
-					    }
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
 					}
 				}
 			}
@@ -501,7 +504,12 @@ public class User extends Controller {
 			  return badRequest("The old password does not match with the current one");
 		  }	  
 
-		  UserService.changePasswordCurrentUser(newPassword);
+		  try {
+			UserService.changePasswordCurrentUser(newPassword);
+		  } catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+		  }
 		  if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		  return ok();
 	  }	  
@@ -617,15 +625,16 @@ public class User extends Controller {
 				UserService.disableCurrentUser();
 			} catch (UserNotFoundException e) {
 				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
 			}
 		  return ok();
 	  }
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result follow(String toFollowUsername){
-//		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-//				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-//			  		return badRequest("Cannot follow internal users");
+
 		  String currentUsername = DbHelper.currentUsername();
 
           try{
@@ -633,7 +642,6 @@ public class User extends Controller {
 		  }catch(Exception e){
 			 return internalServerError(e.getMessage()); 
 		  }
-
           try {
               ODocument followed = FriendShipService.follow(currentUsername, toFollowUsername);
               return created(prepareResponseToJson(followed));
@@ -693,48 +701,20 @@ public class User extends Controller {
 	  public static Result following (String username){
 		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
           try {
-              List<ODocument> following = FriendShipService.getFollowing(username, QueryParams.getParamsFromQueryString(request().queryString()));
+              Context ctx=Http.Context.current.get();
+              QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+              List<ODocument> following = FriendShipService.getFollowing(username, criteria);
               return ok(prepareResponseToJson(following));
           } catch (SqlInjectionException e) {
               return internalServerError(ExceptionUtils.getFullStackTrace(e));
           }
-//          return getFollowing(username);
 	  }
-	  
 
-/**
- * Returns the people followed by the given user
- * @param username
- * @return
- */
-	private static Result getFollowing(String username) {
-		  OUser me = null;
-		  try{
-			
-			 me = UserService.getOUserByUsername(username);
-			 Set<ORole> roles = me.getRoles();
-			 List<String> usernames = new ArrayList<String>();
-			 for (ORole oRole : roles) {
-				  
-				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
-					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
-				}
-			 }
-			 if(usernames.isEmpty()){
-				 return ok(prepareResponseToJson(new ArrayList<ODocument>()));
-			 }else{
-				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
-				 return ok(prepareResponseToJson(followers));
-			 }
-		  }catch(Exception e){
-			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
-		  }
-	}
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result unfollow(String toUnfollowUsername){
-//		  OUser me = null;
 		  String currentUsername = DbHelper.currentUsername();
+
           try {
               boolean success = FriendShipService.unfollow(currentUsername,toUnfollowUsername);
               if (success){

@@ -22,19 +22,19 @@ import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.ScriptException;
-import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Internal;
 import com.baasbox.service.scripting.js.Json;
-import com.baasbox.service.stats.StatsService;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.baasbox.service.events.EventsService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -55,46 +55,39 @@ class ScriptsResource extends Resource {
 
 
     private static  final Map<String,ScriptCommand> COMMANDS= ImmutableMap.<String,ScriptCommand>builder()
-               .put("log", new ScriptCommand() {
-                   @Override
-                   public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                       JsonNode idOfTheModule = command.get(ScriptCommand.ID);
-                       JsonNode par = command.get(ScriptCommand.PARAMS);
-                       if (idOfTheModule == null) {
-                           throw new CommandParsingException(command, "module id is null");
-                       }
-                       StatsService.publish("scripts",StatsService.obtainMessage("scripts",idOfTheModule.asText(),par));
-                       return null;
-                   }
-               })
-              /*  .put("switchUser", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                        try {
-                            DbHelper.reconnectAsAdmin();
-                            return callback.call(NullNode.getInstance());
-                        } finally {
-                            DbHelper.reconnectAsAuthenticatedUser();
-                        }
-                    }
-                })*/
-                .put("storage", new ScriptCommand() {
-                    @Override
-                    public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-
-                        return storageCommand(command, callback);
-                    }
-
-                })
-                .put("event", new ScriptCommand() {
-                                @Override
-                                public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                                    // todo publish pubic json event for streaming
-                                    return null;
-                                }
-
-                })
+               .put("log",ScriptsResource::log )
+                .put("ws", ScriptsResource::wsCall)
+                .put("storage", ScriptsResource::storageCommand)
+                .put("event", ScriptsResource::event)
                 .build();
+
+
+    private static JsonNode event(JsonNode command,JsonCallback callback) throws CommandException{
+        //todo implement public events?
+        return NullNode.getInstance();
+    }
+
+    private static JsonNode log(JsonNode command,JsonCallback callback) throws CommandException {
+        JsonNode idOfTheModule = command.get(ScriptCommand.MAIN);
+        JsonNode par = command.get(ScriptCommand.PARAMS);
+        if (idOfTheModule ==null){
+            idOfTheModule =command.get(ScriptCommand.ID);
+        }
+        ObjectNode message = Json.mapper().createObjectNode();
+        message.put("message",par);
+        message.put("script",idOfTheModule);
+        message.put("date",new Date().toString());
+        int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
+        return IntNode.valueOf(publish);
+    }
+
+    private static JsonNode wsCall(JsonNode command,JsonCallback callback) throws CommandException{
+        try {
+            return ScriptingService.callJsonSync(command.get(ScriptCommand.PARAMS));
+        } catch (Exception e) {
+            throw new CommandExecutionException(command,e.getMessage(),e);
+        }
+    }
 
     private static JsonNode storageCommand(JsonNode command, JsonCallback callback) throws CommandException {
         JsonNode moduleId = command.get(ScriptCommand.ID);

@@ -12,6 +12,23 @@
  * http://stackoverflow.com/a/2548133/487576
  * String endsWith
  */
+angular.module("console", ['ui.ace'])
+	.factory("prompt",function($window,$q){
+
+		function prompt(message,defaultValue){
+			var defer = $q.defer();
+			var response = $window.prompt(message,defaultValue);
+			if (response==null){
+				defer.reject();
+			} else {
+				defer.resolve(response);
+			}
+			return defer.promise;
+		}
+		return prompt;
+	});
+
+
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };

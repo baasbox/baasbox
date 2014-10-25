@@ -28,7 +28,6 @@ import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptEvalException;
-import com.baasbox.service.scripting.base.ScriptResult;
 import com.baasbox.service.scripting.base.ScriptStatus;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
@@ -37,13 +36,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import play.Logger;
-import play.libs.EventSource;
-import play.libs.F;
 import play.mvc.*;
 import play.mvc.Http.Context;
 
 import java.io.IOException;
-import java.util.IllegalFormatException;
 import java.util.List;
 
 /**
@@ -82,7 +78,9 @@ public class ScriptsAdmin extends Controller{
         Http.Request req = request();
         Result result;
         JsonNode body = req.body().asJson();
+
         try {
+
             ScriptStatus update = ScriptingService.update(name, body);
             if (update.ok){
                 result = ok(update.message);
@@ -212,6 +210,9 @@ public class ScriptsAdmin extends Controller{
         if (Logger.isTraceEnabled())Logger.trace("Method end");
         return result;
     }
+
+
+
 
 //    public static Result log(final String name){
 //        ODocument fn = ScriptingService.get(name);
