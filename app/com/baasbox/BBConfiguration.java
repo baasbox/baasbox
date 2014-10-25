@@ -172,6 +172,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getOrientListeningAddress() {
 		return configuration.getString(ORIENT_LISTENING_ADDRESS);
 	}
-
+	
+	public static Boolean getOrientStartCluster() {
+		return configuration.getBoolean(ORIENT_START_CLUSTER);
+	}
+	
 	
 }

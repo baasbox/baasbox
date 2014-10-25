@@ -23,7 +23,6 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -54,6 +53,7 @@ import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -217,21 +217,23 @@ public class Global extends GlobalSettings {
  			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 	    			   + "<orient-server>"
 	    			   + " <handlers>"
-	    /*			   + " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
-	    			   + " <parameters>"
-	    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
-	    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
-	    	           + "     <parameter name=\"configuration.db.default\""
-	    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
-	    	           + "     <parameter name=\"configuration.hazelcast\" value=\"conf/hazelcast.xml\"/>"
-	    	           + "     <parameter name=\"conflict.resolver.impl\""
-	    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
-
-	    	           + "     <!-- PARTITIONING STRATEGIES -->"
-	    	           + "     <parameter name=\"sharding.strategy.round-robin\""
-	    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
-	    	           + " </parameters>"
-	    	           + " </handler>"*/
+	    			   + (BBConfiguration.getOrientStartCluster()?
+		    			     " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
+		    			   + " <parameters>"
+		    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+		    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
+		    	           + "     <parameter name=\"configuration.db.default\""
+		    	           + "                value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/default-distributed-db-config.json\"/>"
+		    	           + "     <parameter name=\"configuration.hazelcast\" value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/hazelcast.xml\"/>"
+		    	           + "     <parameter name=\"conflict.resolver.impl\""
+		    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
+	
+		    	           + "     <!-- PARTITIONING STRATEGIES -->"
+		    	           + "     <parameter name=\"sharding.strategy.round-robin\""
+		    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
+		    	           + " </parameters>"
+		    	           + " </handler>"
+	    	           :"")
 	    	           + " </handlers>"
 		
 	    			   + "<network>"
@@ -247,7 +249,7 @@ public class Global extends GlobalSettings {
 	    			   + "</users>"
 	    			   + "<properties>"
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
-	    			   + "<entry name=\"log.console.level\" value=\"info\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"fine\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
 	    			   + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
 	    			 
