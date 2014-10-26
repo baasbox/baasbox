@@ -14,7 +14,7 @@
 						</div>
 					</div>
 					<div class="box-content">
-						<ul class="plugin list">
+						<ul class="dashboard-list plugin list">
 							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
@@ -22,57 +22,60 @@
 							</li>
 						</ul>
 					</div> <!-- box-content -->
-				</div><!-- box span3 -->
-				<div class="box span8">
-					<div class="box-header well" data-original-title>
-						<h2><i class="icon icon-darkgray icon-script"></i><span>{{currentScript.name}}</span></h2>
-						<div class="box-icon">
-							<a href="#" id="btnToggleEdit" ng-click="toggleEdit()" title="Edit/View mode" class="btn btn-setting btn-round"><i class="icon-edit"></i></a>
+				</div><!-- box span3 installed plugins list-->
+				
+				<!-- editor -->
+					<div class="box span8">
+						<div class="box-header well" data-original-title>
+							<h2><i class="icon icon-darkgray icon-book"></i><span>{{currentScript.name}}</span></h2>
+							<div ng-show="currentScript" class="box-icon">
+								<a href="#" id="btnToggleEdit" ng-click="toggleEdit()" title="Edit/View mode" class="btn btn-setting btn-round"><i class="icon-edit"></i></a>
+							</div>
+							<div ng-show="currentScript" class="box-icon">
+								<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
+							</div>
+	
 						</div>
-						<div class="box-icon">
-							<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
+						<div class="editor box-content" ng-show="!currentScript"
+							style="height: 300px;">
 						</div>
-
-					</div>
-					<div class="editor box-content" ng-show="currentScript"
-						readonly="{{!editMode}}"
-						style="height: 300px;"
-						ui-ace="aceEditMode"
-						ng-model="currentScript.buffer">
-					</div>
-
-					<div ng-show="lastError" class="errorBox">
-						<pre class="errorBoxText">{{lastError}}</pre>
-					</div>
-
-					<div ng-show="showStorage" class="box-content">
-						<div ng-show="currentScript"
-							readonly="true"
-							style="height: 100px"
-							ui-ace="{mode: 'json',theme: 'solarized_dark',showGutter:false,useWrapMode:false}"
-							ng-model="storageFormatted">
-
+						<div class="editor box-content" ng-show="currentScript"
+							readonly="{{!editMode}}"
+							style="height: 300px;"
+							ui-ace="aceEditMode"
+							ng-model="currentScript.buffer">
+						</div>
+						
+						<div class="form-actions" ng-show="editMode">
+							<button type="submit" ng-click="saveScript()" class="btn btn-primary btn-small">Save</button>
+							<button type="reset" ng-click="closeEditor()" class="btn btn-small">Cancel</button>
+						</div>
+	
+						<div ng-show="lastError" class="errorBox">
+							<pre class="errorBoxText">{{lastError}}</pre>
+							<div style="margin:10px"><a ng-click="codeShown=true" ng-show="!codeShown"> (Show Full Response) </a><a ng-click="codeShown=false" ng-show="codeShown"> (Hide Full Response) </a></div>
+							<pre  ng-show="codeShown" class="errorBoxText">{{fullLastError}}</pre>
+						</div>
+	
+						<div ng-show="showStorage" class="box-content">
+							<div>Script Private Storage</div>
+							<div ng-show="currentScript"
+								readonly="true"
+								style="height: 100px"
+								ui-ace="{mode: 'json',showGutter:false,useWrapMode:false}"
+								ng-model="storageFormatted">
+	
+							</div>
 						</div>
 					</div>
-
-					<div class="form-actions" ng-show="editMode">
-						<button type="submit" ng-click="saveScript()" class="btn btn-primary btn-small">Save</button>
-						<button type="reset" ng-click="closeEditor()" class="btn btn-small">Cancel</button>
-					</div>
-
-				</div>
-
 				<div class="span3">&nbsp;</div>
-
 				<div class="box span8">
-
 					<div class="box-header well">
-						<h2><i class="icon icon-darkgray icon-list"></i><span>Logs</span></h2>
+						<h2><i class="icon icon-darkgray icon-clipboard"></i><span>Plugins Log - (<span ng-show="logEnabled">Not</span> Enabled)</span></h2>
 						<div class="box-icon">
 							<a href="#" id="btnToggleLogs" ng-click="toggleLogs()" title="Show/Hide logger" class="btn btn-setting btn-round"><i class="icon-eye-open"></i></a>
 						</div>
 					</div>
-
 					<div class="box-content">
 						<ul ng-show="logEnabled" class="dashboard-list">
 							<li ng-repeat="line in logs" class="logLine">
@@ -81,34 +84,5 @@
 						</ul>
 					</div>
 				</div>
-				<!-- code -->
-				<!--
-				<div  class="box span7"  >
-					<div data-rel="tooltip" title="Code" class="box-header well" data-original-title>
-						<h2><i class="icon icon-darkgray icon-script"></i><span ng-bind="data.data[getSelectedItem()].name"></span> </h2>
-						<div class="box-icon">
-							<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
-						</div>
-					</div>
-					<div ng-show="getShowStorage()" class="box-content">
-						<pre id="plugin-storage" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()]._storage"></pre>
-					</div>
-					<div class="box-content">
-						<pre id="plugin-code" class="js" js-code-highlight ng-bind="data.data[getSelectedItem()].code[0]"></pre>
-					</div>
-				</div>
-
-				<div class="span11">
-					<div class="editor-buttons" ng-show="currentScript"><span ng-click="saveScript()">Save</span> <span ng-click="discardEdits()"> Discard </span><span ng-click="closeEditor()"> Close </span></div>
-				</div>
-				<div>
-					<button class="btn" ng-click="toggleLogs()">{{logEnabled && 'pause logs' || 'resume logs'}}</button>
-					<ul ng-show="logEnabled">
-						<li ng-repeat="line in logs">
-							<span>{{line.script}}&nbsp;:</span><span>{{line.message}}</span>
-						</li>
-					</ul>
-				</div>
-				-->
 			</div>
 			

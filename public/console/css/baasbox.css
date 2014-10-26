@@ -416,3 +416,39 @@ img.companylogo {
     margin: 8px;
     color: #F00;
 }
+
+.plugin .item{
+	cursor: pointer;
+	margin-top: 0px;
+}
+
+.plugin .name{
+	cursor: pointer;
+	margin-top: 0px;
+	font-weight: bold;
+	font-size:14px;
+}
+
+.plugin .action{
+	font-size:11px;
+}
+.box-content ul.plugin{
+	margin:-10px;
+}
+
+li.plugin.selected{
+	background-color: rgba(183, 200, 183, 0.19);
+}
+
+li.plugin{
+	padding:10px !important;
+}
+
+li.plugin.deactivated{
+	color:#8B8989 !important;
+	font-style:italic;
+}
+
+.well{
+	padding-left: 10px;
+}

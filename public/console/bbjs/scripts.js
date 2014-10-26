@@ -42,7 +42,7 @@ function ScriptsController($scope,prompt){
 			setEditMode(true);
 			$scope.showStorage=false;
 		} else {
-			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
+			prompt("Plugin name "+resp+ " is not valid, choose another one. The right format is namespace.name","").then(onNewScript,noop);
 		}
 	};
 
@@ -85,11 +85,12 @@ function ScriptsController($scope,prompt){
 		return "Unknown error";
 	};
 
-	var pubblishError = function(data){
+	var publishError = function(data){
 		var e = $.parseJSON(data.responseText);
 		var error= parseError(e.message);
 		$scope.$apply(function(){
 			$scope.lastError = error;
+			$scope.fullLastError = JSON.stringify(e, undefined, 2);
 		});
 	};
 
@@ -105,7 +106,7 @@ function ScriptsController($scope,prompt){
 			contentType: "application/json",
 			processData: false,
 
-			error: pubblishError,
+			error: publishError,
 			success: onUpdateSucces
 		});
 	};
@@ -118,7 +119,7 @@ function ScriptsController($scope,prompt){
 			data: toSend,
 			contentType: "application/json",
 			processData: false,
-			error: pubblishError,
+			error: publishError,
 			success: onUpdateSucces
 		});
 
@@ -136,6 +137,7 @@ function ScriptsController($scope,prompt){
 	$scope.selected = -1;
 	$scope.editMode = false;
 	$scope.lastError = null;
+	$scope.fullLastError = null;
 	$scope.storageFormatted="";
 
 	$scope.logEnabled = false;
@@ -144,7 +146,7 @@ function ScriptsController($scope,prompt){
 
 
 	$scope.newScript = function(){
-		prompt("Script name","").then(
+		prompt("Plugin name (namespace.name)","").then(
 			onNewScript,
 			noop);
 	};
@@ -213,8 +215,6 @@ function ScriptsController($scope,prompt){
 							wasInEditMode = null;
 						}
 					}
-
-
 				});
 			}
 		});
