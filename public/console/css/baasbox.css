@@ -448,3 +448,7 @@ li.plugin.deactivated{
 	color:#8B8989 !important;
 	font-style:italic;
 }
+
+.well{
+	padding-left: 10px;
+}
