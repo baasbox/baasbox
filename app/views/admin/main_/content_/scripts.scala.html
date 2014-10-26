@@ -14,7 +14,7 @@
 						</div>
 					</div>
 					<div class="box-content">
-						<ul class="plugin list">
+						<ul class="dashboard-list plugin list">
 							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
 								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
