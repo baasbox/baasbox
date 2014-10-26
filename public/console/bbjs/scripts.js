@@ -42,7 +42,7 @@ function ScriptsController($scope,prompt){
 			setEditMode(true);
 			$scope.showStorage=false;
 		} else {
-			prompt("Script name "+resp+ " is not valid, choose another one","").then(onNewScript,noop);
+			prompt("Plugin name "+resp+ " is not valid, choose another one. The right format is namespace.name","").then(onNewScript,noop);
 		}
 	};
 
@@ -146,7 +146,7 @@ function ScriptsController($scope,prompt){
 
 
 	$scope.newScript = function(){
-		prompt("Script name","").then(
+		prompt("Plugin name (namespace.name)","").then(
 			onNewScript,
 			noop);
 	};
