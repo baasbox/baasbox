@@ -310,7 +310,7 @@ function ScriptsController($scope,prompt){
 			evtSource = connectLogger(function(e){
 				//console.log(e.data);
 				var temp = e.data;//.split('\n').join('');
-				temp=temp.replace(/\\"/g,'"');
+				//temp=temp.replace(/\\"/g,'"');
 				console.log(temp);
 				var data = JSON.parse(temp);
 
