@@ -16,7 +16,7 @@
 					<div class="box-content">
 						<ul class="dashboard-list plugin list">
 							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
-								<span class="red" ng-show="selected==$index && currentScript.buffer!=currentScript.code[0]">* &nbsp;</span> <span class="plugin name trim-info">{{script.name}}</span> <span class="plugin description"></span> 
+								<span class="red" ng-show="script.modified()">* &nbsp;</span> <span class="plugin name trim-info">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
 								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
 							</li>

@@ -205,6 +205,9 @@ function ScriptsController($scope,prompt){
 		$scope.showStorage=false;
 		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
+		scr.modified= function(){
+			return this.buffer != this.code[0];
+		}
 		$scope.currentScript = scr;
 	};
 
