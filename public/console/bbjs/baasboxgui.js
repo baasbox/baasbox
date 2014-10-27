@@ -1390,8 +1390,6 @@ function make_base_auth(user, password) {
 }
 
 function setup(){
-
-	
 	setupAjax();
 	setupMenu();
 	setupTables();
