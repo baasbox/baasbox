@@ -68,6 +68,22 @@ public class APNServer  extends PushProviderAbstract {
 		}
 		
 		
+		JsonNode contentAvailableNode=bodyJson.findValue("content-available");
+		Integer contentAvailable = null;
+		if(!(contentAvailableNode == null)) {
+			if(!(contentAvailableNode.isInt())) throw new PushContentAvailableFormatException("Content-available MUST be an Integer (1 for silent notification)");
+			contentAvailable=contentAvailableNode.asInt();
+		}
+		
+		JsonNode categoryNode=bodyJson.findValue("category");
+		String category = null;
+		if(!(categoryNode == null)) {
+			if(!(categoryNode.isTextual())) throw new PushCategoryFormatException("Category MUST be a String");
+			category=categoryNode.asText();
+		}
+		
+		
+		
 		
 		JsonNode soundNode=bodyJson.findValue("sound");
 		String sound =null;
@@ -148,6 +164,7 @@ public class APNServer  extends PushProviderAbstract {
 							.localizedArguments(locArgs)
 							.badge(badge)
 							.customFields(customData)
+							.category(category)
 							.build();
 		if(timeout<=0){
 			try {	
@@ -177,6 +194,23 @@ public class APNServer  extends PushProviderAbstract {
 	
 	public static boolean validatePushPayload(JsonNode bodyJson) throws BaasBoxPushException {
 		JsonNode soundNode=bodyJson.findValue("sound");
+		
+		
+		JsonNode contentAvailableNode=bodyJson.findValue("content-available");
+		Integer contentAvailable = null;
+		if(!(contentAvailableNode == null)) {
+			if(!(contentAvailableNode.isInt())) throw new PushContentAvailableFormatException("Content-available MUST be an Integer (1 for silent notification)");
+			contentAvailable=contentAvailableNode.asInt();
+		}
+		
+		JsonNode categoryNode=bodyJson.findValue("category");
+		String category = null;
+		if(!(categoryNode == null)) {
+			if(!(categoryNode.isTextual())) throw new PushCategoryFormatException("Category MUST be a String");
+			category=categoryNode.asText();
+		}
+		
+		
 		String sound =null;
 		if (!(soundNode==null)) {
 			if(!(soundNode.isTextual())) throw new PushSoundKeyFormatException("Sound value MUST be a String");
