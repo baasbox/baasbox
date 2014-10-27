@@ -19,6 +19,7 @@
 package com.baasbox.service.scripting.base;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
  *
@@ -61,34 +62,20 @@ public final class ScriptResult {
         return data;
     }
 
-    /*
-     * {status: 200,
-     *  content: content,
-     * }
-     */
-    public boolean isRestResponse() {
-        if (!Type.OBJECT.equals(type)) return false;
+    public int status(){
+        if (!Type.OBJECT.equals(type))return 200;
         JsonNode node = (JsonNode)data;
         JsonNode status = node.get("status");
-        if (status == null || !status.isNumber()) return false;
-        JsonNode content = node.get("content");
-        if (content == null) return false;
-
-        return true;
-    }
-
-    public int status(){
-        if (isRestResponse()){
-            return ((JsonNode)data).get("status").asInt();
-        }
-        throw new IllegalStateException("Expected status code is missing");
+        if (status==null||!status.isNumber()) return 200;
+        return status.asInt();
     }
 
     public JsonNode content(){
-        if (isRestResponse()){
-            return ((JsonNode)data).get("content");
-        }
-        throw new IllegalStateException("Expected content is missing");
+        if (!Type.OBJECT.equals(type))return TextNode.valueOf("");
+        JsonNode node = (JsonNode)data;
+        JsonNode content = node.get("content");
+        if (content==null) return TextNode.valueOf("");
+        return content;
     }
 
 

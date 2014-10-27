@@ -136,8 +136,6 @@ public class ScriptCall {
     }
 
     public void validate(ScriptResult result) {
-        if (REQUEST.equals(event) && !result.isRestResponse()) {
-        }
-
+       //todo no more validation on responses
     }
 }
