@@ -16,7 +16,7 @@
 					<div class="box-content">
 						<ul class="dashboard-list plugin list">
 							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
-								<span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
+								<span class="red" ng-show="selected==$index && currentScript.buffer!=currentScript.code[0]">* &nbsp;</span> <span class="plugin name">{{script.name}}</span> <span class="plugin description"></span> 
 								<div></div>                          
 								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
 							</li>
@@ -27,7 +27,7 @@
 				<!-- editor -->
 					<div class="box span8">
 						<div class="box-header well" data-original-title>
-							<h2><i class="icon icon-darkgray icon-book"></i><span>{{currentScript.name}}</span></h2>
+							<h2><i class="icon icon-darkgray icon-book"></i><span>{{currentScript.name}}</span> &nbsp; <span class="red" ng-show="currentScript.buffer!=currentScript.code[0]"> (not saved yet) </span></h2>
 							<div ng-show="currentScript" class="box-icon">
 								<a href="#" id="btnToggleEdit" ng-click="toggleEdit()" title="Edit/View mode" class="btn btn-setting btn-round"><i class="icon-edit"></i></a>
 							</div>
@@ -39,7 +39,9 @@
 						<div class="editor box-content" ng-show="!currentScript"
 							style="height: 300px;">
 						</div>
-						<div class="editor box-content" ng-show="currentScript"
+						<div class="editor box-content" 
+							ng-show="currentScript"
+							bb-keypress="console.log('ciao')"
 							readonly="{{!editMode}}"
 							style="height: 300px;"
 							ui-ace="aceEditMode"

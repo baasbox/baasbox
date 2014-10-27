@@ -8,8 +8,9 @@ function loadScriptsPage(scopeName){
 	});
 }
 
-function ScriptsController($scope,prompt){
 
+function ScriptsController($scope,prompt){
+	$scope.editorAlreadyLoaded=false;
 	// private helpers
 	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
 	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
@@ -130,7 +131,38 @@ function ScriptsController($scope,prompt){
 						  require: ['ace/ext/language_tools'],
 						  advanced:{enableSnippets: true,
 							  		enableBasicAutocompletion: true,
-							  		enableLiveAutocompletion: true}};
+							  		enableLiveAutocompletion: true,
+						  },
+					  		onLoad:function(editor){
+					  			console.log("editor config");
+					  			editor.commands.addCommand({
+					  				name: 'saveFile',
+					  				bindKey: {
+					  					win: 'Ctrl-S',
+					  					mac: 'Command-S',
+					  					sender: 'editor|cli'
+					  				},
+					  				exec: function(env, args, request) {
+					  					$scope.saveScript();
+					  				}
+					  			});
+					  			if (!$scope.editorAlreadyLoaded){
+					  				$scope.editorAlreadyLoaded=true;
+						  			editor.keyBinding.oldOnCommandKey=editor.keyBinding.originalOnCommandKey;
+						  			editor.keyBinding.originalOnCommandKey = editor.keyBinding.onCommandKey;
+						  			editor.keyBinding.onCommandKey = function(e, hashId, keyCode) {
+						  				$scope.$apply(function(){
+								  			  if (!$scope.editMode) $scope.setEditMode(true);
+								  			console.log($scope.editMode);
+						  				});
+						  				console.log(this);
+						  				this.originalOnCommandKey(e, hashId, keyCode);
+						  			}
+					  			}
+					  		}
+	};
+	
+
 	$scope.data={};
 	$scope.currentScript = null;
 	$scope.showStorage=false;
@@ -155,7 +187,11 @@ function ScriptsController($scope,prompt){
 		setEditMode(!$scope.editMode);
 
 	};
-
+	
+	$scope.setEditMode= function(mode){
+		setEditMode(mode);
+	}
+	
 	$scope.toggleStorageView=function(){
 		$scope.showStorage = !$scope.showStorage;
 		if($scope.showStorage){
