@@ -30,6 +30,7 @@ public class NashornEngine implements BaasboxScriptEngine {
     private static volatile NashornEngine sEngine;
     private static final Object slock = new Object();
 
+
     private static final ThreadLocal<Nashorn> NASHORN = new ThreadLocal<Nashorn>(){
         @Override
         protected Nashorn initialValue() {

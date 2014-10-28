@@ -26,8 +26,6 @@ import com.baasbox.service.scripting.base.ScriptResult;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import jdk.nashorn.api.scripting.NashornException;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import jdk.nashorn.internal.runtime.ECMAErrors;
-import jdk.nashorn.internal.runtime.ECMAException;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import play.Logger;
 

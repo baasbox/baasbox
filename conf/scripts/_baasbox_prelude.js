@@ -141,13 +141,15 @@ var GLOBAL=this;
          */
         this.id = name;
 
+
+
         /**
          * Exported objects of the module
          * @type {null}
          */
         this.exports=Object.create(null);
         var m = this;
-
+        this.module = this;
         var bbox = undefined;
 
         this._command = function(command) {
