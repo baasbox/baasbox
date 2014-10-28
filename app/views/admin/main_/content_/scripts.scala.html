@@ -81,7 +81,7 @@
 					<div class="box-content">
 						<ul ng-show="logEnabled" class="dashboard-list">
 							<li ng-repeat="line in logs" class="logLine">
-								<span>{{line.date}}</span>&nbsp;<span>[{{line.script}}]:</span>&nbsp;<span>{{line.message}}</span>
+								<span>{{line.date}}</span>&nbsp;<span>[{{line.script}}]:</span>&nbsp;<pre>{{line.message}}</pre>
 							</li>
 						</ul>
 					</div>

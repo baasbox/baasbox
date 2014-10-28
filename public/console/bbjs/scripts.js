@@ -311,12 +311,10 @@ function ScriptsController($scope,prompt){
 		} else{
 			$scope.logEnabled = true;
 			evtSource = connectLogger(function(e){
-				//console.log(e.data);
-				var temp = e.data;//.split('\n').join('');
-				//temp=temp.replace(/\\"/g,'"');
-				console.log(temp);
+				var temp = e.data;
+				temp=temp.replace(/\\\\/gim,'\\');
+				temp=temp.replace(/\\(["'])/gim,'$1');
 				var data = JSON.parse(temp);
-
 
 				$scope.$apply(function(){
 					console.log(data);
