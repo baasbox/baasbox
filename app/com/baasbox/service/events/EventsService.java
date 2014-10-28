@@ -3,11 +3,14 @@ package com.baasbox.service.events;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import play.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 /**
  * Stub service for sse connections
@@ -65,16 +68,16 @@ public class EventsService {
         }
         LongAdder a= new LongAdder();
 
-        Logger.debug(message.toString());
-
+        String messageToSend=message.toString();
+        
         STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
-            e.sendData(message.toString());
+            e.sendData(messageToSend);
             a.increment();
 
         });
 
         STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{
-            e.sendData(message.toString());
+            e.sendData(messageToSend);
             a.increment();
 
         });

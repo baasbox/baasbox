@@ -452,3 +452,12 @@ li.plugin.deactivated{
 .well{
 	padding-left: 10px;
 }
+
+.trim-info {
+      max-width: 100%;
+      display: inline-block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;  
+      position: relative;
+   }

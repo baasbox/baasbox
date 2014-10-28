@@ -205,6 +205,9 @@ function ScriptsController($scope,prompt){
 		$scope.showStorage=false;
 		var scr = $scope.data.data[index];
 		scr.buffer = scr.buffer||scr.code[0];
+		scr.modified= function(){
+			return this.buffer != this.code[0];
+		}
 		$scope.currentScript = scr;
 	};
 
@@ -308,12 +311,10 @@ function ScriptsController($scope,prompt){
 		} else{
 			$scope.logEnabled = true;
 			evtSource = connectLogger(function(e){
-				//console.log(e.data);
-				var temp = e.data;//.split('\n').join('');
-				//temp=temp.replace(/\\"/g,'"');
-				console.log(temp);
+				var temp = e.data;
+				temp=temp.replace(/\\\\/gim,'\\');
+				temp=temp.replace(/\\(["'])/gim,'$1');
 				var data = JSON.parse(temp);
-
 
 				$scope.$apply(function(){
 					console.log(data);
