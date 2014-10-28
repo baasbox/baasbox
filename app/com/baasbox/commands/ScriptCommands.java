@@ -1,7 +1,9 @@
 package com.baasbox.commands;
 
 import com.baasbox.service.scripting.js.Json;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import scala.collection.script.Script;
 
 /**
@@ -17,7 +19,7 @@ public final class ScriptCommands {
         return cmd;
     }
 
-    public static ObjectNode createCommand(String resource,String name,ObjectNode params){
+    public static ObjectNode createCommand(String resource,String name,JsonNode params){
         ObjectNode cmd = Json.mapper().createObjectNode();
         cmd.put(ScriptCommand.RESOURCE,resource);
         cmd.put(ScriptCommand.NAME,name);
