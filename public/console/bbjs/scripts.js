@@ -38,7 +38,7 @@ function ScriptsController($scope,prompt){
 
 	var onNewScript = function(resp){
 		if(validateName(resp)){
-			$scope.currentScript ={buffer: "/* script: "+resp+" */\n", name: resp};
+			$scope.currentScript ={buffer: $('#script-template').html().replace(/_SCRIPT_NAME_/g,resp), name: resp};
 			$scope.selected=-1;
 			setEditMode(true);
 			$scope.showStorage=false;
