@@ -461,3 +461,6 @@ li.plugin.deactivated{
       white-space: nowrap;  
       position: relative;
    }
+.black{
+	color:black;
+}
