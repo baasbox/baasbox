@@ -73,7 +73,6 @@ public class ScriptingService {
         ODocument emdedded = new ODocument().fromJSON(data.toString());
         script.field(ScriptsDao.LOCAL_STORAGE,emdedded);
         dao.save(script);
-        dao.save(script);
         return emdedded;
     }
 
