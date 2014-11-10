@@ -18,7 +18,7 @@
 
 package com.baasbox.exception;
 
-public class FileTooBigException extends Exception {
+public class FileTooBigException extends BaasBoxException {
 
 	public FileTooBigException() {
 		// TODO Auto-generated constructor stub

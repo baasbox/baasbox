@@ -44,6 +44,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.RootCredentialWrapFilter;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.service.dbmanager.DbManagerService;
@@ -76,6 +77,9 @@ public class Root extends Controller {
 		} catch (UserNotFoundException e) {
 			Logger.error("User 'admin' not found!");
 		    return internalServerError("User 'admin' not found!");
+		} catch (OpenTransactionException e) {
+			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
 		}
 		return ok("Admin password reset");
 	}

@@ -26,6 +26,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
@@ -79,6 +80,7 @@ public class UserDao extends NodeDao  {
 	public ODocument create(String username, String password) throws UserAlreadyExistsException {
 		return create(username, password, null);
 	};
+
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException {
 		OrientGraph db = DbHelper.getOrientGraphConnection();
@@ -135,7 +137,7 @@ public class UserDao extends NodeDao  {
 		return result;
 	}
 
-	public void disableUser(String username) throws UserNotFoundException{
+	public void disableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
@@ -144,7 +146,7 @@ public class UserDao extends NodeDao  {
 		//cannot resume the old connection because now the user is disabled
 	}
 	
-	public void enableUser(String username) throws UserNotFoundException{
+	public void enableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");

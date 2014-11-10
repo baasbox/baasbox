@@ -53,14 +53,17 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -286,24 +289,31 @@ public class UserService {
 			                    }catch (OSerializationException e){
 			                            throw new InvalidJsonException (dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER + " is not a valid JSON object",e);
 			                    }
+			                    attrObj.field("_social",new HashMap());
 			                    PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));       
 			                    PermissionsHelper.changeOwner(attrObj, userRid);
 			                    profile.field(dao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
 			                    attrObj.save();
 			            }
 			              
-			            ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
-			            attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
-			            attrObj.field(UserDao.GENERATED_USERNAME,generated);
-			            PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
-			            PermissionsHelper.changeOwner(attrObj, userRid);
-			            profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);
+			            //system info
+			            {
+				            ODocument attrObj = new ODocument(dao.USER_ATTRIBUTES_CLASS);
+				            attrObj.field(dao.USER_LOGIN_INFO, new ArrayList() );
+				            attrObj.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
+				            PermissionsHelper.changeOwner(attrObj, userRid);
+				            profile.field(dao.ATTRIBUTES_SYSTEM, attrObj);   
+			            }
+			            
+			            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
+			            //this is useful when you want to know if the username was automatically generated
+			            profile.field(UserDao.GENERATED_USERNAME,generated);
 			            
 			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
 			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
 			            PermissionsHelper.changeOwner(profile, userRid);
 			            
-			            profile.field(dao.USER_SIGNUP_DATE, signupDate==null?new Date():signupDate);
+			            
 			            profile.save();
 			            DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
@@ -356,7 +366,11 @@ public class UserService {
 		if (appUsersAttributes!=null)  {
 			ODocument attrObj = profile.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 			if (attrObj==null) attrObj=new ODocument(UserDao.USER_ATTRIBUTES_CLASS);
+			//preserve the _social field
+				OTrackedMap oldSocial = (OTrackedMap)attrObj.field("_social");
+				((ObjectNode)(appUsersAttributes)).remove("_social");
 			attrObj.fromJSON(appUsersAttributes.toString());
+				if (oldSocial!=null) attrObj.field("_social",oldSocial);
 			PermissionsHelper.grantRead(attrObj, RoleDao.getRole(DefaultRoles.REGISTERED_USER.toString()));
 			PermissionsHelper.grantRead(attrObj, RoleDao.getFriendRole());	
 			profile.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER, attrObj);
@@ -419,7 +433,7 @@ public class UserService {
 		}
 	}//updateProfile with role
 
-	public static void changePasswordCurrentUser(String newPassword) {
+	public static void changePasswordCurrentUser(String newPassword) throws OpenTransactionException {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
@@ -427,7 +441,7 @@ public class UserService {
 		//DbHelper.removeConnectionFromPool();
 	}
 	
-	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException {
+	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException, OpenTransactionException {
 		ODatabaseRecordTx db=DbHelper.getConnection();
 		db = DbHelper.reconnectAsAdmin();
 		UserDao udao=UserDao.getInstance();
@@ -621,6 +635,15 @@ public class UserService {
 			systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
 			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();
+			
+			ODocument registeredUserProp = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+			Map socialdata=registeredUserProp.field("_social");
+			if(socialdata == null){
+				socialdata = new HashMap<String,ODocument>();
+			}
+			socialdata.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON("{\"id\":\""+userInfo.getId()+"\"}"));
+			registeredUserProp.field("_social",socialdata);
+			registeredUserProp.save();
 			user.save();
 			if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
 			DbHelper.commitTransaction();
@@ -650,7 +673,7 @@ public class UserService {
 		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {});
 	}
 	
-	public static void addUserToRole(String username,String role){
+	public static void addUserToRole(String username,String role) throws OpenTransactionException{
 		boolean admin = true;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
@@ -667,7 +690,7 @@ public class UserService {
 		
 	}
 	
-	public static void removeUserFromRole(String username,String role){
+	public static void removeUserFromRole(String username,String role) throws OpenTransactionException{
 		boolean admin = false;
 		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
@@ -702,16 +725,16 @@ public class UserService {
 	
 	
 	
-	public static void disableUser(String username) throws UserNotFoundException{
+	public static void disableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		UserDao.getInstance().disableUser(username);
 	}
 
-	public static void disableCurrentUser() throws UserNotFoundException{
+	public static void disableCurrentUser() throws UserNotFoundException, OpenTransactionException{
 		String username = DbHelper.currentUsername();
 		disableUser(username);
 	}
 	
-	public static void enableUser(String username) throws UserNotFoundException{
+	public static void enableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		UserDao.getInstance().enableUser(username);
 	}
 
