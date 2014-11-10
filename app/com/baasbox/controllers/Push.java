@@ -43,7 +43,9 @@ import com.baasbox.service.push.PushProfileInvalidException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.push.providers.PushActionLocalizedKeyFormatException;
 import com.baasbox.service.push.providers.PushBadgeFormatException;
+import com.baasbox.service.push.providers.PushCategoryFormatException;
 import com.baasbox.service.push.providers.PushCollapseKeyFormatException;
+import com.baasbox.service.push.providers.PushContentAvailableFormatException;
 import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.baasbox.service.push.providers.PushLocalizedArgumentsFormatException;
 import com.baasbox.service.push.providers.PushLocalizedKeyFormatException;
@@ -144,10 +146,14 @@ public class Push extends Controller {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
 		}
-
-
-
-
+		catch(PushContentAvailableFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription());
+		}
+		catch(PushCategoryFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription());
+		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		for(int i=0;i<withError.length;i++) {
 			if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
@@ -275,7 +281,14 @@ public class Push extends Controller {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
 		}
-
+		catch(PushContentAvailableFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription());
+		}
+		catch(PushCategoryFormatException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription());
+		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
 		for(int i=0;i<withError.length;i++) {
