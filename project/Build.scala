@@ -55,7 +55,8 @@ object ApplicationBuild extends Build {
 				  "org.apache.tika" % "tika-parsers" % "1.4",
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
-          "com.orientechnologies" % "orientdb-graphdb" % "1.7.9"
+          "com.orientechnologies" % "orientdb-graphdb" % "1.7.9",
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta4"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
