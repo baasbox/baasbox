@@ -35,11 +35,12 @@ import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
+import com.baasbox.service.permissions.PermissionTagService;
+import com.baasbox.service.permissions.Tags;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -59,6 +60,8 @@ public class Evolution_0_8_4 implements IEvolution {
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
+//            addScriptsClass(db);
+//            addScriptsPermission();
 			multiPushProfileSettings(db);
 			exposeSocialId(db);
 		}catch (Throwable e){
@@ -67,6 +70,9 @@ public class Evolution_0_8_4 implements IEvolution {
 		}
 		Logger.info ("DB now is on " + version + " level");
 	}
+
+
+
 	
 	//issue #195 Registered users should have access to anonymous resources
 		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
@@ -182,6 +188,10 @@ public class Evolution_0_8_4 implements IEvolution {
 		}
 		return result;
 	}
+
+
+
+
 	
 	
 	/***
@@ -228,5 +238,5 @@ public class Evolution_0_8_4 implements IEvolution {
 			profile.save();
 		}
 	}
-    
+
 }

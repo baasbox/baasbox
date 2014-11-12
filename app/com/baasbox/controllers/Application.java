@@ -44,7 +44,8 @@ public class Application extends Controller {
 	  String edition = BBConfiguration.configuration.getString(IBBConfigurationKeys.EDITION);
 	  return ok(views.html.index.render(version,edition));
   }
-  
+
+
   public static Result apiVersion() {
 	  ObjectNode result = Json.newObject();
 	  result.put("api_version", BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));

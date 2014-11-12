@@ -48,7 +48,6 @@ object ApplicationBuild extends Build {
     			"xalan"  % "xalan"  % "2.7.1",
     			"org.imgscalr" % "imgscalr-lib" % "4.2",
     			"org.apache.commons" % "commons-email" % "1.3.1",
-    			"org.antlr" % "stringtemplate" % "4.0.2",
           "com.github.tony19" % "named-regexp" % "0.2.3",
           "org.scribe" % "scribe" % "1.3.2",
 				  "com.eaio.uuid" % "uuid" % "3.4",
@@ -65,14 +64,15 @@ object ApplicationBuild extends Build {
 
     val baas = taskKey[File]("distribute standard baasbox format")
 
+
     val main = play.Project(appName, appVersion, appDependencies).settings(
        sources in doc in Compile := List(),
-	     resolvers := Seq(
+
+      resolvers := Seq(
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
 		      "eaio" at "http://eaio.com/maven2"
 	      )
-
        ,baas := {
           val distributionName = name.value.toLowerCase + "-" + version.value
 		  val baseTarget = file(target.value.getAbsolutePath) / "universal"
@@ -101,7 +101,7 @@ object ApplicationBuild extends Build {
        , resourceDirectory in Compile <<= baseDirectory(_ => new File("conf"))
        , mappings in Universal ~= { _.filterNot { case (_,name) => name.startsWith("conf")}}
 	     ,requireJs += "main.js"
-	     ,Keys.fork in (Test) := false
+       ,Keys.fork in (Test) := false
     )
 
 }

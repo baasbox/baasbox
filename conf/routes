@@ -345,6 +345,38 @@ DELETE	/admin/db/export/:filename							    com.baasbox.controllers.Admin.delete
 GET	    /admin/db/export										com.baasbox.controllers.Admin.getExports()
 POST	/admin/db/import         							    com.baasbox.controllers.Admin.importDb()
 
+#scripts
+
+# @tag(baasbox.scripts.invoke)
+GET /plugin/:name                              com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+GET /plugin/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+POST /plugin/:name                             com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+POST /plugin/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+PUT /plugin/:name                              com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+PUT /plugin/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+# @tag(baasbox.scripts.invoke)
+DELETE /plugin/:name                             com.baasbox.controllers.ScriptInvoker.invoke(name:String,params="")
+# @tag(baasbox.scripts.invoke)
+DELETE /plugin/:name/*params                      com.baasbox.controllers.ScriptInvoker.invoke(name:String,params)
+
+GET /admin/plugin/logs                         com.baasbox.controllers.EventsController.openLogger()
+POST /admin/plugin                             com.baasbox.controllers.ScriptsAdmin.create()
+GET  /admin/plugin                             com.baasbox.controllers.ScriptsAdmin.list()
+GET  /admin/plugin/:name                       com.baasbox.controllers.ScriptsAdmin.get(name:String)
+PUT  /admin/plugin/:name                       com.baasbox.controllers.ScriptsAdmin.update(name:String)
+DELETE  /admin/plugin/:name/last               com.baasbox.controllers.ScriptsAdmin.delete(name:String)
+DELETE /admin/plugin/:name					   com.baasbox.controllers.ScriptsAdmin.drop(name:String)
+PUT /admin/plugin/:name/active                 com.baasbox.controllers.ScriptsAdmin.activate(name: String)
+DELETE /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.deactivate(name: String)
+
+
+#GET /admin/stats/logs                           com.baasbox.controllers.Stats.log()
+
 # endpoints switches
 
 GET     /admin/endpoints                                        com.baasbox.controllers.Admin.getPermissionTags

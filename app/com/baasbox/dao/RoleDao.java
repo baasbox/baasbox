@@ -18,11 +18,14 @@ package com.baasbox.dao;
 
 
 
+import java.util.List;
 import java.util.Map;
 
 import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -43,9 +46,9 @@ public class RoleDao {
 		
 		public static ORole getRole(String name){
 			ODatabaseRecordTx db = DbHelper.getConnection();
-			return db.getMetadata().getSecurity().getRole(name);
-		}
-		
+            return db.getMetadata().getSecurity().getRole(name);
+        }
+
 		public static ORole createRole(String name,String inheritedRoleName){
 			ODatabaseRecordTx db = DbHelper.getConnection();
 			ORole inheritedRole = db.getMetadata().getSecurity().getRole(inheritedRoleName);

@@ -93,6 +93,17 @@ public class PermissionTagService {
         }
     }
 
+    public static void createReservedPermission(Tags.Reserved reserved) {
+        PermissionTagDao dao = PermissionTagDao.getInstance();
+        try {
+            if (dao.existsPermissionTag(reserved.name)) return;
+            dao.createReserved(reserved.name);
+        }catch (Throwable error){
+            if (Logger.isErrorEnabled()) Logger.error("Error while creating reserved permission "+reserved.name,error);
+            throw new RuntimeException(error);
+        }
+    }
+
     public static ImmutableMap<String,Object> getPermissionTagMap(String name) throws SqlInjectionException{
         ODocument doc = getPermissionTag(name);
         if (doc == null) return null;
