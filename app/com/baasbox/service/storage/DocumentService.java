@@ -32,6 +32,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -57,13 +58,16 @@ public class DocumentService {
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
 
-	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
+	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
-
-		ODocument doc = dao.create();
+		ODocument doc = null;
 		try	{
+			doc = dao.create();
+			ObjectNode acl = PermissionsHelper.returnAcl(bodyJson, true);
+			if (acl!=null)  bodyJson.remove(BaasBoxPrivateFields.ACL.toString());
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
 			dao.save(doc);
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
@@ -73,30 +77,34 @@ public class DocumentService {
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
 		}
-		
 		return doc;
 	}
 
 	/**
+	 * @throws  
 	 * 
 	 * @param collectionName
 	 * @param rid
 	 * @param bodyJson
 	 * @return the updated document, null if the document is not found or belongs to another collection
-	 * @throws InvalidCollectionException
-	 * @throws DocumentNotFoundException 
-	 * @throws IllegalArgumentException 
-	 * @throws ODatabaseException 
-	 * @throws UpdateOldVersionException 
+	 * @throws  
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, UpdateOldVersionException {
+	public static ODocument update(String collectionName,String rid, ObjectNode bodyJson) throws InvalidCollectionException,InvalidModelException,DocumentNotFoundException,UpdateOldVersionException,AclNotValidException   {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
-		DocumentDao dao = DocumentDao.getInstance(collectionName);
-		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
-		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
+		DbHelper.requestTransaction();
+		try{
+			DocumentDao dao = DocumentDao.getInstance(collectionName);
+			ObjectNode acl = PermissionsHelper.returnAcl(bodyJson, true);
+			if (acl!=null)  bodyJson.remove(BaasBoxPrivateFields.ACL.toString());
+			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			DbHelper.commitTransaction();
+		}catch(Exception e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}
+		return doc;
 	}//update
 
 
@@ -213,7 +221,7 @@ public class DocumentService {
 		return PermissionsHelper.revoke(doc, permission, role);
 	}
 	public static ODocument update(String collectionName, String rid,
-			JsonNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
 		ObjectMapper mapper = new ObjectMapper();

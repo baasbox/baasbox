@@ -46,6 +46,7 @@ import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -54,11 +55,13 @@ import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -259,14 +262,14 @@ public class Document extends Controller {
 		public static Result createDocument(String collection){
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
-
-			JsonNode bodyJson= body.asJson();
-			if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
-			if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
-			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			ODocument document;
 			try{
-				document=DocumentService.create(collection, bodyJson); 
+				JsonNode bodyJson= body.asJson();
+				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
+				if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
+				if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
+				if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
 				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
 				return notFound(e.getMessage());
@@ -291,12 +294,17 @@ public class Document extends Controller {
 			JsonNode bodyJson= body.asJson();
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
-			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 			ODocument document=null;
 			try{
+				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
+				if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
+				if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 				String rid=getRidByString(id,isUUID);
-				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);  
+				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson);
+			} catch (DocumentNotFoundException e) {
+				return notFound("Document " + id + " not found");
+			}catch (AclNotValidException e){
+				return badRequest("ACL field ("+BaasBoxPrivateFields.ACL.toString()+") is not valid: " + e.getMessage());		
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (RidNotFoundException e){
@@ -313,6 +321,8 @@ public class Document extends Controller {
 				return notFound(id + " unknown");  
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to modify " + id);  
+			}catch (InvalidJsonException e){
+				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");				
 			}catch (Throwable e){
 				Logger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -330,6 +340,7 @@ public class Document extends Controller {
 			JsonNode bodyJson= body.asJson();
 			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
 			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
+			if (!bodyJson.isObject()) return badRequest("The body must be an JSON object");
 			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
 			ODocument document=null;
@@ -349,7 +360,7 @@ public class Document extends Controller {
 					}
 				}
 				PartsParser pp = new PartsParser(objParts);
-				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson,pp);   
+				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson,pp);   
 			}catch (MissingNodeException e){
 				return notFound(e.getMessage());
 			}catch (InvalidCollectionException e){
