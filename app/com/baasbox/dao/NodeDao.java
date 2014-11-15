@@ -57,9 +57,9 @@ public abstract class NodeDao  {
 	public static final String CLASS_NODE_NAME = "_BB_Node";
 	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	
-	public static final String FIELD_LINK_TO_VERTEX = "_links";
+	public static final String FIELD_LINK_TO_VERTEX = BaasBoxPrivateFields.LINKS.toString();
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";
-	public static final String FIELD_CREATION_DATE = BaasBoxPrivateFields.CREATION_DATE.toString();
+	
 	
 	public static final String EDGE_CLASS_CREATED = "Created";
 	
@@ -105,7 +105,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		return records;
 	}
@@ -119,7 +119,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}	
 		return list;
 	}
@@ -130,8 +130,8 @@ public abstract class NodeDao  {
 		try{
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
+				Date now = new Date();
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
-				doc.field(FIELD_CREATION_DATE,new Date());
 				UUID token = UUID.randomUUID();
 				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
@@ -179,7 +179,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}catch (StringIndexOutOfBoundsException e){
 			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
 		}catch (IndexOutOfBoundsException e){
@@ -274,7 +274,7 @@ public abstract class NodeDao  {
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ((Long)result.get(0).field("count")).longValue();

@@ -17,27 +17,45 @@
  */
 package com.baasbox.db.hook;
 
+import java.security.MessageDigest;
+import org.apache.commons.codec.binary.Hex;
 import java.util.Date;
 
+import org.apache.commons.lang3.StringUtils;
+
 import play.Logger;
+import play.mvc.Http;
 
 import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.NodeDao;
+import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 
 
-public class Audit extends BaasBoxHook {
+public class AuditHook extends BaasBoxHook {
 	
-	public static Audit getIstance(){
-		return new Audit();
+	public static AuditHook getIstance(){
+		return new AuditHook();
 	}
 	
-	protected Audit() {
+	protected AuditHook() {
 		super();
 	}
 	
+	  public static String sha256(String base) {
+		  if (base==null) return null;
+	        try{
+	            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+	            byte[] hash = digest.digest(base.getBytes("UTF-8"));
+	          
+	            return Hex.encodeHexString(hash);
+	    } catch(Exception ex){
+	       throw new RuntimeException(ex);
+	    }
+	}
+	  
 	@Override
 	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord<?> iRecord){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -57,6 +75,7 @@ public class Audit extends BaasBoxHook {
 						auditDoc.field("createdOn",data); 
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
+						auditDoc.field("modifiedByToken", sha256((String)Http.Context.current().args.get("token")));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);		
 						return RESULT.RECORD_CHANGED;
 					}//doc.getClassName()
@@ -77,12 +96,13 @@ public class Audit extends BaasBoxHook {
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
-						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
+						if (Logger.isDebugEnabled()) Logger.debug("AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
 						ODocument auditDoc = doc.field(BBInternalConstants.FIELD_AUDIT);
 						if (auditDoc==null) auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
+						auditDoc.field("modifiedByToken", sha256((String)Http.Context.current().args.get("token")));
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
 						return RESULT.RECORD_CHANGED;
 					}

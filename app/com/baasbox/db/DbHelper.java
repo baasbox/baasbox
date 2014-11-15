@@ -146,11 +146,21 @@ public class DbHelper {
 		if (!count && criteria.getOrderBy()!=null && !criteria.getOrderBy().equals("")){
 			ret += " order by " + criteria.getOrderBy();
 		}
-		if (!count && (criteria.getPage()!=null && criteria.getPage()!=-1)){
-			ret += " skip " + (criteria.getPage() * criteria.getRecordPerPage()) +
-					" limit " + 	criteria.getRecordPerPage();
+		int skip=0;
+		if (!count && criteria.getPage()!=null && criteria.getPage()!=-1 ){
+			skip+=(criteria.getPage() * criteria.getRecordPerPage());
 		}
-
+		if (!count && (criteria.getSkip()!=null)){
+			skip += 	criteria.getSkip();
+		}
+		
+		if (skip!=0){
+			ret+= " skip " + skip;
+		}
+		
+		if (!count && criteria.getPage()!=null && criteria.getPage()!=-1 ){
+			ret += 	" limit " + criteria.getRecordPerPage();
+		}
 		if (Logger.isDebugEnabled()) Logger.debug("queryBuilder: " + ret);
 		return ret;
 	}
@@ -600,6 +610,8 @@ public class DbHelper {
      * Executes a sequence of orient sql commands
      */
     public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+
+    		Logger.debug("Ready to execute these commands: " + commands);
         if (commands==null) return;
         for (String command:commands){
             if (command==null){
@@ -608,6 +620,7 @@ public class DbHelper {
             }
             if (log)Logger.debug("sql:> "+command);
             if (!command.startsWith("--")&&!command.trim().isEmpty()){
+            	if (Logger.isDebugEnabled()) Logger.debug("Executing command: " + command);
                 db.command(new OCommandSQL(command.replace(';',' '))).execute();
             }
         }

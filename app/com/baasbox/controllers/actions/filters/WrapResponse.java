@@ -17,25 +17,26 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
+import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http.Context;
 import play.mvc.Http.RequestHeader;
-import play.mvc.Result;
 import play.mvc.Results;
+import play.mvc.SimpleResult;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
-import play.mvc.SimpleResult;
-import play.libs.F;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class WrapResponse {
 
@@ -50,6 +51,7 @@ public class WrapResponse {
 		result.put("request_header", mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
 		setCallIdOnResult(request, result);
+		setServerTimeStamp(request,result);
 		return result;
 	} 
 
@@ -105,6 +107,7 @@ public class WrapResponse {
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode result = Json.newObject();
 		setCallIdOnResult(request, result);
+		setServerTimeStamp(request,result);
 		result.put("result", "ok");
 		try {
 			result.put("data", mapper.readTree(stringBody));
@@ -116,6 +119,16 @@ public class WrapResponse {
 		}    
 		return result;
     }
+
+
+	private void setServerTimeStamp(RequestHeader request, ObjectNode result) {
+		SimpleDateFormat formatter;
+
+		formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sssZ");
+		Date now = new Date();
+		String output = formatter.format(now);
+		result.put("server_datetime",output);
+	}
 
 
 	/**

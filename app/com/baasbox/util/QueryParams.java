@@ -31,6 +31,7 @@ public class QueryParams implements IQueryParametersKeys{
 	private String fields="";
 	private String where="";
 	private Integer page=-1;
+	private Integer skip=null;
 	private Integer recordPerPage=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_PER_PAGE));
 	private String groupBy="";
 	private String orderBy="";
@@ -105,7 +106,12 @@ public class QueryParams implements IQueryParametersKeys{
 		this.justCount=count!=null?count:false;
 	}
 	
-
+	protected QueryParams(String fields, String groupBy, String where,
+			Integer page, Integer recordPerPage, String orderBy,
+			Integer depth, String[] params,Boolean count,Integer skip) {
+		this(fields, groupBy, where,  page,recordPerPage,  orderBy,  depth, params,count);
+		this.skip=skip!=null?skip:null;
+	}
 
 	public boolean justCountTheRecords(){
 		return justCount;
@@ -152,7 +158,13 @@ public class QueryParams implements IQueryParametersKeys{
 	public Integer getDepth() {
 		return depth;
 	}
-	
+
+	/**
+	 * @return the number of records to skip
+	 */
+	public Integer getSkip() {
+		return skip;
+	}
 	
 	/**
 	 * @return the params
@@ -170,13 +182,13 @@ public class QueryParams implements IQueryParametersKeys{
 				+ ("justCount="+justCount +", ")
 				+ (fields != null ? "fields=" + fields + ", " : "")
 				+ (where != null ? "where=" + where + ", " : "")
+				+ (params != null ? "params=" + Arrays.toString(params) + ", ": "")
 				+ (page != null ? "page=" + page + ", " : "")
+				+ (recordPerPage != null ? "recordPerPage=" + recordPerPage + ", " : "")
+				+ (skip != null ? "skip=" + skip + ", " : "")
 				+ (groupBy != null ? "groupBy=" + groupBy + ", " : "")		
 				+ (orderBy != null ? "orderBy=" + orderBy + ", " : "")
-				+ (depth != null ? "depth=" + depth + ", " : "")
-				+ (params != null ? "params=" + Arrays.toString(params) : "")
-				+ (recordPerPage != null ? "recordPerPage=" + recordPerPage
-						+ ", " : "")
+				+ (depth != null ? "depth=" + depth + " " : "")
 				+ "]";
 	}
 
@@ -218,7 +230,12 @@ public class QueryParams implements IQueryParametersKeys{
 	
 	public  QueryParams justCountTheRecords(boolean justCount){
 		this.justCount=justCount;
-		return new QueryParams();
+		return this;
+	}
+	
+	public  QueryParams skip(Integer skip){
+		this.skip=skip;
+		return this;
 	}
 	
 	public static QueryParams getInstance(){
@@ -236,6 +253,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String orderBy;
 		Integer depth;
 		Boolean count;
+		Integer skip;
 		String[] params;
 
 		String fieldsFromQS=null;
@@ -246,6 +264,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String groupByFromQS=null;
 		String depthFromQS=null;
 		String countFromQS=null;
+		String skipFromQS=null;
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Map <String,String[]> queryString = header.queryString();
@@ -267,6 +286,9 @@ public class QueryParams implements IQueryParametersKeys{
 			depthFromQS=queryString.get(IQueryParametersKeys.DEPTH)[0];
 		if (queryString.get(IQueryParametersKeys.COUNT)!=null)
 			countFromQS=queryString.get(IQueryParametersKeys.COUNT)[0];
+		if (queryString.get(IQueryParametersKeys.SKIP)!=null)
+			skipFromQS=queryString.get(IQueryParametersKeys.SKIP)[0];
+		
 		params = queryString.get(IQueryParametersKeys.PARAMS);
 		
 		fields=fieldsFromQS;
@@ -292,8 +314,13 @@ public class QueryParams implements IQueryParametersKeys{
 			count=countFromQS==null?null:new Boolean(countFromQS);
 		}catch (NumberFormatException e){
 			throw new NumberFormatException(IQueryParametersKeys.COUNT + " parameter must be true or false");
-		}		
-		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params,count);
+		}	
+		try{
+			skip=skipFromQS==null?null:new Integer(skipFromQS);
+		}catch (NumberFormatException e){
+			throw new NumberFormatException(IQueryParametersKeys.SKIP + " parameter must be a valid Integer");
+		}	
+		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params,count,skip);
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return qryp;

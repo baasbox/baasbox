@@ -84,7 +84,13 @@ public class GenericDao {
 		ORID rid = (ORID) index.get(id);  
 		return rid;
 	}
-	
+
+	public ORID getRidDeletedNodeByUUID(String id){
+		ODatabaseRecordTx db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Deleted.id");
+		ORID rid = (ORID) index.get(id);  
+		return rid;
+	}
 
 	/***
 	 * Execute a query against a given OrientDB Class
@@ -99,7 +105,7 @@ public class GenericDao {
 		try{
 			result = DbHelper.selectCommandExecute(command, criteria.getParams());
 		}catch (OCommandSQLParsingException e){
-			throw new InvalidCriteriaException("Invalid criteria. Please check the syntax of you 'where' and/or 'orderBy' clauses. Hint: if you used < or > operators, put spaces before and after them",e);
+			throw new InvalidCriteriaException(e);
 		}
 		return result;
 	}
