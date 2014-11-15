@@ -66,6 +66,7 @@ public class Tags {
         FILES_READ("file.read"),
         FILES_WRITE("file.write"),
         FILES_GRANTS("file.grants"),
+        SCRIPT_INVOKE("scripts.invoke")
         ;
         public final String name;
         private final static String PREFIX="baasbox.";

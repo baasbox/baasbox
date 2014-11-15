@@ -38,7 +38,6 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
-import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -62,7 +61,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
@@ -140,21 +138,9 @@ public class Document extends Controller {
 
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return ok(ret);
-	}		
-
-	private static String getRidByString(String id , boolean isUUID) throws RidNotFoundException {
-		String rid=null;
-		if (isUUID) {
-			if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
-			ORID orid=GenericDao.getInstance().getRidNodeByUUID(id);
-			if (orid==null) throw new RidNotFoundException(id);
-			rid = orid.toString();
-			if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: " + rid);
-		}else rid="#"+id;
-		return rid;
 	}
 
-	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+    @With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result queryDocument(String collectionName,String id,boolean isUUID,String parts){
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
@@ -182,7 +168,7 @@ public class Document extends Controller {
 					return badRequest(pve.getMessage());
 				}
 				PartsParser pl = new PartsParser(queryParts);
-				String rid = getRidByString(id, isUUID);
+				String rid = DocumentService.getRidByString(id, isUUID);
 				doc=DocumentService.get(collectionName, rid,pl);
 				
 				if (doc==null) return notFound();
@@ -214,7 +200,7 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 			ODocument doc;
 			try {
-				String rid = getRidByString(id, isUUID);
+				String rid = DocumentService.getRidByString(id, isUUID);
 				doc=DocumentService.get(collectionName, rid);
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
@@ -295,7 +281,7 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 			ODocument document=null;
 			try{
-				String rid=getRidByString(id,isUUID);
+				String rid= DocumentService.getRidByString(id, isUUID);
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, bodyJson);  
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
@@ -334,7 +320,7 @@ public class Document extends Controller {
 			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
 			ODocument document=null;
 			try{
-				String rid=getRidByString(id, isUUID);
+				String rid= DocumentService.getRidByString(id, isUUID);
 				String[] tokens = parts.split("/");
 				PartsLexer lexer = new PartsLexer();
 				List<Part> objParts = new ArrayList<Part>();
@@ -381,7 +367,7 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument collectionName: " + collectionName);
 			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument rid: " + id);
 			try {
-				String rid=getRidByString(id,isUUID);
+				String rid= DocumentService.getRidByString(id, isUUID);
 				DocumentService.delete(collectionName,rid);
 			}catch (RidNotFoundException e){
 				return notFound("id  " + id + " not found");  
@@ -448,7 +434,7 @@ public class Document extends Controller {
 				String username, String action, boolean grant, boolean isUUID) {
 			try {
 				//converts uuid in rid
-				String rid=getRidByString(id,isUUID);			
+				String rid= DocumentService.getRidByString(id, isUUID);
 				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
 				if (permission==null) return badRequest(action + " is not a valid action");
 				if (grant) DocumentService.grantPermissionToUser(collectionName, rid, permission, username);
@@ -481,7 +467,7 @@ public class Document extends Controller {
 				Permissions permission=PermissionsHelper.permissionsFromString.get(action.toLowerCase());
 				if (permission==null) return badRequest(action + " is not a valid action");
 				//converts uuid in rid
-				String rid = getRidByString(id, isUUID);
+				String rid = DocumentService.getRidByString(id, isUUID);
 				if (grant) DocumentService.grantPermissionToRole(collectionName, rid, permission, rolename);
 				else       DocumentService.revokePermissionToRole(collectionName, rid, permission, rolename);
 			} catch (RidNotFoundException e) {
