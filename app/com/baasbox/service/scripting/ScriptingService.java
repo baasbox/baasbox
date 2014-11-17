@@ -153,7 +153,7 @@ public class ScriptingService {
         ScriptsDao dao = ScriptsDao.getInstance();
         updateCacheVersion();
         ODocument updated = dao.update(name,code);
-        compile(updated);
+        compile(updated,false);
 
         ScriptStatus status;
         ScriptCall install = ScriptCall.install(updated);
@@ -188,7 +188,7 @@ public class ScriptingService {
         ScriptsDao dao = ScriptsDao.getInstance();
 
         ODocument doc = createScript(dao,script);
-        compile(doc);
+        compile(doc,true);
         if (Logger.isDebugEnabled())Logger.debug("Script created");
 
         if (Logger.isDebugEnabled())Logger.debug("Script installing");
@@ -324,7 +324,7 @@ public class ScriptingService {
      * @param doc
      * @throws ScriptEvalException
      */
-    private static void compile(ODocument doc) throws ScriptEvalException {
+    private static void compile(ODocument doc,boolean dropOnFailure) throws ScriptEvalException {
         if (Logger.isDebugEnabled()) Logger.debug("Start Compile");
         ScriptCall compile = ScriptCall.compile(doc);
         try {
@@ -332,7 +332,13 @@ public class ScriptingService {
             if (Logger.isDebugEnabled()) Logger.debug("End Compile");
         } catch (ScriptEvalException e){
             Logger.error("Failed Script compilation");
-            doc.delete();
+            if (dropOnFailure){
+                doc.delete();
+            }else {
+                ScriptsDao dao = ScriptsDao.getInstance();
+
+                dao.revertToLastVersion(doc);
+            }
             if (Logger.isDebugEnabled()) Logger.debug("Script delete");
             throw e;
         }
