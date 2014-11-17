@@ -26,6 +26,7 @@ import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.events.EventsService;
+import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -118,7 +119,7 @@ class ScriptsResource extends Resource {
             if (args==null){
                 args = NullNode.getInstance();
             }
-            if (!args.isObject()||!args.isNull()){
+            if (!args.isObject() && !args.isNull()){
                 throw new CommandExecutionException(command,"Stored values should be objects or null");
             }
             try {
@@ -148,7 +149,9 @@ class ScriptsResource extends Resource {
         } else {
             String s = result.toJSON();
             try {
-                JsonNode jsonNode = Json.mapper().readTree(s);
+                ObjectNode jsonNode =(ObjectNode) Json.mapper().readTree(s);
+                jsonNode.remove("@version");
+                jsonNode.remove("@type");
                 return jsonNode;
             } catch (IOException e) {
                 throw new CommandExecutionException(command,"error converting result",e);
