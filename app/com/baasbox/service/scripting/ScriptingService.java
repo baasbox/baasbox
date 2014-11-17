@@ -70,10 +70,16 @@ public class ScriptingService {
         ScriptsDao dao = ScriptsDao.getInstance();
         ODocument script = dao.getByName(name);
         if (script == null) throw new ScriptException("Script not found");
-        ODocument emdedded = new ODocument().fromJSON(data.toString());
-        script.field(ScriptsDao.LOCAL_STORAGE,emdedded);
+        ODocument embedded;
+        if (data==null||data.isNull()){
+            embedded = null;
+            script.removeField(ScriptsDao.LOCAL_STORAGE);
+        } else {
+            embedded = new ODocument().fromJSON(data.toString());
+            script.field(ScriptsDao.LOCAL_STORAGE,embedded);
+        }
         dao.save(script);
-        return emdedded;
+        return embedded;
     }
 
     public static ODocument getStore(String name) throws ScriptException {
@@ -101,9 +107,13 @@ public class ScriptingService {
             if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
 
             JsonNode updated = updaterFn.call(current);
-
-            ODocument result = new ODocument().fromJSON(updated.toString());
-            script.field(ScriptsDao.LOCAL_STORAGE, result);
+            ODocument result;
+            if (updated ==null||updated.isNull()){
+                script.removeField(ScriptsDao.LOCAL_STORAGE);
+            } else {
+                result = new ODocument().fromJSON(updated.toString());
+                script.field(ScriptsDao.LOCAL_STORAGE, result);
+            }
             dao.save(script);
             ODocument field = retScript.field(ScriptsDao.LOCAL_STORAGE);
             return field;
