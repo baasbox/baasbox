@@ -50,4 +50,11 @@ public class WatchKey {
     public boolean wantsCurrent() {
         return currents;
     }
+    public QueryParams params(){
+        return params;
+    }
+
+    public String collection() {
+        return collection;
+    }
 }

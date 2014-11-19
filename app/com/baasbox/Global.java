@@ -24,6 +24,7 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import com.baasbox.security.ScriptingSandboxSecutrityManager;
+import com.baasbox.service.watchers.WatchService;
 import play.libs.F;
 import play.mvc.*;
 
@@ -150,6 +151,7 @@ public class Global extends GlobalSettings {
 			    	info("Initializing session manager");
 			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
 			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
+					
 		    	}catch (Throwable e){
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
@@ -196,6 +198,7 @@ public class Global extends GlobalSettings {
     	overrideSettings();
     	
     	//activate metrics
+    	WatchService.start();
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
     	//prepare the Welcome Message
@@ -203,7 +206,7 @@ public class Global extends GlobalSettings {
 	    if (port==null) port="9000";
 	    String address=Play.application().configuration().getString("http.address");
 	    if (address==null) address="localhost";
-	    
+
 	    //write the Welcome Message
 	    info("");
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
@@ -284,6 +287,7 @@ public class Global extends GlobalSettings {
 	    }
 	    info("Destroying session manager...");
 	    SessionTokenProvider.destroySessionTokenProvider();
+		  WatchService.stop();
 	    info("...BaasBox has stopped");
 		debug("Global.onStop() ended");
 	  }  

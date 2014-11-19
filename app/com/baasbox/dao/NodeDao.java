@@ -166,7 +166,6 @@ public abstract class NodeDao  {
 		restoreBaasBoxFields(originalDocument, map);
 		originalDocument.save();
 	}
-	
 
 
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {

@@ -40,6 +40,7 @@ import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
+import com.baasbox.service.watchers.WatchService;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,6 +70,7 @@ public class DocumentService {
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			dao.save(doc);
 			DbHelper.commitTransaction();
+			WatchService.publishUpdate(collection);
 		}catch (OSerializationException e){
 			DbHelper.rollbackTransaction();
 			throw new InvalidJsonException(e);
@@ -98,7 +100,7 @@ public class DocumentService {
 		//update the document
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
+		WatchService.publishUpdate(collectionName);
 		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
 	}//update
 
@@ -129,24 +131,6 @@ public class DocumentService {
 		.append(" from ").append(rid);
 		List<ODocument> odocs = DocumentDao.getInstance(collectionName).selectByQuery(q.toString());
 		ODocument result = (odocs!=null && !odocs.isEmpty())?odocs.iterator().next():null;
-
-		//TODO:
-		/*if(parser.isArray()){
-			try {
-				ArrayNode an = (ArrayNode)mp.readTree(result.toJSON()).get(parser.last().getName());
-				PartsLexer.ArrayField af =  (PartsLexer.ArrayField)parser.last();
-				if(an.size()<af.arrayIndex){
-					throw new InvalidModelException("The index requested does not exists in model");
-				}else{
-					String json = String.format("{\"%s[%d]\":\"%s\"}",parser.last().getName(),af.arrayIndex,an.get(af.arrayIndex).textValue());
-					result = new ODocument().fromJSON(json);
-					System.out.println("JSON:"+result.toJSON());
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}*/
 
 		return result;
 	}
@@ -252,6 +236,7 @@ public class DocumentService {
 			throw new RuntimeException (e);
 		}
 		od = get(collectionName,rid);
+		WatchService.publishUpdate(collectionName);
 		return od;
 	}
 

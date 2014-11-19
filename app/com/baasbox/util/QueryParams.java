@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baasbox.BBConfiguration;
@@ -41,6 +42,19 @@ public class QueryParams implements IQueryParametersKeys{
 	private Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
 	private Object[] params={};
 
+
+	protected QueryParams(QueryParams params){
+		this.justCount = params.justCount;
+		this.fields = params.fields;
+		this.where = params.where;
+		this.page = params.page;
+		this.skip = params.skip;
+		this.recordPerPage=params.recordPerPage;
+		this.groupBy = params.groupBy;
+		this.orderBy = params.orderBy;
+		this.depth = params.depth;
+		this.params = Arrays.copyOf(params.params,params.params.length);
+	}
 
 	protected QueryParams(){};
 	
@@ -240,7 +254,11 @@ public class QueryParams implements IQueryParametersKeys{
 		this.skip=skip;
 		return this;
 	}
-	
+
+	public QueryParams copy(){
+		return new QueryParams(this);
+	}
+
 	public static QueryParams getInstance(){
 		return new QueryParams();
 	}
@@ -363,5 +381,36 @@ public class QueryParams implements IQueryParametersKeys{
 
 	public String getFields() {
 		return fields;
+	}
+
+	public QueryParams and(String p) {
+		if (where == null||where.length()==0){
+			where = p;
+		} else {
+			where += " AND ("+p+")";
+		}
+		return this;
+	}
+
+
+	public QueryParams or(String p) {
+		if (where == null||where.length()==0){
+			where = p;
+		} else {
+			where += " OR ("+p+")";
+		}
+		return this;
+	}
+
+	public QueryParams appendParams(Object[] objects) {
+		if (objects == null||objects.length==0){
+			return this;
+		}
+		if (params == null || params.length==0){
+			params = objects;
+			return this;
+		}
+		params = ArrayUtils.addAll(params,objects);
+		return this;
 	}
 }
