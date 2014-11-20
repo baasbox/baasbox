@@ -39,6 +39,8 @@ import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
+import play.data.DynamicForm;
+import play.data.Form;
 
 import java.util.Map;
 
@@ -79,7 +81,10 @@ public class ScriptInvoker extends Controller{
     public static JsonNode serializeRequest(String path,Http.Request request){
 
         Http.RequestBody body = request.body();
-        JsonNode jsonBody = body==null?null:body.asJson();
+        String textBody = body==null?null:body.asText();
+
+        DynamicForm requestData = Form.form().bindFromRequest();
+        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
 
         Map<String, String[]> headers = request.headers();
         String method = request.method();
@@ -88,8 +93,13 @@ public class ScriptInvoker extends Controller{
 
         ObjectNode reqJson = Json.mapper().createObjectNode();
         reqJson.put("method",method);
-        reqJson.put("body",jsonBody);
         reqJson.put("path",path);
+
+        if(textBody == null)
+            reqJson.put("body",jsonBody);
+        else
+            reqJson.put("body",textBody);
+
         JsonNode queryJson = Json.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
