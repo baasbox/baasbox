@@ -1,20 +1,20 @@
 package com.baasbox.service.watchers;
 
-import akka.actor.ActorRef;
-import akka.actor.Inbox;
-import akka.actor.Props;
-import akka.pattern.AskTimeoutException;
+import akka.actor.*;
 import akka.pattern.Patterns;
-import akka.routing.RoundRobinRouter;
 import com.baasbox.service.events.EventSource;
 import com.baasbox.util.QueryParams;
 import play.Logger;
 import play.libs.Akka;
 import scala.concurrent.Await;
+import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by eto on 11/14/14.
@@ -47,11 +47,19 @@ public class WatchService {
     }
 
     public static void publishUpdate(String collection){
-        //todo add debouncing
-        //if(!watch.isTerminated()){
-            watch.tell(new Update(collection),null);
-        //}
+        Scheduler sched = Akka.system().scheduler();
+        Update up = new Update(collection);
+        FiniteDuration time = Duration.create(100, TimeUnit.MILLISECONDS);
+        ExecutionContext ctx = Akka.system().dispatcher();
+
+        DEBOUNCED.computeIfAbsent(collection, (c) -> sched.scheduleOnce(time, () -> {
+            watch.tell(up,null);
+            DEBOUNCED.remove(collection);
+        }, ctx));
     }
+
+    private static final ConcurrentHashMap<String,Cancellable> DEBOUNCED = new ConcurrentHashMap<>();
+
 
     public static void stop() {
         if (watch != null){
@@ -63,4 +71,5 @@ public class WatchService {
             }
         }
     }
+
 }

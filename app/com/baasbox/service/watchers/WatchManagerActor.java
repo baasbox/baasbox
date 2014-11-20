@@ -65,10 +65,14 @@ public class WatchManagerActor extends UntypedActor {
         long now=System.currentTimeMillis();
         Set<WatchKey> keys = collToKey.get(message.collection);
         if (keys==null||keys.isEmpty()) return;
+        long reschedAfter = Long.MAX_VALUE;
         for (WatchKey k:keys){
             WatchState s = statusMap.get(k);
             long throttle = k.throttle();
-            if (now-s.lastUpdate<throttle){
+            long t =now-s.lastUpdate;
+
+            if (t<throttle){
+                reschedAfter = Math.min(reschedAfter,throttle-t);
                 continue;
             }
             EventSource es = eventSources.get(k);
@@ -82,6 +86,9 @@ public class WatchManagerActor extends UntypedActor {
             if (k.updates()>0 && s.count>=k.updates()) {
                 handleUnregister(new Unregister(k));
             }
+        }
+        if (reschedAfter<Long.MAX_VALUE){
+           //todo handle throttled message reschedule
         }
     }
 
