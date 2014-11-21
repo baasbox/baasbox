@@ -103,6 +103,7 @@ DB.rollback = function(){
 };
 
 var ABORT  = Object.create(null);
+DB.ABORT = ABORT;
 
 DB.runInTransaction = function(fn){
     try {
