@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.baasbox.exception.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -58,6 +59,7 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
@@ -150,18 +152,18 @@ public class User extends Controller {
 		  if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		  Context ctx=Http.Context.current.get();
 		  QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		  String where="user.name not in ?" ;
-		  if (!StringUtils.isEmpty(criteria.getWhere())) {
-			  where += " and (" + criteria.getWhere() + ")";
-		  }
-		  Object[] params = criteria.getParams();
-		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
-		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
-		  criteria.where(where);
-		  criteria.params(veryNewParams);
+//		  String where="user.name not in ?" ;
+//		  if (!StringUtils.isEmpty(criteria.getWhere())) {
+//			  where += " and (" + criteria.getWhere() + ")";
+//		  }
+//		  Object[] params = criteria.getParams();
+//		  Object[] newParams = new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()};
+//		  Object[] veryNewParams = ArrayUtils.addAll(new Object[]{ newParams}, params);
+//		  criteria.where(where);
+//		  criteria.params(veryNewParams);
 		  List<ODocument> profiles=null;;
 		  try {
-			profiles = UserService.getUsers(criteria);
+			profiles = UserService.getUsers(criteria,true);
 		  } catch (SqlInjectionException e) {
 			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
 		  }
@@ -632,43 +634,31 @@ public class User extends Controller {
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result follow(String toFollowUsername){
-		  if (toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
-				  toFollowUsername.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-			  		return badRequest("Cannot follow internal users");
+
 		  String currentUsername = DbHelper.currentUsername();
-		  OUser me = null;
-		  try{
-			
-			 me = UserService.getOUserByUsername(currentUsername);
-			
+
+          try{
+			 UserService.getOUserByUsername(currentUsername);
 		  }catch(Exception e){
 			 return internalServerError(e.getMessage()); 
 		  }
-		  if(UserService.exists(toFollowUsername)){
-			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toFollowUsername;
-			boolean alreadyFriendOf = RoleService.hasRole(currentUsername, friendshipRoleName);
-			if(!alreadyFriendOf){
-				try {
-					UserService.addUserToRole(me.getName(), friendshipRoleName);
-				} catch (OpenTransactionException e) {
-					Logger.error (ExceptionUtils.getFullStackTrace(e));
-					throw new RuntimeException(e);
-				}
-				ODocument userToFollowObject;
-				try {
-					userToFollowObject = UserService.getUserProfilebyUsername(toFollowUsername);
-				} catch (SqlInjectionException e) {
-					return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
-				}
-				return created(prepareResponseToJson(userToFollowObject));
-			}else{
-				return badRequest("User "+me.getName()+" is already a friend of "+toFollowUsername);
-			}
-			
-			
-		  }else{
-			  return notFound("User "+toFollowUsername+" does not exists.");
-		  }
+          try {
+              ODocument followed = FriendShipService.follow(currentUsername, toFollowUsername);
+              return created(prepareResponseToJson(followed));
+          } catch (UserToFollowNotExistsException e){
+              return notFound(e.getMessage());
+          }catch (UserNotFoundException e) {
+              return internalServerError(e.getMessage());
+          } catch (AlreadyFriendsException e) {
+              return badRequest(e.getMessage());
+          } catch (SqlInjectionException e) {
+              return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
+          } catch (IllegalArgumentException e){
+              return badRequest(e.getMessage());
+          }catch (Exception e){
+              return internalServerError(e.getMessage());
+          }
+
 	  }
 	  
 	  
@@ -710,66 +700,33 @@ public class User extends Controller {
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	  public static Result following (String username){
 		  if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
-		  return getFollowing(username);
+          try {
+              Context ctx=Http.Context.current.get();
+              QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+              List<ODocument> following = FriendShipService.getFollowing(username, criteria);
+              return ok(prepareResponseToJson(following));
+          } catch (SqlInjectionException e) {
+              return internalServerError(ExceptionUtils.getFullStackTrace(e));
+          }
 	  }
-	  
 
-/**
- * Returns the people followed by the given user
- * @param username
- * @return
- */
-	private static Result getFollowing(String username) {
-		  OUser me = null;
-		  try{
-			
-			 me = UserService.getOUserByUsername(username);
-			 Set<ORole> roles = me.getRoles();
-			 List<String> usernames = new ArrayList<String>();
-			 for (ORole oRole : roles) {
-				  
-				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
-					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
-				}
-			 }
-			 if(usernames.isEmpty()){
-				 return ok(prepareResponseToJson(new ArrayList<ODocument>()));
-			 }else{
-				 List<ODocument> followers = UserService.getUserProfilebyUsernames(usernames);
-				 return ok(prepareResponseToJson(followers));
-			 }
-		  }catch(Exception e){
-			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
-		  }
-	}
 	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  public static Result unfollow(String toUnfollowUsername){
-		  OUser me = null;
 		  String currentUsername = DbHelper.currentUsername();
-		  try{
-			 me = UserService.getOUserByUsername(currentUsername);
-		  }catch(Exception e){
-			 return internalServerError(ExceptionUtils.getFullStackTrace(e)); 
-		  }
-		  if(UserService.exists(toUnfollowUsername)){
-			String friendshipRoleName = RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername;
-			boolean alreadyFriendOf = RoleService.hasRole(me.getName(),friendshipRoleName);
-			if(alreadyFriendOf){
-				try {
-					UserService.removeUserFromRole(me.getName(), RoleDao.FRIENDS_OF_ROLE+toUnfollowUsername);
-				} catch (OpenTransactionException e) {
-					Logger.error (ExceptionUtils.getFullStackTrace(e));
-					throw new RuntimeException(e);
-				}
-				return ok();
-		  	}else{
-		  		return notFound("User "+me.getName()+" is not a friend of "+toUnfollowUsername);
-		  	}
-			
-		  }else{
-			  return notFound("User "+me.getName()+" does not exists.");
-		  }  	
+
+          try {
+              boolean success = FriendShipService.unfollow(currentUsername,toUnfollowUsername);
+              if (success){
+                  return ok();
+              } else {
+                  return notFound("User "+currentUsername+" is not a friend of "+toUnfollowUsername);
+              }
+          } catch (UserNotFoundException e) {
+              return notFound(e.getMessage());
+          } catch (Exception e) {
+              return internalServerError(e.getMessage());
+          }
 	  }
 
 }

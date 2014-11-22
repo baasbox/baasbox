@@ -1,6 +1,6 @@
 				<div class="box span11">
 					<div data-rel="tooltip" title="These are the objects belonging to the selected collection." class="box-header well" >
-						<h2><i class="icon-book"></i> {{collectionName}}</h2>
+						<h2><span ng-show="collectionName"><i class="fa fa-file fa-fw black"></i> {{collectionName}}</span><span ng-show="!collectionName">...please select a collection...</span></h2>
 						<div class="box-icon">
 							<a href="#" id="btnReloadDocuments" title="Reload table" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
 							<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
