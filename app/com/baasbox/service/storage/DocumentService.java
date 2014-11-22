@@ -22,6 +22,7 @@ import java.util.List;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
+import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -41,12 +42,12 @@ import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,8 +65,7 @@ public class DocumentService {
 		ODocument doc = null;
 		try	{
 			doc = dao.create();
-			ObjectNode acl = PermissionsHelper.returnAcl(bodyJson, true);
-			if (acl!=null)  bodyJson.remove(BaasBoxPrivateFields.ACL.toString());
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			dao.save(doc);
@@ -76,12 +76,24 @@ public class DocumentService {
 		}catch (UpdateOldVersionException e){
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
+		}catch(AclNotValidException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}catch (Exception e){
+			DbHelper.rollbackTransaction();
+			throw e;
 		}
 		return doc;
 	}
 
 	/**
-	 * @throws  
+	 * @throws DocumentNotFoundException 
+	 * @throws InvalidModelException 
+	 * @throws InvalidCollectionException 
+	 * @throws IllegalArgumentException 
+	 * @throws ODatabaseException 
+	 * @throws UpdateOldVersionException
+	 * @throws AclNotValidException
 	 * 
 	 * @param collectionName
 	 * @param rid
@@ -89,18 +101,18 @@ public class DocumentService {
 	 * @return the updated document, null if the document is not found or belongs to another collection
 	 * @throws  
 	 */
-	public static ODocument update(String collectionName,String rid, ObjectNode bodyJson) throws InvalidCollectionException,InvalidModelException,DocumentNotFoundException,UpdateOldVersionException,AclNotValidException   {
+	public static ODocument update(String collectionName,String rid, ObjectNode bodyJson) throws AclNotValidException,ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException ,UpdateOldVersionException  {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
 		DbHelper.requestTransaction();
 		try{
 			DocumentDao dao = DocumentDao.getInstance(collectionName);
-			ObjectNode acl = PermissionsHelper.returnAcl(bodyJson, true);
-			if (acl!=null)  bodyJson.remove(BaasBoxPrivateFields.ACL.toString());
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
 			DbHelper.commitTransaction();
-		}catch(Exception e){
+		}catch(AclNotValidException | UpdateOldVersionException | InvalidCollectionException e){
 			DbHelper.rollbackTransaction();
 			throw e;
 		}
@@ -256,5 +268,14 @@ public class DocumentService {
 		}
 		od = get(collectionName,rid);
 		return od;
+	}
+	
+	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
+		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
+		GenericDao gdao = GenericDao.getInstance();
+		ORID rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid.toString());
+		PermissionsHelper.setAcl(doc, acl);
+		return doc;
 	}
 }

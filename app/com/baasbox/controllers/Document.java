@@ -21,6 +21,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,12 +40,14 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
@@ -55,10 +58,10 @@ import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
-import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
+import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -71,9 +74,27 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Document extends Controller {
 
+	private static final String JSON_BODY_NULL = "The body payload cannot be empty. Hint: put in the request header Content-Type: application/json";
+
+
 	private static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
-		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.DOCUMENT);
+		Formats format;
+		try{
+			DbHelper.filterOUserPasswords(true);
+			if (BooleanUtils.toBoolean(Http.Context.current().request().getQueryString("withAcl")))
+			{
+				format=JSONFormats.Formats.DOCUMENT_WITH_ACL;
+				return JSONFormats.prepareResponseToJson(doc,format,true);
+			}
+			else
+			{
+				format=JSONFormats.Formats.DOCUMENT;
+				return JSONFormats.prepareResponseToJson(doc,format,false);
+			}
+		}finally{
+			DbHelper.filterOUserPasswords(false);
+		}
 	}
 	
 	private static String prepareResponseToObjectJson(ODocument doc){
@@ -83,7 +104,19 @@ public class Document extends Controller {
 
 	private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException{
 		response().setContentType("application/json");
-		return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.DOCUMENT);
+		Formats format;
+		try{
+			DbHelper.filterOUserPasswords(true);
+			if (BooleanUtils.toBoolean(Http.Context.current().request().getQueryString("withAcl"))){
+				format=JSONFormats.Formats.DOCUMENT_WITH_ACL;
+				return  JSONFormats.prepareResponseToJson(listOfDoc,format,true);
+			}else{
+				format=JSONFormats.Formats.DOCUMENT;
+				return  JSONFormats.prepareResponseToJson(listOfDoc,format);
+			}
+		}finally{
+			DbHelper.filterOUserPasswords(false);
+		}
 	}
 
 
@@ -262,13 +295,13 @@ public class Document extends Controller {
 		public static Result createDocument(String collection){
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
-			ODocument document;
+			ODocument document=null;
 			try{
 				JsonNode bodyJson= body.asJson();
 				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
 				if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
 				if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
-				if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
 				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
@@ -277,11 +310,13 @@ public class Document extends Controller {
 				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
 			}catch (UpdateOldVersionException e){
 				return badRequest(ExceptionUtils.getMessage(e));
+			} catch (InvalidModelException e) {
+				return badRequest("ACL fields are not valid: " + e.getMessage());
+			}catch (Throwable e){
+					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
-			catch (Throwable e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			}
+			
 			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
@@ -292,7 +327,7 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
-			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
 			ODocument document=null;
 			try{
@@ -304,7 +339,7 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound("Document " + id + " not found");
 			}catch (AclNotValidException e){
-				return badRequest("ACL field ("+BaasBoxPrivateFields.ACL.toString()+") is not valid: " + e.getMessage());		
+				return badRequest("ACL fields are not valid: " + e.getMessage());		
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (RidNotFoundException e){
@@ -341,7 +376,7 @@ public class Document extends Controller {
 			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
 			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
 			if (!bodyJson.isObject()) return badRequest("The body must be an JSON object");
-			if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
 			ODocument document=null;
 			try{
@@ -516,4 +551,37 @@ public class Document extends Controller {
 			}
 			return ok();
 		}//grantOrRevokeToRole
+		
+		
+		@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+		@BodyParser.Of(BodyParser.Json.class)
+		public static Result updateAcl(String collectionName, String uuid){
+			Http.RequestBody body = request().body();
+			ObjectNode bodyJson= (ObjectNode)body.asJson();
+			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
+			PermissionJsonWrapper acl;
+			ODocument doc=null;
+			try {
+				acl = new PermissionJsonWrapper(bodyJson, true);
+				doc=DocumentService.setAcl(collectionName, uuid, acl);
+			} catch (AclNotValidException e) {
+				return badRequest("ACL fields are not valid: " + e.getMessage());
+			} catch (IllegalArgumentException e) {
+				return badRequest(e.getMessage());
+			} catch (InvalidCollectionException e) {
+				return notFound("collection " + collectionName + " not found");
+			} catch (InvalidModelException e) {
+				return badRequest(uuid + " does not belong to the " + collectionName + " collection");
+			} catch (DocumentNotFoundException e) {
+				return notFound("document " + uuid + " not found. Hint: has the user the correct rights on it?");
+			} catch (OSecurityAccessException e ){
+				return Results.forbidden();
+			} catch (OSecurityException e ){
+				return Results.forbidden();				
+			} catch (Throwable e ){
+				return internalServerError(ExceptionUtils.getFullStackTrace(e));
+			}
+			return ok(prepareResponseToJson(doc));
+		}
+		
 	}

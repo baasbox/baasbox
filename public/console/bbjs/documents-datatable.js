@@ -36,8 +36,8 @@ var documentDataArray= new Array();
 							},bSortable:false
 			               },
 			               {"mData": "id","mRender": function ( data, type, full ) {
-								var obj=JSON.parse(JSON.stringify(full));
-			            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]);
+							   var obj=JSON.parse(JSON.stringify(full));
+			            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]) + "&nbsp;" + getActionButton("acl","document",data+obj["@class"]);
 			            	},bSortable:false,bSearchable:false
 			               }
 			               ],

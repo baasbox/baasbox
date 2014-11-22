@@ -18,30 +18,32 @@ package com.baasbox.service.storage;
 
 import java.util.ArrayList;
 
+import com.baasbox.enumerations.Permissions;
+
 public enum BaasBoxPrivateFields {
-	ID	("id",true),
+	ID	("id",true,false),
 	LINKS	("_links") ,
 	AUDIT	("_audit") ,
 	ALLOW	("_allow"),
-	ALLOW_READ	("_allowRead"),
-	ALLOW_WRITE	("_allowWrite"),
-	ALLOW_UPDATE	("_allowUpdate"),
-	ALLOW_DELETE	("_allowDelete"),
-	CREATION_DATE	("_creation_date",true),
-	AUTHOR			("_author",true),
-	ACL				("_acl");
+	ALLOW_READ	(Permissions.ALLOW_READ.toString(),false,true),
+	ALLOW_UPDATE	(Permissions.ALLOW_UPDATE.toString(),false,true),
+	ALLOW_DELETE	(Permissions.ALLOW_DELETE.toString(),false,true),
+	CREATION_DATE	("_creation_date",true,false),
+	AUTHOR			("_author",true,false);
+	
 	private String field;
 	private boolean visibleByTheClient=false;
-	
+	private boolean aclField=false;
 
 
 	private BaasBoxPrivateFields(String field){
 		this.field=field;
 	}
 	
-	private BaasBoxPrivateFields(String field, boolean exportToClient){
+	private BaasBoxPrivateFields(String field, boolean exportToClient,boolean isAclField){
 		this.field=field;
 		this.visibleByTheClient=exportToClient;
+		this.aclField=isAclField;
 	}
 	
 	public String toString(){
@@ -50,6 +52,10 @@ public enum BaasBoxPrivateFields {
 	public boolean isVisibleByTheClient() {
 		return visibleByTheClient;
 	}
+	public boolean isAclField() {
+		return aclField;
+	}
+	
 	public static String[] getFields(){
 		ArrayList<String> fields=new ArrayList<String>();
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
