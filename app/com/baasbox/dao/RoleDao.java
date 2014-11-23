@@ -54,6 +54,7 @@ public class RoleDao {
 			ORole inheritedRole = db.getMetadata().getSecurity().getRole(inheritedRoleName);
 			final ORole role =  db.getMetadata().getSecurity().createRole(name,inheritedRole.getMode());
 			role.getDocument().field(FIELD_INHERITED,inheritedRole.getDocument().getRecord());
+			role.getDocument().field("isrole",true);
 			role.save();
 	        return role;
 		}
@@ -62,6 +63,7 @@ public class RoleDao {
 			ODatabaseRecordTx db = DbHelper.getConnection();
 			final ORole role =  db.getMetadata().getSecurity().createRole(name,mode);
 			role.getDocument().field("rules",rules);
+			role.getDocument().field("isrole",true);
 			role.save();
 	        return role;
 		}
@@ -106,9 +108,7 @@ public class RoleDao {
 		}
 
 		public static void delete(String name) {
-			ORole role = getRole(name);
-			role.getDocument().delete();
-			
+			DbHelper.getConnection().getMetadata().getSecurity().dropRole(name);
 		}
 		
 		

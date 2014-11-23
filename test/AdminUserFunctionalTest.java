@@ -128,7 +128,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 					result = routeAndCall(request);
 					assertRoute(result, "testRouteCreateAndUpdateUser: Check updated user.", Status.OK, null, false);
 					assertRoute(result, "testRouteCreateAndUpdateUser check username", Status.OK, "name\":\""+sFakeUser+"\"", true);
-					assertRoute(result, "testRouteCreateAndUpdateUser check role", Status.OK, "roles\":[{\"name\":\"registered\"}", true);
+					assertRoute(result, "testRouteCreateAndUpdateUser check role", Status.OK, "roles\":[{\"name\":\"registered\",\"isrole\":true}", true);
 					
 					assertCheckUserUpdate(contentAsString(result), sFakeUser);
 				}

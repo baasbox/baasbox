@@ -70,7 +70,7 @@ public class AdminImportTest_issue_428 extends AbstractDocumentTest {
 					assertServer("issue_428 - get document", 200, "", false);
 					
 					String sCreationDate = getCreationDate(toJSON(getResponse()));
-					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}\\+\\d{4}")) {
+					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}[\\+-]\\d{4}")) {
 						 Assert.fail("_creationDate field is in wrong format: " + sCreationDate);
 					}
 				}

@@ -258,7 +258,8 @@ PUT		/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers
 # @tag(baasbox.data.grants)
 DELETE	/document/:collection/:uuid/:action/role/:rolename		com.baasbox.controllers.Document.revokeToRole(collection:String, uuid:String, rolename:String, action:String, isUUID: Boolean ?= true)
 
-
+# @tag(baasbox.data.grants)
+PUT 	/document/:collection/:uuid/acl							com.baasbox.controllers.Document.updateAcl(collection:String, uuid:String)
 
 #Admin actions
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()

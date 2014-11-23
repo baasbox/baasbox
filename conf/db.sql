@@ -100,6 +100,9 @@ alter property _BB_Permissions.tag notnull=true;
 alter property _BB_Permissions.enabled mandatory=true;
 alter property _BB_Permissions.enabled notnull=true;
 
+create property orole.isrole boolean
+update orole set isrole=true
+
 --indices
 
 alter property ouser.name collate ci;

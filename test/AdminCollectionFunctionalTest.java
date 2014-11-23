@@ -145,7 +145,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			Result result4 = routeAndCall(request);
-			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":62", true);
+			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
 			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
 			
 			} catch (JsonProcessingException e) {

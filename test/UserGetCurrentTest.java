@@ -88,7 +88,7 @@ public class UserGetCurrentTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					result = routeAndCall(request);
 					assertRoute(result, "testRouteGetCurrentUser - registered - username", Status.OK, "name\":\""+sFakeUser+"\"", true);
-					assertRoute(result, "testRouteGetCurrentUser - registered - role", Status.OK, "roles\":[{\"name\":\"registered\"}", true);
+					assertRoute(result, "testRouteGetCurrentUser - registered - role", Status.OK, "roles\":[{\"name\":\"registered\",\"isrole\":true}", true);
 					
 				}
 			}

@@ -22,6 +22,7 @@ public class Evolution_0_9_0 implements IEvolution {
         try{
             addScriptsClass(db);
             addScriptsPermission();
+            addRoleFlag(db);
         }catch (Throwable e){
             Logger.error("Error applying evolution to " + version + " level!!" ,e);
             throw new RuntimeException(e);
@@ -61,6 +62,14 @@ public class Evolution_0_9_0 implements IEvolution {
     private void addScriptsPermission() {
         Logger.info("Creating scripts permission tag...");
         PermissionTagService.createReservedPermission(Tags.Reserved.SCRIPT_INVOKE);
+        Logger.info("...done!");
+    }
+    
+    private void addRoleFlag(ODatabaseRecordTx db) {
+        Logger.info("Adding role flag on class OROLE...");
+        DbHelper.execMultiLineCommands(db,true,
+        		"create property orole.isrole boolean;",
+        		"update orole set isrole=true");
         Logger.info("...done!");
     }
 }

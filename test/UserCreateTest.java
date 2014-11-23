@@ -154,7 +154,7 @@ public class UserCreateTest extends AbstractUserTest
 					Result result = routeAndCall(request);
 					
 					assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
-					assertRoute(result, "routeCreateUser check role", Status.CREATED, "roles\":[{\"name\":\"registered\"}", true);
+					assertRoute(result, "routeCreateUser check role", Status.CREATED, "roles\":[{\"name\":\"registered\",\"isrole\":true}", true);
 					
 					String body = play.test.Helpers.contentAsString(result);
 					JsonNode jsonRes = Json.parse(body);

@@ -23,6 +23,7 @@ import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
+import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -33,6 +34,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -41,7 +43,6 @@ import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -60,13 +61,15 @@ public class DocumentService {
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
 
-	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
+	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
-
-		ODocument doc = dao.create();
+		ODocument doc = null;
 		try	{
+			doc = dao.create();
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
 			dao.save(doc);
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
@@ -75,31 +78,47 @@ public class DocumentService {
 		}catch (UpdateOldVersionException e){
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
+		}catch(AclNotValidException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}catch (Exception e){
+			DbHelper.rollbackTransaction();
+			throw e;
 		}
-		
 		return doc;
 	}
 
 	/**
+	 * @throws DocumentNotFoundException 
+	 * @throws InvalidModelException 
+	 * @throws InvalidCollectionException 
+	 * @throws IllegalArgumentException 
+	 * @throws ODatabaseException 
+	 * @throws UpdateOldVersionException
+	 * @throws AclNotValidException
 	 * 
 	 * @param collectionName
 	 * @param rid
 	 * @param bodyJson
 	 * @return the updated document, null if the document is not found or belongs to another collection
-	 * @throws InvalidCollectionException
-	 * @throws DocumentNotFoundException 
-	 * @throws IllegalArgumentException 
-	 * @throws ODatabaseException 
-	 * @throws UpdateOldVersionException 
+	 * @throws  
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, UpdateOldVersionException {
+	public static ODocument update(String collectionName,String rid, ObjectNode bodyJson) throws AclNotValidException,ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException ,UpdateOldVersionException  {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
-		DocumentDao dao = DocumentDao.getInstance(collectionName);
-		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
-		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
+		DbHelper.requestTransaction();
+		try{
+			DocumentDao dao = DocumentDao.getInstance(collectionName);
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
+			DbHelper.commitTransaction();
+		}catch(AclNotValidException | UpdateOldVersionException | InvalidCollectionException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}
+		return doc;
 	}//update
 
 
@@ -218,7 +237,7 @@ public class DocumentService {
 		return PermissionsHelper.revoke(doc, permission, role);
 	}
 	public static ODocument update(String collectionName, String rid,
-			JsonNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
 		ObjectMapper mapper = new ObjectMapper();
@@ -254,6 +273,15 @@ public class DocumentService {
 		od = get(collectionName,rid);
 		return od;
 	}
+	
+	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
+		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
+		GenericDao gdao = GenericDao.getInstance();
+		ORID rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid.toString());
+		PermissionsHelper.setAcl(doc, acl);
+		return doc;
+	}
 
     public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
         String rid = null;
@@ -268,4 +296,5 @@ public class DocumentService {
         }
         return rid;
     }
+
 }

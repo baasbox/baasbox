@@ -24,6 +24,7 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.exception.*;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.scripting.base.JsonCallback;
@@ -42,7 +43,9 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
+
 import play.Logger;
 
 import java.io.IOException;
@@ -209,7 +212,7 @@ class DocumentsResource extends BaseRestResource {
         String id = getDocumentId(command);
         try {
             String rid = DocumentService.getRidByString(id, true);
-            ODocument doc = DocumentService.update(coll, rid, data);
+            ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
             node.remove(TO_REMOVE);
@@ -229,7 +232,9 @@ class DocumentsResource extends BaseRestResource {
             throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
         } catch (IOException e) {
             throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
-        }
+		} catch (AclNotValidException e) {
+			 throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+		}
     }
 
     @Override
@@ -241,7 +246,7 @@ class DocumentsResource extends BaseRestResource {
 
         try {
            ODocument doc =
-                    DocumentService.create(collection, data);
+                    DocumentService.create(collection, (ObjectNode)data);
 //                    DocumentService.createOnBehalf(collection,authorOverride,data);
             if (doc == null){
                 return null;
