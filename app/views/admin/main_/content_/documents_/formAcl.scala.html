@@ -1,0 +1,72 @@
+<!-- Add/Edit Document starts -->
+	<div class="modal hide fade" id="addDocumentModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">×</button>
+			<h3 id="documentTitle">Edit ACL</h3>
+		</div>
+		<div class="modal-body">
+			<div class="row-fluid">
+			<div class="box span12" id="AclForm">
+					<div class="box-content">
+						<form class="form-horizontal" id="aclForm">
+						<div class="alert alert-info">
+							These is the ACL (Access Control List).
+						</div>
+						<p class="hint">
+							Update ACL information and press 'Save'
+						</p>
+							<fieldset>
+								<div id="documentModalMode" class="hide"> </div>
+								<div id="errorAddDocument" class="alert alert-error hide"></div>
+								<div id="errorAddDocuemnt2" class="control-group error hide" >
+									 <span class="help-inline" id="errorAddDocumentMessage"></span>
+								</div>	
+							  <div class="control-group">
+							    <label class="control-label" for="txtAclCollection">Collection</label>
+								<div class="controls">
+									<input class="input-xlarge focused" id="txtAclCollectionò" type="text" value="" disabled>
+								</div>
+							  </div>								
+							  <div class="control-group">
+							    <label class="control-label" for="txtDocumentId">ID</label>
+								<div class="controls">
+									<input class="input-xlarge focused" id="txtDocumentId" type="text" value="" disabled>
+								</div>
+							  </div>
+							  <div class="control-group">
+							    <label class="control-label" for="txtDocumentAuthor">Author</label>
+								<div class="controls">
+									<input class="input-xlarge focused" id="txtDocumentAuthor" type="text" value="" disabled>
+								</div>
+							  </div>
+							  <div class="control-group">
+							    <label class="control-label" for="txtDocumentCreationDate">Creation Date</label>
+								<div class="controls">
+									<input class="input-xlarge focused" id="txtDocumentCreationDate" type="text" value="" disabled>
+								</div>
+							  </div>									
+							  <div class="control-group">
+							    <label class="control-label" for="txtDocumentVersion">Version</label>
+								<div class="controls">
+									<input class="input-xlarge focused" id="txtDocumentVersion" type="text" value="" disabled>
+								</div>
+							  </div>										
+							  <div class="control-group">
+								<label class="control-label" for="txtDocumentData">Data (JSON format)*</label>
+								<div class="controls">
+								  <textarea class="autogrow" id="txtDocumentData" required></textarea>
+								</div>
+							  </div>
+							</fieldset>
+						  </form>
+					</div>
+				</div><!--/span-->
+		</div><!--/row-->
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+			<a href="#" class="btn btn-action btn-DocumentReload btn-warning" data-rel="tooltip" title="Reload the document from the server"  >Reload</a>
+			<a href="#" class="btn btn-primary btn-DocumentCommit">Save</a>
+		</div>
+	</div>
+	<!-- Add/Edit Document ends -->

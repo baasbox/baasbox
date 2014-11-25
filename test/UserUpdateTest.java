@@ -157,7 +157,7 @@ public class UserUpdateTest extends AbstractUserTest
 	                    ObjectMapper mapper = new ObjectMapper();
 	                    JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
 	                    		+ "\"password\":\"test\","	
-	                    		+ "\"role\":\"registered\"}");
+	                    		+ "\"role\":\"registered\",\"isrole\":true}");
 	                    request = request.withJsonBody(actualObj);
 	                    request = request.withHeader("Content-Type", "application/json");
 	                    Result result = route(request);

@@ -80,7 +80,7 @@ public class ConnectToDBFilter extends Action.Simple {
 			
 			result = delegate.call(ctx);
 
-			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) throw new TransactionIsStillOpenException("Controller leaved an open transaction. Database will be rollbacked"); 
+			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) throw new TransactionIsStillOpenException("Controller left an open transaction. Database will be rollbacked"); 
 			
 		}catch (OSecurityAccessException e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
@@ -89,7 +89,7 @@ public class ConnectToDBFilter extends Action.Simple {
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
 			result = F.Promise.<SimpleResult>pure(unauthorized(e.getMessage()));	
 		}catch (Throwable e){
-			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ e.getMessage());
+			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ ExceptionUtils.getFullStackTrace(e));
 			result = F.Promise.<SimpleResult>pure(internalServerError(ExceptionUtils.getFullStackTrace(e)));	
 		}finally{
 			Http.Context.current.set(ctx); 

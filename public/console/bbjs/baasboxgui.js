@@ -12,6 +12,23 @@
  * http://stackoverflow.com/a/2548133/487576
  * String endsWith
  */
+angular.module("console", ['ui.ace'])
+	.factory("prompt",function($window,$q){
+
+		function prompt(message,defaultValue){
+			var defer = $q.defer();
+			var response = $window.prompt(message,defaultValue);
+			if (response==null){
+				defer.reject();
+			} else {
+				defer.resolve(response);
+			}
+			return defer.promise;
+		}
+		return prompt;
+	});
+
+
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
@@ -187,8 +204,6 @@ function downloadExportHref(name){
 	}else{
 		return '#';
 	}
-
-
 }
 
 
@@ -1375,7 +1390,6 @@ function make_base_auth(user, password) {
 }
 
 function setup(){
-
 	setupAjax();
 	setupMenu();
 	setupTables();
@@ -1420,6 +1434,12 @@ function getActionButton(action, actionType,parameters){
 	var tooltip="";
 
 	switch (action)	{
+	case "acl":
+		iconType="icon-user";
+        classType="btn-warning";
+        labelName="ACL";
+        tooltip="Change ACL..."
+		break;
     case "followers":
         iconType="icon-user";
         classType="btn-info";
@@ -1498,6 +1518,9 @@ function setBradCrumb(type)
 		break;
 	case "#files":
 		sBradCrumb = "Files";
+		break;
+	case "#scripts":
+		sBradCrumb = "Plugins";
 		break;
 	case "#permissions":
 		sBradCrumb = "Api Access";
@@ -2182,6 +2205,9 @@ function callMenu(action){
 				$('#assetTable').dataTable().fnAddData(data);
 			}
 		});
+		case "#scripts":
+			loadScriptsPage(action);
+		break;//#scripts
 		case "#files":
 			resetDataTable( $('#fileTable'));
 			loadFilesData();

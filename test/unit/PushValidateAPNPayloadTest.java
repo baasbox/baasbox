@@ -27,6 +27,104 @@ import com.notnoop.apns.PayloadBuilder;
 
 public class PushValidateAPNPayloadTest {
 	@Test
+	public void ValidateCorrectContentAvailable(){
+		try{	
+			ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+			jNode.put("content-available", 1);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e){
+			Assert.assertEquals("Test failed for content-available",true,true);
+		}
+	}
+	
+	@Test
+	public void ValidateFormatInvalidContentAvailable(){
+		ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+		try {
+			//String
+			jNode.put("content-available", "1");
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try{
+			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
+			aNode.put("content-available", 10);
+			// ObjectNode
+			jNode.put("content-available", aNode);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try {
+			//ArrayNode
+			ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+			arrayNode.add(10);
+			jNode.put("content-available", arrayNode);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+	}
+	
+	
+	
+	
+	@Test
+	public void ValidateCorrectCategory(){
+		try{	
+			ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+			jNode.put("category", "this is a category");
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e){
+			Assert.assertEquals("Test failed for category",true,true);
+		}
+	}
+	
+	
+	@Test
+	public void ValidateFormatInvalidCategory(){
+		ObjectNode jNode = JsonNodeFactory.instance.objectNode();
+		try{	
+			// int
+			jNode.put("category", 123);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e){
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try{
+			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
+			aNode.put("category", "test.wav");
+			// ObjectNode
+			jNode.put("category", aNode);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+		try{
+			//ArrayNode
+			ArrayNode arrayNode = JsonNodeFactory.instance.arrayNode();
+			arrayNode.add("category");
+			jNode.put("category", arrayNode);
+			APNServer.validatePushPayload(jNode);
+		}
+		catch(BaasBoxPushException e) {
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+		}
+
+	}
+	
+
+	
+	
+	@Test
 	public void ValidateCorrectSound(){
 		try{	
 			ObjectNode jNode = JsonNodeFactory.instance.objectNode();

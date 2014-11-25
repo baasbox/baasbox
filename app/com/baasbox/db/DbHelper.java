@@ -244,10 +244,10 @@ public class DbHelper {
 		return updateQueryResult;
 	}
 	public static List<ODocument> commandExecute(OCommandRequest command, Object[] params){
-		  DbHelper.filterOUserPasswords(true);
-          List<ODocument> queryResult = command.execute((Object[])params);
-          DbHelper.filterOUserPasswords(false);
-          return queryResult;
+		DbHelper.filterOUserPasswords(true);
+        List<ODocument> queryResult = command.execute((Object[])params);
+        DbHelper.filterOUserPasswords(false);
+        return queryResult;
 	}
 	
 	/**
@@ -350,7 +350,6 @@ public class DbHelper {
 		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBFullPath());
 		conn.open(username,password);
 		HooksManager.registerAll(getConnection());
-		
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);
 		DbHelper.password.set(password);

@@ -1,0 +1,130 @@
+			<div id="scripts" ng-controller="ScriptsController" ng-init="">
+				<script type="bogus" id="script-template">
+/* script: _SCRIPT_NAME_ */
+/* This script endpoint: /plugin/_SCRIPT_NAME_	
+
+/* uncomment this snippet to write a script that executes an initialization function when is installed */
+/*
+on('install',function(installEvent){
+    return true;
+});
+*/
+
+/* uncomment this snippet to write a script that replies on GET method */
+/*
+http().get(function(req){
+    return {status: 200};    
+});
+*/
+
+/* uncomment this snippet to write a script that replies on POST method */
+/*
+http().post(function(req){
+    return {status: 200};    
+});
+*/
+
+/* uncomment this snippet to write a script that replies on PUT method */
+/*
+http().put(function(req){
+    return {status: 200};    
+});
+*/
+
+/* uncomment this snippet to write a script that replies on DELETE method */
+/*
+http().delete(function(req){
+    return {status: 200};    
+});
+*/			
+				</script>
+
+				<p class="hint">These are your installed Plugins.</p>
+				
+				<div class="span11">
+					<a href="#" id="newPlugin" class="btn btn-primary btn-action" ng-click="newScript()">New...</a>
+				</div>
+				
+				<!-- plugins  -->
+				<div class="box span3">
+					<div data-rel="tooltip" title="Installed Plugins" class="box-header well" data-original-title>
+						<h2><i class="fa fa-puzzle-piece fa-fw black"></i> Installed Plugins</h2>
+						<div class="box-icon">
+							<a href="#" id="btnReloadPlugins" ng-click="reload()" title="Reload plugins list" class="btn btn-setting btn-round"><i class="icon-refresh"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+						<ul class="dashboard-list plugin list">
+							<li ng-click="selectItem($index)" ng-repeat="script in data.data" class="plugin item"  ng-class="{activated:script.active,deactivated:!script.active,selected:(selected==$index),invalid:script._invalid}">
+								<span class="red" ng-show="script.modified()">* &nbsp;</span> <span class="plugin name trim-info">{{script.name}}</span> <span class="plugin description"></span> 
+								<div></div>                          
+								<span class="plugin action"><span ng-click="activate($index)" ng-show="!script.active">Activate</span><span ng-click="deactivate($index)" ng-show="script.active">Deactivate</span> | <span ng-click="remove($index)" class="plugin action" > Remove </span>  <span class="plugin version" ></span>
+							</li>
+						</ul>
+					</div> <!-- box-content -->
+				</div><!-- box span3 installed plugins list-->
+				
+				<!-- editor -->
+					<div class="box span8">
+						<div class="box-header well" data-original-title>
+							<h2><i class="fa fa-code fa-fw black"></i><span>{{currentScript.name}}</span> &nbsp; <span class="red" ng-show="currentScript.buffer!=currentScript.code[0]"> (not saved yet) </span></h2>
+							<div ng-show="currentScript" class="box-icon">
+								<a href="#" id="btnToggleEdit" ng-click="toggleEdit()" title="Edit/View mode" class="btn btn-setting btn-round"><i class="icon-edit"></i></a>
+							</div>
+							<div ng-show="currentScript" class="box-icon">
+								<a href="#" id="btnToggleStorage" ng-click="toggleStorageView()" title="Show/Hide script internal storage" class="btn btn-setting btn-round"><i class="icon-briefcase"></i></a>
+							</div>
+	
+						</div>
+						<div class="editor box-content" ng-show="!currentScript"
+							style="height: 300px;">
+						</div>
+						<div class="editor box-content" 
+							ng-show="currentScript"
+							bb-keypress="console.log('ciao')"
+							readonly="{{!editMode}}"
+							style="height: 300px;"
+							ui-ace="aceEditMode"
+							ng-model="currentScript.buffer">
+						</div>
+						
+						<div class="form-actions" ng-show="editMode">
+							<button type="submit" ng-click="saveScript()" class="btn btn-primary btn-small">Save</button>
+							<button type="reset" ng-click="closeEditor()" class="btn btn-small">Cancel</button>
+						</div>
+	
+						<div ng-show="lastError" class="errorBox">
+							<pre class="errorBoxText">{{lastError}}</pre>
+							<div style="margin:10px"><a ng-click="codeShown=true" ng-show="!codeShown"> (Show Full Response) </a><a ng-click="codeShown=false" ng-show="codeShown"> (Hide Full Response) </a></div>
+							<pre  ng-show="codeShown" class="errorBoxText">{{fullLastError}}</pre>
+						</div>
+	
+						<div ng-show="showStorage" class="box-content">
+							<div>Script Private Storage</div>
+							<div ng-show="currentScript"
+								readonly="true"
+								style="height: 100px"
+								ui-ace="{mode: 'json',showGutter:false,useWrapMode:false}"
+								ng-model="storageFormatted">
+	
+							</div>
+						</div>
+					</div>
+				<div class="span3">&nbsp;</div>
+				<div class="box span8">
+					<div class="box-header well">
+						<h2><i class="fa fa-list-ul fa-fw black"></i><span>Plugins Log - (<span ng-show="!logEnabled">Not</span> Enabled)</span></h2>
+						<div class="box-icon">
+							<a href="#" id="btnToggleLogs" ng-click="toggleLogs()" title="Show/Hide logger" class="btn btn-setting btn-round"><i class="icon-eye-open"></i></a>
+						</div>
+					</div>
+					<div class="box-content">
+						<ul ng-show="logEnabled" class="dashboard-list">
+							<li ng-repeat="line in logs" class="logLine">
+								<span>{{line.date}}</span>&nbsp;<span>[{{line.script}}]:</span>&nbsp;<pre>{{line.message}}</pre>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			

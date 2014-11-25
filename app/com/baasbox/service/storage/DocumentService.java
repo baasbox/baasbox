@@ -19,9 +19,11 @@ package com.baasbox.service.storage;
 import java.security.InvalidParameterException;
 import java.util.List;
 
+import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.NodeDao;
+import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -32,6 +34,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -40,15 +43,16 @@ import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import play.Logger;
 
 
 public class DocumentService {
@@ -57,13 +61,15 @@ public class DocumentService {
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
 
-	public static ODocument create(String collection, JsonNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
+	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
-
-		ODocument doc = dao.create();
+		ODocument doc = null;
 		try	{
+			doc = dao.create();
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
 			dao.save(doc);
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
@@ -72,39 +78,57 @@ public class DocumentService {
 		}catch (UpdateOldVersionException e){
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
+		}catch(AclNotValidException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}catch (Exception e){
+			DbHelper.rollbackTransaction();
+			throw e;
 		}
-		
 		return doc;
 	}
 
 	/**
+	 * @throws DocumentNotFoundException 
+	 * @throws InvalidModelException 
+	 * @throws InvalidCollectionException 
+	 * @throws IllegalArgumentException 
+	 * @throws ODatabaseException 
+	 * @throws UpdateOldVersionException
+	 * @throws AclNotValidException
 	 * 
 	 * @param collectionName
 	 * @param rid
 	 * @param bodyJson
 	 * @return the updated document, null if the document is not found or belongs to another collection
-	 * @throws InvalidCollectionException
-	 * @throws DocumentNotFoundException 
-	 * @throws IllegalArgumentException 
-	 * @throws ODatabaseException 
-	 * @throws UpdateOldVersionException 
+	 * @throws  
 	 */
-	public static ODocument update(String collectionName,String rid, JsonNode bodyJson) throws InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException, UpdateOldVersionException {
+	public static ODocument update(String collectionName,String rid, ObjectNode bodyJson) throws AclNotValidException,ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException ,UpdateOldVersionException  {
 		ODocument doc=get(collectionName,rid);
 		if (doc==null) throw new InvalidParameterException(rid + " is not a valid document");
 		//update the document
-		DocumentDao dao = DocumentDao.getInstance(collectionName);
-		dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
-
-		return doc;//.toJSON("fetchPlan:*:0 _audit:1,rid");
+		DbHelper.requestTransaction();
+		try{
+			DocumentDao dao = DocumentDao.getInstance(collectionName);
+			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
+			PermissionsHelper.setAcl(doc, acl);
+			DbHelper.commitTransaction();
+		}catch(AclNotValidException | UpdateOldVersionException | InvalidCollectionException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}
+		return doc;
 	}//update
 
 
 	public static ODocument get(String collectionName,String rid) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		ODocument doc=dao.get(rid);
+
 		return doc;
 	}
+
 
 	public static ODocument get(String collectionName,String rid,PartsParser parser) throws IllegalArgumentException,InvalidCollectionException,InvalidModelException, ODatabaseException, DocumentNotFoundException, InvalidCriteriaException {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
@@ -164,7 +188,7 @@ public class DocumentService {
 	public static ODocument get(String rid) {
 		GenericDao dao = GenericDao.getInstance();
 		ODocument doc=dao.get(rid);
-		return doc;
+     	return doc;
 	}
 
 	/**
@@ -202,7 +226,7 @@ public class DocumentService {
 		if (role==null) throw new RoleNotFoundException(rolename);
 		ODocument doc = get(collectionName, rid);
 		if (doc==null) throw new DocumentNotFoundException(rid);
-		return PermissionsHelper.grant(doc, permission, role);
+        return PermissionsHelper.grant(doc, permission, role);
 	}
 
 	public static ODocument revokePermissionToRole(String collectionName, String rid, Permissions permission, String rolename) throws  IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, RoleNotFoundException {
@@ -213,7 +237,7 @@ public class DocumentService {
 		return PermissionsHelper.revoke(doc, permission, role);
 	}
 	public static ODocument update(String collectionName, String rid,
-			JsonNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
+			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
 		ObjectMapper mapper = new ObjectMapper();
@@ -249,4 +273,28 @@ public class DocumentService {
 		od = get(collectionName,rid);
 		return od;
 	}
+	
+	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
+		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
+		GenericDao gdao = GenericDao.getInstance();
+		ORID rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid.toString());
+		PermissionsHelper.setAcl(doc, acl);
+		return doc;
+	}
+
+    public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
+        String rid = null;
+        if (isUUID) {
+            if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
+            ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
+            if (orid == null) throw new RidNotFoundException(id);
+            rid = orid.toString();
+            if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
+        } else {
+            rid = "#"+id;
+        }
+        return rid;
+    }
+
 }

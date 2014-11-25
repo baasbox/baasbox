@@ -23,6 +23,11 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import com.baasbox.security.ScriptingSandboxSecutrityManager;
+import play.libs.F;
+import play.mvc.*;
+
+
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +69,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 
 public class Global extends GlobalSettings {
-	
+	static {
+        /*Initialize this before anything else to avoid reflection*/
+        ScriptingSandboxSecutrityManager.init();
+    }
+
 	  private static Boolean  justCreated = false;
 	  private static OServer server = null;
 
@@ -196,7 +205,6 @@ public class Global extends GlobalSettings {
     	//activate metrics
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
-    	
     	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
