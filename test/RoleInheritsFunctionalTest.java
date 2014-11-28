@@ -145,7 +145,7 @@ public class RoleInheritsFunctionalTest extends AbstractTest{
                                          mapper = new ObjectMapper();
                                          actualObj = mapper.readTree("{\"username\":\""+sFakeRegUser+"\","
                                          		+ "\"password\":\"test\","	
-                                         		+ "\"role\":\"registered\"}");
+                                         		+ "\"role\":\"registered\",\"isrole\":true}");
                                          requestCreation = requestCreation.withJsonBody(actualObj);
                                          requestCreation = requestCreation.withHeader("Content-Type", "application/json");
                                          result = route(requestCreation);

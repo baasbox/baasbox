@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import com.baasbox.exception.UserNotFoundException;
 import play.Logger;
 
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -124,7 +125,7 @@ public abstract class NodeDao  {
 		}	
 		return list;
 	}
-	
+
 	public ODocument create() throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		OrientGraph db = DbHelper.getOrientGraphConnection();
@@ -137,7 +138,7 @@ public abstract class NodeDao  {
 				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
-			return doc;
+			    return doc;
 		}catch (Throwable e){
 			throw e;
 		}finally{

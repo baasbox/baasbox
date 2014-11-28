@@ -48,7 +48,7 @@ public class DocumentDao extends NodeDao {
 	public static DocumentDao getInstance(String collectionName) throws InvalidCollectionException{
 		return new DocumentDao(collectionName);
 	}
-	
+
 	@Override
 	public ODocument create() throws Throwable{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");

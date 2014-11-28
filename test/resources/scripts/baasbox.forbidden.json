@@ -1,0 +1,5 @@
+{"name": "baasbox.create",
+ "code": "on('install',function(e){})",
+ "lang": "javascript",
+ "library": false,
+ "active": true}

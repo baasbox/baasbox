@@ -97,7 +97,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					Result result = routeCreateDocument(getRouteAddress(sFakeCollection));
 					assertRoute(result, "testRouteCMDDocument CREATE", Status.OK, null, true);
 					String sCreationDate = getCreationDate();
-					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}\\+\\d{4}")) {
+					if (!sCreationDate.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}[\\+-]\\d{4}")) {
 						 Assert.fail("_creationDate field is in wrong format: " + sCreationDate);
 					}
 				}

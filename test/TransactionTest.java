@@ -9,19 +9,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.baasbox.dao.exception.InvalidCollectionException;
-import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import  play.test.FakeApplication;
 
 
 public class TransactionTest {
@@ -58,7 +53,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						JsonNode payload = (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.rollbackTransaction();
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
@@ -81,7 +76,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						JsonNode payload = (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.commitTransaction();
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
@@ -104,7 +99,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						JsonNode payload = (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.close(DbHelper.getConnection());
 						Assert.fail("Closing a connection within a transaction should be raise an exception");
