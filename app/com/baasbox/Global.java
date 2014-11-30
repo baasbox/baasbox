@@ -24,9 +24,9 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import com.baasbox.security.ScriptingSandboxSecutrityManager;
+
 import play.libs.F;
 import play.mvc.*;
-
 
 import java.util.Iterator;
 import java.util.Set;
@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang.math.NumberUtils;
 
 import play.Application;
 import play.Configuration;
@@ -112,7 +113,7 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
-			  
+			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
