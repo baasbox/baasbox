@@ -18,6 +18,7 @@
 
 package com.baasbox.controllers;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
@@ -31,7 +32,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+
 import play.Logger;
 import play.libs.EventSource;
 import play.libs.F;
@@ -56,6 +60,8 @@ public class ScriptInvoker extends Controller{
            ExtractQueryParameters.class})
     public static Result invoke(String name,String path){
         ODocument serv = null;
+        if(request().body().isMaxSizeExceeded())
+        	return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"),"128KB"));
         try {
             serv = ScriptingService.get(name, true,true);
         } catch (ScriptException e) {
@@ -79,27 +85,28 @@ public class ScriptInvoker extends Controller{
     }
 
     public static JsonNode serializeRequest(String path,Http.Request request){
-
         Http.RequestBody body = request.body();
-        String textBody = body==null?null:body.asText();
-
-        DynamicForm requestData = Form.form().bindFromRequest();
-        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
-
+       
         Map<String, String[]> headers = request.headers();
         String method = request.method();
         Map<String, String[]> query = request.queryString();
         path=path==null?"/":path;
-
         ObjectNode reqJson = Json.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
 
-        if(textBody == null)
-            reqJson.put("body",jsonBody);
-        else
-            reqJson.put("body",textBody);
-
+        if (!ObjectUtils.toString(request.getHeader(CONTENT_TYPE),"").equalsIgnoreCase("application/json")){
+	        String textBody = body==null?null:body.asText();
+	        DynamicForm requestData = Form.form().bindFromRequest();
+	        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
+	        if(textBody == null)
+	            reqJson.put("body",jsonBody);
+	        else
+	            reqJson.put("body",textBody);
+        }else{
+        	reqJson.put("body",body.asJson());
+        }
+        
         JsonNode queryJson = Json.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
