@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import net.sf.ehcache.search.expression.Criteria;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -72,6 +73,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 public class UserService {
 
@@ -166,6 +168,22 @@ public class UserService {
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		boolean found=false;
+
+		com.baasbox.db.DbHelper.reconnectAsAdmin();
+		
+		List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"')",null);
+
+		for(ODocument record: sqlresult ) {
+			List<ODocument> login_Infos=record.field(UserDao.USER_LOGIN_INFO);
+			for (ODocument login_Info : login_Infos){
+				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
+					login_Infos.remove(login_Info);
+					break;
+				}
+			}
+			record.save();	
+		}
+	
 		for (ODocument loginInfo : loginInfos){
 
 			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
@@ -177,6 +195,9 @@ public class UserService {
 			loginInfos.add(new ODocument(data));
 			systemProps.save();
 		}
+		
+		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
+
 	}
 	public static void unregisterDevice(String pushToken) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
