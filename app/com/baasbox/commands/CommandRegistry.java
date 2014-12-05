@@ -44,11 +44,12 @@ public class CommandRegistry {
     private static final Map<String,Resource> RESOURCES =
             ImmutableMap.<String,Resource>builder()
                         .put(DocumentsResource.INSTANCE.name(),     DocumentsResource.INSTANCE)
+                        .put(LinksResource.INSTANCE.name(),			LinksResource.INSTANCE)
                         .put(ScriptsResource.INSTANCE.name(),       ScriptsResource.INSTANCE)
                         .put(UsersResource.INSTANCE.name(),         UsersResource.INSTANCE)
                         .put(CollectionsResource.INSTANCE.name(),   CollectionsResource.INSTANCE)
-                        .put(PushResource.INSTANCE.name(), PushResource.INSTANCE)
-                        .put(DBResource.INSTANCE.name(),DBResource.INSTANCE)
+                        .put(PushResource.INSTANCE.name(), 			PushResource.INSTANCE)
+                        .put(DBResource.INSTANCE.name(),			DBResource.INSTANCE)
                         .build();
 
 

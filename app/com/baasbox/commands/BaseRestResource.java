@@ -19,18 +19,31 @@
 package com.baasbox.commands;
 
 import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Created by Andrea Tortorella on 30/06/14.
  */
 public abstract class BaseRestResource extends Resource {
 
-    private final ImmutableMap.Builder<String,ScriptCommand> baseCommands =
+    protected static final Predicate<BaasBoxPrivateFields> removeVisible = ((Predicate<BaasBoxPrivateFields>)BaasBoxPrivateFields::isVisibleByTheClient).negate();
+
+    protected static final Collection<String> TO_REMOVE = EnumSet.allOf(BaasBoxPrivateFields.class)
+	                                                               .stream().filter(removeVisible)
+	                                                                        .map(BaasBoxPrivateFields::toString)
+	                                                                        .collect(Collectors.toSet());
+
+	private final ImmutableMap.Builder<String,ScriptCommand> baseCommands =
             ImmutableMap.<String, ScriptCommand>builder()
                     .put("get", new ScriptCommand() {
                         @Override
@@ -86,5 +99,11 @@ public abstract class BaseRestResource extends Resource {
     public final Map<String, ScriptCommand> commands() {
         return commands;
     }
+	protected void validateHasParams(JsonNode commnand)
+			throws CommandParsingException {
+			    if (!commnand.has(ScriptCommand.PARAMS)) {
+			        throw new CommandParsingException(commnand,"missing parameters");
+			    }
+			}
 
 }
