@@ -60,7 +60,7 @@ public class ScriptInvoker extends Controller{
            ExtractQueryParameters.class})
     public static Result invoke(String name,String path){
         ODocument serv = null;
-        if(request().body().isMaxSizeExceeded())
+        if(request().body().asText()!=null && request().body().isMaxSizeExceeded())//fixes issue_561
         	return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"),"128KB"));
         try {
             serv = ScriptingService.get(name, true,true);

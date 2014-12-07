@@ -28,7 +28,8 @@
  */
 exports.version = '0.9.0';
 
-var Documents = {};
+
+//-------- WS (Remote API calls) --------
 
 var WS = {};
 var wsRequest = function(method,url,body,params,headers){
@@ -63,6 +64,7 @@ WS.delete = function(url,opts){
     opts = opts||{};
     return wsRequest('delete',url,null,opts.params,opts.headers);
 };
+//-------- END WS --------
 
 
 
@@ -81,8 +83,18 @@ var log = function(msg){
 };
 
 
+//-------- DB --------
+
 var DB = {};
 
+DB.isAnId=function(id){
+    return _command({resource: 'db',
+        name: 'isAnId',
+        params: {
+        	id:id
+        	}
+        });
+};
 
 DB.isInTransaction = function(){
     return _command({resource: 'db',
@@ -159,6 +171,9 @@ DB.ensureCollection = function(name){
         return true;
     }
 };
+//-------- END DB --------
+
+
 
 var isAdmin = function(){
     return _command({resource: 'db',
@@ -171,9 +186,9 @@ var runAsAdmin = function(fn) {
                      callback: fn});
 };
 
+//-------- Users --------
+
 var Users = {};
-
-
 Users.find = function(){
     var q = null,
         id = null;
@@ -331,10 +346,11 @@ Users.save = function(uzr){
         throw new TypeError("you must supply a user to save");
     }
 };
+//-------- END Users --------
 
 
-
-
+//--------   Documents --------
+var Documents = {};
 Documents.find = function(){
     var coll = null,
         q = null,
@@ -346,6 +362,7 @@ Documents.find = function(){
             } else {
                 q = arguments[1];
             }
+        //fall through (missing break)
         case 1:
             coll = arguments[0];
     }
@@ -454,6 +471,8 @@ Documents.save = function(){
     }
 };
 
+//-------- End Documents --------
+
 var queryUsers = function(to){
     var ret = [];
     Users.find(to).forEach(function (u){
@@ -462,6 +481,7 @@ var queryUsers = function(to){
     return ret;
 };
 
+//------------Push----------------
 var Push ={};
 Object.defineProperty(Push,"OK",{value: 0});
 Object.defineProperty(Push,"ERROR",{value: 2});
@@ -516,7 +536,83 @@ Push.send = function(){
                          'profiles': profiles
                      }});
 };
+//---------- END Push --------
 
+//---------- Links -----------
+var Links = {};
+
+//find({search params}), find(id)
+Links.find = function(){
+	if (arguments.length===0) {
+		throw new TypeError("Links.find() need one parameter");
+	}
+	var q = null,
+      id = null;
+	if(typeof arguments[0] === 'string') {
+		id = arguments[0];
+	} else {
+	    q = arguments[0];
+	}
+  if(id === null ){
+      return _command({resource: 'links',
+                       name: 'list',
+                       params: {
+                           query: q
+                       }});
+  } else {
+      return _command({resource: 'links',
+                       name: 'get',
+                       params:{
+                           id: id
+                       }});
+  }
+};
+
+Links.remove = function(id){
+  if(!id){
+      throw new TypeError("Links.remove() need one arguments");
+  }
+  return _command({resource: 'links',
+                   name: 'delete',
+                   params: {
+                       id: id
+                   }});
+};
+
+//save({params})
+Links.save = function(params){
+  var label = null,
+      id = null,
+		sourceId=null,
+		destId=null;
+	if (!params ||  typeof params!='object'){
+		throw new TypeError("Invalid arguments: Links.save() need an object as parameter");
+	}
+		
+	id = params['id'];
+	if (id) {
+		throw new TypeError("Invalid arguments: Links.save() does not allow to update links. You passed an id: " + id);
+	}
+	sourceId = params['sourceId'];
+	destId = params['destId'];
+	label = params['label'];
+	
+	if (!sourceId || !destId || !label){
+		throw new TypeError("Invalid arguments: Links.save() need an object as parameter with following parameters {sourceId,destId,label}");
+	}
+
+  return _command({
+     resource: 'links',
+     name: 'post',
+     params: {
+       sourceId: sourceId,
+       destId: destId,
+       label: label
+     }
+  });
+  
+};
+//---------- END Links ------
 
 exports.Documents = Documents;
 exports.Users = Users;
@@ -524,6 +620,7 @@ exports.DB = DB;
 exports.Push = Push;
 exports.WS= WS;
 exports.log = log;
+exports.Links = Links;
 
 exports.runAsAdmin=runAsAdmin;
 

@@ -30,18 +30,21 @@ public abstract class CommandException extends Exception {
     protected final static String TYPE_EXEC="exec";
     protected final static String TYPE_NOT_FOUND="notfound";
     protected final static String TYPE_GENERIC="generic";
+    protected final static String TYPE_NOT_SUPPORTED="notSupported";
 
     protected final static int CODE_PARSE=0;
     protected final static int CODE_EXEC=1;
     protected final static int CODE_NOT_FOUND=2;
     protected final static int CODE_GENERIC=3;
+    protected final static int CODE_NOT_SUPPORTED=4;
+    
 
     private final static String TYPE="error";
     private final static String CODE="errorCode";
     private final static String COMMAND="command";
     private final static String MESSAGE="message";
     /*
-     * {type: 'parsing|execution|notfound',
+     * {type: 'parsing|execution|notfound|notSupported',
      *  command: {original command},
      *  message: "message",
      *

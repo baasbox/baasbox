@@ -20,6 +20,7 @@ package com.baasbox.commands;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +50,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
 import scala.util.parsing.combinator.testing.Str;
 
 /**
@@ -273,7 +277,7 @@ class UsersResource extends BaseRestResource {
         QueryParams qp = QueryParams.getParamsFromJson(paramsNode);
         try {
             List<ODocument> users = UserService.getUsers(qp, true);
-            String response = JSONFormats.prepareDocToJson(users, JSONFormats.Formats.USER);
+            String response = prepareResponseToJson(users);
             return Json.mapper().readTree(response);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command, "error executing command: " + e.getMessage());
@@ -291,7 +295,7 @@ class UsersResource extends BaseRestResource {
             if (doc == null){
                 return NullNode.getInstance();
             }
-            String resp = JSONFormats.prepareDocToJson(doc,JSONFormats.Formats.USER);
+            String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
             return Json.mapper().readTree(resp);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
@@ -304,4 +308,26 @@ class UsersResource extends BaseRestResource {
     public String name() {
         return "users";
     }
+    
+	private String prepareResponseToJson(List<ODocument> listOfDoc) {
+		try {
+			for (ODocument doc : listOfDoc){
+				doc.detach();
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
+					}
+				}
+			}
+			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }
