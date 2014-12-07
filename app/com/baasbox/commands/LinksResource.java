@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -181,8 +182,8 @@ class LinksResource extends BaseRestResource {
 			String s = JSONFormats.prepareDocToJson(listOfLinks, JSONFormats.Formats.LINK);
 			ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
 			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
-			lst.forEach((j)->((ObjectNode)j.get("in")).remove(TO_REMOVE).remove("@rid"));
-			lst.forEach((j)->((ObjectNode)j.get("out")).remove(TO_REMOVE).remove("@rid"));
+			lst.forEach((j)->(ObjectUtils.firstNonNull((ObjectNode)j.get("in"),Json.mapper().createObjectNode())).remove(TO_REMOVE).remove("@rid"));
+			lst.forEach((j)->(ObjectUtils.firstNonNull((ObjectNode)j.get("ot"),Json.mapper().createObjectNode())).remove(TO_REMOVE).remove("@rid"));
 			return lst;
 		} catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
