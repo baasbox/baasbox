@@ -23,6 +23,7 @@ public class Evolution_0_9_0 implements IEvolution {
             addScriptsClass(db);
             addScriptsPermission();
             addRoleFlag(db);
+            createBBNodeIndexes(db);
         }catch (Throwable e){
             Logger.error("Error applying evolution to " + version + " level!!" ,e);
             throw new RuntimeException(e);
@@ -72,4 +73,12 @@ public class Evolution_0_9_0 implements IEvolution {
         		"update orole set isrole=true");
         Logger.info("...done!");
     }
+    
+	private void createBBNodeIndexes(ODatabaseRecordTx db) {
+		DbHelper.execMultiLineCommands(db, true, new String[]{
+			"create property _BB_Node._author String;",
+			"create index _bb_node._author notunique;",
+			"create index _bb_node._creation_date notunique;"
+		});
+	}
 }
