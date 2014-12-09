@@ -96,6 +96,9 @@ PUT 	/me/suspend						com.baasbox.controllers.User.disable()
 # @tag(baasbox.account)
 PUT		/me/password					com.baasbox.controllers.User.changePassword()
 
+# @tag(baasbox.account)
+PUT		/me/username				com.baasbox.controllers.User.changeUserName()
+
 
 #forgotten password
 

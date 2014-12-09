@@ -218,6 +218,23 @@ public class User extends Controller {
 		  return created(jn);
 	  }
 	  
+
+	  
+	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	  @BodyParser.Of(BodyParser.Json.class)
+	  public static Result changeUserName() throws UserNotFoundException{
+		  Http.RequestBody body = request().body();
+		  
+		  JsonNode bodyJson= body.asJson();
+		  if (Logger.isTraceEnabled()) Logger.trace("updateuserName bodyJson: " + bodyJson);
+		  if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+		  if (bodyJson.get("username")==null || !bodyJson.get("username").isTextual())
+			  return badRequest("'username' field must be a String");
+		  String newUsername=bodyJson.get("username").asText();
+		  UserService.changeUsername(DbHelper.getCurrentHTTPUsername(),newUsername);
+		  return ok();
+	  }
+	  
 	  @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	  @BodyParser.Of(BodyParser.Json.class)
 	  public static Result updateProfile(){
