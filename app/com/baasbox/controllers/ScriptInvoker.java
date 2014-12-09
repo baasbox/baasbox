@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
@@ -95,7 +96,7 @@ public class ScriptInvoker extends Controller{
         reqJson.put("method",method);
         reqJson.put("path",path);
 
-        if (!ObjectUtils.toString(request.getHeader(CONTENT_TYPE),"").equalsIgnoreCase("application/json")){
+        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE),"application/json")){
 	        String textBody = body==null?null:body.asText();
 	        DynamicForm requestData = Form.form().bindFromRequest();
 	        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
