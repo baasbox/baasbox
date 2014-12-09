@@ -17,6 +17,7 @@ create property _BB_NodeVertex._node link _BB_Node;
 create property _BB_Node._creation_date datetime;
 create property _BB_Node._links link _BB_NodeVertex;
 create property _BB_Node.id String;
+create property _BB_Node._author String;
 
 --user
 create class _BB_User extends _BB_Node;
