@@ -23,19 +23,12 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import com.baasbox.security.ScriptingSandboxSecutrityManager;
-import play.libs.F;
-import play.mvc.*;
-
 import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import play.Application;
 import play.Configuration;
@@ -44,9 +37,10 @@ import play.Logger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
+import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
-import play.mvc.Result;
+import play.mvc.SimpleResult;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
@@ -54,8 +48,12 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
+import com.baasbox.security.ScriptingSandboxSecutrityManager;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -107,7 +105,7 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
-			  
+			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
