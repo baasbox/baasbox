@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import net.sf.ehcache.search.expression.Criteria;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -43,6 +44,8 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.LinkDao;
+import com.baasbox.dao.NodeDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
@@ -803,4 +806,16 @@ public class UserService {
         return BBConfiguration.getBaasBoxAdminUsername().equals(username)||
                BBConfiguration.getBaasBoxUsername().equals(username);
     }
+
+	public static void changeUsername(String currentUsername,String newUsername) throws UserNotFoundException {
+		DbHelper.reconnectAsAdmin();
+		//change the username
+		UserDao.getInstance().changeUsername(currentUsername,newUsername);
+		//change all the reference in _author fields (this should be placed in a background task)
+		NodeDao.updateAuthor(currentUsername, newUsername);
+		LinkDao.updateAuthor(currentUsername, newUsername);
+		DbHelper.close(DbHelper.getConnection());
+		//warning! from this point there is no database available!
+	}
+	
 }

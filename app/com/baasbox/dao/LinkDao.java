@@ -44,6 +44,10 @@ public class LinkDao {
 	private static final String QUERY_BASE="select *,out._node as out,in._node as in from " + MODEL_NAME;
 	private static final String VIEW_BASE=" (" + QUERY_BASE + ") ";
 	
+	public static void updateAuthor(String oldAuthor,String newAuthor){
+		Object command = DbHelper.genericSQLStatementExecute(
+				"update E set _author=? where _author=?", new String[]{newAuthor,oldAuthor});
+	}
 
 	public static LinkDao getInstance(){
 		return new LinkDao();
