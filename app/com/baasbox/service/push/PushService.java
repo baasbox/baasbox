@@ -24,10 +24,16 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
 
 import play.Logger;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.configuration.Application;
+import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.configuration.Push;
 import com.baasbox.dao.UserDao;
 import com.baasbox.exception.BaasBoxPushException;
@@ -43,7 +49,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
+import com.baasbox.service.push.PushMailException;
 public class PushService {
 
 	private ImmutableMap<ConfigurationKeys, String> getPushParameters(Integer pushProfile){
@@ -129,6 +135,17 @@ public class PushService {
 			if (Logger.isDebugEnabled()) Logger.debug("userSystemProperties: " + userSystemProperties);
 			List<ODocument> loginInfos=userSystemProperties.field(UserDao.USER_LOGIN_INFO);
 			if (Logger.isDebugEnabled()) Logger.debug("Sending to " + loginInfos.size() + " devices");
+			
+			if(loginInfos.isEmpty()) {
+				// send email to the Guy
+				ODocument attrObj =user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+				if (attrObj == null || attrObj.field("email") == null) break;
+				else {
+					sendPushMail(user);		
+					break;
+				}
+			}
+			
 			for(ODocument loginInfo : loginInfos){
 				String pushToken=loginInfo.field(UserDao.USER_PUSH_TOKEN);
 				String vendor=loginInfo.field(UserDao.USER_DEVICE_OS);
@@ -183,6 +200,105 @@ public class PushService {
 
 	}//send
 
+
+	private void sendPushMail(ODocument user) throws Exception {
+		//initialization
+		String siteUrl = Application.NETWORK_HTTP_URL.getValueAsString();
+		int sitePort = Application.NETWORK_HTTP_PORT.getValueAsInteger();
+		if (StringUtils.isEmpty(siteUrl)) throw  new PushMailException( "invalid site url (is empty)");
+
+		String textEmail = PasswordRecovery.EMAIL_TEMPLATE_TEXT.getValueAsString();
+		String htmlEmail = PasswordRecovery.EMAIL_TEMPLATE_HTML.getValueAsString();
+		if (StringUtils.isEmpty(htmlEmail)) htmlEmail=textEmail;
+		if (StringUtils.isEmpty(htmlEmail)) throw  new PushMailException ("text to send is not configured");
+
+		boolean useSSL = PasswordRecovery.NETWORK_SMTP_SSL.getValueAsBoolean();
+		boolean useTLS = PasswordRecovery.NETWORK_SMTP_TLS.getValueAsBoolean();
+		String smtpHost = PasswordRecovery.NETWORK_SMTP_HOST.getValueAsString();
+		int smtpPort = PasswordRecovery.NETWORK_SMTP_PORT.getValueAsInteger();
+		if (StringUtils.isEmpty(smtpHost) || (smtpHost.equals("mail.example.com"))) throw new PushMailException ("SMTP host is not configured");
+
+		String username_smtp = null;
+		String password_smtp = null;
+		if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
+			username_smtp = PasswordRecovery.NETWORK_SMTP_USER.getValueAsString();
+			password_smtp = PasswordRecovery.NETWORK_SMTP_PASSWORD.getValueAsString();
+			if (StringUtils.isEmpty(username_smtp)) throw  new PushMailException ("SMTP username is not configured");
+		}
+		
+		String emailFrom = PasswordRecovery.EMAIL_FROM.getValueAsString();
+		String emailSubject = "Push notification received";
+		if (StringUtils.isEmpty(emailFrom)) throw  new PushMailException ("Sender email is not configured");
+
+		
+		try {
+			String userEmail=((ODocument) user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER)).field("email").toString();
+
+			HtmlEmail email = null;
+			
+			email = new HtmlEmail();
+			
+			//Email Configuration
+			email.setSSL(useSSL);
+			email.setSSLOnConnect(useSSL);
+			email.setTLS(useTLS);
+			email.setStartTLSEnabled(useTLS);
+			email.setStartTLSRequired(useTLS);
+			email.setSSLCheckServerIdentity(false);
+			email.setSslSmtpPort(String.valueOf(smtpPort));   
+			email.setHostName(smtpHost);
+			email.setSmtpPort(smtpPort);
+			email.setCharset("utf-8");
+			
+			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
+				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
+			}
+			email.setFrom(emailFrom);			
+			email.addTo(userEmail);
+
+			email.setSubject(emailSubject);
+			if (Logger.isDebugEnabled()) {
+				StringBuilder logEmail = new StringBuilder()
+						.append("HostName: ").append(email.getHostName()).append("\n")
+						.append("SmtpPort: ").append(email.getSmtpPort()).append("\n")
+						.append("SslSmtpPort: ").append(email.getSslSmtpPort()).append("\n")
+						
+						.append("SSL: ").append(email.isSSL()).append("\n")
+						.append("TLS: ").append(email.isTLS()).append("\n")						
+						.append("SSLCheckServerIdentity: ").append(email.isSSLCheckServerIdentity()).append("\n")
+						.append("SSLOnConnect: ").append(email.isSSLOnConnect()).append("\n")
+						.append("StartTLSEnabled: ").append(email.isStartTLSEnabled()).append("\n")
+						.append("StartTLSRequired: ").append(email.isStartTLSRequired()).append("\n")
+						
+						.append("SubType: ").append(email.getSubType()).append("\n")
+						.append("SocketConnectionTimeout: ").append(email.getSocketConnectionTimeout()).append("\n")
+						.append("SocketTimeout: ").append(email.getSocketTimeout()).append("\n")
+						
+						.append("FromAddress: ").append(email.getFromAddress()).append("\n")
+						.append("ReplyTo: ").append(email.getReplyToAddresses()).append("\n")
+						.append("BCC: ").append(email.getBccAddresses()).append("\n")
+						.append("CC: ").append(email.getCcAddresses()).append("\n")
+						
+						.append("Subject: ").append(email.getSubject()).append("\n")
+
+						//the following line throws a NPE in debug mode
+						//.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
+
+						
+						.append("SentDate: ").append(email.getSentDate()).append("\n");
+				Logger.debug("PushMail is ready to send: \n" + logEmail.toString());
+			}
+			email.send();
+
+		}  catch (EmailException authEx){
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(authEx));
+			throw new PushMailException ("Could not reach the mail server. Please contact the server administrator");
+		}  catch (Exception e) {
+			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(e));
+			throw new Exception ("Error on sending pushMail");
+		}
+	
+	}
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
 		for(Integer pushProfile : pushProfiles) {
