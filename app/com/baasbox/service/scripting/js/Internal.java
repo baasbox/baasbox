@@ -29,7 +29,7 @@ public class Internal {
 
     public static void log(String message){
         //todo remove
-        Logger.info(message);
+        Logger.debug(message);
     }
 
     public static void log(Object err,String msg){
