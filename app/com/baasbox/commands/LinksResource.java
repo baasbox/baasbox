@@ -21,9 +21,13 @@ package com.baasbox.commands;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+
+import play.Logger;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -181,9 +185,13 @@ class LinksResource extends BaseRestResource {
 			listOfLinks = LinkService.getLink(params);
 			String s = JSONFormats.prepareDocToJson(listOfLinks, JSONFormats.Formats.LINK);
 			ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
-			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
-			lst.forEach((j)->(ObjectUtils.firstNonNull((ObjectNode)j.get("in"),Json.mapper().createObjectNode())).remove(TO_REMOVE).remove("@rid"));
-			lst.forEach((j)->(ObjectUtils.firstNonNull((ObjectNode)j.get("ot"),Json.mapper().createObjectNode())).remove(TO_REMOVE).remove("@rid"));
+			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));			
+			StreamSupport.stream(lst.spliterator(),false)
+				.flatMap(x -> Stream.of(x.get("in"),x.get("out")))
+					.filter(x -> x instanceof ObjectNode)
+						.forEach(x -> ((ObjectNode)x).remove(TO_REMOVE).remove("@rid"));
+			
+			
 			return lst;
 		} catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
