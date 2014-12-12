@@ -30,7 +30,7 @@ public class HttpClientService {
             case "get": return req.get();
             case "delete": return req.delete();
             case "post":
-                return body instanceof JsonNode?req.put((JsonNode)body):req.put((String)body);
+                return body instanceof JsonNode?req.post((JsonNode)body):req.post((String)body);
             case "put":
                 return body instanceof JsonNode?req.put((JsonNode)body):req.put((String)body);
             default:
