@@ -26,8 +26,10 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
+import org.stringtemplate.v4.ST;
 
 import play.Logger;
 
@@ -141,7 +143,7 @@ public class PushService {
 				ODocument attrObj =user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
 				if (attrObj == null || attrObj.field("email") == null) break;
 				else {
-					sendPushMail(user);		
+					sendPushMail(user,message);		
 					break;
 				}
 			}
@@ -201,16 +203,13 @@ public class PushService {
 	}//send
 
 
-	private void sendPushMail(ODocument user) throws Exception {
+	private void sendPushMail(ODocument user, String message) throws Exception {
 		//initialization
 		String siteUrl = Application.NETWORK_HTTP_URL.getValueAsString();
 		int sitePort = Application.NETWORK_HTTP_PORT.getValueAsInteger();
 		if (StringUtils.isEmpty(siteUrl)) throw  new PushMailException( "invalid site url (is empty)");
 
-		String textEmail = PasswordRecovery.EMAIL_TEMPLATE_TEXT.getValueAsString();
-		String htmlEmail = PasswordRecovery.EMAIL_TEMPLATE_HTML.getValueAsString();
-		if (StringUtils.isEmpty(htmlEmail)) htmlEmail=textEmail;
-		if (StringUtils.isEmpty(htmlEmail)) throw  new PushMailException ("text to send is not configured");
+		String textEmail ="You have received a push notification but no devices was logged at the moment \n";
 
 		boolean useSSL = PasswordRecovery.NETWORK_SMTP_SSL.getValueAsBoolean();
 		boolean useTLS = PasswordRecovery.NETWORK_SMTP_TLS.getValueAsBoolean();
@@ -250,6 +249,9 @@ public class PushService {
 			email.setSmtpPort(smtpPort);
 			email.setCharset("utf-8");
 			
+			StringBuilder sb = new StringBuilder().append(textEmail).append("Text of Push Notification: ").append(message);
+			email.setMsg(sb.toString());
+			
 			if (PasswordRecovery.NETWORK_SMTP_AUTHENTICATION.getValueAsBoolean()) {
 				email.setAuthenticator(new  DefaultAuthenticator(username_smtp, password_smtp));
 			}
@@ -280,6 +282,7 @@ public class PushService {
 						.append("CC: ").append(email.getCcAddresses()).append("\n")
 						
 						.append("Subject: ").append(email.getSubject()).append("\n")
+						//.append("Message: ").append(email..append("\n")
 
 						//the following line throws a NPE in debug mode
 						//.append("Message: ").append(email.getMimeMessage().getContent()).append("\n")
