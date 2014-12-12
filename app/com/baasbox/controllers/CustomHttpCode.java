@@ -51,7 +51,7 @@ public enum CustomHttpCode {
 			PUSH_INVALID_APIKEY(50304,503,"Could not save API KEY. HINT: Check your API Key, it's possible that push service aren't enabled in the Google Play Developer Console","error"),
 			PUSH_PROFILE_DISABLED(50305,503,"Push app disabled, one or more app are disabled","error"),
 			PUSH_SWITCH_EXCEPTION(50306,503,"Cannot switch, because settings for the selected mode are missing","error"),
-
+			PUSH_MAIL_CONFIGURATION_MISSED(50310,503,"Error with settings for sending mail","error");
 			;
 			private String type;
 			private int bbCode;

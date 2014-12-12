@@ -37,6 +37,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.push.PushMailException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushProfileDisabledException;
 import com.baasbox.service.push.PushProfileInvalidException;
@@ -105,6 +106,10 @@ public class Push extends Controller {
 		catch (PushProfileDisabledException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
+		}
+		catch (PushMailException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_MAIL_CONFIGURATION_MISSED.getBbCode(),CustomHttpCode.PUSH_MAIL_CONFIGURATION_MISSED.getDescription());
 		}
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
@@ -236,6 +241,10 @@ public class Push extends Controller {
 		catch (PushProfileInvalidException e) {
 			Logger.error(e.getMessage());
 			return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
+		}
+		catch (PushMailException e) {
+			Logger.error(e.getMessage());
+			return status(CustomHttpCode.PUSH_MAIL_CONFIGURATION_MISSED.getBbCode(),CustomHttpCode.PUSH_MAIL_CONFIGURATION_MISSED.getDescription()) ;
 		}
 		catch (PushInvalidApiKeyException e) {
 			Logger.error(e.getMessage());
