@@ -344,7 +344,7 @@ public class User extends Controller {
 		try{
 			//if isJSON it's true, in input I have a json. So I need to delete the "extension" .json
 			if(isJSON) {
-				base64.substring(0, base64.lastIndexOf('.'));
+				base64=base64.substring(0, base64.lastIndexOf('.'));
 			}
 			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
 			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
@@ -371,7 +371,8 @@ public class User extends Controller {
 		}catch (Exception e){
 			if (isJSON)  {
 				result.put("status", "KO");
-				result.put("user_name",e.getMessage());
+				result.put("user_name",username);
+				result.put("error",e.getMessage());
 				result.put("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(result);
@@ -388,9 +389,8 @@ public class User extends Controller {
 
 		if(isJSON) {
 			result.put("user_name", username);
-			result.put("link","/user/password/reset/" + tokenStep2);
-			result.put("password","password");
-			result.put("repeat_password","repeat-password");
+			result.put("link","/user/password/reset/" + tokenStep2+".json");
+			result.put("token",tokenStep2);
 			result.put("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 			DbHelper.getConnection().close();
 			return ok(result);
@@ -408,6 +408,7 @@ public class User extends Controller {
 			pageTemplate.add("link","/user/password/reset/" + tokenStep2);
 			pageTemplate.add("password","password");
 			pageTemplate.add("repeat_password","repeat-password");
+			pageTemplate.add("token",tokenStep2);
 			pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 			DbHelper.getConnection().close();
 			return ok(Html.apply(pageTemplate.render()));
@@ -431,7 +432,7 @@ public class User extends Controller {
 		try{
 			//if isJSON it's true, in input I have a json. So I need to delete the "extension" .json
 			if(isJSON) {
-				base64.substring(0, base64.lastIndexOf('.'));
+				base64=base64.substring(0, base64.lastIndexOf('.'));
 			}
 			//loads the received token and extracts data by the hashcode in the url
 			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
@@ -498,9 +499,8 @@ public class User extends Controller {
 		if (!errorString.isEmpty()){
 			if(isJSON) {
 				result.put("user_name", username);
-				result.put("link","/user/password/reset/" + base64);
-				result.put("password", "password");
-				result.put("repeat_password", "repeat-password");
+				result.put("link","/user/password/reset/" + base64+".json");
+				result.put("token",base64);
 				result.put("application_name", com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				result.put("error", errorString);
 				DbHelper.getConnection().close();
@@ -517,6 +517,7 @@ public class User extends Controller {
 						"</form>");
 				pageTemplate.add("user_name",username);
 				pageTemplate.add("link","/user/password/reset/" + base64);
+				pageTemplate.add("token",base64);
 				pageTemplate.add("password","password");
 				pageTemplate.add("repeat_password","repeat-password");
 				pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
@@ -543,12 +544,14 @@ public class User extends Controller {
 			DbHelper.getConnection().close();
 			return ok(result);
 		}
-		ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
-		pageTemplate.add("user_name",username);
-		pageTemplate.add("message",ok_message);
-		pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
-		DbHelper.getConnection().close();
-		return ok(Html.apply(pageTemplate.render()));
+		else {
+			ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
+			pageTemplate.add("user_name",username);
+			pageTemplate.add("message",ok_message);
+			pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
+			DbHelper.getConnection().close();
+			return ok(Html.apply(pageTemplate.render()));
+		}
 	}
 
 
