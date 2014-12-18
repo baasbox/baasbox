@@ -556,12 +556,14 @@ public class UserService {
 			ST htmlMailTemplate = new ST(htmlEmail, '$', '$');
 			htmlMailTemplate.add("link", resetUrl);
 			htmlMailTemplate.add("user_name", username);
+			htmlMailTemplate.add("token",sBase64Random);
 
 			//Plain text Email Text
 			ST textMailTemplate = new ST(textEmail, '$', '$');
 			textMailTemplate.add("link", resetUrl);
 			textMailTemplate.add("user_name", username);
-
+			textMailTemplate.add("token",sBase64Random);
+			
 			email = new HtmlEmail();
 
 			email.setHtmlMsg(htmlMailTemplate.render());
