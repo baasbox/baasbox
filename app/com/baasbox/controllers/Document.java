@@ -26,6 +26,8 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
+import play.libs.F;
+import play.libs.F.Promise;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -36,9 +38,11 @@ import play.mvc.With;
 
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -146,34 +150,39 @@ public class Document extends Controller {
 		return ok("{\"count\": "+ count +" }");
 	}
 
-	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result getDocuments(String collectionName){
+	@With ({UserOrAnonymousCredentialsFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static Promise<Result> getDocuments(String collectionName){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
 
-		List<ODocument> result;
-		String ret="{[]}";
-		try {
-			Context ctx=Http.Context.current.get();
-			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			result = DocumentService.getDocuments(collectionName,criteria);
-			if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
-		} catch (InvalidCollectionException e) {
-			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
-			return notFound(collectionName + " is not a valid collection name");
-		} catch (Exception e){
-			Logger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		}
-
-		try{
-			ret=prepareResponseToJson(result);
-		}catch (IOException e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		return ok(ret);
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		
+		return F.Promise.promise(()->{
+			try{
+				List<ODocument> result;
+				String ret="{[]}";
+				DbHelper.openFromContext(ctx);
+				result=DocumentService.getDocuments(collectionName,criteria);
+				if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
+				try{
+					ret=prepareResponseToJson(result);
+				}catch (IOException e){
+					return internalServerError(ExceptionUtils.getFullStackTrace(e));
+				}
+				if (Logger.isTraceEnabled()) Logger.trace("Method End");
+				return ok(ret);
+			} catch (InvalidCollectionException e) {
+				if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
+				return notFound(collectionName + " is not a valid collection name");
+			} catch (Exception e){
+				Logger.error(ExceptionUtils.getFullStackTrace(e));
+				return internalServerError(e.getMessage());
+			}finally{
+				DbHelper.close(DbHelper.getConnection());
+			}
+		});
+		
 	}
 
     @With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
