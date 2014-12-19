@@ -41,6 +41,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.dao.PermissionJsonWrapper;
@@ -285,35 +286,40 @@ public class Document extends Controller {
 			return ok(prepareResponseToJson(doc));
 		}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
-		public static Result createDocument(String collection){
+		public static Promise<Result> createDocument(String collection){
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			Http.RequestBody body = request().body();
-			ODocument document=null;
-			try{
-				JsonNode bodyJson= body.asJson();
-				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
-				if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
-				if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
-				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
-				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
-				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
-			}catch (InvalidCollectionException e){
-				return notFound(e.getMessage());
-			}catch (InvalidJsonException e){
-				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
-			}catch (UpdateOldVersionException e){
-				return badRequest(ExceptionUtils.getMessage(e));
-			} catch (InvalidModelException e) {
-				return badRequest("ACL fields are not valid: " + e.getMessage());
-			}catch (Throwable e){
-					Logger.error(ExceptionUtils.getFullStackTrace(e));
-					return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			}
+			Context ctx=Http.Context.current.get();
 			
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
-			return ok(prepareResponseToJson(document));
+			return F.Promise.promise(()->{
+				ODocument document=null;
+				try{
+					DbHelper.openFromContext(ctx);
+					JsonNode bodyJson= body.asJson();
+					if (bodyJson==null) return badRequest(JSON_BODY_NULL);
+					if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
+					if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
+					if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
+					document=DocumentService.create(collection, (ObjectNode)bodyJson); 
+					if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
+					return ok(prepareResponseToJson(document));
+				}catch (InvalidCollectionException e){
+					return notFound(e.getMessage());
+				}catch (InvalidJsonException e){
+					return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
+				}catch (UpdateOldVersionException e){
+					return badRequest(ExceptionUtils.getMessage(e));
+				} catch (InvalidModelException e) {
+					return badRequest("ACL fields are not valid: " + e.getMessage());
+				}catch (Throwable e){
+						Logger.error(ExceptionUtils.getFullStackTrace(e));
+						return internalServerError(ExceptionUtils.getFullStackTrace(e));
+				}finally{
+					DbHelper.close(DbHelper.getConnection());
+				}
+			});
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
