@@ -44,6 +44,7 @@ import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
@@ -205,10 +206,10 @@ public class DbHelper {
 			ret += " where ( " + criteria.getWhere() + " )";
 		}
 		// patch for issue #469
-		if (StringUtils.isEmpty(criteria.getWhere())) {
+		if (StringUtils.isEmpty(criteria.getWhere()) && !isConnectedAsAdmin(false)) {
 			ret += " where 1=1";
 		}
-		if (!StringUtils.isEmpty(criteria.getGroupBy())) {
+		if (!count && !StringUtils.isEmpty(criteria.getGroupBy())) {
 			ret += " group by ( " + criteria.getGroupBy() + " )";
 		}
 		if (!count && criteria.getOrderBy() != null
@@ -223,7 +224,7 @@ public class DbHelper {
 			skip += criteria.getSkip();
 		}
 
-		if (skip != 0) {
+		if (!count && skip != 0) {
 			ret += " skip " + skip;
 		}
 
