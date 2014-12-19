@@ -17,10 +17,15 @@
 package com.baasbox.controllers;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
+import com.baasbox.util.ErrorToResult;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import play.Logger;
 import play.libs.F;
 import play.libs.F.Promise;
+import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -73,6 +79,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 
 
 public class Document extends Controller {
@@ -128,27 +135,32 @@ public class Document extends Controller {
 	 * @param collectionName
 	 * @return the number of documents in the collection
 	 */
-	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result getCount(String collectionName){
+	@With ({UserOrAnonymousCredentialsFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static Promise<Result> getCount(String collectionName){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
 
-		long count;
-		try {
-			Context ctx=Http.Context.current.get();
-			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			count = DocumentService.getCount(collectionName,criteria);
+		//long count;
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+			long count=DocumentService.getCount(collectionName,criteria);
 			if (Logger.isTraceEnabled()) Logger.trace("count: " + count);
-		} catch (InvalidCollectionException e) {
-			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
-			return notFound(collectionName + " is not a valid collection name");
-		} catch (Exception e){
-			Logger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		response().setContentType("application/json");
-		return ok("{\"count\": "+ count +" }");
+			return ok(Json.newObject().put("count",count));
+		})).recover(ErrorToResult
+				.when(InvalidCollectionException.class,
+						e ->{
+							if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
+							return notFound(collectionName + " is not a valid collection name");
+						}
+				)
+				.when(Exception.class,
+						e ->{
+							Logger.error(ExceptionUtils.getFullStackTrace(e));
+							return internalServerError(e.getMessage());
+						}));
+
 	}
 
 	@With ({UserOrAnonymousCredentialsFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
@@ -158,114 +170,110 @@ public class Document extends Controller {
 
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		
-		return F.Promise.promise(()->{
-			try{
-				List<ODocument> result;
-				String ret="{[]}";
-				DbHelper.openFromContext(ctx);
-				result=DocumentService.getDocuments(collectionName,criteria);
-				if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
-				try{
-					ret=prepareResponseToJson(result);
-				}catch (IOException e){
-					return internalServerError(ExceptionUtils.getFullStackTrace(e));
-				}
-				if (Logger.isTraceEnabled()) Logger.trace("Method End");
-				return ok(ret);
-			} catch (InvalidCollectionException e) {
-				if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
-				return notFound(collectionName + " is not a valid collection name");
-			} catch (Exception e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(e.getMessage());
-			}finally{
-				DbHelper.close(DbHelper.getConnection());
-			}
-		});
+
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
+			List<ODocument> result;
+			String ret = "{[]}";
+			result = DocumentService.getDocuments(collectionName, criteria);
+			if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
+			ret = prepareResponseToJson(result);
+			return ok(ret);
+
+		})).recover(ErrorToResult
+				.when(InvalidCollectionException.class, e -> {
+					if (Logger.isDebugEnabled()) Logger.debug(collectionName + " is not a valid collection name");
+					return notFound(collectionName + " is not a valid collection name");
+				})
+				.when(IOException.class,
+						e->internalServerError(ExceptionUtils.getFullStackTrace(e))
+				)
+				.when(Exception.class,
+						e->{
+							Logger.error(ExceptionUtils.getFullStackTrace(e));
+							return internalServerError(e.getMessage());
+						}));
 		
 	}
 
-    @With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result queryDocument(String collectionName,String id,boolean isUUID,String parts){
+    @With ({UserOrAnonymousCredentialsFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static Promise<Result> queryDocument(String collectionName,String id,boolean isUUID,String parts){
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
-		} else{
+		} else {
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
 			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
-			ODocument doc;
-			try {
-				
-				String[] tokens = parts.split("/");
-				List<Part> queryParts = new ArrayList<Part>();
-				PartsLexer pp = new PartsLexer();
-				
-				try{
-				for (int i = 0; i < tokens.length; i++) {
-					try{
-						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
-						queryParts.add(pp.parse(p, i+1));
-					}catch(Exception e){
-						return badRequest("Unable to decode parts");
-					}
-				}
-				}catch(PartValidationException pve){
-					return badRequest(pve.getMessage());
-				}
-				PartsParser pl = new PartsParser(queryParts);
-				String rid = DocumentService.getRidByString(id, isUUID);
-				doc=DocumentService.get(collectionName, rid,pl);
-				
-				if (doc==null) return notFound();
-			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
-			} catch (InvalidCollectionException e) {
-				return notFound(collectionName + " is not a valid collection name");
-			} catch (InvalidModelException e) {
-				return notFound("Document " + id + " is not a " + collectionName + " document");
-			}catch (ODatabaseException e){
-				return notFound(id + " not found. Do you have the right to read it?");  
-			} catch (DocumentNotFoundException e) {
-				return notFound(id + " not found"); 
-			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage());
-			} catch (InvalidCriteriaException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
-			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 
-			return ok(prepareResponseToObjectJson(doc));
+			String[] tokens = parts.split("/");
+			List<Part> queryParts = new ArrayList<Part>();
+			PartsLexer pp = new PartsLexer();
+			for (int i = 0; i < tokens.length; i++) {
+				try {
+					String decoded = URLDecoder.decode(tokens[i], "UTF-8");
+					queryParts.add(pp.parse(decoded, i + 1));
+				} catch (UnsupportedEncodingException e) {
+					return Promise.pure(badRequest("Unable to decode parts"));
+				} catch (PartValidationException e) {
+					return Promise.pure(badRequest(e.getMessage() == null ? "" : e.getMessage()));
+				}
+			}
+			final PartsParser partsParser = new PartsParser(queryParts);
+
+			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),
+					() -> {
+						String rid = DocumentService.getRidByString(id, isUUID);
+						ODocument doc = DocumentService.get(collectionName, rid, partsParser);
+						return doc == null ? notFound() : ok(prepareResponseToJson(doc));
+					})).recover(ErrorToResult
+					.when(IllegalArgumentException.class,
+							e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+					.when(InvalidCollectionException.class,
+							e -> notFound(collectionName + " is not a valid collection name"))
+					.when(ODatabaseException.class,
+							e -> notFound(id + " not found. Do you have the right to read it?"))
+					.when(DocumentNotFoundException.class,
+							e -> notFound(id + " not found"))
+					.when(RidNotFoundException.class,
+							e -> notFound(e.getMessage()))
+					.when(InvalidCriteriaException.class,
+							e -> badRequest(e.getMessage() != null ? e.getMessage() : "")))
+					.map(r -> {
+						if (Logger.isTraceEnabled()) Logger.trace("Method End");
+						return r;
+					});
 		}
 	}
 
-	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-		public static Result getDocument(String collectionName, String id, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
-			ODocument doc;
-			try {
-				String rid = DocumentService.getRidByString(id, isUUID);
-				doc=DocumentService.get(collectionName, rid);
-				if (doc==null) return notFound();
-			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
-			} catch (InvalidCollectionException e) {
-				return notFound(collectionName + " is not a valid collection name");
-			} catch (InvalidModelException e) {
-				return notFound("Document " + id + " is not a " + collectionName + " document");
-			}catch (ODatabaseException e){
-				return notFound(id + " not found. Do you have the right to read it?");  
-			} catch (DocumentNotFoundException e) {
-				return notFound(id + " not found"); 
-			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage()); 
-			} 
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+	@With ({UserOrAnonymousCredentialsFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static Promise<Result> getDocument(String collectionName, String id, boolean isUUID){
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
+		if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
 
-			return ok(prepareResponseToJson(doc));
-		}
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+				String rid = DocumentService.getRidByString(id,isUUID);
+				ODocument doc = DocumentService.get(collectionName,rid);
+				return doc == null?notFound():ok(prepareResponseToJson(doc));
+			})).recover(ErrorToResult
+
+				.when(IllegalArgumentException.class,
+						e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+				.when(InvalidCollectionException.class,
+						e -> notFound(collectionName + " is not a valid collection name"))
+				.when(InvalidModelException.class,
+						e -> notFound("Document " + id + " is not a " + collectionName + " document"))
+				.when(ODatabaseException.class,
+						e -> notFound(id + " not found. Do you have the right to read it?"))
+				.when(DocumentNotFoundException.class,
+						e -> notFound(id + " not found"))
+				.when(RidNotFoundException.class,
+						e -> notFound(e.getMessage())))
+
+			.map(r -> {
+				if (Logger.isTraceEnabled()) Logger.trace("Method End");
+				return r;
+			});
+	}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocumentByRid(String rid){
@@ -293,80 +301,99 @@ public class Document extends Controller {
 			Http.RequestBody body = request().body();
 			Context ctx=Http.Context.current.get();
 			
-			return F.Promise.promise(()->{
-				ODocument document=null;
-				try{
+			return F.Promise.promise(() -> {
+				ODocument document = null;
+				try {
 					DbHelper.openFromContext(ctx);
-					JsonNode bodyJson= body.asJson();
-					if (bodyJson==null) return badRequest(JSON_BODY_NULL);
+					JsonNode bodyJson = body.asJson();
+					if (bodyJson == null) return badRequest(JSON_BODY_NULL);
 					if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
 					if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
 					if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
-					document=DocumentService.create(collection, (ObjectNode)bodyJson); 
-					if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
+					document = DocumentService.create(collection, (ObjectNode) bodyJson);
+					if (Logger.isTraceEnabled())
+						Logger.trace("Document created: " + document.getRecord().getIdentity());
 					return ok(prepareResponseToJson(document));
-				}catch (InvalidCollectionException e){
+				} catch (InvalidCollectionException e) {
 					return notFound(e.getMessage());
-				}catch (InvalidJsonException e){
+				} catch (InvalidJsonException e) {
 					return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
-				}catch (UpdateOldVersionException e){
+				} catch (UpdateOldVersionException e) {
 					return badRequest(ExceptionUtils.getMessage(e));
 				} catch (InvalidModelException e) {
 					return badRequest("ACL fields are not valid: " + e.getMessage());
-				}catch (Throwable e){
-						Logger.error(ExceptionUtils.getFullStackTrace(e));
-						return internalServerError(ExceptionUtils.getFullStackTrace(e));
-				}finally{
+				} catch (Throwable e) {
+					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					return internalServerError(ExceptionUtils.getFullStackTrace(e));
+				} finally {
 					DbHelper.close(DbHelper.getConnection());
 				}
 			});
 		}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-		@BodyParser.Of(BodyParser.Json.class)
-		public static Result updateDocument(String collectionName, String id, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			Http.RequestBody body = request().body();
-			JsonNode bodyJson= body.asJson();
-			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
-			if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()) return badRequest("@version field must be an Integer");
-			ODocument document=null;
-			try{
-				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
-				if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
-				if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
-				String rid= DocumentService.getRidByString(id, isUUID);
-				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson);
-			} catch (DocumentNotFoundException e) {
-				return notFound("Document " + id + " not found");
-			}catch (AclNotValidException e){
-				return badRequest("ACL fields are not valid: " + e.getMessage());		
-			}catch (UpdateOldVersionException e){
-				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
-			}catch (RidNotFoundException e){
-				return notFound("id " + id + " not found");
-			}catch (InvalidCollectionException e){
-				return notFound(collectionName + " is not a valid collection name");
-			}catch (InvalidModelException e){
-				return notFound(id + " is not a valid belongs to " + collectionName);
-			}catch (InvalidParameterException e){
-				return badRequest(id + " is not a document");
-			}catch (IllegalArgumentException e){
-				return badRequest(id + " is not a document");  
-			}catch (ODatabaseException e){
-				return notFound(id + " unknown");  
-			}catch (OSecurityException e){
-				return forbidden("You have not the right to modify " + id);  
-			}catch (InvalidJsonException e){
-				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");				
-			}catch (Throwable e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			}
-			if (document==null) return notFound("Document " + id + " was not found in the collection " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
-			return ok(prepareResponseToJson(document));
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	@BodyParser.Of(BodyParser.Json.class)
+	public static Promise<Result> updateDocument(String collectionName, String id, boolean isUUID){
+		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson= body.asJson();
+		if (bodyJson==null) {
+			return Promise.pure(badRequest(JSON_BODY_NULL));
 		}
+		if (bodyJson.get("@version")!=null && !bodyJson.get("@version").isInt()){
+			return Promise.pure(badRequest("@version field must be an Integer"));
+		}
+		if (!bodyJson.isObject()) {
+			return Promise.pure(badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field"));
+		}
+
+		if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
+		if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
+
+		return Promise.promise(DbHelper.withDbFromContext(ctx(),
+				()->{
+					String rid= DocumentService.getRidByString(id, isUUID);
+					ODocument document=DocumentService.update(collectionName, rid, (ObjectNode)bodyJson);
+					if (document == null){
+						return notFound("Document " + id + " was not found in the collection " + collectionName);
+					} else {
+						return ok(prepareResponseToJson(document));
+					}
+				}))
+				.recover(ErrorToResult
+					.when(DocumentNotFoundException.class,
+							e ->  notFound("Document " + id + " not found"))
+					.when(AclNotValidException.class,
+							e -> badRequest("ACL fields are not valid: " + e.getMessage()))
+					.when(UpdateOldVersionException.class,
+							e -> status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),
+									"You are attempting to update an older version of the document. Your document version is "
+											+ e.getVersion1() + ", the stored document has version "
+											+ e.getVersion2()))
+					.when(RidNotFoundException.class,
+							e -> notFound("id " + id + " not found"))
+					.when(InvalidCollectionException.class,
+							e -> notFound(collectionName + " is not a valid collection name"))
+					.when(InvalidModelException.class,
+							e -> notFound(id + " is not a valid belongs to " + collectionName))
+					.when(InvalidParameterException.class,
+							e -> badRequest(id + " is not a document"))
+					.when(IllegalArgumentException.class,
+							e -> badRequest(id + " is not a document"))
+					.when(ODatabaseException.class,
+							e -> notFound(id + " unknown"))
+					.when(OSecurityException.class,
+							e -> forbidden("You have not the right to modify " + id))
+					.when(Throwable.class,
+							e ->{
+								Logger.error(ExceptionUtils.getFullStackTrace(e));
+								return internalServerError(ExceptionUtils.getFullStackTrace(e));
+							}))
+				.map(r ->{
+					if (Logger.isTraceEnabled()) Logger.trace("Method End");
+					return r;
+				});
+	}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)

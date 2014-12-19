@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import play.Logger;
 import play.Play;
+import play.libs.F;
 import play.mvc.Http;
 
 import com.baasbox.BBConfiguration;
@@ -78,6 +79,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import play.mvc.Result;
 
 public class DbHelper {
 
@@ -823,6 +825,17 @@ public class DbHelper {
 
 	public static void filterOUserPasswords(boolean activate) {
 		HooksManager.enableHidePasswordHook(getConnection(), activate);
+	}
+
+	public static F.Function0<play.mvc.Result> withDbFromContext(Http.Context ctx, F.Function0<Result> work){
+		return ()->{
+			try{
+				DbHelper.openFromContext(ctx);
+				return work.apply();
+			}finally {
+				DbHelper.close(DbHelper.getConnection());
+			}
+		};
 	}
 
 }
