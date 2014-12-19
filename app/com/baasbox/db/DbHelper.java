@@ -167,40 +167,45 @@ public class DbHelper {
 		if (Logger.isDebugEnabled()) Logger.debug("Rollback Transaction: transaction count -after-: " + tranCount.get());
 	}
 
-	public static String selectQueryBuilder (String from, boolean count, QueryParams criteria){
+	public static String selectQueryBuilder(String from, boolean count,
+			QueryParams criteria) {
 		String ret;
-		if (count || criteria.justCountTheRecords()) ret = "select count(*) from ";
-		else ret = "select " + criteria.getFields() + " from ";
+		if (count || criteria.justCountTheRecords())
+			ret = "select count(*) from ";
+		else
+			ret = "select " + criteria.getFields() + " from ";
 		ret += from;
-		if (criteria.getWhere()!=null && !criteria.getWhere().equals("")){
+		if (criteria.getWhere() != null && !criteria.getWhere().equals("")) {
 			ret += " where ( " + criteria.getWhere() + " )";
 		}
-		//patch for issue #469
-		if (StringUtils.isEmpty(criteria.getWhere())){
+		// patch for issue #469
+		if (StringUtils.isEmpty(criteria.getWhere()) && !isConnectedAsAdmin(false)) {
 			ret += " where 1=1";
 		}
-		if (!StringUtils.isEmpty(criteria.getGroupBy())){
+		if (!count && !StringUtils.isEmpty(criteria.getGroupBy())) {
 			ret += " group by ( " + criteria.getGroupBy() + " )";
 		}
-		if (!count && criteria.getOrderBy()!=null && !criteria.getOrderBy().equals("")){
+		if (!count && criteria.getOrderBy() != null
+				&& !criteria.getOrderBy().equals("")) {
 			ret += " order by " + criteria.getOrderBy();
 		}
-		int skip=0;
-		if (!count && criteria.getPage()!=null && criteria.getPage()!=-1 ){
-			skip+=(criteria.getPage() * criteria.getRecordPerPage());
+		int skip = 0;
+		if (!count && criteria.getPage() != null && criteria.getPage() != -1) {
+			skip += (criteria.getPage() * criteria.getRecordPerPage());
 		}
-		if (!count && (criteria.getSkip()!=null)){
-			skip += 	criteria.getSkip();
+		if (!count && (criteria.getSkip() != null)) {
+			skip += criteria.getSkip();
 		}
-		
-		if (skip!=0){
-			ret+= " skip " + skip;
+
+		if (!count && skip != 0) {
+			ret += " skip " + skip;
 		}
-		
-		if (!count && criteria.getPage()!=null && criteria.getPage()!=-1 ){
-			ret += 	" limit " + criteria.getRecordPerPage();
+
+		if (!count && criteria.getPage() != null && criteria.getPage() != -1) {
+			ret += " limit " + criteria.getRecordPerPage();
 		}
-		if (Logger.isDebugEnabled()) Logger.debug("queryBuilder: " + ret);
+		if (Logger.isDebugEnabled())
+			Logger.debug("queryBuilder: " + ret);
 		return ret;
 	}
 
