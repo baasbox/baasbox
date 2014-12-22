@@ -55,9 +55,10 @@ import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 
-@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-@BodyParser.Of(BodyParser.Json.class)
 public class Push extends Controller {
+
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@BodyParser.Of(BodyParser.Json.class)
 	public static Result send(String username) throws Exception  {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
@@ -161,6 +162,8 @@ public class Push extends Controller {
 		return ok();
 	}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@BodyParser.Of(BodyParser.Json.class)
 	public static Result sendUsers() throws Exception {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
@@ -295,12 +298,12 @@ public class Push extends Controller {
 			if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 		}
 		return ok();
-	}	 
+	}
 
 
 
-
-
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@BodyParser.Of(BodyParser.Json.class)
 	public static Result enablePush(String os, String pushToken) throws SqlInjectionException{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if(os==null) return badRequest("OS value cannot be null");
@@ -315,6 +318,8 @@ public class Push extends Controller {
 
 	}
 
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@BodyParser.Of(BodyParser.Json.class)
 	public static Result disablePush(String pushToken) throws SqlInjectionException{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if(pushToken==null) return badRequest("pushToken value cannot be null");

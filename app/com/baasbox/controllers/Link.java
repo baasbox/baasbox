@@ -21,17 +21,18 @@ package com.baasbox.controllers;
 import java.io.IOException;
 import java.util.List;
 
+import com.baasbox.controllers.actions.filters.*;
+import com.baasbox.db.DbHelper;
+import com.baasbox.util.ErrorToResult;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
+import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.With;
 import play.mvc.Http.Context;
 
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -44,50 +45,63 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Link extends Controller{
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result createLink(String sourceId, String destId, String edgeName){
-		ODocument toReturn = null;
-		try {
-			ODocument link = LinkService.createLink(sourceId, destId, edgeName);
-			toReturn = (ODocument)link.getRecord().copy();
-			//toReturn.detach();
-			toReturn.field("out",(ODocument)((ODocument)(link.field("out"))).field("_node"));
-			toReturn.field("in",(ODocument)((ODocument)(link.field("in"))).field("_node"));
-		}catch (DocumentNotFoundException e){
-			return badRequest("Source or Destination record was not found. Hint: do you have the read grant on them? Or ids are not valid");
-		}
-		toReturn.detach();
-		return ok(JSONFormats.prepareResponseToJson(toReturn, Formats.LINK));
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> createLink(String sourceId, String destId, String edgeName){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),
+				()->{
+					ODocument link = LinkService.createLink(sourceId,destId,edgeName);
+					ODocument toReturn =(ODocument)link.getRecord().copy();
+					toReturn.field("out",(ODocument)((ODocument)(link.field("out"))).field("_node"));
+					toReturn.field("in",(ODocument)((ODocument)(link.field("in"))).field("_node"));
+					toReturn.detach();
+					return ok(JSONFormats.prepareResponseToJson(toReturn,Formats.LINK));
+				})).recover(ErrorToResult
+				.when(DocumentNotFoundException.class,
+						e ->  badRequest("Source or Destination record was not found. Hint: do you have the read grant on them? Or ids are not valid"))
+				.when(Throwable.class,
+						e -> internalServerError(e.getMessage()==null?"":e.getMessage())));
 	}
 	
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result getLinkByItsId(String linkId){
-		ODocument link=LinkService.getLink(linkId);
-		if (link==null) return notFound("The link " + linkId + " was not found");
-		return ok(JSONFormats.prepareResponseToJson(link, Formats.LINK));
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> getLinkByItsId(String linkId){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),
+				()->{
+					ODocument link=LinkService.getLink(linkId);
+					if (link==null) {
+						return notFound("The link " + linkId + " was not found");
+					} else {
+						return ok(JSONFormats.prepareResponseToJson(link, Formats.LINK));
+					}
+				}));
 	}
 	
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result getLinks() throws IOException{
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static F.Promise<Result> getLinks() throws IOException{
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		List<ODocument> listOfLinks;
-		try {
-			listOfLinks = LinkService.getLink(criteria);
-		} catch (InvalidCriteriaException e) {
-			return badRequest(ExceptionUtils.getMessage(e));
-		} catch (SqlInjectionException e) {
-			return badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded");
-		}
-		return ok(JSONFormats.prepareResponseToJson(listOfLinks, Formats.LINK));
+
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+			List<ODocument> links = LinkService.getLink(criteria);
+			return ok(JSONFormats.prepareResponseToJson(links,Formats.LINK));
+		})).recover(ErrorToResult
+			.when(InvalidCriteriaException.class,
+					e -> badRequest(ExceptionUtils.getMessage(e)))
+			.when(SqlInjectionException.class,
+					e -> badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded")));
 	}
 	
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result deleteLink(String linkId){
-		ODocument link=LinkService.getLink(linkId);
-		if (link==null) return notFound("The link " + linkId + " was not found");
-		LinkService.deleteLink(linkId);
-		return ok();
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> deleteLink(String linkId){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),
+				()->{
+					ODocument link = LinkService.getLink(linkId);
+					if (link==null){
+						return notFound("The link " + linkId + " was not found");
+					} else {
+						LinkService.deleteLink(linkId);
+						return ok();
+					}
+				}));
 	}
 	
 	/*
