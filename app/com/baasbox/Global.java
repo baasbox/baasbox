@@ -48,7 +48,7 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
-import com.baasbox.security.ScriptingSandboxSecutrityManager;
+import com.baasbox.security.ScriptingSandboxSecurityManager;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -64,7 +64,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 public class Global extends GlobalSettings {
 	static {
         /*Initialize this before anything else to avoid reflection*/
-        ScriptingSandboxSecutrityManager.init();
+        ScriptingSandboxSecurityManager.init();
     }
 
 	  private static Boolean  justCreated = false;
