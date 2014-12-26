@@ -96,7 +96,7 @@ public class Global extends GlobalSettings {
 			  //Deprecated due to OrientDB 1.6
 			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
 			  
-			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
 			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.TRUE);
 			  
 			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
