@@ -123,7 +123,7 @@ class DBResource extends Resource {
     	}catch (CommandParsingException e){
     		return BooleanNode.valueOf(false);
     	}
-    	ORID ret=GenericDao.getInstance().getRidNodeByUUID(id);
+    	String ret=GenericDao.getInstance().getRidNodeByUUID(id);
         return BooleanNode.valueOf(!(ret==null));
     }
     

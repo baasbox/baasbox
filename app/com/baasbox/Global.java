@@ -89,15 +89,15 @@ public class Global extends GlobalSettings {
 		  debug("Global.onLoadConfig() called");
 		  info("BaasBox is preparing OrientDB Embedded Server...");
 		  try{
-			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
-			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.FALSE);
 			  
-			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.FALSE);
 			  //Deprecated due to OrientDB 1.6
 			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
 			  
 			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.TRUE);
 			  
 			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
 			  OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -105,7 +105,7 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
-			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
+			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(1000);
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
