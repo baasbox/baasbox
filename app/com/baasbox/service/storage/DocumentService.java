@@ -277,8 +277,8 @@ public class DocumentService {
 	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
 		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
 		GenericDao gdao = GenericDao.getInstance();
-		ORID rid=gdao.getRidNodeByUUID(uuid);
-		ODocument doc = get(collection,rid.toString());
+		String rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid);
 		PermissionsHelper.setAcl(doc, acl);
 		return doc;
 	}
@@ -287,9 +287,9 @@ public class DocumentService {
         String rid = null;
         if (isUUID) {
             if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
-            ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
+            String orid = GenericDao.getInstance().getRidNodeByUUID(id);
             if (orid == null) throw new RidNotFoundException(id);
-            rid = orid.toString();
+            rid = orid;
             if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
         } else {
             rid = "#"+id;

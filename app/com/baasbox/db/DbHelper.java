@@ -66,7 +66,9 @@ import com.eaio.uuid.UUID;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -79,6 +81,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
 import play.mvc.Result;
 
 public class DbHelper {
@@ -421,9 +424,13 @@ public class DbHelper {
 			Logger.debug("opening connection on db: " + databaseName + " for "
 					+ username);
 
-		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:"
-				+ BBConfiguration.getDBDir());
-		conn.open(username, password);
+		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
+		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
+				+ BBConfiguration.getDBDir(), username, password);
+		
+		//ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:"
+		//		+ BBConfiguration.getDBDir());
+		//conn.open(username, password);
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);
