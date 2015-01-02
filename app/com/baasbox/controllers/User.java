@@ -314,8 +314,6 @@ public class User extends Controller {
 	}
 
 
-
-
 	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> resetPasswordStep1(String username){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
@@ -333,7 +331,6 @@ public class User extends Controller {
 				return badRequest("Username " + username + " not found!");
 			}
 			QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
-
 
 			try {
 				List<ODocument> users = UserService.getUsers(criteria);
@@ -363,28 +360,32 @@ public class User extends Controller {
 
 	//NOTE: this controller is called via a web link by a mail client to reset the user's password
 	//Filters to extract username/appcode/atc.. from the headers have no sense in this case
-	public static Result resetPasswordStep2(String base64) throws ResetPasswordException {
+	public static F.Promise<Result> resetPasswordStep2(String base64) throws ResetPasswordException {
 		//loads the received token and extracts data by the hashcode in the url
-		String tokenReceived="";
-		String appCode= "";
-		String username = "";
-		String tokenId= "";
-		String adminUser="";
-		String adminPassword = "";
-		Boolean isJSON = false;
-		ObjectNode result = Json.newObject();
 
-		if(base64.endsWith(".json")) {
-			isJSON = true;
-		}
+		boolean isJSON = base64.endsWith(".json");
+
+		return F.Promise.promise(()->{
+
+			String tokenReceived="";
+			String appCode= "";
+			String username = "";
+			String tokenId= "";
+			String adminUser="";
+			String adminPassword = "";
+			ObjectNode result = Json.newObject();
 
 
-		try{
-			//if isJSON it's true, in input I have a json. So I need to delete the "extension" .json
+			try{
+			String decBase64;
+				//if isJSON it's true, in input I have a json. So I need to delete the "extension" .json
 			if(isJSON) {
-				base64=base64.substring(0, base64.lastIndexOf('.'));
+				decBase64=base64.substring(0, base64.lastIndexOf('.'));
+			} else {
+				decBase64 = base64;
 			}
-			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
+
+			tokenReceived = new String(Base64.decodeBase64(decBase64.getBytes()));
 			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
@@ -451,11 +452,15 @@ public class User extends Controller {
 			DbHelper.getConnection().close();
 			return ok(Html.apply(pageTemplate.render()));
 		}
+
+		});
 	}
 
 	//NOTE: this controller is called via a web form by a browser to reset the user's password
 	//Filters to extract username/appcode/atc.. from the headers have no sense in this case
-	public static Result resetPasswordStep3(String base64) {
+	public static F.Promise<Result> resetPasswordStep3(String base64) {
+		return F.Promise.promise(()->{
+
 		String tokenReceived="";
 		String appCode= "";
 		String username = "";
@@ -468,12 +473,15 @@ public class User extends Controller {
 			isJSON = true;
 		}
 		try{
+			String decBase64;
 			//if isJSON it's true, in input I have a json. So I need to delete the "extension" .json
 			if(isJSON) {
-				base64=base64.substring(0, base64.lastIndexOf('.'));
+				decBase64=base64.substring(0, base64.lastIndexOf('.'));
+			} else {
+				decBase64 = base64;
 			}
 			//loads the received token and extracts data by the hashcode in the url
-			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
+			tokenReceived = new String(Base64.decodeBase64(decBase64.getBytes()));
 			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
@@ -590,58 +598,86 @@ public class User extends Controller {
 			DbHelper.getConnection().close();
 			return ok(Html.apply(pageTemplate.render()));
 		}
+
+		});
+
 	}
 
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
-	public static Result changePassword(){
+	public static F.Promise<Result> changePassword(){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
 		if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
-		if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
+		if (bodyJson==null) {
+			return F.Promise.pure(badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json"));
+		}
 
 		//check and validate input
-		if (!bodyJson.has("old"))
-			return badRequest("The 'old' field is missing");
-		if (!bodyJson.has("new"))
-			return badRequest("The 'new' field is missing");	
+		if (!bodyJson.has("old")) {
+			return F.Promise.pure(badRequest("The 'old' field is missing"));
+		}
+		if (!bodyJson.has("new")) {
+			return F.Promise.pure(badRequest("The 'new' field is missing"));
+		}
 
 		String currentPassword = DbHelper.getCurrentHTTPPassword();
-		String oldPassword=(String) bodyJson.findValuesAsText("old").get(0);
-		String newPassword=(String)  bodyJson.findValuesAsText("new").get(0);
+		String oldPassword= bodyJson.findValuesAsText("old").get(0);
+		String newPassword= bodyJson.findValuesAsText("new").get(0);
 
 		if (!oldPassword.equals(currentPassword)){
-			return badRequest("The old password does not match with the current one");
+			return F.Promise.pure(badRequest("The old password does not match with the current one"));
 		}	  
-
-		try {
-			UserService.changePasswordCurrentUser(newPassword);
-		} catch (OpenTransactionException e) {
-			Logger.error (ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e);
-		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		return ok();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				UserService.changePasswordCurrentUser(newPassword);
+			} catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+			}
+			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			return ok();
+		}));
 	}	  
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result logoutWithDevice(String pushToken) throws SqlInjectionException { 
+
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> logoutWithDevice(String pushToken) {
 		String token=(String) Http.Context.current().args.get("token");
-		if (!StringUtils.isEmpty(token)) {
-			UserService.logout(pushToken);
-			SessionTokenProvider.getSessionTokenProvider().removeSession(token);
-		}		
-		return ok("pushToken: " + pushToken + " logged out");
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			if (!StringUtils.isEmpty(token)) {
+				UserService.logout(pushToken);
+				SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+			}
+			return ok("pushToken: " + pushToken + " logged out");
+		})).recover((t)->{
+			if (t instanceof SqlInjectionException) {
+				return badRequest();
+			} else {
+				return internalServerError();
+			}
+		});
 	}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result logoutWithoutDevice() throws SqlInjectionException { 
+
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> logoutWithoutDevice() {
+
 		String token=(String) Http.Context.current().args.get("token");
-		if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
-		return ok("user logged out");
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+			return ok("user logged out");
+		})).recover((t)->{
+			if (t instanceof SqlInjectionException){
+				return badRequest();
+			} else {
+				return internalServerError();
+			}
+		});
+
 	} 
 
 	/***
@@ -658,91 +694,112 @@ public class User extends Controller {
 	 * @throws IOException 
 	 * @throws JsonProcessingException 
 	 */
-	@With ({NoUserCredentialWrapFilter.class})
+	@With ({NoUserCredentialWrapFilterAsync.class})
 	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
-	public static Result login() throws SqlInjectionException, JsonProcessingException, IOException {
+	public static F.Promise<Result> login()/* throws SqlInjectionException, JsonProcessingException, IOException */{
 		Map<String, String[]> body = request().body().asFormUrlEncoded();
-		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
-		String username="";
-		String password="";
-		String appcode="";
-		String loginData=null;
-		if(body.get("username")==null) return badRequest("The 'username' field is missing");
-		else username=body.get("username")[0];
-		if(body.get("password")==null) return badRequest("The 'password' field is missing");
-		else password=body.get("password")[0];
-		if(body.get("appcode")==null) return badRequest("The 'appcode' field is missing");
-		else appcode=body.get("appcode")[0];
+		if (body==null) {
+			return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded?"));
+		}
+		String username;
+		String password;
+		String appcode;
+		String loginData;
+		if(body.get("username")==null) {
+			return F.Promise.pure(badRequest("The 'username' field is missing"));
+		} else {
+			username=body.get("username")[0];
+		}
+
+		if(body.get("password")==null) {
+			return F.Promise.pure(badRequest("The 'password' field is missing"));
+		} else {
+			password=body.get("password")[0];
+		}
+
+		if(body.get("appcode")==null) {
+			return F.Promise.pure(badRequest("The 'appcode' field is missing"));
+		} else {
+			appcode=body.get("appcode")[0];
+		}
+
 		if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
 		if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
 		if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
-		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
-				||
-				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
-				) return forbidden(username + " cannot login");
 
-		if (body.get("login_data")!=null)
-			loginData=body.get("login_data")[0];
+		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+			|| username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+				) {
+			return F.Promise.pure(forbidden(username + " cannot login"));
+		}
+
+		if (body.get("login_data")!=null) {
+			loginData = body.get("login_data")[0];
+		} else {
+			loginData = null;
+		}
 		if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
 
 		/* other useful parameter to receive and to store...*/		  	  
 		//validate user credentials
-		ODatabaseRecordTx db=null;
-		String user = null;
-		try{
-			db = DbHelper.open(appcode,username, password);
-			user =  prepareResponseToJson(UserService.getCurrentUser());
+		return F.Promise.promise(()->{
+			String user;
+			try (ODatabaseRecordTx db = DbHelper.open(appcode,username,password)){
+				user = prepareResponseToJson(UserService.getCurrentUser());
+				if (loginData != null) {
+					JsonNode loginInfo = null;
+					try {
+						loginInfo =Json.parse(loginData);
+					} catch (Exception e){
+						if (Logger.isDebugEnabled()) Logger.debug ("Error parsong login_data field");
+						if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
+						return badRequest("login_data field is not a valid json string");
+					}
 
+					Iterator<Entry<String, JsonNode>> it =loginInfo.fields();
+					HashMap<String, Object> data = new HashMap<String, Object>();
+					while (it.hasNext()){
+						Entry<String, JsonNode> element = it.next();
+						String key=element.getKey();
+						Object value=element.getValue().asText();
+						data.put(key,value);
+					}
+					UserService.registerDevice(data);
 
-			if (loginData!=null){
-				JsonNode loginInfo=null;
-				try{
-					loginInfo = Json.parse(loginData);
-				}catch(Exception e){
-					if (Logger.isDebugEnabled()) Logger.debug ("Error parsong login_data field");
-					if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
-					return badRequest("login_data field is not a valid json string");
 				}
-				Iterator<Entry<String, JsonNode>> it =loginInfo.fields();
-				HashMap<String, Object> data = new HashMap<String, Object>();
-				while (it.hasNext()){
-					Entry<String, JsonNode> element = it.next();
-					String key=element.getKey();
-					Object value=element.getValue().asText();
-					data.put(key,value);
-				}
-				UserService.registerDevice(data);
+				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+
+				ObjectMapper mapper =com.baasbox.service.scripting.js.Json.mapper();
+				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+				JsonNode jn = mapper.readTree(user);
+				return ok(jn);
+			} catch (OSecurityAccessException e){
+				if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " +  e.getMessage());
+				return unauthorized("user " + username + " unauthorized");
+			} catch (InvalidAppCodeException e) {
+				if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " + e.getMessage());
+				return badRequest("user " + username + " unauthorized");
 			}
-		}catch (OSecurityAccessException e){
-			if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " +  e.getMessage());
-			return unauthorized("user " + username + " unauthorized");
-		} catch (InvalidAppCodeException e) {
-			if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " + e.getMessage());
-			return badRequest("user " + username + " unauthorized");
-		}finally{
-			if (db!=null && !db.isClosed()) db.close();
-		}
-		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-		response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+		});
 
-		ObjectMapper mapper = new ObjectMapper();
-		user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
-		JsonNode jn = mapper.readTree(user);
-
-		return ok(jn);
 	}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result disable(){
-		try {
-			UserService.disableCurrentUser();
-		} catch (UserNotFoundException e) {
-			return badRequest(e.getMessage());
-		} catch (OpenTransactionException e) {
-			Logger.error (ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e);
-		}
-		return ok();
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> disable(){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+
+			try {
+				UserService.disableCurrentUser();
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+			}
+			return ok();
+
+		}));
 	}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
