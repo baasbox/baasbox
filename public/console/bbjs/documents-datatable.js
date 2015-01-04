@@ -21,7 +21,7 @@ var documentDataArray= new Array();
 						   },
 						   {"mData": "id", sWidth:"78px","mRender": function ( data, type, full ) 	{
 				 				return "<span style='font-family:Courier'>"+data+"</span>";
-							}
+							},bSortable:false
 						   },
 			               {"mData": "_author"},
 			               {"mData": "@rid",sWidth:"50%","mRender": function ( data, type, full ) 	{

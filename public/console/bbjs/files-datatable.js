@@ -17,10 +17,10 @@ var  filesDataArray= new Array();
 			              {"mData": "id", sWidth:"42px","mRender": function (data, type, full ) {
 			            	  var obj=JSON.parse(JSON.stringify(full));
 			            	  return getFileIcon(obj["contentType"],obj["id"]);
-			              }},
+			              },bSortable:false},
 						   {"mData": "id", sWidth:"180px","mRender": function ( data, type, full ) 	{
 				 				return "<span style='font-family:Courier'>"+data+"</span>";
-							}
+							},bSortable:false
 						   },
 			              {"mData": "id", "mRender": function ( data, type, full ) {
 			            	  var obj=JSON.parse(JSON.stringify(full));
