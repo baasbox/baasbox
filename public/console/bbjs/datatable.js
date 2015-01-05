@@ -88,7 +88,9 @@ var sDomGlobal="R<'row-fluid'<'span6'l><'span6'f>r><'row-fluid'<'span12'i><'span
     	tDef.sAjaxSource= sUrl;
     	tDef.bProcessing = true,
     	tDef.bServerSide = true,
-    	tDef.oLanguage = {sProcessing:"Loading data from BaasBox, please wait..."};
+    	tDef.oLanguage = {
+    			sProcessing:"Loading data from BaasBox, please wait..."
+    			,sSearch:"Filter records that have at least one field containing (press ENTER):"	};
     	tDef.fnServerData= function ( sSource, aoData, fnCallback ) {serverDataTableCallback( sSource, aoData, fnCallback,dataArray)},
     	
     	oDataTable.dataTable(tDef);
