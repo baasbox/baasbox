@@ -2,6 +2,10 @@
 Javascript helper functions for server side pagination of datatables
 */
 
+var sDomGlobal="R<'row-fluid'<'span6'l><'span6'f>r><'row-fluid'<'span12'i><'span12 center'p>>t<'row-fluid'<'span12'ri><'span12 center'p>>";
+
+
+	
     //transforms datatable parameters into BaasBox query criteria, calls the API and converts the result into the datatable format
     function serverDataTableCallback( sSource, aoData, fnCallback,dataArray ) {
     	//sSource: URL to call
@@ -73,6 +77,8 @@ Javascript helper functions for server side pagination of datatables
      * dataArray is a global array variable that will contain the rows currently displayed
      */
     function loadTable(oDataTable,oTableDef,sUrl,dataArray){
+    	var tableName=oDataTable.selector.substr(1);
+    	
     	oDataTable.dataTable().fnDestroy();
     	oDataTable.attr("style",'width:100% !important');
     	var tDef = $.extend({},oTableDef);
@@ -84,7 +90,19 @@ Javascript helper functions for server side pagination of datatables
     	tDef.bServerSide = true,
     	tDef.oLanguage = {sProcessing:"Loading data from BaasBox, please wait..."};
     	tDef.fnServerData= function ( sSource, aoData, fnCallback ) {serverDataTableCallback( sSource, aoData, fnCallback,dataArray)},
+    	
     	oDataTable.dataTable(tDef);
+    	
+    	//let's start the query ONLY and ONLY IF the user press ENTER or TAB
+    	$('#'+tableName+"_filter input")
+    	.unbind('keypress keyup keydown')
+    	.bind('keypress', function(e){
+    		if (e.keyCode != 13) return;
+    		oDataTable.fnFilter($(this).val());
+    	}).bind('keydown', function(e){
+    		if ((e.keyCode==9)) oDataTable.fnFilter($(this).val());
+    		return;
+    	});;
     }//loadTable
     
     function resetDataTable(oDataTable){

@@ -10,7 +10,7 @@ var  filesDataArray= new Array();
     }
    
    var filesDataTableDef={
-			"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+			"sDom": sDomGlobal,
 			"sPaginationType": "bootstrap",
 			"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 			"aoColumns": [
