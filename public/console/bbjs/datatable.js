@@ -25,7 +25,7 @@ var sDomGlobal="R<'row-fluid'<'span6'l><'span6'f>r><'row-fluid'<'span12'i><'span
     	    if (aoData[index]["name"]=="sEcho") call_id=aoData[index]["value"];
 			if (aoData[index]["name"]=="iDisplayStart") iDisplayStart=aoData[index]["value"] ;
 			if (aoData[index]["name"]=="iDisplayLength") recordsPerPage=aoData[index]["value"];
-			if (aoData[index]["name"]=="sSearch" && aoData[index]["value"]!="") search="any() like '%" + aoData[index]["value"] +"%'";
+			if (aoData[index]["name"]=="sSearch" && aoData[index]["value"]!="") search='any() like "%' + aoData[index]["value"].replace(/"/g, '\\"') +'%"';
 			if (aoData[index]["name"]=="iSortCol_0") { //sorting
 				var sortColNumber=aoData[index]["value"];
 				for (j = 0; j < aoDataLength; ++j) {
