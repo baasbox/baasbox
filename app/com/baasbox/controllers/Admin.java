@@ -102,6 +102,8 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 @With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
 
+	//todo async
+
 	static String backupDir = DbManagerService.backupDir;
 	static String fileSeparator = DbManagerService.fileSeparator;
 

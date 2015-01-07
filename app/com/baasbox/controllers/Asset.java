@@ -65,6 +65,8 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 public class Asset extends Controller{
+	//todo async
+
 	private static String prepareResponseToJson(ODocument doc){
 		response().setContentType("application/json");
 		doc.removeField("file");

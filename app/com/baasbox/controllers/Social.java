@@ -61,7 +61,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Social extends Controller{
 
-	//todo async
 	private static final String OAUTH_TOKEN="oauth_token";
 	private static final String OAUTH_SECRET="oauth_secret";
 	

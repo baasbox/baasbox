@@ -57,6 +57,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Root extends Controller {
 
+	//todo async
 	@With({RootCredentialWrapFilter.class,ConnectToDBFilter.class})
 	public static Result resetAdminPassword(){
 		Http.RequestBody body = request().body();
