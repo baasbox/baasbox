@@ -125,14 +125,11 @@ public class Asset extends Controller{
 				}
 				response().setHeader("Content-Length", Long.toString(output.length));
 				return ok(output);
-			} catch (IllegalArgumentException e) {
+			} catch (IllegalArgumentException | InvalidModelException e) {
 				Logger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
-			} catch (InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
-				throw e;
 			} catch (IOException e) {
 				Logger.error("error retrieving asset file content " + name, e);
 				throw e;
@@ -245,14 +242,11 @@ public class Asset extends Controller{
 				response().setHeader("Content-Length", ((Long)doc.field("contentLength")).toString());
 				//return ok(new ByteArrayInputStream(out.toByteArray()));
 				return ok(out.toByteArray());
-			} catch (IllegalArgumentException e) {
+			} catch (IllegalArgumentException | InvalidModelException e) {
 				Logger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
-			} catch (InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
-				throw e;
 			} catch (IOException e) {
 				Logger.error("error retrieving asset file content " + name, e);
 				throw e;
