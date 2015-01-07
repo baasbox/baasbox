@@ -802,9 +802,10 @@ public class User extends Controller {
 		}));
 	}
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result follow(String toFollowUsername){
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> follow(String toFollowUsername){
 
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 		String currentUsername = DbHelper.currentUsername();
 
 		try{
@@ -828,7 +829,7 @@ public class User extends Controller {
 		}catch (Exception e){
 			return internalServerError(e.getMessage());
 		}
-
+		}));
 	}
 
 
@@ -836,29 +837,37 @@ public class User extends Controller {
 	 * Returns the followers of the current user
 	 * @return
 	 */
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result followers(boolean justCountThem, String username){
-		if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static F.Promise<Result> followers(boolean justCountThem, String username){
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		List<ODocument> listOfFollowers=new ArrayList<ODocument>();
-		long count=0;
-		try {
-			if (justCountThem) count = FriendShipService.getCountFriendsOf(username, criteria);
-			else listOfFollowers = FriendShipService.getFriendsOf(username, criteria);
-		} catch (InvalidCriteriaException e) {
-			return badRequest(ExceptionUtils.getMessage(e));
-		} catch (SqlInjectionException e) {
-			return badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded");
-		}
-		if (justCountThem) {
-			response().setContentType("application/json");
-			return ok("{\"count\": "+ count +" }");
-		}
-		else{
-			String ret = prepareResponseToJson(listOfFollowers);
-			return ok(ret);
-		}
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+			String user;
+			if (StringUtils.isEmpty(username)) {
+				user=DbHelper.currentUsername();
+			} else {
+				user = username;
+			}
+			List<ODocument> listOfFollowers=new ArrayList<ODocument>();
+			long count=0;
+			try {
+				if (justCountThem) count = FriendShipService.getCountFriendsOf(user, criteria);
+				else listOfFollowers = FriendShipService.getFriendsOf(user, criteria);
+			} catch (InvalidCriteriaException e) {
+				return badRequest(ExceptionUtils.getMessage(e));
+			} catch (SqlInjectionException e) {
+				return badRequest("The parameters you passed are incorrect. HINT: check if the querystring is correctly encoded");
+			}
+			if (justCountThem) {
+				response().setContentType("application/json");
+				return ok("{\"count\": "+ count +" }");
+			}
+			else{
+				String ret = prepareResponseToJson(listOfFollowers);
+				return ok(ret);
+			}
+		}));
+
 	}
 
 
@@ -867,36 +876,49 @@ public class User extends Controller {
 	 * @param username
 	 * @return
 	 */
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
-	public static Result following (String username){
-		if (StringUtils.isEmpty(username)) username=DbHelper.currentUsername();
-		try {
-			Context ctx=Http.Context.current.get();
-			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			List<ODocument> following = FriendShipService.getFollowing(username, criteria);
-			return ok(prepareResponseToJson(following));
-		} catch (SqlInjectionException e) {
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
+	public static F.Promise<Result> following (String username){
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+
+		String user;
+			if (StringUtils.isEmpty(username)) {
+				user=DbHelper.currentUsername();
+			} else {
+				user = username;
+			}
+			try {
+				List<ODocument> following = FriendShipService.getFollowing(user, criteria);
+				return ok(prepareResponseToJson(following));
+			} catch (SqlInjectionException e) {
+				return internalServerError(ExceptionUtils.getFullStackTrace(e));
+			}
+
+		}));
 	}
 
 
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
-	public static Result unfollow(String toUnfollowUsername){
-		String currentUsername = DbHelper.currentUsername();
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> unfollow(String toUnfollowUsername){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 
-		try {
-			boolean success = FriendShipService.unfollow(currentUsername,toUnfollowUsername);
-			if (success){
-				return ok();
-			} else {
-				return notFound("User "+currentUsername+" is not a friend of "+toUnfollowUsername);
+			String currentUsername = DbHelper.currentUsername();
+
+			try {
+				boolean success = FriendShipService.unfollow(currentUsername,toUnfollowUsername);
+				if (success){
+					return ok();
+				} else {
+					return notFound("User "+currentUsername+" is not a friend of "+toUnfollowUsername);
+				}
+			} catch (UserNotFoundException e) {
+				return notFound(e.getMessage());
+			} catch (Exception e) {
+				return internalServerError(e.getMessage());
 			}
-		} catch (UserNotFoundException e) {
-			return notFound(e.getMessage());
-		} catch (Exception e) {
-			return internalServerError(e.getMessage());
-		}
+
+		}));
 	}
 
 }
