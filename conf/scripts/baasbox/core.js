@@ -394,7 +394,7 @@ Documents.remove = function(coll,id){
                      name: 'delete',
                      params: {
 
-                         collection: 'collection',
+                         collection: coll,
                          id: id
                      }});
 };
