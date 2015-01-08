@@ -12,13 +12,15 @@ import com.google.common.collect.ImmutableMap;
 
 public class PushProviderMock implements IPushServer {
 
+	private ImmutableMap<ConfigurationKeys, String> configuration;
+
 	PushProviderMock() {
 		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	public void setConfiguration(
-			ImmutableMap<ConfigurationKeys, String> configuration) {
+	public void setConfiguration(ImmutableMap<ConfigurationKeys, String> configuration) {
+		this.configuration=configuration;
 	}
 
 	@Override
