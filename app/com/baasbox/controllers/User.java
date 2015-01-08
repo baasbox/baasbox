@@ -232,7 +232,13 @@ public class User extends Controller {
 		if (bodyJson.get("username")==null || !bodyJson.get("username").isTextual())
 			return badRequest("'username' field must be a String");
 		String newUsername=bodyJson.get("username").asText();
-		UserService.changeUsername(DbHelper.getCurrentHTTPUsername(),newUsername);
+		try {
+			UserService.changeUsername(DbHelper.getCurrentHTTPUsername(),newUsername);
+		} catch (OpenTransactionException e) {
+			return internalServerError(ExceptionUtils.getMessage(e));
+		} catch (SqlInjectionException e) {
+			return badRequest("Username not valid");
+		}
 		return ok();
 	}
 
