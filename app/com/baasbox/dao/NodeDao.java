@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.baasbox.exception.UserNotFoundException;
+
 import play.Logger;
 
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -67,6 +68,10 @@ public abstract class NodeDao  {
 
 	protected ODatabaseRecordTx db;
 
+	public static void updateAuthor(String oldAuthor,String newAuthor){
+		Object command = DbHelper.genericSQLStatementExecute(
+				"update _bb_node set _author=? where _author=?", new String[]{newAuthor,oldAuthor});
+	}
 	 
 	public NodeDao(String modelName) {
 		super();

@@ -16,7 +16,6 @@
  */
 package com.baasbox.controllers;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,9 +35,6 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;
 
 import play.Logger;
@@ -78,6 +74,9 @@ import com.baasbox.service.user.UserService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;

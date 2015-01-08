@@ -17,6 +17,7 @@ create property _BB_NodeVertex._node link _BB_Node;
 create property _BB_Node._creation_date datetime;
 create property _BB_Node._links link _BB_NodeVertex;
 create property _BB_Node.id String;
+create property _BB_Node._author String;
 
 --user
 create class _BB_User extends _BB_Node;
@@ -100,6 +101,9 @@ alter property _BB_Permissions.tag notnull=true;
 alter property _BB_Permissions.enabled mandatory=true;
 alter property _BB_Permissions.enabled notnull=true;
 
+create property orole.isrole boolean
+update orole set isrole=true
+
 --indices
 
 alter property ouser.name collate ci;
@@ -109,6 +113,8 @@ create index _BB_Node.id unique;
 create index _BB_Permissions.tag unique;
 ---bug on OrientDB index? (our issue #412) We have to define a "new" index to avoid class scan when looking for a username:
 create index _bb_user.user.name unique
+create index _bb_node._author notunique;
+create index _bb_node._creation_date notunique;
 
 --configuration class
 create class _BB_Index;

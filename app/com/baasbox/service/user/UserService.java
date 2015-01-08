@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import net.sf.ehcache.search.expression.Criteria;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -43,6 +44,8 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.LinkDao;
+import com.baasbox.dao.NodeDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
@@ -165,10 +168,27 @@ public class UserService {
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
+		String os=(String) data.get(UserDao.USER_DEVICE_OS);
 		boolean found=false;
+
+		com.baasbox.db.DbHelper.reconnectAsAdmin();
+		
+		List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
+
+		for(ODocument record: sqlresult ) {
+			List<ODocument> login_Infos=record.field(UserDao.USER_LOGIN_INFO);
+			for (ODocument login_Info : login_Infos){
+				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && (login_Info.field(UserDao.USER_DEVICE_OS).equals(os))){
+					login_Infos.remove(login_Info);
+					break;
+				}
+			}
+			record.save();	
+		}
+	
 		for (ODocument loginInfo : loginInfos){
 
-			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken)){
+			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
 				found=true;
 				break;
 			}
@@ -177,6 +197,9 @@ public class UserService {
 			loginInfos.add(new ODocument(data));
 			systemProps.save();
 		}
+		
+		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
+
 	}
 	public static void unregisterDevice(String pushToken) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
@@ -533,12 +556,14 @@ public class UserService {
 			ST htmlMailTemplate = new ST(htmlEmail, '$', '$');
 			htmlMailTemplate.add("link", resetUrl);
 			htmlMailTemplate.add("user_name", username);
+			htmlMailTemplate.add("token",sBase64Random);
 
 			//Plain text Email Text
 			ST textMailTemplate = new ST(textEmail, '$', '$');
 			textMailTemplate.add("link", resetUrl);
 			textMailTemplate.add("user_name", username);
-
+			textMailTemplate.add("token",sBase64Random);
+			
 			email = new HtmlEmail();
 
 			email.setHtmlMsg(htmlMailTemplate.render());
@@ -783,4 +808,16 @@ public class UserService {
         return BBConfiguration.getBaasBoxAdminUsername().equals(username)||
                BBConfiguration.getBaasBoxUsername().equals(username);
     }
+
+	public static void changeUsername(String currentUsername,String newUsername) throws UserNotFoundException {
+		DbHelper.reconnectAsAdmin();
+		//change the username
+		UserDao.getInstance().changeUsername(currentUsername,newUsername);
+		//change all the reference in _author fields (this should be placed in a background task)
+		NodeDao.updateAuthor(currentUsername, newUsername);
+		LinkDao.updateAuthor(currentUsername, newUsername);
+		DbHelper.close(DbHelper.getConnection());
+		//warning! from this point there is no database available!
+	}
+	
 }

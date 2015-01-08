@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.baasbox.dao.exception.InvalidCriteriaException;
+
 import play.Logger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -179,6 +180,12 @@ public class UserDao extends NodeDao  {
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.ACTIVE);
 		user.save();
+	}
+
+	public void changeUsername(String currentUsername, String newUsername) throws UserNotFoundException {
+		if (existsUserName(currentUsername)){
+			Object command = DbHelper.genericSQLStatementExecute("update ouser set name=? where name=?", new String[]{newUsername,currentUsername});
+		}else throw new UserNotFoundException(currentUsername + " does not exists");
 	}
 
 }

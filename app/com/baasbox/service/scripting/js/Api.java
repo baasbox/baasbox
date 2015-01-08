@@ -55,7 +55,7 @@ public class Api {
             }
             JsonNode exec = CommandRegistry.execute(node,callback);
             String res = exec== null?null:exec.toString();
-            Logger.info("Command result: "+res);
+            Logger.debug("Command result: "+res);
             return res;
         } catch (IOException e) {
             Logger.error("IoError "+e.getMessage(),e);

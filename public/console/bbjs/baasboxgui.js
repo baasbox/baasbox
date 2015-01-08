@@ -1434,6 +1434,12 @@ function getActionButton(action, actionType,parameters){
 	var tooltip="";
 
 	switch (action)	{
+	case "acl":
+		iconType="icon-user";
+        classType="btn-warning";
+        labelName="ACL";
+        tooltip="Change ACL..."
+		break;
     case "followers":
         iconType="icon-user";
         classType="btn-info";

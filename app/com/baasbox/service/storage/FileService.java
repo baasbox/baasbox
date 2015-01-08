@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.baasbox.configuration.ImagesConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.dao.FileDao;
@@ -41,6 +41,8 @@ import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.exception.AclNotValidException;
+import com.baasbox.exception.AclNotValidException.Type;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.FileTooBigException;
@@ -99,6 +101,14 @@ public class FileService {
 			}catch(JsonProcessingException e){
 				throw e;
 			}
+			setAcl(doc, aclJson);
+			return doc;
+		}//createFile with permission
+		
+		private static void setAcl(ODocument doc, JsonNode aclJson)
+				throws UserNotFoundException, RoleNotFoundException,
+				FileNotFoundException, SqlInjectionException,
+				InvalidModelException, AclNotValidException {
 			Iterator<Entry<String, JsonNode>> itAction = aclJson.fields(); //read,update,delete
 			while (itAction.hasNext()){
 				Entry<String, JsonNode> nextAction = itAction.next();
@@ -112,7 +122,8 @@ public class FileService {
 					actionPermission=Permissions.ALLOW_DELETE;
 				else if (action.equalsIgnoreCase("all"))
 					actionPermission=Permissions.FULL_ACCESS;
-				
+				if (actionPermission==null) throw new AclNotValidException(Type.ACL_KEY_NOT_VALID, "'"+action+"' is not a valid permission to set. Allowed ones are: read, update, delete, all");
+					
 				Iterator<Entry<String, JsonNode>> itUsersRoles = nextAction.getValue().fields();
 
 				while (itUsersRoles.hasNext()){
@@ -128,8 +139,7 @@ public class FileService {
 					 }
 				}
 			}//set permissions
-			return doc;
-		}//createFile with permission
+		}
 		
 		
 		public static ODocument createFile(String fileName,String data,String contentType, long contentLength , InputStream content) throws Throwable{
