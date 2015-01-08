@@ -19,10 +19,9 @@
 package com.baasbox.controllers;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.controllers.actions.filters.*;
 import com.baasbox.dao.exception.ScriptException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
@@ -38,6 +37,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
 import play.Play;
+import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -54,35 +54,34 @@ import java.util.Map;
  */
 public class ScriptInvoker extends Controller{
 
-    //todo async
 
-    @With({UserOrAnonymousCredentialsFilter.class,
-           ConnectToDBFilter.class,
+    @With({UserOrAnonymousCredentialsFilterAsync.class,
+           ConnectToDBFilterAsync.class,
            ExtractQueryParameters.class})
-    public static Result invoke(String name,String path){
-        ODocument serv = null;
-        if(request().body().asText()!=null && request().body().isMaxSizeExceeded())//fixes issue_561
-        	return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"),"128KB"));
-        try {
-            serv = ScriptingService.get(name, true,true);
-        } catch (ScriptException e) {
-           return status(503,"Script is in an invalid state");
-        }
-        if (serv == null){
-            return notFound("Script does not exists");
-        }
-        JsonNode reqAsJson = serializeRequest(path, request());
+    public static F.Promise<Result> invoke(String name,String path){
+        return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()-> {
 
-        try {
-            ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
-            return status(result.status(),result.content());
-        } catch (ScriptEvalException e) {
-            Logger.error("Error evaluating script",e);
-            return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
-        }
-//        catch (IllegalStateException e){
-//            return internalServerError("script returned invalid json response");
-//        }
+            ODocument serv = null;
+            if (request().body().asText() != null && request().body().isMaxSizeExceeded())//fixes issue_561
+                return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"), "128KB"));
+            try {
+                serv = ScriptingService.get(name, true, true);
+            } catch (ScriptException e) {
+                return status(503, "Script is in an invalid state");
+            }
+            if (serv == null) {
+                return notFound("Script does not exists");
+            }
+            JsonNode reqAsJson = serializeRequest(path, request());
+
+            try {
+                ScriptResult result = ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
+                return status(result.status(), result.content());
+            } catch (ScriptEvalException e) {
+                Logger.error("Error evaluating script", e);
+                return internalServerError("script failure " + ExceptionUtils.getFullStackTrace(e));
+            }
+        }));
     }
 
     public static JsonNode serializeRequest(String path,Http.Request request){
