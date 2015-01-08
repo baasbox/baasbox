@@ -23,7 +23,7 @@ import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.service.webservices.HttpClientService;
 import com.baasbox.service.scripting.base.*;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -34,7 +34,6 @@ import play.Logger;
 import play.libs.EventSource;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -102,7 +101,7 @@ public class ScriptingService {
             Optional<ODocument> storage1 = Optional.ofNullable(storage);
 
             JsonNode current = storage1.map(ODocument::toJSON)
-                    .map(Json.mapper()::readTreeOrMissing)
+                    .map(BBJson.mapper()::readTreeOrMissing)
                     .orElse(NullNode.getInstance());
             if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
 
@@ -402,7 +401,7 @@ public class ScriptingService {
 
     private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
         try {
-            ObjectNode node = Json.mapper().createObjectNode();
+            ObjectNode node = BBJson.mapper().createObjectNode();
             WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
 
             int status = resp.getStatus();

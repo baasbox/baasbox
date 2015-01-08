@@ -27,9 +27,8 @@ import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -38,8 +37,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
-import play.libs.EventSource;
-import play.libs.F;
+import play.Play;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -94,14 +92,14 @@ public class ScriptInvoker extends Controller{
         String method = request.method();
         Map<String, String[]> query = request.queryString();
         path=path==null?"/":path;
-        ObjectNode reqJson = Json.mapper().createObjectNode();
+        ObjectNode reqJson = BBJson.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
 
         if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE),"application/json")){
 	        String textBody = body==null?null:body.asText();
 	        DynamicForm requestData = Form.form().bindFromRequest();
-	        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
+	        JsonNode jsonBody = BBJson.mapper().valueToTree(requestData.data());
 	        if(textBody == null)
 	            reqJson.put("body",jsonBody);
 	        else
@@ -110,9 +108,9 @@ public class ScriptInvoker extends Controller{
         	reqJson.put("body",body.asJson());
         }
         
-        JsonNode queryJson = Json.mapper().valueToTree(query);
+        JsonNode queryJson = BBJson.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
-        JsonNode headersJson = Json.mapper().valueToTree(headers);
+        JsonNode headersJson = BBJson.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
         return reqJson;
     }

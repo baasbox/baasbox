@@ -23,11 +23,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.baasbox.controllers.actions.filters.*;
 import com.baasbox.exception.*;
 
+import com.baasbox.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -50,7 +50,6 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.ResetPwdDao;
-import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.ResetPasswordException;
@@ -65,12 +64,7 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.user.FriendShipService;
-import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
-import com.baasbox.util.IQueryParametersKeys;
-import com.baasbox.util.JSONFormats;
-import com.baasbox.util.QueryParams;
-import com.baasbox.util.Util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,8 +73,6 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -307,12 +299,7 @@ public class User extends Controller {
 	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> exists(String username){
 		return F.Promise.pure(status(NOT_IMPLEMENTED));
-		/*
-		  boolean result = true;//UserService.exists(username);
-		  return ok ("{\"response\": \""+result+"\"}");
-		 */
 	}
-
 
 	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> resetPasswordStep1(String username){
@@ -323,14 +310,13 @@ public class User extends Controller {
 			return F.Promise.pure(badRequest("The 'username' field is missing in the URL, please check the documentation"));
 		}
 
-
-		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+		return  F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 			ODocument user;
 
 			if (!UserService.exists(username)) {
 				return badRequest("Username " + username + " not found!");
 			}
-			QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
+			QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String[]{username});
 
 			try {
 				List<ODocument> users = UserService.getUsers(criteria);
@@ -342,8 +328,8 @@ public class User extends Controller {
 
 				// if (UserService.checkResetPwdAlreadyRequested(username)) return badRequest("You have already requested a reset of your password.");
 
-				String appCode = (String) Http.Context.current.get().args.get("appcode");
-				UserService.sendResetPwdMail(appCode,user);
+				String appCode = (String) Context.current.get().args.get("appcode");
+				UserService.sendResetPwdMail(appCode, user);
 			} catch (PasswordRecoveryException e) {
 				Logger.warn("resetPasswordStep1", e);
 				return badRequest(e.getMessage());
@@ -353,7 +339,7 @@ public class User extends Controller {
 			}
 			if (Logger.isTraceEnabled()) Logger.trace("Method End");
 			return ok();
-				}));
+		}));
 
 	}
 
@@ -770,7 +756,7 @@ public class User extends Controller {
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
-				ObjectMapper mapper =com.baasbox.service.scripting.js.Json.mapper();
+				ObjectMapper mapper = BBJson.mapper();
 				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
 				JsonNode jn = mapper.readTree(user);
 				return ok(jn);
