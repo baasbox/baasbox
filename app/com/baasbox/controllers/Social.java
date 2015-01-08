@@ -26,8 +26,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.scribe.model.Token;
 
 import play.Logger;
@@ -48,6 +50,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
@@ -176,7 +179,7 @@ public class Social extends Controller{
 				internalServerError("unable to login with "+socialNetwork+" : "+e.getMessage());
 			}
 			
-			String password = generateUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
+			String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 			
 			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
@@ -191,7 +194,7 @@ public class Social extends Controller{
 			String username = UUID.randomUUID().toString();
 			Date signupDate = new Date();
 			try{
-				String password = generateUserPassword(username, signupDate);
+				String password = UserService.generateFakeUserPassword(username, signupDate);
 				JsonNode privateData = null;
 				if(result.getAdditionalData()!=null && !result.getAdditionalData().isEmpty()){
 					privateData = Json.toJson(result.getAdditionalData());
@@ -252,9 +255,10 @@ public class Social extends Controller{
 	 * Otherwise a 200 code will be returned
 	 * @param socialNetwork
 	 * @return
+	 * @throws SqlInjectionException 
 	 */
 	@With ({UserCredentialWrapFilter.class, ConnectToDBFilter.class})
-	public static Result unlink(String socialNetwork){
+	public static Result unlink(String socialNetwork) throws SqlInjectionException{
 			ODocument user = null;
 			try{
 				user = UserService.getCurrentUser();
@@ -265,7 +269,7 @@ public class Social extends Controller{
 			if(logins==null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork)==null){
 				return notFound("User's account is not linked with "+ StringUtils.capitalize(socialNetwork));
 			}else{
-				boolean generated = (Boolean)user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.GENERATED_USERNAME);
+				boolean generated = UserService.isSocialAccount(DbHelper.getCurrentUserNameFromConnection());
 				if(logins.size()==1 && generated){
 					return internalServerError("User's account can't be unlinked.");
 				}else{
@@ -338,11 +342,6 @@ public class Social extends Controller{
 	}
 	
 
-	private static String generateUserPassword(String username,Date signupDate){
-		String bbid=Internal.INSTALLATION_ID.getValueAsString();
-		String password = Crypto.sign(username+new SimpleDateFormat("ddMMyyyyHHmmss").format(signupDate)+bbid);
-		return password;
-	}
 
 
 }
