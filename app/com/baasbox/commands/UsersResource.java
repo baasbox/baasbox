@@ -220,7 +220,7 @@ class UsersResource extends BaseRestResource {
     protected JsonNode put(JsonNode command) throws CommandException {
         String username = getUsername(command);
         JsonNode params = command.get(ScriptCommand.PARAMS);
-        String role = params.get("role")==null?params.get("role").asText():null;
+        String role = params.get("role")!=null?params.get("role").asText():null;
         JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
         JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
         JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
