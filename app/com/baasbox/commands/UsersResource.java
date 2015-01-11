@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandNotImplementedException;
@@ -76,7 +78,9 @@ class UsersResource extends BaseRestResource {
             }
         }).put("follow", this::friendshipUpdate)
           .put("followers",getFriends(false))
-          .put("following",getFriends(true));
+          .put("following",getFriends(true))
+          .put("changeUsername", this::changeUsername)
+          .put("changePassword", this::changePassword);
     }
 
     private ScriptCommand getFriends(boolean following){
@@ -180,7 +184,35 @@ class UsersResource extends BaseRestResource {
         }
         return BooleanNode.getTrue();
     }
+    
+    protected JsonNode changeUsername(JsonNode command,JsonCallback unused) throws CommandException {
+    	String username = getUsername(command);
+    	JsonNode newUsernameJson = getParamField(command, "newUsername");
+    	if (newUsernameJson==null || !newUsernameJson.isTextual()) throw new CommandExecutionException(command,"invalid new username: "+newUsernameJson);
+    	String newUsername=newUsernameJson.asText();
+    	try {
+			UserService.changeUsername(username, newUsername);
+		} catch (UserNotFoundException | OpenTransactionException
+				| SqlInjectionException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+    	return NullNode.getInstance();
+    }
 
+    protected JsonNode changePassword(JsonNode command,JsonCallback unused) throws CommandException {
+    	String username = getUsername(command);
+    	JsonNode newPasswordJson = getParamField(command, "newPassword");
+    	if (newPasswordJson==null || !newPasswordJson.isTextual()) throw new CommandExecutionException(command,"invalid new password: "+newPasswordJson);
+    	String newPassword=newPasswordJson.asText();
+    	try {
+			UserService.changePassword(username, newPassword);
+		} catch (UserNotFoundException | OpenTransactionException
+				| SqlInjectionException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+    	return NullNode.getInstance();
+    }
+    
     private String getUsername(JsonNode command) throws CommandException {
         JsonNode params = command.get(ScriptCommand.PARAMS);
         JsonNode id = params.get("username");
