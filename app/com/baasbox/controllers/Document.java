@@ -284,10 +284,10 @@ public class Document extends Controller {
 			ODocument document=null;
 			try{
 				JsonNode bodyJson= body.asJson();
-				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
+				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
+				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be a JSON object");
 				if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
 				if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
-				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
 				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
