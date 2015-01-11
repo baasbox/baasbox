@@ -2257,20 +2257,25 @@ function tryToLogin(user, pass,appCode){
 	BBRoutes.com.baasbox.controllers.User.login().ajax({
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
-			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-			$('#password').val('');
-			//console.debug("login success");
-			//console.debug("data received: ");
-			//console.debug(data);
-			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-			//refresh the sessiontoken every 5 minutes
-			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
-			var scope=$("#loggedIn").scope();
-			scope.$apply(function(){
-				scope.loggedIn=true;
-			});
-			sessionStorage.up ="yep";
-			callMenu("#dashboard");
+			//issue #579 - Hang on "Loading" spinner for non-admin login
+			if (data.data.user.roles[0].name!=="administrator"){
+				$("#errorLogin").removeClass("hide");
+			}else{
+				sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+				$('#password').val('');
+				//console.debug("login success");
+				//console.debug("data received: ");
+				//console.debug(data);
+				//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+				//refresh the sessiontoken every 5 minutes
+				refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
+				var scope=$("#loggedIn").scope();
+				scope.$apply(function(){
+					scope.loggedIn=true;
+				});
+				sessionStorage.up ="yep";
+				callMenu("#dashboard");
+		   }
 		},
 		error: function() {
 			$("#errorLogin").removeClass("hide");
