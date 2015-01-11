@@ -337,7 +337,7 @@ Users.save = function(uzr){
             upd.role = uzr.role;
         } else {
         	if (uzr.role!=null) throw new TypeError("Only administrators can update a user role");
-        	if (uzr.username!=null) throw new TypeError("Users can update only their own profiles");
+        	if (uzr.username!=null && uzr.username!==context.userName) throw new TypeError("Users can update only their own profiles");
             upd.username = context.userName;
         }
 
@@ -349,6 +349,40 @@ Users.save = function(uzr){
     } else {
         throw new TypeError("you must supply a user to save");
     }
+};
+
+/*
+ * Users.changePassword(username,newpass);
+ */
+Users.changePassword = function(username,password){
+	if (arguments.length!=2) throw new TypeError("Users.changePassword() needs 2 arguments");
+	if(!isAdmin() && context.userName!=username) {
+		throw new TypeError("You have to be an administrator to change someone else password");
+	} 
+    return _command({resource: 'users',
+        name: 'changePassword',
+        params: {
+        	username:username,
+        	newPassword:password
+        }
+    });
+};
+
+/*
+ * Users.changeUsername(username,newUsername);
+ */
+Users.changeUsername = function(username,newUsername){
+	if (arguments.length!=2) throw new TypeError("Users.changeUsername() needs 2 arguments");
+	if(!isAdmin() && context.userName!=username) {
+		throw new TypeError("You have to be an administrator to change someone else username");
+	} 
+    return _command({resource: 'users',
+        name: 'changeUsername',
+        params: {
+        	username:username,
+        	newUsername:newUsername
+        }
+    });
 };
 //-------- END Users --------
 
