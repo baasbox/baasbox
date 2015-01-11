@@ -380,6 +380,24 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		);		
 	}
 	
+	//#615 - NPE when creating a document without a body
+	@Test
+	public void testEmptyBody(){
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 	{
+				public void run() {
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();		
+					FakeRequest request=new FakeRequest("POST",getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					Result result = routeAndCall(request);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.revoke", Status.BAD_REQUEST, "The body payload cannot be empty.", true);
+				}
+			});					
+	}
+	
 	@Test
 	public void testServerCMDDocument()
 	{
@@ -656,4 +674,6 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 		
 		return sRet;
 	}
+	
+	
 }
