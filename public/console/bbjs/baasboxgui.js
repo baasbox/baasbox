@@ -1523,7 +1523,7 @@ function setBradCrumb(type)
 		sBradCrumb = "Plugins";
 		break;
 	case "#permissions":
-		sBradCrumb = "Api Access";
+		sBradCrumb = "REST API Access";
 		break;		
 	case "#push_conf":
 		sBradCrumb = "Push Settings";
