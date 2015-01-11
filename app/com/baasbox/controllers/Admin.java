@@ -365,8 +365,6 @@ public class Admin extends Controller {
 		JsonNode bodyJson= body.asJson();
 		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
 
-		if (!bodyJson.has("role"))
-			return badRequest("The 'role' field is missing");	
 
 		//extract fields
 		String missingField = null;
@@ -399,7 +397,9 @@ public class Admin extends Controller {
 		}catch(Exception npe){
 			return badRequest("The '"+ missingField+"' field is missing");
 		}
-		String role=(String)  bodyJson.findValuesAsText("role").get(0);
+		String role=null;
+		if (bodyJson.has("role"))
+			role= (String)  bodyJson.findValuesAsText("role").get(0);
 
 		if (privateAttributes.has("email")) {
 			//check if email address is valid

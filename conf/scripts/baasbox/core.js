@@ -26,7 +26,7 @@
  * Baasbox server version
  * @type {string}
  */
-exports.version = '0.9.0';
+exports.version = '0.9.2';
 
 
 //-------- WS (Remote API calls) --------
@@ -331,9 +331,13 @@ Users.save = function(uzr){
         upd.visibleByTheUser = uzr.visibleByTheUser;
 
         if(isAdmin()) {
+        	//admin can update any user
             upd.username = uzr.username;
-
+            //admin can update the role as well
+            upd.role = uzr.role;
         } else {
+        	if (uzr.role!=null) throw new TypeError("Only administrators can update a user role");
+        	if (uzr.username!=null) throw new TypeError("Users can update only their own profiles");
             upd.username = context.userName;
         }
 
