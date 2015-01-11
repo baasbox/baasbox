@@ -84,7 +84,7 @@ class DBResource extends Resource {
     }
 
     private static JsonNode isConnectedAsAdmin(JsonNode command,JsonCallback callback) throws CommandException {
-        return BooleanNode.valueOf(DbHelper.isConnectedAsAdmin(true));
+        return BooleanNode.valueOf(DbHelper.isConnectedAsAdmin(false));
     }
 
 //    private static JsonNode runInTransaction(JsonNode command,JsonCallback callback) throws CommandException{

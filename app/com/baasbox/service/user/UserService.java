@@ -442,10 +442,7 @@ public class UserService {
 			JsonNode privateAttributes, JsonNode friendsAttributes,
 			JsonNode appUsersAttributes) throws InvalidJsonException,Exception{
 		try{
-			ORole newORole=RoleDao.getRole(role);
-			if (newORole==null) throw new InvalidParameterException(role + " is not a role");
-			if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
-			ORID newRole=newORole.getDocument().getIdentity();
+			DbHelper.requestTransaction();
 			UserDao udao=UserDao.getInstance();
 			ODocument profile=udao.getByUserName(username);
 			if (profile==null) throw new InvalidParameterException(username + " is not a user");
@@ -461,19 +458,28 @@ public class UserService {
 					break;
 				}
 			}
-			ORole oldORole=RoleDao.getRole(oldRole);
+			
 			//TODO: update role
-			OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
-			ouser.getRoles().remove(oldORole);
-			ouser.addRole(newORole);
-			ouser.save();
+			if (role!=null){
+				ORole newORole=RoleDao.getRole(role);
+				if (newORole==null) throw new InvalidParameterException(role + " is not a role");
+				if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
+				ORID newRole=newORole.getDocument().getIdentity();
+				ORole oldORole=RoleDao.getRole(oldRole);
+				OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
+				ouser.getRoles().remove(oldORole);
+				ouser.addRole(newORole);
+				ouser.save();
+			}
 			profile.save();
 			profile.reload();
-
+			DbHelper.commitTransaction();
 			return profile;
 		}catch (OSerializationException e){
+			DbHelper.rollbackTransaction();
 			throw new InvalidJsonException(e);
 		}catch (Exception e){
+			DbHelper.rollbackTransaction();
 			throw e;
 		}
 	}//updateProfile with role
