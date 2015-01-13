@@ -95,19 +95,22 @@ public class ScriptInvoker extends Controller{
         ObjectNode reqJson = Json.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
+        reqJson.put("remote",request.remoteAddress());
 
-        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE),"application/json")){
-	        String textBody = body==null?null:body.asText();
-	        DynamicForm requestData = Form.form().bindFromRequest();
-	        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
-	        if(textBody == null)
-	            reqJson.put("body",jsonBody);
-	        else
-	            reqJson.put("body",textBody);
-        }else{
-        	reqJson.put("body",body.asJson());
+        //todo this doesn't work with query strings
+        if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+            String textBody = body == null ? null : body.asText();
+            DynamicForm requestData = Form.form().bindFromRequest();
+            JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
+            if (textBody == null) {
+                reqJson.put("body", jsonBody);
+            } else {
+                reqJson.put("body", textBody);
+            }
+        } else {
+            reqJson.put("body", body.asJson());
         }
-        
+
         JsonNode queryJson = Json.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
