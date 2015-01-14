@@ -173,6 +173,7 @@ function ScriptsController($scope,prompt){
 	$scope.storageFormatted="";
 
 	$scope.logEnabled = false;
+	$scope.logContent="";
 	$scope.logs = [];
 	$scope.maxLogSize = 40;
 
@@ -302,11 +303,17 @@ function ScriptsController($scope,prompt){
 		return source;
 	};
 
+	$scope.clearLogs = function(){
+		$scope.logContent ="";
+		$scope.logs.splice(0,$scope.logs.length);
+	};
+
 	$scope.toggleLogs = function(){
 		if($scope.logEnabled) {
 			$scope.logEnabled = false;
 			evtSource.close();
 			evtSource =null;
+			$scope.logContent = "";
 			$scope.logs.splice(0,$scope.logs.length);
 		} else{
 			$scope.logEnabled = true;
@@ -319,8 +326,13 @@ function ScriptsController($scope,prompt){
 				$scope.$apply(function(){
 					console.log(data);
 					$scope.logs.unshift(data);
-					if($scope.logs.length<$scope.maxLogSize) return;
-					Array.prototype.splice.call($scope.logs,$scope.maxLogSize,($scope.logs.length-$scope.maxLogSize));
+					if($scope.logs.length>=$scope.maxLogSize) {
+						Array.prototype.splice.call($scope.logs, $scope.maxLogSize, ($scope.logs.length - $scope.maxLogSize));
+					}
+					$scope.logContent = "";
+					$scope.logs.forEach(function(e){
+						$scope.logContent+="" + e.date+ " ["+ e.script+"]: "+ e.message+"\n";
+					});
 				})
 			});
 		}
