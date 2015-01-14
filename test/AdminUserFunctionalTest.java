@@ -224,7 +224,8 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 						PUT,
 						"/adminUserUpdateNoRolePayload.json"
 					);
-					assertServer("testServerUpdateUserNoRole", Status.BAD_REQUEST, "The 'role' field is missing", true);
+					//since #602 this is a valid operation!
+					assertServer("testServerUpdateUserNoRole", Status.OK, null, false);
 				}
 	        }
 		);
@@ -252,7 +253,7 @@ public class AdminUserFunctionalTest extends AbstractAdminTest
 						PUT,
 						"/adminUserUpdateNotExistentRole.json"
 					);
-					assertServer("testServerUpdateUserNoRole", Status.BAD_REQUEST, " is not a role", true);
+					assertServer("testServerUpdateUserNotExistentRole", Status.BAD_REQUEST, " is not a role", true);
 				}
 	        }
 		);

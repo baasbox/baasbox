@@ -41,6 +41,7 @@ import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import play.mvc.Http.RequestBody;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -629,30 +630,52 @@ public class User extends Controller {
 	@With ({NoUserCredentialWrapFilter.class})
 	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
 	public static Result login() throws SqlInjectionException, JsonProcessingException, IOException {
-		Map<String, String[]> body = request().body().asFormUrlEncoded();
-		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded?");	
 		String username="";
 		String password="";
 		String appcode="";
 		String loginData=null;
-		if(body.get("username")==null) return badRequest("The 'username' field is missing");
-		else username=body.get("username")[0];
-		if(body.get("password")==null) return badRequest("The 'password' field is missing");
-		else password=body.get("password")[0];
-		if(body.get("appcode")==null) return badRequest("The 'appcode' field is missing");
-		else appcode=body.get("appcode")[0];
-		if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-		if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-		if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
-		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
-				||
-				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
-				) return forbidden(username + " cannot login");
-
-		if (body.get("login_data")!=null)
-			loginData=body.get("login_data")[0];
-		if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
-
+		
+		RequestBody body = request().body();
+		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded or application/json?");
+		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
+		if (bodyUrlEncoded!=null){
+			if(bodyUrlEncoded.get("username")==null) return badRequest("The 'username' field is missing");
+			else username=bodyUrlEncoded.get("username")[0];
+			if(bodyUrlEncoded.get("password")==null) return badRequest("The 'password' field is missing");
+			else password=bodyUrlEncoded.get("password")[0];
+			if(bodyUrlEncoded.get("appcode")==null) return badRequest("The 'appcode' field is missing");
+			else appcode=bodyUrlEncoded.get("appcode")[0];
+			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
+			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
+			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					||
+					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					) return forbidden(username + " cannot login");
+	
+			if (bodyUrlEncoded.get("login_data")!=null)
+				loginData=bodyUrlEncoded.get("login_data")[0];
+			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
+		}else{
+			JsonNode bodyJson = body.asJson();
+			if(bodyJson.get("username")==null) return badRequest("The 'username' field is missing");
+			else username=bodyJson.get("username").asText();
+			if(bodyJson.get("password")==null) return badRequest("The 'password' field is missing");
+			else password=bodyJson.get("password").asText();
+			if(bodyJson.get("appcode")==null) return badRequest("The 'appcode' field is missing");
+			else appcode=bodyJson.get("appcode").asText();
+			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
+			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
+			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					||
+					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					) return forbidden(username + " cannot login");
+	
+			if (bodyJson.get("login_data")!=null)
+				loginData=bodyJson.get("login_data").asText();
+			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);	
+		}
 		/* other useful parameter to receive and to store...*/		  	  
 		//validate user credentials
 		ODatabaseRecordTx db=null;
