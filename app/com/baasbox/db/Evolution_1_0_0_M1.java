@@ -14,8 +14,8 @@ import play.Logger;
 /**
  * Created by eto on 10/23/14.
  */
-public class Evolution_0_9_2 implements IEvolution {
-    private String version = "0.9.2";
+public class Evolution_1_0_0_M1 implements IEvolution {
+    private String version = "1.0.0-M1";
 
     @Override
     public String getFinalVersion() {

@@ -77,7 +77,7 @@ public class Evolutions {
 		me.put(ev.getFinalVersion(), ev);
 		ev = (IEvolution)new Evolution_0_9_0();
 		me.put(ev.getFinalVersion(),ev);
-		ev = (IEvolution)new Evolution_0_9_2();
+		ev = (IEvolution)new Evolution_1_0_0_M1();
 		me.put(ev.getFinalVersion(),ev);
 	}
 	
