@@ -6,14 +6,13 @@ import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.ScriptCommand;
 import com.baasbox.commands.ScriptCommands;
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.service.user.UserService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -32,12 +31,12 @@ public class ScriptDocumentCommandTest {
 
     private final static String TEST_COLLECTION = "script_command_test_coll_"+UUID.randomUUID();
     private static volatile List<String> sGenIds;
-    private static final Json.ObjectMapperExt MAPPER = Json.mapper();
+    private static final BBJson.ObjectMapperExt MAPPER = BBJson.mapper();
 
 
     private static List<String> createRandomDocuments(int howMany){
         Random rand = new Random();
-        Json.ObjectMapperExt mapper = Json.mapper();
+        BBJson.ObjectMapperExt mapper = BBJson.mapper();
         return IntStream.rangeClosed(0, howMany - 1).mapToObj((x) -> {
             ObjectNode node = mapper.createObjectNode();
             node.put("generated", "generated-" + rand.nextInt());

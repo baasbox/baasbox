@@ -14,7 +14,7 @@ import play.Logger;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -35,7 +35,7 @@ public class TestGrantInTransaction {
 
                             DbHelper.open("1234567890", USER, USER);
                             ODocument coll = CollectionService.create(COLL);
-                            ObjectNode node = Json.mapper().createObjectNode();
+                            ObjectNode node = BBJson.mapper().createObjectNode();
                             node.put("ciao","ciao");
                             DbHelper.requestTransaction();
                             ODocument doc = DocumentService.create(COLL, node);
