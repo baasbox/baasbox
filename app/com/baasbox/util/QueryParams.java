@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baasbox.BBConfiguration;
@@ -261,7 +263,7 @@ public class QueryParams implements IQueryParametersKeys{
                 int idx = 0;
                 for (JsonNode n: val){
                     String s = n==null?null:n.toString();
-                    ary[idx] = s;
+                    ary[idx++] = s;
                 }
                 query.put(k,ary);
             } else {
@@ -269,7 +271,6 @@ public class QueryParams implements IQueryParametersKeys{
                 query.put(k,o);
             }
         }
-
         return getParamsFromQueryString(query);
     }
 
@@ -357,6 +358,7 @@ public class QueryParams implements IQueryParametersKeys{
 		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params,count,skip);
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		
 		return qryp;
 		
 	}
