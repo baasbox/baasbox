@@ -139,7 +139,7 @@ public class WrapResponse {
 		String callId = request.getQueryString("call_id");
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
-	
+
 	private void setServerTime(Http.Response response) {
 		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
 		String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(date);

@@ -77,7 +77,8 @@ class ScriptsResource extends Resource {
             idOfTheModule =command.get(ScriptCommand.ID);
         }
         ObjectNode message = Json.mapper().createObjectNode();
-        message.put("message",par);
+        message.put("message",par.get("message"));
+        message.put("args",par.get("args"));
         message.put("script",idOfTheModule);
         message.put("date",SDF.format(new Date()));
         int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
