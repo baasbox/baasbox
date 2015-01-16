@@ -116,14 +116,19 @@ http().delete(function(req){
 						<h2><i class="fa fa-list-ul fa-fw black"></i><span>Plugins Log - (<span ng-show="!logEnabled">Not</span> Enabled)</span></h2>
 						<div class="box-icon">
 							<a href="#" id="btnToggleLogs" ng-click="toggleLogs()" title="Show/Hide logger" class="btn btn-setting btn-round"><i class="icon-eye-open"></i></a>
+							<a href="#" id="btnClearLogs" ng-click="clearLogs()" title="Clear" class="btn btn-setting btn-round"><i class="icon-trash"></i></a>
 						</div>
 					</div>
 					<div class="box-content">
-						<ul ng-show="logEnabled" class="dashboard-list">
+						<textarea ng-show="logEnabled" ng-bind="logContent" readonly="readonly" class="log-area" show-tail="show-tail">
+
+						</textarea>
+						<!--<ul ng-show="logEnabled" class="dashboard-list">
 							<li ng-repeat="line in logs" class="logLine">
 								<span>{{line.date}}</span>&nbsp;<span>[{{line.script}}]:</span>&nbsp;<pre>{{line.message}}</pre>
 							</li>
 						</ul>
+						-->
 					</div>
 				</div>
 			</div>

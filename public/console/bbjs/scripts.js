@@ -173,8 +173,9 @@ function ScriptsController($scope,prompt){
 	$scope.storageFormatted="";
 
 	$scope.logEnabled = false;
+	$scope.logContent="";
 	$scope.logs = [];
-	$scope.maxLogSize = 40;
+	$scope.maxLogSize = 800;
 
 
 	$scope.newScript = function(){
@@ -302,11 +303,55 @@ function ScriptsController($scope,prompt){
 		return source;
 	};
 
+	$scope.clearLogs = function(){
+		$scope.logContent ="";
+		$scope.logs.splice(0,$scope.logs.length);
+	};
+
+	var _formatLogs = function(msg,args) {
+		if (msg.search(/%[dios]/)!=-1) {
+			var pos = 0;
+			return msg.replace(/%([dios])/g,function(match,sym){
+				if (pos>=args.length){
+					pos++;
+					return match;
+				} else {
+					var elem=args[pos];
+					pos++;
+					if(sym==='d'){
+						return (typeof elem === 'number')?elem.toString():"NaN";
+					} else if(sym==='i'){
+						return (typeof elem === 'number')?elem.toFixed():'NaN';
+					} else if(sym==='o'){
+						if (typeof elem === 'string'){
+							return elem;
+						} else {
+							return (elem === undefined) ? 'undefined' : JSON.stringify(elem);
+						}
+					} else if(sym==='s'){
+						if (elem === undefined){
+							return 'undefined';
+						} else if(elem === null){
+							return 'null';
+						} else {
+							return elem.toString();
+						}
+					}
+				}
+			});
+		} else {
+			return msg +' '+Array.prototype.join.call(args.map(function (x){
+					return (typeof x==='string')?x:JSON.stringify(x);
+			}));
+		}
+	};
+
 	$scope.toggleLogs = function(){
 		if($scope.logEnabled) {
 			$scope.logEnabled = false;
 			evtSource.close();
 			evtSource =null;
+			$scope.logContent = "";
 			$scope.logs.splice(0,$scope.logs.length);
 		} else{
 			$scope.logEnabled = true;
@@ -318,9 +363,32 @@ function ScriptsController($scope,prompt){
 
 				$scope.$apply(function(){
 					console.log(data);
-					$scope.logs.unshift(data);
-					if($scope.logs.length<$scope.maxLogSize) return;
-					Array.prototype.splice.call($scope.logs,$scope.maxLogSize,($scope.logs.length-$scope.maxLogSize));
+					$scope.logs.push(data);
+					if($scope.logs.length>=$scope.maxLogSize) {
+						Array.prototype.splice.call($scope.logs,0, ($scope.logs.length - $scope.maxLogSize));
+					}
+					$scope.logContent = "";
+					$scope.logs.forEach(function(e){
+						var toPrint;
+						if (e.args.length === 0) {
+							if (typeof e.message === 'string'){
+								toPrint = e.message;
+							} else {
+								toPrint =JSON.stringify(e.message);
+							}
+						} else {
+							if (typeof e.message === 'string'){
+							   toPrint = _formatLogs(e.message, e.args);
+							} else {
+
+								toPrint = e.message+" "+Array.prototype.join.call(e.args.map(function (x){
+									return typeof (x === 'string')?x:JSON.stringify(x);
+								}),' ');
+							}
+						}
+						$scope.logContent += "" + e.date + " [" + e.script + "]: " + toPrint + "\n";
+
+					});
 				})
 			});
 		}
