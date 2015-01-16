@@ -68,17 +68,17 @@ WS.delete = function(url,opts){
 
 
 
-var log = function(msg){
-    var message;
-    if(typeof msg === 'string'){
-        message = msg;
-    } else {
-        message = JSON.stringify(msg);
+var log = function(){
+    if (arguments.length < 1){
+        return;
     }
+
+    var message = arguments[0];
+    var args = Array.prototype.slice.call(arguments,1);
 
     _command({resource: 'script',
               name: 'log',
-              params: message});
+              params: {message: message,args:args}});
 
 };
 
