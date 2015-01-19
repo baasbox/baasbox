@@ -481,7 +481,7 @@ function openChangePasswordUserForm(changePassword){
     $("#userTitle").text("Change password");
     $("#txtUserName").addClass("disabled");
     $("#txtUserName").prop('disabled', true);
-    //$(".groupUserPwd").removeClass("hide");
+    $(".groupUserPwd").removeClass("hide");
     for(i=0;i<userDataArray.length;i++)
     {
         if(userDataArray[i].user.name == changePassword)
