@@ -37,6 +37,7 @@ import play.Logger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
+import play.filters.gzip.GzipFilter;
 import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
@@ -350,7 +351,7 @@ public class Global extends GlobalSettings {
 	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
 		
-		return new Class[]{com.baasbox.filters.LoggingFilter.class};
+		return new Class[]{GzipFilter.class,com.baasbox.filters.LoggingFilter.class};
 	}
 
 

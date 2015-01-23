@@ -3,16 +3,20 @@ package com.baasbox.commands;
 import java.util.Map;
 import java.util.UUID;
 
+import play.Logger;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.SwitchUserContextException;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
@@ -74,17 +78,24 @@ class DBResource extends Resource {
     }
 
     private static JsonNode switchUser(JsonNode command,JsonCallback callback) throws CommandException {
-        if (DbHelper.isInTransaction()) throw new CommandExecutionException(command,"Cannot switch to admin during a transaction");
         try {
             DbHelper.reconnectAsAdmin();
             return callback.call(NullNode.getInstance());
-        } finally {
-            DbHelper.reconnectAsAuthenticatedUser();
+        }catch (SwitchUserContextException e){
+        	throw new CommandExecutionException(command,"Cannot switch to admin! Did you leave an open transaction?");
+    	}finally {
+    		try{
+    			DbHelper.reconnectAsAuthenticatedUser();
+    		}catch(OSecurityAccessException e){
+    			//if the script has changed username or password of the actual user, her credentials are not valid anymore and the db connection is lost
+    			Logger.warn("Database connection is not available inside a Plugin Script");
+    			//swallow
+    		}
         }
     }
 
     private static JsonNode isConnectedAsAdmin(JsonNode command,JsonCallback callback) throws CommandException {
-        return BooleanNode.valueOf(DbHelper.isConnectedAsAdmin(true));
+        return BooleanNode.valueOf(DbHelper.isConnectedAsAdmin(false));
     }
 
 //    private static JsonNode runInTransaction(JsonNode command,JsonCallback callback) throws CommandException{

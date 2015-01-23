@@ -21,7 +21,7 @@ package com.baasbox.dao.exception;
 
 public class InvalidCriteriaException extends SqlInjectionException {
 
-	private final static String invalidCriteriaMessage="Invalid criteria. Please check the syntax of you 'where', 'orderBy' and recordsPerPage (cannot be 0) clauses. Hint: if you used < or > operators, put spaces before and after them";
+	private final static String invalidCriteriaMessage="Invalid criteria. Please check the syntax of your 'where', 'orderBy' and recordsPerPage (cannot be 0) clauses. Hint: if you used < or > operators, put spaces before and after them";
 	public InvalidCriteriaException() {
 		// TODO Auto-generated constructor stub
 	}

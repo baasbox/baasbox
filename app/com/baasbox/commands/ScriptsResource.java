@@ -18,6 +18,7 @@
 
 package com.baasbox.commands;
 
+import com.baasbox.BBInternalConstants;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
@@ -35,6 +36,7 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -43,6 +45,7 @@ import java.util.Map;
  */
 class ScriptsResource extends Resource {
     public static final Resource INSTANCE = new ScriptsResource();
+    private static SimpleDateFormat SDF = new SimpleDateFormat(BBInternalConstants.DATE_FORMAT_STRING);
 
     @Override
     public String name() {
@@ -75,9 +78,10 @@ class ScriptsResource extends Resource {
             idOfTheModule =command.get(ScriptCommand.ID);
         }
         ObjectNode message = Json.mapper().createObjectNode();
-        message.put("message",par);
+        message.put("message",par.get("message"));
+        message.put("args",par.get("args"));
         message.put("script",idOfTheModule);
-        message.put("date",new Date().toString());
+        message.put("date",SDF.format(new Date()));
         int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
         return IntNode.valueOf(publish);
     }

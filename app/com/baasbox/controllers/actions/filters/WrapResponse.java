@@ -17,6 +17,14 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -28,20 +36,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.Logger;
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
+import play.data.format.Formats;
 import play.libs.Json;
+import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Result;
 import play.mvc.Results;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
 import com.baasbox.controllers.CustomHttpCode;
 
 import play.mvc.SimpleResult;
 import play.libs.F;
 
 public class WrapResponse {
-
 	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -129,7 +139,13 @@ public class WrapResponse {
 		String callId = request.getQueryString("call_id");
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
-    
+
+	private void setServerTime(Http.Response response) {
+		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
+		String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(date);
+		response.setHeader("Date",httpDate);
+	}
+
 	private SimpleResult onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
 		ObjectNode result = prepareOK(statusCode, request, stringBody);
 		result.put("http_code", statusCode);
@@ -179,7 +195,9 @@ public class WrapResponse {
 			      	default:  	
 			      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
 			      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
-			      		}else result =onDefaultError(statusCode,ctx.request(),stringBody);
+			      		}else {
+							result =onDefaultError(statusCode,ctx.request(),stringBody);
+						}
 			      	break;
 			      }
 		    }else{ //status is not an error
@@ -196,12 +214,11 @@ public class WrapResponse {
 			}catch (Throwable e){}
 			if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		}
+		setServerTime(ctx.response());
 		ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 		return result;
 	}//wrap
-
-
 
 
 

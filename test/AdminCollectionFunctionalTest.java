@@ -100,6 +100,8 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		);
 	}	
 	
+			
+	
 	public void getCollections()
 	{
 		//get a collection
@@ -158,7 +160,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 	
 	public String routeCreateCollection()
 	{
-		//tries to create an invalid collection
+		//tries to create a series of invalid collection
 		String collectionNameWithError="123";
 		FakeRequest request = new FakeRequest(getMethod(), "/admin/collection/" + collectionNameWithError);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -172,6 +174,71 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		result = routeAndCall(request);
 		assertRoute(result, "testRoute-Collection-StartsWithDigits", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+
+		collectionNameWithError="_123NotValid";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-StartsWith_", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+
+		
+		collectionNameWithError=";";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-semicolon", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError=":";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-colon", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError=".";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-dot", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError="@";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-@", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+		
+		collectionNameWithError="a@b";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-a@b", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+
+		collectionNameWithError="_hello";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-_hello", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+
+		collectionNameWithError="hel+lo";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-hel+lo", Status.BAD_REQUEST, "name "+collectionNameWithError+" is invalid", true);
+
+		collectionNameWithError="hel%20lo";
+		request = new FakeRequest(getMethod(), "/admin/collection/"+collectionNameWithError);
+		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		result = routeAndCall(request);
+		assertRoute(result, "testRoute-Collection-hel%20lo", Status.BAD_REQUEST, "name hel lo is invalid", true);
+
 		
 		String sFakeCollection = getRouteAddress();
 
