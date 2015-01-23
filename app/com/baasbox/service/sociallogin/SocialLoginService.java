@@ -25,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -222,7 +222,7 @@ public abstract class SocialLoginService {
 
 	public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException{
 		String url = getValidationURL(token);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
 		HttpGet method = new HttpGet(url);
 
 		BasicResponseHandler brh = new BasicResponseHandler();
