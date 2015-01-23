@@ -18,8 +18,12 @@
 
 package com.baasbox;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 public class BBInternalConstants {
 	public static final String FIELD_AUDIT = "_audit";
 	public static final String IMPORT_MANIFEST_VERSION_PREFIX = "Version:";
 	public static final String IMPORT_MANIFEST_VERSION_PATTERN = IMPORT_MANIFEST_VERSION_PREFIX+"(.*)$";
+	public static final String DATE_FORMAT_STRING="yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 }

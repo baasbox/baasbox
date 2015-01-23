@@ -18,6 +18,7 @@
 
 package com.baasbox.commands;
 
+import com.baasbox.BBInternalConstants;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
@@ -44,7 +45,7 @@ import java.util.Map;
  */
 class ScriptsResource extends Resource {
     public static final Resource INSTANCE = new ScriptsResource();
-    private static SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss.SSS z");
+    private static SimpleDateFormat SDF = new SimpleDateFormat(BBInternalConstants.DATE_FORMAT_STRING);
 
     @Override
     public String name() {

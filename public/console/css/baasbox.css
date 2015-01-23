@@ -465,7 +465,8 @@ li.plugin.deactivated{
 	color:black;
 }
 
-.log-area {
+.log-area {	
+	height:auto;
     width: 100%;
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
