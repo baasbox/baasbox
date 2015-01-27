@@ -1,17 +1,19 @@
 package com.baasbox.commands;
 
-import ch.qos.logback.classic.db.DBHelper;
+import java.util.Map;
+import java.util.UUID;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
+import com.baasbox.commands.exceptions.CommandParsingException;
+import com.baasbox.dao.GenericDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
-
-import java.util.Map;
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * Created by eto on 22/09/14.
@@ -37,7 +39,9 @@ class DBResource extends Resource {
                         .put("beginTransaction",DBResource::beginTransaction)
                         .put("isInTransaction",DBResource::isInTransaction)
                         .put("commitTransaction",DBResource::commitTransaction)
-                        .put("rollbackTransaction",DBResource::rollbackTransaction).build();
+                        .put("rollbackTransaction",DBResource::rollbackTransaction)
+                        .put("isAnId",DBResource::isAnId)
+                        .build();
 
 //            ImmutableMap.of("switchUser", DBResource::switchUser,
 //                            "transact", DBResource::runInTransaction,
@@ -111,6 +115,37 @@ class DBResource extends Resource {
         return BooleanNode.valueOf(DbHelper.isInTransaction());
     }
 
+    private static JsonNode isAnId(JsonNode command,JsonCallback callback) throws CommandException {
+    	validateHasParams(command);
+    	String id = null;
+    	try {
+    		id=getLinkId(command);
+    	}catch (CommandParsingException e){
+    		return BooleanNode.valueOf(false);
+    	}
+    	String ret=GenericDao.getInstance().getRidNodeByUUID(id);
+        return BooleanNode.valueOf(!(ret==null));
+    }
+    
+    private static void validateHasParams(JsonNode command) throws CommandParsingException{
+        if (!command.has(ScriptCommand.PARAMS)) {
+            throw new CommandParsingException(command,"missing parameters");
+        }
+    }
 
+    private static String getLinkId(JsonNode command) throws CommandException{
+        JsonNode params = command.get(ScriptCommand.PARAMS);
+        JsonNode id = params.get("id");
+        if (id==null||!id.isTextual()){
+            throw new CommandParsingException(command,"missing id");
+        }
+        String idString = id.asText();
+        try{
+            UUID.fromString(idString);
+        } catch (IllegalArgumentException e){
+            throw new CommandParsingException(command,"id: "+id+" must be a valid uuid");
+        }
+        return idString;
+    }
 
 }

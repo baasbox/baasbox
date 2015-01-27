@@ -35,7 +35,7 @@ public class HooksManager {
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
-		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
+		//we have to check if the hooks have been already registered since the connections could be reused due the pool 
 		boolean register=true;
 		//OrientDB 1.7: 
 		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();

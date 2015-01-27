@@ -30,13 +30,22 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 import static play.test.Helpers.testServer;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+
+import ch.qos.logback.classic.db.DBHelper;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,8 +56,16 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
+import com.baasbox.BBConfiguration;
+import com.baasbox.configuration.PasswordRecovery;
+import com.baasbox.dao.GenericDao;
+import com.baasbox.dao.NodeDao;
+import com.baasbox.dao.ResetPwdDao;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.util.QueryParams;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -111,7 +128,98 @@ public class PasswordRecoveryTest extends AbstractUserTest
 					assertRoute(result, "testEmailAddress.resetpwd", BAD_REQUEST, "Cannot reset password, the \\\"email\\\" attribute is not defined into the user's private profile", true);	
 				}
 			}
-		);		
+		);	
+	}
+		
+		@Test
+		public void testToken()
+		{
+			running
+			(
+				getFakeApplication(), 
+				new Runnable() 
+				{
+					public void run() 
+					{
+						String sFakeUser = USER_TEST + UUID.randomUUID();
+						// Prepare test user
+						String newPassword="password";
+						JsonNode node = updatePayloadFieldValue("/adminUserCreatePayloadForPasswordRecovery.json", "username", sFakeUser);
+						String oldPassword=node.get("password").toString(); 
+
+						// Create user
+						FakeRequest request = new FakeRequest("POST", "/user");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withJsonBody(node, "POST");
+						Result result = routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.createuser", Status.CREATED, null, false);
+						
+						// try to recover the password [step1]
+						request = new FakeRequest("GET", "/user/"+sFakeUser+"/password/reset");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						result = routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep1", BAD_REQUEST, "Cannot send mail to reset the password:  Could not reach the mail server. Please contact the server administrator", true);	
+					
+						// try to recover the password [step2]
+						ODatabaseRecordTx db = null;
+						
+						try {
+							 db = com.baasbox.db.DbHelper.getOrOpenConnection(TestConfig.VALUE_APPCODE, TestConfig.ADMIN_USERNAME, TestConfig.AUTH_ADMIN_PASS);
+						} catch (InvalidAppCodeException e) {
+							// TODO Auto-generated catch block
+							Assert.fail("problem with reset password");
+						}
+						
+						String timeBeforeExpiration = String.valueOf(PasswordRecovery.EMAIL_EXPIRATION_TIME.getValueAsInteger()*60*1000);
+						
+						List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select base64_code_step1 from _BB_ResetPwd where user.user.name='"+sFakeUser+"'",null);
+
+						String token1=sqlresult.get(0).field("base64_code_step1");
+						String token1JSON=token1.concat(".json");
+						
+						//step 2
+						request=new FakeRequest("GET", "/user/password/reset/"+token1JSON);
+						result = routeAndCall(request);
+						
+						sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select base64_code_step2 from _BB_ResetPwd where user.user.name='"+sFakeUser+"'",null);
+
+						String token2=sqlresult.get(0).field("base64_code_step2");
+						String token2JSON=token2.concat(".json");
+						
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"link\":\"/user/password/reset/"+token2JSON+"\",\"token\":\""+token2+"\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
+
+						//step 3
+						
+						request=new FakeRequest("POST", "/user/password/reset/"+token2JSON);
+						Map<String,String> urlEncoded = new HashMap();
+						urlEncoded.put("password",newPassword);
+						urlEncoded.put("repeat-password",newPassword);
+						request.withFormUrlEncodedBody(urlEncoded);
+						
+						result = routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep3", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"message\":\"Password changed\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
+
+						//try to authenticate with older password
+						
+						String sAuthEnc = TestConfig.encodeAuth(sFakeUser, oldPassword);
+
+						request = new FakeRequest("GET","/me");
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						result=routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.loginWithOlderPassword", Status.UNAUTHORIZED, "{\"result\":\"error\",\"message\":\"User "+sFakeUser+" is not authorized to access\",\"resource\":\"/me\",\"method\":\"GET\",\"request_header\":{\"AUTHORIZATION\":[\""+sAuthEnc+"\"],\"X-BAASBOX-APPCODE\":[\""+TestConfig.VALUE_APPCODE+"\"]},\"API_version\":\""+BBConfiguration.getApiVersion()+"\",\"http_code\":"+Status.UNAUTHORIZED+"}", true);	
+
+						//try to authenticate with newer password
+						sAuthEnc=TestConfig.encodeAuth(sFakeUser,newPassword);
+						request = new FakeRequest("GET","/me");
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						result=routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.loginWithNewerPassword",Status.OK,"", false);	
+						
+					}
+				}
+			);		
 		
 	}
 	

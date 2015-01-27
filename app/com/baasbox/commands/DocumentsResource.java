@@ -28,8 +28,7 @@ import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
-import com.baasbox.service.storage.BaasBoxPrivateFields;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -38,23 +37,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
-
 import play.Logger;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * {resource: 'documents',
@@ -100,14 +92,6 @@ import java.util.stream.Collectors;
  * Created by Andrea Tortorella on 30/06/14.
  */
 class DocumentsResource extends BaseRestResource {
-    private static final Predicate<BaasBoxPrivateFields> removeVisible = ((Predicate<BaasBoxPrivateFields>)BaasBoxPrivateFields::isVisibleByTheClient).negate();
-
-    private static final Collection<String> TO_REMOVE = EnumSet.allOf(BaasBoxPrivateFields.class)
-                                                               .stream().filter(removeVisible)
-                                                                        .map(BaasBoxPrivateFields::toString)
-                                                                        .collect(Collectors.toSet());
-
-
     public static final Resource INSTANCE = new DocumentsResource();
 
     private static final String RESOURCE_NAME = "documents";
@@ -187,13 +171,6 @@ class DocumentsResource extends BaseRestResource {
     }
 
 
-    private void validateHasParams(JsonNode commnand) throws CommandParsingException{
-        if (!commnand.has(ScriptCommand.PARAMS)) {
-            throw new CommandParsingException(commnand,"missing parameters");
-        }
-    }
-
-
     private String getCollectionName(JsonNode command) throws CommandParsingException {
         JsonNode params = command.get(ScriptCommand.PARAMS);
         JsonNode collNode = params.get(COLLECTION);
@@ -214,7 +191,7 @@ class DocumentsResource extends BaseRestResource {
             String rid = DocumentService.getRidByString(id, true);
             ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
+            ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
             node.remove(TO_REMOVE);
             node.remove("@rid");
             return node;
@@ -252,7 +229,7 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             }
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            JsonNode node = Json.mapper().readTree(fmt);
+            JsonNode node = BBJson.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
             n.remove(TO_REMOVE).remove("@rid");
 //            n.remove("@rid");
@@ -294,7 +271,7 @@ class DocumentsResource extends BaseRestResource {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
+            ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
             lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
             return lst;
         } catch (SqlInjectionException | IOException e) {
@@ -316,7 +293,7 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
-                ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
+                ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
                 node.remove(TO_REMOVE).remove("@rid");
                 return node;
             }

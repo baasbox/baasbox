@@ -23,11 +23,8 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
-import com.baasbox.security.ScriptingSandboxSecutrityManager;
-
-import play.libs.F;
-import play.mvc.*;
-
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -54,12 +51,12 @@ import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.db.DbHelper;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
+import com.baasbox.security.ScriptingSandboxSecurityManager;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -72,7 +69,7 @@ import com.orientechnologies.orient.server.OServerMain;
 public class Global extends GlobalSettings {
 	static {
         /*Initialize this before anything else to avoid reflection*/
-        ScriptingSandboxSecutrityManager.init();
+        ScriptingSandboxSecurityManager.init();
     }
 
 	  private static Boolean  justCreated = false;
@@ -97,15 +94,15 @@ public class Global extends GlobalSettings {
 		  debug("Global.onLoadConfig() called");
 		  info("BaasBox is preparing OrientDB Embedded Server...");
 		  try{
-			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.TRUE);
-			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.FALSE);
 			  
-			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
+			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.FALSE);
 			  //Deprecated due to OrientDB 1.6
 			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
 			  
 			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.TRUE);
 			  
 			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
 			  OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -113,7 +110,8 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
-			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
+
+			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(1000);
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
@@ -147,9 +145,7 @@ public class Global extends GlobalSettings {
 	    //Orient.instance().shutdown();
 	    ODatabaseRecordTx db =null;
 	    try{
-	    	server = OServerMain.create();
-	    	server.startup(getOrientConfString());
-	    	server.activate();
+	    	createOrientDBDeamon();
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
@@ -221,6 +217,24 @@ public class Global extends GlobalSettings {
 	    info("BaasBox is Ready.");
 	  }
 
+	private void createOrientDBDeamon() throws Exception,
+			InstantiationException, IllegalAccessException,
+			ClassNotFoundException, InvocationTargetException,
+			NoSuchMethodException, IOException {
+		if (BBConfiguration.getOrientEnableRemoteConnection() || BBConfiguration.getOrientStartCluster()){
+			Logger.info("Starting OrientDB deamon...");
+			server = OServerMain.create();
+			String deamonConf=getOrientConfString();
+			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
+				Logger.info("*** DUMP of OrientDB deamon configuration: ");
+				Logger.info(deamonConf);
+			}
+			server.startup(deamonConf);
+			server.activate();
+			Logger.info("...done");
+		}
+	}
+
 	private String getOrientConfString() {
 		String toReturn=
  			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
@@ -229,7 +243,7 @@ public class Global extends GlobalSettings {
 	    			   + (BBConfiguration.getOrientStartCluster()?
 		    			     " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
 		    			   + " <parameters>"
-		    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+		    	          // + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
 		    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
 		    	           + "     <parameter name=\"configuration.db.default\""
 		    	           + "                value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/default-distributed-db-config.json\"/>"
@@ -258,15 +272,16 @@ public class Global extends GlobalSettings {
 	    			   + "</users>"
 	    			   + "<properties>"
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
-	    			   + "<entry name=\"log.console.level\" value=\"fine\"/>"
-	    			   + "<entry name=\"log.file.level\" value=\"info\"/>"
-	    			   + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
+	    			   + "<entry name=\"log.console.level\" value=\"ALL\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"ALL\"/>"
+	    			   // + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
+	    			   + "<entry value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/db/\" name=\"server.database.path\" />"
+	    			 
 	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
 	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
 	    			   + "</properties>" + 
 	    			   "</orient-server>";
-		Logger.debug(toReturn);
 		return toReturn;
 	}
 

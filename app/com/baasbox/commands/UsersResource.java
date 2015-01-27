@@ -20,8 +20,8 @@ package com.baasbox.commands;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -36,21 +36,20 @@ import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import scala.util.parsing.combinator.testing.Str;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Created by Andrea Tortorella on 02/07/14.
@@ -91,7 +90,7 @@ class UsersResource extends BaseRestResource {
                         FriendShipService.getFriendsOf(user.asText(), qparams);
                 String s = JSONFormats.prepareDocToJson(res, JSONFormats.Formats.USER);
 
-                return Json.mapper().readTreeOrMissing(s);
+                return BBJson.mapper().readTreeOrMissing(s);
             } catch (SqlInjectionException e){
                 throw new CommandExecutionException(command,e.getMessage(),e);
             }
@@ -144,7 +143,7 @@ class UsersResource extends BaseRestResource {
         try {
             ODocument followed = FriendShipService.follow(from, to);
             String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
-            return Json.mapper().readTree(s);
+            return BBJson.mapper().readTree(s);
         } catch (UserNotFoundException e) {
             throw new CommandExecutionException(command,e.getMessage(),e);
         } catch (AlreadyFriendsException e) {
@@ -224,7 +223,7 @@ class UsersResource extends BaseRestResource {
         try {
             ODocument doc = UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
             String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
-            return Json.mapper().readTree(s);
+            return BBJson.mapper().readTree(s);
         } catch (Exception e) {
             throw new CommandExecutionException(command,"Error updating user: "+e.getMessage());
         }
@@ -259,7 +258,7 @@ class UsersResource extends BaseRestResource {
                                                 new Date(), role,
                                                 anonymousVisible,userVisible,friendsVisible, registeredVisible, false);
             String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
-            return Json.mapper().readTree(userNode);
+            return BBJson.mapper().readTree(userNode);
         } catch (InvalidJsonException | IOException e) {
             throw new CommandExecutionException(command,"invalid json",e);
         } catch (UserAlreadyExistsException e) {
@@ -273,8 +272,8 @@ class UsersResource extends BaseRestResource {
         QueryParams qp = QueryParams.getParamsFromJson(paramsNode);
         try {
             List<ODocument> users = UserService.getUsers(qp, true);
-            String response = JSONFormats.prepareDocToJson(users, JSONFormats.Formats.USER);
-            return Json.mapper().readTree(response);
+            String response = prepareResponseToJson(users);
+            return BBJson.mapper().readTree(response);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command, "error executing command: " + e.getMessage());
         } catch (IOException e) {
@@ -291,8 +290,8 @@ class UsersResource extends BaseRestResource {
             if (doc == null){
                 return NullNode.getInstance();
             }
-            String resp = JSONFormats.prepareDocToJson(doc,JSONFormats.Formats.USER);
-            return Json.mapper().readTree(resp);
+            String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
+            return BBJson.mapper().readTree(resp);
         } catch (SqlInjectionException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
         } catch (IOException e) {
@@ -304,4 +303,26 @@ class UsersResource extends BaseRestResource {
     public String name() {
         return "users";
     }
+    
+	private String prepareResponseToJson(List<ODocument> listOfDoc) {
+		try {
+			for (ODocument doc : listOfDoc){
+				doc.detach();
+				if ( doc.field("user") instanceof ODocument) {
+					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
+					if (roles.size()>1){
+						Iterator<OIdentifiable> it = roles.iterator();
+						while (it.hasNext()){
+							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
+						        it.remove();
+						    }
+						}
+					}
+				}
+			}
+			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

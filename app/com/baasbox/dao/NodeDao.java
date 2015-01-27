@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import com.baasbox.exception.UserNotFoundException;
 import play.Logger;
 
+import com.baasbox.BBCache;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
@@ -67,6 +66,10 @@ public abstract class NodeDao  {
 
 	protected ODatabaseRecordTx db;
 
+	public static void updateAuthor(String oldAuthor,String newAuthor){
+		Object command = DbHelper.genericSQLStatementExecute(
+				"update _bb_node set _author=? where _author=?", new String[]{newAuthor,oldAuthor});
+	}
 	 
 	public NodeDao(String modelName) {
 		super();
@@ -138,6 +141,7 @@ public abstract class NodeDao  {
 				if (Logger.isDebugEnabled()) Logger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
+				if (!DbHelper.isInTransaction()) BBCache.cacheUUIDtoRID(token.toString(),doc.getIdentity().toString());
 			    return doc;
 		}catch (Throwable e){
 			throw e;

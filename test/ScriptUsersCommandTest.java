@@ -3,17 +3,15 @@ import com.baasbox.commands.ScriptCommand;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidJsonException;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import core.AbstractTest;
 import core.TestConfig;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import play.api.mvc.SimpleResult;
 import play.mvc.Result;
 import play.test.FakeRequest;
 
@@ -32,12 +30,12 @@ public class ScriptUsersCommandTest {
 
     private static TreeSet<String>  sRandUsers;
     private static String sTestUser;
-    private static final Json.ObjectMapperExt mapper = Json.mapper();
+    private static final BBJson.ObjectMapperExt mapper = BBJson.mapper();
     private static final String USER_PREFIX = "script-users-test-";
     private static String key;
 
     private static TreeSet<String> createUsers(int howMany){
-        Json.ObjectMapperExt mapper = Json.mapper();
+        BBJson.ObjectMapperExt mapper = BBJson.mapper();
         key = UUID.randomUUID().toString();
         return IntStream.range(0, howMany).mapToObj((x)->{
             String uuid = UUID.randomUUID().toString();
