@@ -87,10 +87,13 @@ public abstract class SocialLoginService {
 			}else{
 				serverUrl.append(PROTOCOL);
 			}
-			String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+			String serverName = Application.NETWORK_HTTP_HOST.getValueAsString();
 			serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
 			String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
 			serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
+            String serverPath = Application.NETWORK_HTTP_URL.getValueAsString();
+            serverUrl.append(serverPath!=null?serverName:"");
+
 			this.service = new ServiceBuilder().
 					provider(provider())
 					.apiKey(this.token.getToken())

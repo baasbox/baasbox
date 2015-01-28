@@ -39,7 +39,8 @@ public enum Application implements IProperties{
 
 	NETWORK_HTTP_SSL("network.http.ssl", "Set to TRUE if the BaasBox server is reached via SSL through a reverse proxy.", Boolean.class),	
 	NETWORK_HTTP_URL("network.http.url", "The public url of the BaasBox server. I.e. the url used by the App to contact BaasBox, without the protocol prefix (i.e. http://) and PORT", String.class),
-	NETWORK_HTTP_PORT("network.http.port", "The public TCP port used by the App to contact BaasBox. Please note: when behind a reverse proxy, this could be different from the port used by BaasBox.", Integer.class);	
+	NETWORK_HTTP_HOST("network.http.host", "The public host name of the BaasBox server.", String.class),
+	NETWORK_HTTP_PORT("network.http.port", "The public TCP port used by the App to contact BaasBox. Please note: when behind a reverse proxy, this could be different from the port used by BaasBox.", Integer.class);
 	
 	private final String                 key;
 	private final Class<?>               type;
