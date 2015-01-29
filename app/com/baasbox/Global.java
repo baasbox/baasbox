@@ -121,6 +121,7 @@ public class Global extends GlobalSettings {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
 					justCreated  = true;
+                    info("DB has been create successfully");
 				}
 			  } catch (Throwable e) {
 					error("!! Error initializing BaasBox!", e);
@@ -128,8 +129,8 @@ public class Global extends GlobalSettings {
 					throw e;
 			  } finally {
 		    	 if (db!=null && !db.isClosed()) db.close();
+		    	 Orient.instance().shutdown();
 			  }
-			  info("DB has been create successfully");
 		    }catch (Throwable e){
 		    	error("!! Error initializing BaasBox!", e);
 		    	error("Abnormal BaasBox termination.");
