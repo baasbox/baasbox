@@ -393,10 +393,13 @@ public class User extends Controller {
 			}
 		}
 		String tokenStep2 = ResetPwdDao.getInstance().setTokenStep2(username, appCode);
+        String applicationContext = BBConfiguration.configuration.getString(IBBConfigurationKeys.APP_CONTEXT);
+        if (!applicationContext.endsWith("/"))
+            applicationContext += "/";
 
 		if(isJSON) {
 			result.put("user_name", username);
-			result.put("link","/user/password/reset/" + tokenStep2+".json");
+			result.put("link",applicationContext+"user/password/reset/" + tokenStep2+".json");
 			result.put("token",tokenStep2);
 			result.put("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 			DbHelper.getConnection().close();
@@ -404,7 +407,7 @@ public class User extends Controller {
 		}
 		else {
 			ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_TEMPLATE.getValueAsString(), '$', '$');
-			pageTemplate.add("form_template", "<form action='/user/password/reset/" + tokenStep2 + "' method='POST' id='reset_pwd_form'>" +
+			pageTemplate.add("form_template", "<form action='"+ applicationContext +"user/password/reset/" + tokenStep2 + "' method='POST' id='reset_pwd_form'>" +
 					"<label for='password'>New password</label>"+
 					"<input type='password' id='password' name='password' />" +
 					"<label for='repeat-password'>Repeat the new password</label>"+
@@ -412,7 +415,7 @@ public class User extends Controller {
 					"<button type='submit' id='reset_pwd_submit'>Reset the password</button>" +
 					"</form>");
 			pageTemplate.add("user_name",username);
-			pageTemplate.add("link","/user/password/reset/" + tokenStep2);
+			pageTemplate.add("link",applicationContext+"user/password/reset/" + tokenStep2);
 			pageTemplate.add("password","password");
 			pageTemplate.add("repeat_password","repeat-password");
 			pageTemplate.add("token",tokenStep2);
@@ -469,7 +472,7 @@ public class User extends Controller {
 
 			Http.RequestBody body = request().body();
 
-			bodyForm= body.asFormUrlEncoded(); 
+			bodyForm= body.asFormUrlEncoded();
 			if (bodyForm==null) throw new Exception("Error getting submitted data. Please repeat the reset password procedure");
 
 		}catch (Exception e){
@@ -490,23 +493,30 @@ public class User extends Controller {
 				return badRequest(Html.apply(pageTemplate.render()));
 			}
 		}
+
+        String applicationContext = BBConfiguration.configuration.getString(IBBConfigurationKeys.APP_CONTEXT);
+        if (!applicationContext.endsWith("/"))
+            applicationContext += "/";
+
 		//check and validate input
 		String errorString="";
-		if (bodyForm.get("password").length != 1)
-			errorString="The 'new password' field is missing";
-		if (bodyForm.get("repeat-password").length != 1)
-			errorString="The 'repeat password' field is missing";	
 
-		String password=(String) bodyForm.get("password")[0];
-		String repeatPassword=(String)  bodyForm.get("repeat-password")[0];
+        String password = (bodyForm.get("password").length == 1) ? (String) bodyForm.get("password")[0] : "";
+        String repeatPassword = (bodyForm.get("repeat-password").length == 1) ? (String) bodyForm.get("repeat-password")[0] : "";
 
-		if (!password.equals(repeatPassword)){
+        if (password.isEmpty()) {
+            errorString = "The 'new password' field is missing";
+        }
+        if (repeatPassword.isEmpty()) {
+            errorString = "The 'repeat password' field is missing";
+        }
+        if (!password.equals(repeatPassword)){
 			errorString="The new \"password\" field and the \"repeat password\" field must be the same.";
 		}
 		if (!errorString.isEmpty()){
 			if(isJSON) {
 				result.put("user_name", username);
-				result.put("link","/user/password/reset/" + base64+".json");
+				result.put("link",applicationContext+"user/password/reset/" + base64+".json");
 				result.put("token",base64);
 				result.put("application_name", com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				result.put("error", errorString);
