@@ -1,17 +1,20 @@
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import core.TestConfig;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.fest.assertions.Assert;
 import org.fest.assertions.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import play.mvc.Result;
 import play.test.FakeRequest;
 
@@ -21,8 +24,6 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 import static play.test.Helpers.*;
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.running;
 
 /**
  * Created by eto on 1/13/15.
@@ -38,9 +39,9 @@ public class ScriptRequestTest {
     private final static JsonNode QSTRINGJSON = queryStringAsJson();
 
     private static JsonNode queryStringAsJson(){
-        ObjectNode node=Json.mapper().createObjectNode();
-        node.put("q",Json.mapper().createArrayNode().add("2"));
-        node.put("p",Json.mapper().createArrayNode().add("x").add("y"));
+        ObjectNode node=BBJson.mapper().createObjectNode();
+        node.put("q",BBJson.mapper().createArrayNode().add("2"));
+        node.put("p",BBJson.mapper().createArrayNode().add("x").add("y"));
         return node;
     }
 
@@ -92,7 +93,7 @@ public class ScriptRequestTest {
             }
             Result res = route(req);
             String content= contentAsString(res);
-            JsonNode node = Json.mapper().readTreeOrMissing(content);
+            JsonNode node = BBJson.mapper().readTreeOrMissing(content);
             JsonNode data = node.get("data");
             assertEquals(method,data.get("method").asText());
             assertEquals(PATH.substring(1),data.get("path").asText());

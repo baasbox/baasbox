@@ -16,44 +16,44 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import java.util.Set;
-
-import play.Logger;
-import play.mvc.Action;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Result;
-
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import play.mvc.SimpleResult;
+import play.Logger;
 import play.libs.F;
+import play.mvc.Action;
+import play.mvc.Http.Context;
+import play.mvc.SimpleResult;
+
+import java.util.Set;
 
 
-public class CheckAdminRoleFilter extends Action.Simple{
+public class CheckAdminRoleFilterAsync extends Action.Simple{
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		Http.Context.current.set(ctx);
-		
-		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
+		Context.current.set(ctx);
+
+		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Context.current().request());
 		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
-		
-		OUser user=DbHelper.getConnection().getUser();
-		Set<ORole> roles=user.getRoles();
-		
-		F.Promise<SimpleResult> result=null;
-		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
-			result = delegate.call(ctx);
-		}else {
-			result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
-		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-		return result;
+
+		return F.Promise.promise(()->{
+			try {
+				DbHelper.openFromContext(ctx);
+				OUser user=DbHelper.getConnection().getUser();
+				Set<ORole> roles=user.getRoles();
+				return roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
+			} finally {
+				DbHelper.close(DbHelper.getConnection());
+			}
+		}).flatMap(
+				isAdmin->isAdmin?
+						delegate.call(ctx)
+						:F.Promise.pure(forbidden("User " + ctx.args.get("username") + " is not an administrator")));
+
 	}
 
 }

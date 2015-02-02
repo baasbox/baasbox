@@ -11,7 +11,7 @@ var documentDataArray= new Array();
    		}
     }
    var documentsDataTableDef={
-			"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+			"sDom": sDomGlobal,
 			"sPaginationType": "bootstrap",
 			"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 			"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) {
@@ -21,7 +21,7 @@ var documentDataArray= new Array();
 						   },
 						   {"mData": "id", sWidth:"78px","mRender": function ( data, type, full ) 	{
 				 				return "<span style='font-family:Courier'>"+data+"</span>";
-							}
+							},bSortable:false
 						   },
 			               {"mData": "_author"},
 			               {"mData": "@rid",sWidth:"50%","mRender": function ( data, type, full ) 	{

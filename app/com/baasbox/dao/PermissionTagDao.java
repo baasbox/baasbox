@@ -18,6 +18,7 @@
 
 package com.baasbox.dao;
 
+import com.baasbox.BBCache;
 import com.baasbox.controllers.Generic;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -29,7 +30,9 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import play.Logger;
+import play.cache.Cache;
 
 import java.util.List;
 
@@ -158,6 +161,7 @@ public class PermissionTagDao  {
             doc.save();
             changed = true;
         }
+        Cache.remove(BBCache.TAG_KEY+tagName);
         if (Logger.isTraceEnabled()) Logger.trace("Method End");
         return changed;
     }
@@ -169,13 +173,21 @@ public class PermissionTagDao  {
      * @throws SqlInjectionException
      * @throws com.baasbox.dao.exception.InvalidPermissionTagException
      */
-    public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException {
+    public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException,Exception {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-        ODocument doc = getByName(tagName);
-        if (doc==null) throw new InvalidPermissionTagException("tag not found");
-        boolean enabled = doc.<Boolean>field(ENABLED);
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
-        return enabled;
+        try {
+			return Cache.getOrElse(BBCache.TAG_KEY + tagName, ()->{
+				ODocument doc = getByName(tagName);
+		        if (doc==null) throw new InvalidPermissionTagException("tag not found");
+		        return doc.<Boolean>field(ENABLED);
+		    }, BBCache.TAG_TIMEOUT);
+		} catch (Exception e) {
+			Logger.error ("Error retrieving tagName: " + tagName,e);
+			throw e;
+		} finally {
+			  if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		}
+        
     }
 
     public List<ODocument> getAll(){

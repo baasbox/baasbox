@@ -21,9 +21,7 @@ package com.baasbox.commands;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Interface for commands executed from scripting languages.

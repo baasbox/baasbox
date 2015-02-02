@@ -19,7 +19,7 @@
 package com.baasbox.controllers;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.filters.SessionTokenAccess;
+import com.baasbox.controllers.actions.filters.*;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import play.Logger;
 import play.mvc.Result;
-
 import java.util.Set;
 
 import static play.mvc.Controller.*;
@@ -40,6 +39,36 @@ import static play.mvc.Results.ok;
  * Created by eto on 13/10/14.
  */
 public class EventsController {
+
+    /*
+    private void checkSessionRoleFromContext(Http.Context ctx,DefaultRoles role) throws InvalidAppCodeException {
+        SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
+       boolean hasSetCredentials = sessionTokenAccess.setCredential(ctx);
+        if (!hasSetCredentials) {
+
+        } else {
+            String userName = (String)ctx.args.get("username");
+            if (userName.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())||
+                userName.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())){
+
+            }
+            String appcode = (String)ctx.args.get("appcode");
+            String password = (String)ctx.args.get("password");
+            try {
+                DbHelper.open(appcode,userName,password);
+                OUser user = DbHelper.getConnection().getUser();
+                Set<ORole> roles = user.getRoles();
+                if (!roles.contains(RoleDao.getRole(role.toString()))) {
+
+                }
+            } catch (InvalidAppCodeException e){
+                throw e;
+            } finally {
+                DbHelper.close(DbHelper.getConnection());
+            }
+        }
+    }
+    */
 
     public static Result openLogger(){
         try {

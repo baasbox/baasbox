@@ -7,16 +7,16 @@ import java.security.Permission;
 /**
  * Created by eto on 24/09/14.
  */
-public class ScriptingSandboxSecutrityManager extends SecurityManager {
+public class ScriptingSandboxSecurityManager extends SecurityManager {
 
     private SecurityManager mDelegated;
 
     public static void init() {
         SecurityManager sm = System.getSecurityManager();
-        System.setSecurityManager(new ScriptingSandboxSecutrityManager(sm));
+        System.setSecurityManager(new ScriptingSandboxSecurityManager(sm));
     }
 
-    private ScriptingSandboxSecutrityManager(SecurityManager sm) {
+    private ScriptingSandboxSecurityManager(SecurityManager sm) {
         mDelegated = sm;
     }
 

@@ -19,17 +19,15 @@
 package com.baasbox.controllers;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
+import com.baasbox.controllers.actions.filters.*;
 import com.baasbox.dao.exception.ScriptException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -38,7 +36,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
-import play.libs.EventSource;
+import play.Play;
 import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -56,33 +54,34 @@ import java.util.Map;
  */
 public class ScriptInvoker extends Controller{
 
-    @With({UserOrAnonymousCredentialsFilter.class,
-           ConnectToDBFilter.class,
-           ExtractQueryParameters.class})
-    public static Result invoke(String name,String path){
-        ODocument serv = null;
-        if(request().body().asText()!=null && request().body().isMaxSizeExceeded())//fixes issue_561
-        	return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"),"128KB"));
-        try {
-            serv = ScriptingService.get(name, true,true);
-        } catch (ScriptException e) {
-           return status(503,"Script is in an invalid state");
-        }
-        if (serv == null){
-            return notFound("Script does not exists");
-        }
-        JsonNode reqAsJson = serializeRequest(path, request());
 
-        try {
-            ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
-            return status(result.status(),result.content());
-        } catch (ScriptEvalException e) {
-            Logger.error("Error evaluating script",e);
-            return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
-        }
-//        catch (IllegalStateException e){
-//            return internalServerError("script returned invalid json response");
-//        }
+    @With({UserOrAnonymousCredentialsFilterAsync.class,
+           ConnectToDBFilterAsync.class,
+           ExtractQueryParameters.class})
+    public static F.Promise<Result> invoke(String name,String path){
+        return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()-> {
+
+            ODocument serv = null;
+            if (request().body().asText() != null && request().body().isMaxSizeExceeded())//fixes issue_561
+                return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"), "128KB"));
+            try {
+                serv = ScriptingService.get(name, true, true);
+            } catch (ScriptException e) {
+                return status(503, "Script is in an invalid state");
+            }
+            if (serv == null) {
+                return notFound("Script does not exists");
+            }
+            JsonNode reqAsJson = serializeRequest(path, request());
+
+            try {
+                ScriptResult result = ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
+                return status(result.status(), result.content());
+            } catch (ScriptEvalException e) {
+                Logger.error("Error evaluating script", e);
+                return internalServerError("script failure " + ExceptionUtils.getFullStackTrace(e));
+            }
+        }));
     }
 
     public static JsonNode serializeRequest(String path,Http.Request request){
@@ -92,28 +91,27 @@ public class ScriptInvoker extends Controller{
         String method = request.method();
         Map<String, String[]> query = request.queryString();
         path=path==null?"/":path;
-        ObjectNode reqJson = Json.mapper().createObjectNode();
+        ObjectNode reqJson = BBJson.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
         reqJson.put("remote",request.remoteAddress());
 
-        //todo this doesn't work with query strings
-        if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
-            String textBody = body == null ? null : body.asText();
-            DynamicForm requestData = Form.form().bindFromRequest();
-            JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
-            if (textBody == null) {
-                reqJson.put("body", jsonBody);
-            } else {
-                reqJson.put("body", textBody);
-            }
-        } else {
-            reqJson.put("body", body.asJson());
+		//TODO: this doesn't work with query strings
+		if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+	        String textBody = body==null?null:body.asText();
+	        DynamicForm requestData = Form.form().bindFromRequest();
+	        JsonNode jsonBody = BBJson.mapper().valueToTree(requestData.data());
+	        if(textBody == null)
+	            reqJson.put("body",jsonBody);
+	        else
+	            reqJson.put("body",textBody);
+        }else{
+        	reqJson.put("body",body.asJson());
         }
-
-        JsonNode queryJson = Json.mapper().valueToTree(query);
+        
+        JsonNode queryJson = BBJson.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
-        JsonNode headersJson = Json.mapper().valueToTree(headers);
+        JsonNode headersJson = BBJson.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
         return reqJson;
     }

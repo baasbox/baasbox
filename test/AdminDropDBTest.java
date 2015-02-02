@@ -1,7 +1,3 @@
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.routeAndCall;
-import static play.test.Helpers.running;
-
 import org.junit.Test;
 
 import play.mvc.Http.Status;
@@ -9,6 +5,8 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import core.AbstractTest;
 import core.TestConfig;
+
+import static play.test.Helpers.*;
 
 
 public class AdminDropDBTest extends AbstractTest{
@@ -27,7 +25,9 @@ public class AdminDropDBTest extends AbstractTest{
 					FakeRequest request = new FakeRequest("DELETE", "/admin/db/2000");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+
 					Result result = routeAndCall(request);
+
 					assertRoute(result, "testDelete", Status.OK, null, true);
 				}
 			}
