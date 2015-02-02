@@ -16,30 +16,26 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
-import play.mvc.Action;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Result;
-import play.mvc.SimpleResult;
-import play.libs.F;
-
 import com.baasbox.BBConfiguration;
-import com.baasbox.IBBConfigurationKeys;
+import play.Logger;
+import play.libs.F;
+import play.mvc.Action;
+import play.mvc.Http.Context;
+import play.mvc.SimpleResult;
 
 /**
  * Inject the admin credentials into the args argument
  * @author claudio
  */
-public class AdminCredentialWrapFilter extends Action.Simple {
+public class AdminCredentialWrapFilterAsync extends Action.Simple {
 
 	@Override
 	public F.Promise<SimpleResult> call(Context ctx) throws Throwable {
 		F.Promise<SimpleResult> tempResult=null;
 		if (Logger.isTraceEnabled())  Logger.trace("Method Start");
-		Http.Context.current.set(ctx);
-		
-		if (Logger.isDebugEnabled()) Logger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
+		Context.current.set(ctx);
+
+		if (Logger.isDebugEnabled()) Logger.debug("AdminCredentialWrapFilter  for resource " + Context.current().request());
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
 		//try to retrieve from querystring
@@ -69,11 +65,11 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		}
 
 		WrapResponse wr = new WrapResponse();
-		SimpleResult result=wr.wrap(ctx, tempResult);
+		F.Promise<SimpleResult> result=wr.wrapAsync(ctx, tempResult);
 
 
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-	    return F.Promise.<SimpleResult>pure(result);
+	    return result;
 	}
 
 }

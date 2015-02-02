@@ -18,7 +18,7 @@
 
 package com.baasbox.commands.exceptions;
 
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -70,7 +70,7 @@ public abstract class CommandException extends Exception {
     }
 
     private static JsonNode createJSON(String type, int code, JsonNode command, String message) {
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(TYPE,type);
         node.put(CODE,code);
         node.put(COMMAND,command);

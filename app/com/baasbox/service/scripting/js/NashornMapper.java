@@ -18,18 +18,15 @@
 
 package com.baasbox.service.scripting.js;
 
-import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.*;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import jdk.nashorn.api.scripting.ScriptUtils;
 import jdk.nashorn.internal.runtime.Undefined;
 import play.Logger;
-import scala.util.parsing.combinator.testing.Str;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -86,34 +83,34 @@ final class NashornMapper {
     }
 
     private static String stringEvent(String event,String data){
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(EVENT_NAME,event);
         node.put(EVENT_DATA,data);
         return node.toString();
     }
 
     private static String simpleEvent(String event){
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(EVENT_NAME,event);
         return node.toString();
     }
 
     private static String primitiveEvent(String event,Number data){
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(EVENT_NAME,event);
         node.put(EVENT_DATA,data.doubleValue());
         return node.toString();
     }
 
     private static String primitiveEvent(String event,Boolean data) {
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(EVENT_NAME,event);
         node.put(EVENT_DATA,data);
         return node.toString();
     }
 
     private static String objectEvent(String event,JsonNode data) {
-        ObjectNode node = Json.mapper().createObjectNode();
+        ObjectNode node = BBJson.mapper().createObjectNode();
         node.put(EVENT_NAME,event);
         node.put(EVENT_DATA,data);
         return node.toString();
@@ -189,7 +186,7 @@ final class NashornMapper {
             return MissingNode.getInstance();
         } else if (mirror.isArray()){
             Collection<Object> values = mirror.values();
-            ArrayNode node = Json.mapper().createArrayNode();
+            ArrayNode node = BBJson.mapper().createArrayNode();
             for (Object o: values){
                 JsonNode e = convertDeepJson(o);
                 if (e.isMissingNode()){
@@ -203,7 +200,7 @@ final class NashornMapper {
             return convertDeepJson(toJSON);
         }
         else {
-            ObjectNode obj = Json.mapper().createObjectNode();
+            ObjectNode obj = BBJson.mapper().createObjectNode();
             Set<Map.Entry<String, Object>> entries = mirror.entrySet();
             for (Map.Entry<String,Object> e:entries){
                 Object obv = e.getValue();

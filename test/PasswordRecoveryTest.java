@@ -180,13 +180,14 @@ public class PasswordRecoveryTest extends AbstractUserTest
 						//step 2
 						request=new FakeRequest("GET", "/user/password/reset/"+token1JSON);
 						result = routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2 - 1", Status.OK, null,false);
 						
 						sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select base64_code_step2 from _BB_ResetPwd where user.user.name='"+sFakeUser+"'",null);
 
 						String token2=sqlresult.get(0).field("base64_code_step2");
 						String token2JSON=token2.concat(".json");
 						
-						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"link\":\"/user/password/reset/"+token2JSON+"\",\"token\":\""+token2+"\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2 - 2", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"link\":\"/user/password/reset/"+token2JSON+"\",\"token\":\""+token2+"\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
 
 						//step 3
 						
