@@ -26,6 +26,15 @@ angular.module("console", ['ui.ace'])
 			return defer.promise;
 		}
 		return prompt;
+	}).directive('showTail',function(){
+		return function(scope,elem,attrs) {
+			scope.$watch(function(){
+				return elem[0].value;
+			},function(e){
+				elem[0].scrollTop = elem[0].scrollHeight;
+			});
+
+		}
 	});
 
 
@@ -137,7 +146,7 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("Deleting your db","please wait...")
+	freezeConsole("Resetting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
 				error: function(data)	{
@@ -472,7 +481,7 @@ function openChangePasswordUserForm(changePassword){
     $("#userTitle").text("Change password");
     $("#txtUserName").addClass("disabled");
     $("#txtUserName").prop('disabled', true);
-    //$(".groupUserPwd").removeClass("hide");
+    $(".groupUserPwd").removeClass("hide");
     for(i=0;i<userDataArray.length;i++)
     {
         if(userDataArray[i].user.name == changePassword)
@@ -1523,7 +1532,7 @@ function setBradCrumb(type)
 		sBradCrumb = "Plugins";
 		break;
 	case "#permissions":
-		sBradCrumb = "Api Access";
+		sBradCrumb = "REST API Access";
 		break;		
 	case "#push_conf":
 		sBradCrumb = "Push Settings";
@@ -2257,20 +2266,25 @@ function tryToLogin(user, pass,appCode){
 	BBRoutes.com.baasbox.controllers.User.login().ajax({
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
-			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-			$('#password').val('');
-			//console.debug("login success");
-			//console.debug("data received: ");
-			//console.debug(data);
-			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-			//refresh the sessiontoken every 5 minutes
-			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
-			var scope=$("#loggedIn").scope();
-			scope.$apply(function(){
-				scope.loggedIn=true;
-			});
-			sessionStorage.up ="yep";
-			callMenu("#dashboard");
+			//issue #579 - Hang on "Loading" spinner for non-admin login
+			if (data.data.user.roles[0].name!=="administrator"){
+				$("#errorLogin").removeClass("hide");
+			}else{
+				sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+				$('#password').val('');
+				//console.debug("login success");
+				//console.debug("data received: ");
+				//console.debug(data);
+				//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+				//refresh the sessiontoken every 5 minutes
+				refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
+				var scope=$("#loggedIn").scope();
+				scope.$apply(function(){
+					scope.loggedIn=true;
+				});
+				sessionStorage.up ="yep";
+				callMenu("#dashboard");
+		   }
 		},
 		error: function() {
 			$("#errorLogin").removeClass("hide");

@@ -124,6 +124,31 @@ public class ScriptUsersCommandTest {
             }
         });
     }
+    
+    @Test
+    public void testUserCanUpdateHimself(){
+        running(fakeApplication(),()->{
+            try {
+                DbHelper.open("1234567890",sTestUser,sTestUser);
+                ObjectNode cmd = mapper.createObjectNode();
+                cmd.put(ScriptCommand.RESOURCE,"users");
+                cmd.put(ScriptCommand.NAME,"put");
+                ObjectNode params = mapper.createObjectNode();
+                params.put("visibleByTheUser",mapper.createObjectNode().put("private", 1));
+                params.put("username",sTestUser);
+                cmd.put(ScriptCommand.PARAMS,params);
+                JsonNode exec  = CommandRegistry.execute(cmd,null);
+                assertTrue(exec.isObject());
+                assertEquals(sTestUser, exec.path("user").path("name").asText());
+                assertNotNull(exec.get("visibleByTheUser"));
+                assertNotNull(exec.get("visibleByAnonymousUsers"));
+                assertNotNull(exec.get("visibleByRegisteredUsers"));
+                assertNotNull(exec.get("visibleByFriends"));
+            }catch (Throwable e){
+                fail(ExceptionUtils.getFullStackTrace(e));
+            }
+        });
+    }
 
     public static Result invokeScript(String scriptName,String user,String pass){
         String endpoint = "/plugin/"+scriptName;

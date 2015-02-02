@@ -1,21 +1,24 @@
 import static play.test.Helpers.POST;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
-
-import com.baasbox.security.SessionKeys;
 
 import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
+
+import com.baasbox.security.SessionKeys;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import core.AbstractTest;
 import core.TestConfig;
 public class UserLoginTest extends AbstractTest
@@ -90,4 +93,55 @@ public class UserLoginTest extends AbstractTest
 			}
 		);		
 	}
+
+
+	@Test
+	public void testRouteLoginUserJson()
+	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
+					
+					// Test login user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+					ObjectMapper om = new ObjectMapper();
+					JsonNode payload;
+					try {
+						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");
+					} catch (IOException e) {
+						Assert.fail(ExceptionUtils.getFullStackTrace((e)));
+						return;
+					}
+					request = request.withJsonBody(payload);
+					Result result = routeAndCall(request);
+					
+					assertRoute(result, "testRouteLoginUser", Status.OK, null, true);
+					String body = play.test.Helpers.contentAsString(result);
+					
+					JsonNode jsonRes = Json.parse(body);
+					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
+					Assert.assertNotNull(token);
+					JsonNode user = jsonRes.get("data").get("user");
+					Assert.assertNotNull(user);
+					assertJSON(user, "admin");
+					
+					//test logout
+					request = new FakeRequest(POST, "/logout");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_TOKEN, token);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteLogoutUser", Status.OK, "\"result\":\"ok\",\"data\":\"user logged out\",\"http_code\":200", true);
+					
+				}
+			}
+		);		
+	}
+
 }

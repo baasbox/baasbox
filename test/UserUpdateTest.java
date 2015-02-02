@@ -175,6 +175,19 @@ public class UserUpdateTest extends AbstractUserTest
 	                    result = route(request1);
 	                    assertRoute(result, "testUserChangeRole.changeRole", Status.OK, "\"roles\":[{\"name\":\"backoffice\"", true);
 						
+	                  //no change its role
+	                    request1 = new FakeRequest(PUT, "/admin/user/"+userName);
+	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	                    mapper = new ObjectMapper();
+	                    actualObj = mapper.readTree("{\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
+	                    	 "\"visibleByRegisteredUsers\":{} }");
+	                    request1 = request1.withJsonBody(actualObj,PUT);
+	                    request1 = request1.withHeader("Content-Type", "application/json");
+	                    result = route(request1);
+	                    assertRoute(result, "testUserChangeRole.changeRole", Status.OK, "\"roles\":[{\"name\":\"backoffice\"", true);
+						
+	                    
                     }catch (Exception e) {
                 		e.printStackTrace();
                 		fail();

@@ -449,11 +449,10 @@ public class DbHelper {
 						user.getName()) : isAdminRole;
 	}
 
+
 	public static ODatabaseRecordTx reconnectAsAdmin() {
-		if (tranCount.get() > 0)
-			throw new SwitchUserContextException(
-					"Cannot switch to admin context within an open transaction");
-		getConnection().close();
+		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to admin context within an open transaction");
+		DbHelper.close(DbHelper.getConnection());
 		try {
 			return open(appcode.get(),
 					BBConfiguration.getBaasBoxAdminUsername(),
@@ -464,10 +463,8 @@ public class DbHelper {
 	}
 
 	public static ODatabaseRecordTx reconnectAsAuthenticatedUser() {
-		if (tranCount.get() > 0)
-			throw new SwitchUserContextException(
-					"Cannot switch to user context within an open transaction");
-		getConnection().close();
+		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to user context within an open transaction");
+		DbHelper.close(DbHelper.getConnection());
 		try {
 			return open(appcode.get(), getCurrentHTTPUsername(),
 					getCurrentHTTPPassword());
