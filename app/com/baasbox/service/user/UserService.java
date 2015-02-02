@@ -19,6 +19,7 @@ package com.baasbox.service.user;
 
 import java.net.URL;
 import java.security.InvalidParameterException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,9 +40,11 @@ import org.apache.commons.mail.HtmlEmail;
 import org.stringtemplate.v4.ST;
 
 import play.Logger;
+import play.libs.Crypto;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
+import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PasswordRecovery;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.LinkDao;
@@ -439,10 +442,7 @@ public class UserService {
 			JsonNode privateAttributes, JsonNode friendsAttributes,
 			JsonNode appUsersAttributes) throws InvalidJsonException,Exception{
 		try{
-			ORole newORole=RoleDao.getRole(role);
-			if (newORole==null) throw new InvalidParameterException(role + " is not a role");
-			if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
-			ORID newRole=newORole.getDocument().getIdentity();
+			DbHelper.requestTransaction();
 			UserDao udao=UserDao.getInstance();
 			ODocument profile=udao.getByUserName(username);
 			if (profile==null) throw new InvalidParameterException(username + " is not a user");
@@ -458,19 +458,28 @@ public class UserService {
 					break;
 				}
 			}
-			ORole oldORole=RoleDao.getRole(oldRole);
+			
 			//TODO: update role
-			OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
-			ouser.getRoles().remove(oldORole);
-			ouser.addRole(newORole);
-			ouser.save();
+			if (role!=null){
+				ORole newORole=RoleDao.getRole(role);
+				if (newORole==null) throw new InvalidParameterException(role + " is not a role");
+				if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
+				ORID newRole=newORole.getDocument().getIdentity();
+				ORole oldORole=RoleDao.getRole(oldRole);
+				OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
+				ouser.getRoles().remove(oldORole);
+				ouser.addRole(newORole);
+				ouser.save();
+			}
 			profile.save();
 			profile.reload();
-
+			DbHelper.commitTransaction();
 			return profile;
 		}catch (OSerializationException e){
+			DbHelper.rollbackTransaction();
 			throw new InvalidJsonException(e);
 		}catch (Exception e){
+			DbHelper.rollbackTransaction();
 			throw e;
 		}
 	}//updateProfile with role
@@ -809,14 +818,39 @@ public class UserService {
                BBConfiguration.getBaasBoxUsername().equals(username);
     }
 
-	public static void changeUsername(String currentUsername,String newUsername) throws UserNotFoundException {
+    public static boolean isSocialAccount(String username) throws SqlInjectionException {
+    	ODocument user = getUserProfilebyUsername(username);
+    	Boolean generated = (Boolean)user.field(UserDao.GENERATED_USERNAME);
+		if (generated==null) return false;
+        return generated.booleanValue();
+    }
+    
+	public static String generateFakeUserPassword(String username,Date signupDate){
+		String bbid=Internal.INSTALLATION_ID.getValueAsString();
+		String password = Crypto.sign(username+new SimpleDateFormat("ddMMyyyyHHmmss").format(signupDate)+bbid);
+		return password;
+	}
+
+	public static void changeUsername(String currentUsername,String newUsername) throws UserNotFoundException, SqlInjectionException, OpenTransactionException {
 		DbHelper.reconnectAsAdmin();
-		//change the username
-		UserDao.getInstance().changeUsername(currentUsername,newUsername);
-		//change all the reference in _author fields (this should be placed in a background task)
-		NodeDao.updateAuthor(currentUsername, newUsername);
-		LinkDao.updateAuthor(currentUsername, newUsername);
-		DbHelper.close(DbHelper.getConnection());
+		try{
+			//this must be done in case of fake username (social login)
+			boolean changeThePasswordToo=isSocialAccount(currentUsername);
+			//change the username
+			UserDao.getInstance().changeUsername(currentUsername,newUsername);
+			if (changeThePasswordToo){
+				ODocument user = getUserProfilebyUsername(newUsername);
+				Date signupDate = (Date)user.field(UserDao.USER_SIGNUP_DATE);
+				changePassword(newUsername, generateFakeUserPassword(newUsername, signupDate));
+			}
+			//change all the reference in _author fields (this should be placed in a background task)
+			NodeDao.updateAuthor(currentUsername, newUsername);
+			LinkDao.updateAuthor(currentUsername, newUsername);
+		}catch(UserNotFoundException | SqlInjectionException| OpenTransactionException e){
+			throw e;
+		}finally {
+			DbHelper.close(DbHelper.getConnection());
+		}
 		//warning! from this point there is no database available!
 	}
 	

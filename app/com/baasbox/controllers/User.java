@@ -43,6 +43,7 @@ import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import play.mvc.Http.RequestBody;
 import play.mvc.Result;
 import play.mvc.With;
 
@@ -390,7 +391,7 @@ public class User extends Controller {
 				throw new Exception("The code to reset the password seems to be invalid. Please repeat the reset password procedure");
 			}
 
-			boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(base64, username);
+			boolean isTokenValid=ResetPwdDao.getInstance().verifyTokenStep1(decBase64, username);
 			if (!isTokenValid) throw new Exception("Reset password procedure is expired! Please repeat the reset password procedure");
 
 		}catch (Exception e){
@@ -489,7 +490,7 @@ public class User extends Controller {
 			if (!UserService.exists(username))
 				throw new Exception("User not found!");
 
-			boolean isTokenValid = ResetPwdDao.getInstance().verifyTokenStep2(base64, username);
+			boolean isTokenValid = ResetPwdDao.getInstance().verifyTokenStep2(decBase64, username);
 			if (!isTokenValid)  throw new Exception("Reset Code not found or expired! Please repeat the reset password procedure");
 
 			Http.RequestBody body = request().body();
@@ -683,51 +684,61 @@ public class User extends Controller {
 	@With ({NoUserCredentialWrapFilterAsync.class})
 	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
 	public static F.Promise<Result> login()/* throws SqlInjectionException, JsonProcessingException, IOException */{
-		Map<String, String[]> body = request().body().asFormUrlEncoded();
-		if (body==null) {
-			return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded?"));
-		}
-		String username;
-		String password;
-		String appcode;
-		String loginData;
-		if(body.get("username")==null) {
-			return F.Promise.pure(badRequest("The 'username' field is missing"));
-		} else {
-			username=body.get("username")[0];
+		final String username;
+		final String password;
+		final String appcode;
+		final String loginData;
+		
+		RequestBody body = request().body();
+		if (body==null)  return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded or application/json?"));
+		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
+		if (bodyUrlEncoded!=null){
+			if(bodyUrlEncoded.get("username")==null) 
+				return F.Promise.pure(badRequest("The 'username' field is missing"));
+			else username=bodyUrlEncoded.get("username")[0];
+			if(bodyUrlEncoded.get("password")==null) 
+				return F.Promise.pure(badRequest("The 'password' field is missing"));
+			else password=bodyUrlEncoded.get("password")[0];
+			if(bodyUrlEncoded.get("appcode")==null) 
+				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
+			else appcode=bodyUrlEncoded.get("appcode")[0];
+			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
+			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
+			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					||
+					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					) return F.Promise.pure(forbidden(username + " cannot login"));
+	
+			if (bodyUrlEncoded.get("login_data")!=null)
+				loginData=bodyUrlEncoded.get("login_data")[0];
+			else loginData=null;
+			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
+		}else{
+			JsonNode bodyJson = body.asJson();
+			if(bodyJson.get("username")==null) 
+				return F.Promise.pure(badRequest("The 'username' field is missing"));
+			else username=bodyJson.get("username").asText();
+			if(bodyJson.get("password")==null) 
+				return F.Promise.pure(badRequest("The 'password' field is missing"));
+			else password=bodyJson.get("password").asText();
+			if(bodyJson.get("appcode")==null) 
+				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
+			else appcode=bodyJson.get("appcode").asText();
+			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
+			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
+			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					||
+					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					) return F.Promise.pure(forbidden(username + " cannot login"));
+	
+			if (bodyJson.get("login_data")!=null)
+				loginData=bodyJson.get("login_data").asText();
+			else loginData=null;
+			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);	
 		}
 
-		if(body.get("password")==null) {
-			return F.Promise.pure(badRequest("The 'password' field is missing"));
-		} else {
-			password=body.get("password")[0];
-		}
-
-		if(body.get("appcode")==null) {
-			return F.Promise.pure(badRequest("The 'appcode' field is missing"));
-		} else {
-			appcode=body.get("appcode")[0];
-		}
-
-		if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-		if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-		if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
-
-		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
-			|| username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
-				) {
-			return F.Promise.pure(forbidden(username + " cannot login"));
-		}
-
-		if (body.get("login_data")!=null) {
-			loginData = body.get("login_data")[0];
-		} else {
-			loginData = null;
-		}
-		if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
-
-		/* other useful parameter to receive and to store...*/		  	  
-		//validate user credentials
 		return F.Promise.promise(()->{
 			String user;
 			try (ODatabaseRecordTx db = DbHelper.open(appcode,username,password)){

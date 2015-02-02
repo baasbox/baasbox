@@ -94,8 +94,10 @@ public class ScriptInvoker extends Controller{
         ObjectNode reqJson = BBJson.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
+        reqJson.put("remote",request.remoteAddress());
 
-        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE),"application/json")){
+		//TODO: this doesn't work with query strings
+		if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
 	        String textBody = body==null?null:body.asText();
 	        DynamicForm requestData = Form.form().bindFromRequest();
 	        JsonNode jsonBody = BBJson.mapper().valueToTree(requestData.data());

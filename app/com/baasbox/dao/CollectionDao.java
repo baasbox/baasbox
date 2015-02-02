@@ -37,6 +37,7 @@ public class CollectionDao extends NodeDao {
 	private final static String MODEL_NAME="_BB_Collection";
 	public final static String NAME="name";
 	private static final String COLLECTION_NAME_INDEX = "_BB_Collection.name";
+	public static final String COLLECTION_NAME_REGEX="(?i)^[A-Z-][A-Z0-9_-]*$";
 	
 	public static CollectionDao getInstance(){
 		return new CollectionDao();
@@ -62,19 +63,39 @@ public class CollectionDao extends NodeDao {
 	public ODocument create(String collectionName) throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable {
 		if (DbHelper.isInTransaction()) throw new OpenTransactionException("Cannot create a collection within an open transaction");
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+
+		if (Character.isDigit(collectionName.charAt(0))){
+			throw new InvalidCollectionException("Collection names cannot start by a digit");
+		}
+		if (collectionName.contains(";")){
+			throw new InvalidCollectionException("Collection cannot contain ;");
+		}
+		if (collectionName.contains(":")){
+			throw new InvalidCollectionException("Collection cannot contain :");
+		}
+		if (collectionName.contains(".")){
+			throw new InvalidCollectionException("Collection cannot contain .");
+		}		
+		if (collectionName.contains("@")){
+			throw new InvalidCollectionException("Collection cannot contain @");
+		}
+		if (collectionName.startsWith("_")){
+			throw new InvalidCollectionException("Collection cannot start with _");
+		}		
+		if (!collectionName.matches(COLLECTION_NAME_REGEX)){
+			throw new InvalidCollectionException("Collection name must be complaint with the regular expression: " + COLLECTION_NAME_REGEX);
+		}
+		if(collectionName.toUpperCase().startsWith("_BB_")){
+			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
+		}
 		try {
 			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}
-		if (Character.isDigit(collectionName.charAt(0))){
-			throw new InvalidCollectionException("Collection names cannot start by a digit");
-		}
 		ODocument doc = super.create();
 		doc.field("name",collectionName);
-		if(collectionName.toUpperCase().startsWith("_BB_")){
-			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
-		}
+
 		save(doc);
 		
 		//create new class
