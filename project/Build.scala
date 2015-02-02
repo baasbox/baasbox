@@ -51,6 +51,7 @@ object ApplicationBuild extends Build {
           "com.github.tony19" % "named-regexp" % "0.2.3",
           "org.scribe" % "scribe" % "1.3.2",
 				  "com.eaio.uuid" % "uuid" % "3.4",
+          "org.apache.httpcomponents" % "httpclient" % "4.3.6",
 				  "org.apache.tika" % "tika-core" % "1.4",
 				  "org.apache.tika" % "tika-parsers" % "1.4",
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
