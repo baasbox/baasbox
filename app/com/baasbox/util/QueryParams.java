@@ -262,7 +262,7 @@ public class QueryParams implements IQueryParametersKeys{
                 String[] ary = new String[val.size()];
                 int idx = 0;
                 for (JsonNode n: val){
-                    String s = n==null?null:n.toString();
+                    String s = n==null?null:n.asText();
                     ary[idx++] = s;
                 }
                 query.put(k,ary);
