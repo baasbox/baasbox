@@ -80,7 +80,7 @@ function ScriptsController($scope,prompt){
 	var parseError = function(text){
 		var x =EXTRACT_ERROR.exec(text);
 		if(x && x[1]){
-			console.log(x[1]);
+			//console.log(x[1]);
 			return x[1];
 		}
 		return "Unknown error";
@@ -153,9 +153,9 @@ function ScriptsController($scope,prompt){
 						  			editor.keyBinding.onCommandKey = function(e, hashId, keyCode) {
 						  				$scope.$apply(function(){
 								  			  if (!$scope.editMode) $scope.setEditMode(true);
-								  			console.log($scope.editMode);
+								  			//console.log($scope.editMode);
 						  				});
-						  				console.log(this);
+						  				//console.log(this);
 						  				this.originalOnCommandKey(e, hashId, keyCode);
 						  			}
 					  			}
@@ -359,37 +359,28 @@ function ScriptsController($scope,prompt){
 				var temp = e.data;
 				temp=temp.replace(/\\\\/gim,'\\');
 				temp=temp.replace(/\\(["'])/gim,'$1');
-				var data = JSON.parse(temp);
+				var e = JSON.parse(temp);
+				var toPrint;
+				
+				if (e.args.length === 0) {
+					if (typeof e.message === 'string'){
+						toPrint = e.message;
+					} else {
+						toPrint =JSON.stringify(e.message);
+					}
+				} else {
+					if (typeof e.message === 'string'){
+					   toPrint = _formatLogs(e.message, e.args);
+					} else {
+						toPrint = JSON.stringify(e.message)	+" "+Array.prototype.join.call(e.args.map(function (x){
+							return JSON.stringify(x);
+						}),' ');
+					}
+				}
 
 				$scope.$apply(function(){
-					console.log(data);
-					$scope.logs.push(data);
-					if($scope.logs.length>=$scope.maxLogSize) {
-						Array.prototype.splice.call($scope.logs,0, ($scope.logs.length - $scope.maxLogSize));
-					}
-					$scope.logContent = "";
-					$scope.logs.forEach(function(e){
-						var toPrint;
-						if (e.args.length === 0) {
-							if (typeof e.message === 'string'){
-								toPrint = e.message;
-							} else {
-								toPrint =JSON.stringify(e.message);
-							}
-						} else {
-							if (typeof e.message === 'string'){
-							   toPrint = _formatLogs(e.message, e.args);
-							} else {
-
-								toPrint = e.message+" "+Array.prototype.join.call(e.args.map(function (x){
-									return typeof (x === 'string')?x:JSON.stringify(x);
-								}),' ');
-							}
-						}
-						$scope.logContent += "" + e.date + " [" + e.script + "]: " + toPrint + "\n";
-
-					});
-				})
+					$scope.logContent += "\n" + e.date.replace("T"," ") + " [" + e.script + "]: " + toPrint;
+				});
 			});
 		}
 	}

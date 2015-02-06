@@ -45,13 +45,13 @@ import play.mvc.Result;
 import play.mvc.Results;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.BBInternalConstants;
 import com.baasbox.controllers.CustomHttpCode;
 
 import play.mvc.SimpleResult;
 import play.libs.F;
 
 public class WrapResponse {
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

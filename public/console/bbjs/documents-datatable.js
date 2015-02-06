@@ -6,7 +6,7 @@ var documentDataArray= new Array();
 
    function loadDocumentsData(collectionName){
 	   if (collectionName!=null){
-	    	url=BBRoutes.com.baasbox.controllers.Document.getDocuments(collectionName).absoluteURL();
+	    	url = window.location.origin + BBRoutes.com.baasbox.controllers.Document.getDocuments(collectionName).url;
 	    	loadTable($('#documentTable'),documentsDataTableDef,url,documentDataArray); //defined in datatable.js
    		}
     }

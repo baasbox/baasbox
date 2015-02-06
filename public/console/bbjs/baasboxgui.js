@@ -146,7 +146,7 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("Deleting your db","please wait...")
+	freezeConsole("Resetting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
 				error: function(data)	{
@@ -481,7 +481,7 @@ function openChangePasswordUserForm(changePassword){
     $("#userTitle").text("Change password");
     $("#txtUserName").addClass("disabled");
     $("#txtUserName").prop('disabled', true);
-    //$(".groupUserPwd").removeClass("hide");
+    $(".groupUserPwd").removeClass("hide");
     for(i=0;i<userDataArray.length;i++)
     {
         if(userDataArray[i].user.name == changePassword)
