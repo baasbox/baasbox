@@ -205,7 +205,9 @@ public class ScriptDocumentCommandTest {
                 ObjectNode p = MAPPER.createObjectNode();
                 ObjectNode q = MAPPER.createObjectNode();
                 q.put("where","idx < ?");
-                q.put("params",5);
+                ArrayNode params = MAPPER.createArrayNode();
+                params.add("5");
+                q.put("params",params);
                 p.put("collection",TEST_COLLECTION);
                 p.put("query",q);
 
