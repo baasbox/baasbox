@@ -54,7 +54,7 @@ public class Tags {
         ACCOUNT_CREATION("account.create","Allows users to create new accounts (signup via username/password)."),
         SOCIAL("social","Allows login/signup through supported social networks."),
         LOST_PASSWORD("account.lost_password","Enables the workflow to reset a password via email."),
-        USERS("users","Allows to query users' profiles"),
+        USERS("users","Allows to query users' profiles."),
         FRIENDSHIP("friendship","Allows to know your followers or the people you follow on the social platform within BaasBox."),
         FRIENDSHIP_CREATIONS("friendship.create","Enables the social functions of BaasBox: following/unfollowing among the users of the BaasBox server."),
         SEND("notifications.send","Allows registered users to send push notifications to other users. Administrators can always send notifications to users."),
