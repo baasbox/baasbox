@@ -20,8 +20,6 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
 
-import com.baasbox.dao.exception.InvalidCriteriaException;
-
 import play.Logger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -186,6 +184,13 @@ public class UserDao extends NodeDao  {
 		if (existsUserName(currentUsername)){
 			Object command = DbHelper.genericSQLStatementExecute("update ouser set name=? where name=?", new String[]{newUsername,currentUsername});
 		}else throw new UserNotFoundException(currentUsername + " does not exists");
+	}
+
+	public boolean emailIsAlreadyUsed(String email) {
+		String selectStatement="select from _bb_user where visibleByTheUser.email= ?";
+		List<ODocument> ret=(List<ODocument>)DbHelper.genericSQLStatementExecute(selectStatement, new String[]{email});
+		if (ret.size()!=0) return true;
+		return false;
 	}
 
 }

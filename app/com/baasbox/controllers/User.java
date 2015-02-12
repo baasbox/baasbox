@@ -56,6 +56,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -203,6 +204,9 @@ public class User extends Controller {
 		} catch (UserAlreadyExistsException e){
 			if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
 			return badRequest(username + " already exists");
+		} catch (EmailAlreadyUsedException e){
+			if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+			return badRequest(username + ": the email provided is already in use");
 		} catch (Throwable e){
 			Logger.warn("signUp", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));

@@ -31,6 +31,7 @@ import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandNotImplementedException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
@@ -298,7 +299,7 @@ class UsersResource extends BaseRestResource {
             return Json.mapper().readTree(userNode);
         } catch (InvalidJsonException | IOException e) {
             throw new CommandExecutionException(command,"invalid json",e);
-        } catch (UserAlreadyExistsException e) {
+        } catch (UserAlreadyExistsException | EmailAlreadyUsedException e) {
             return NullNode.getInstance();
         }
     }

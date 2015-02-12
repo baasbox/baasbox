@@ -53,6 +53,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -153,7 +154,7 @@ public class UserService {
 			JsonNode privateAttributes,
 			JsonNode friendsAttributes,
 			JsonNode appUsersAttributes,
-			boolean generated) throws InvalidJsonException, UserAlreadyExistsException{
+			boolean generated) throws InvalidJsonException, UserAlreadyExistsException, EmailAlreadyUsedException{
 		return signUp (
 				username,
 				password,
@@ -240,7 +241,7 @@ public class UserService {
             JsonNode nonAppUserAttributes,
             JsonNode privateAttributes,
             JsonNode friendsAttributes,
-            JsonNode appUsersAttributes,boolean generated) throws InvalidJsonException,UserAlreadyExistsException{
+            JsonNode appUsersAttributes,boolean generated) throws InvalidJsonException,UserAlreadyExistsException, EmailAlreadyUsedException{
 			
 			if (StringUtils.isEmpty(username)) throw new IllegalArgumentException("username cannot be null or empty");
 			if (StringUtils.isEmpty(password)) throw new IllegalArgumentException("password cannot be null or empty");
@@ -248,6 +249,10 @@ public class UserService {
 			ODatabaseRecordTx db =  DbHelper.getConnection();
 			ODocument profile=null;
 			UserDao dao = UserDao.getInstance();
+			if (privateAttributes!=null && privateAttributes.has("email")) {
+				boolean checkEmail=dao.emailIsAlreadyUsed((String) privateAttributes.findValuesAsText("email").get(0));
+				if (checkEmail) throw new EmailAlreadyUsedException("The email provided is already in use by another user");
+			}
 			try{
 			    //because we have to create an OUser record and a User Object, we need a transaction
 			
