@@ -1,5 +1,6 @@
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.ScriptCommand;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidJsonException;
@@ -7,17 +8,21 @@ import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import core.AbstractTest;
 import core.TestConfig;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import play.api.mvc.SimpleResult;
 import play.mvc.Result;
 import play.test.FakeRequest;
 
 import javax.ws.rs.core.MediaType;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -55,7 +60,7 @@ public class ScriptUsersCommandTest {
 
             try {
                 UserService.signUp(user,user,new Date(),visToAnon,visToUser,visToFriends,vistToReg,false);
-            } catch (InvalidJsonException|UserAlreadyExistsException e) {
+            } catch (InvalidJsonException|UserAlreadyExistsException|EmailAlreadyUsedException e) {
                 fail(ExceptionUtils.getFullStackTrace(e));
             }
             return user;
