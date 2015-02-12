@@ -21,6 +21,7 @@ public class Evolution_0_9_4 implements IEvolution {
         Logger.info("Applying evolutions to evolve to the " + version + " level");
         try{
             createDescriptionsForEndpointSwitches(db);
+            createIndexOnEmail(db);
         }catch (Throwable e){
             Logger.error("Error applying evolution to " + version + " level!!" ,e);
             throw new RuntimeException(e);
@@ -29,7 +30,16 @@ public class Evolution_0_9_4 implements IEvolution {
     }
 
 
-    private void createDescriptionsForEndpointSwitches(ODatabaseRecordTx db) {
+    private void createIndexOnEmail(ODatabaseRecordTx db) {
+       	Logger.info("Creating index on email attribute...");
+       	DbHelper.execMultiLineCommands(db,true,
+       			"create property _bb_userattributes.email string;",
+       			"create index _bb_userattributes.email notunique;"
+                );
+       	Logger.info("...done");
+    }
+
+	private void createDescriptionsForEndpointSwitches(ODatabaseRecordTx db) {
     	Logger.info("Creating descriptions for endpoint switches...");
     	 DbHelper.execMultiLineCommands(db,true,
                  "update _BB_permissions set description='Access to APIs for reading and for asset downloading.' where tag='baasbox.assets';",
@@ -54,53 +64,4 @@ public class Evolution_0_9_4 implements IEvolution {
     	Logger.info("...done");
 	}
 
-	private void addScriptsClass(ODatabaseRecordTx db){
-        Logger.info("Creating scripts classes...");
-        DbHelper.execMultiLineCommands(db,true,
-                "create class _BB_Script;" ,
-                "create property _BB_Script.name String;",
-                "alter property _BB_Script.name mandatory=true;" ,
-                "alter property _BB_Script.name notnull=true;" ,
-                "create property _BB_Script.code embeddedlist string;" ,
-                "alter property _BB_Script.code mandatory=true;" ,
-                "alter property _BB_Script.code notnull=true;" ,
-                "create property _BB_Script.lang String;" ,
-                "alter property _BB_Script.lang mandatory=true;" ,
-                "alter property _BB_Script.lang notnull=true;" ,
-                "create property _BB_Script.library boolean;" ,
-                "alter property _BB_Script.library mandatory=true;" ,
-                "alter property _BB_Script.library notnull=true;" ,
-                "create property _BB_Script.active boolean;" ,
-                "alter property _BB_Script.active mandatory=true;" ,
-                "alter property _BB_Script.active notnull=true;" ,
-                "create property _BB_Script._storage embedded;" ,
-                "create property _BB_Script._creation_date datetime;" ,
-                "create property _BB_Script._invalid boolean;" ,
-                "alter property _BB_Script._invalid mandatory=true;" ,
-                "alter property _BB_Script._invalid notnull=true;" ,
-                "create index _BB_Script.name unique;");
-        Logger.info("...done!");
-    }
-
-    private void addScriptsPermission() {
-        Logger.info("Creating scripts permission tag...");
-        PermissionTagService.createReservedPermission(Tags.Reserved.SCRIPT_INVOKE);
-        Logger.info("...done!");
-    }
-    
-    private void addRoleFlag(ODatabaseRecordTx db) {
-        Logger.info("Adding role flag on class OROLE...");
-        DbHelper.execMultiLineCommands(db,true,
-        		"create property orole.isrole boolean;",
-        		"update orole set isrole=true");
-        Logger.info("...done!");
-    }
-    
-	private void createBBNodeIndexes(ODatabaseRecordTx db) {
-		DbHelper.execMultiLineCommands(db, true, new String[]{
-			"create property _BB_Node._author String;",
-			"create index _bb_node._author notunique;",
-			"create index _bb_node._creation_date notunique;"
-		});
-	}
 }
