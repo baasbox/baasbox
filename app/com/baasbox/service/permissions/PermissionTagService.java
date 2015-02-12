@@ -70,13 +70,14 @@ public class PermissionTagService {
         return dao.getAll();
     }
 
-    public static ImmutableMap<String,Boolean> getPermissionTagsMap(){
+    public static ImmutableMap<String,Object[]> getPermissionTagsMap(){
         List<ODocument> tags = getPermissionTags();
-        ImmutableMap.Builder<String,Boolean> map = ImmutableMap.builder();
+        ImmutableMap.Builder<String,Object[]> map = ImmutableMap.builder();
         for (ODocument doc:tags){
             String name = doc.<String>field(PermissionTagDao.TAG);
+            
             boolean enabled = doc.<Boolean>field(PermissionTagDao.ENABLED);
-            map.put(name,enabled);
+            map.put(name,new Object[]{enabled,doc.<String>field(PermissionTagDao.DESCRIPTION)});
         }
         return map.build();
     }
@@ -85,7 +86,7 @@ public class PermissionTagService {
         PermissionTagDao dao = PermissionTagDao.getInstance();
         for (Tags.Reserved tag:Tags.Reserved.values()){
             try {
-                dao.createReserved(tag.name);
+                dao.createReserved(tag.name,tag.description);
             } catch (Throwable throwable) {
                 if (Logger.isErrorEnabled()) Logger.error("Error while creating defaults tags");
                 throw new RuntimeException(throwable);
@@ -97,7 +98,7 @@ public class PermissionTagService {
         PermissionTagDao dao = PermissionTagDao.getInstance();
         try {
             if (dao.existsPermissionTag(reserved.name)) return;
-            dao.createReserved(reserved.name);
+            dao.createReserved(reserved.name,reserved.description);
         }catch (Throwable error){
             if (Logger.isErrorEnabled()) Logger.error("Error while creating reserved permission "+reserved.name,error);
             throw new RuntimeException(error);

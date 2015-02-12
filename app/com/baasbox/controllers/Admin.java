@@ -938,7 +938,7 @@ public class Admin extends Controller {
         if (Logger.isTraceEnabled())Logger.trace("Method Start");
         Result res;
         try{
-            ImmutableMap<String, Boolean> tags = PermissionTagService.getPermissionTagsMap();
+            ImmutableMap<String, Object[]> tags = PermissionTagService.getPermissionTagsMap();
             res = ok(toJson(tags));
         } catch (Throwable e){
             Logger.error(e.getMessage());

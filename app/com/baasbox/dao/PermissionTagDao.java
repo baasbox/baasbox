@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import play.Logger;
 
 import java.util.List;
@@ -41,7 +42,9 @@ public class PermissionTagDao  {
     private static final String MODEL_NAME ="_BB_Permissions";
     public static final String TAG = "tag";
     public static final String ENABLED = "enabled";
+	public static final String DESCRIPTION = "description";
     private static final String INDEX = MODEL_NAME+'.'+TAG;
+
 
     private final ODatabaseRecordTx db;
     public static PermissionTagDao getInstance(){
@@ -77,7 +80,10 @@ public class PermissionTagDao  {
         verifyUnreserved(name);
         return createReserved(name,enabled);
     }
-
+    
+    public ODocument createReserved(String name,boolean enabled) throws Throwable {
+    	return createReserved(name,"",enabled);
+    }
 
     /**
      * Creates a new tag-permission in the database, skipping name validation
@@ -86,7 +92,7 @@ public class PermissionTagDao  {
      * @return
      * @throws Throwable
      */
-    public ODocument createReserved(String name,boolean enabled) throws Throwable {
+    public ODocument createReserved(String name,String description,boolean enabled) throws Throwable {
         if (Logger.isTraceEnabled()) Logger.trace("Method Start");
         try {
             if (existsPermissionTag(name)) throw new PermissionTagAlreadyExistsException("name> "+name);
@@ -95,6 +101,7 @@ public class PermissionTagDao  {
         }
         ODocument document = new ODocument(MODEL_NAME);
         document.field(TAG,name);
+        document.field(DESCRIPTION,description);
         document.field(ENABLED,enabled);
         document.save();
         if (Logger.isTraceEnabled()) Logger.trace("Method End");
@@ -108,8 +115,8 @@ public class PermissionTagDao  {
      * @return
      * @throws Throwable
      */
-    public ODocument createReserved(String name) throws Throwable {
-        return createReserved(name, true);
+    public ODocument createReserved(String name,String description) throws Throwable {
+        return createReserved(name, description, true);
     }
 
     /**
