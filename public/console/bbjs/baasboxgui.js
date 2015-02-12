@@ -1670,6 +1670,7 @@ function setupTables(){
 //        "oLanguage": {"sLengthMenu": "_MENU_ records per page"},
         "aoColumns": [
             {"mData": "endpoint.name"},
+            {"mData": "endpoint.description"},
             {"mData": "endpoint.status","mRender": function (data,type,full){
                    var classStyle ="label-success";
                    var text = "enabled";
@@ -1680,12 +1681,8 @@ function setupTables(){
                   return "<span class='label "+classStyle+"'>"+text+"</span> ";
             }},
             {"mData":"endpoint",mRender: function(data,type,full){
-                //console.log(JSON.stringify(data));
-                if(data.status){
-
-                }
                 return getActionButton(data.status?"disable":"enable", "endpoint", data.name);
-            }}],
+            },sWidth: '80px'}],
         "bRetrieve": true,
         "bDestroy": true
     }).makeEditable();
@@ -2228,7 +2225,7 @@ function callMenu(action){
                     data = data["data"];
                     var arr = [];
                     for(var tag in data){
-                        arr.push({"endpoint": {"name": tag,"status": data[tag]}});
+                        arr.push({"endpoint": {"name": tag,"status": data[tag][0],"description":data[tag][1]}});
                     }
 
                     applySuccessMenu(action,arr);

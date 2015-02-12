@@ -49,29 +49,32 @@ public class Tags {
     }
 
     public static enum Reserved{
-        ASSETS("assets"),
-        ACCOUNT("account"),
-        ACCOUNT_CREATION("account.create"),
-        SOCIAL("social"),
-        LOST_PASSWORD("account.lost_password"),
-        USERS("users"),
-        FRIENDSHIP("friendship"),
-        FRIENDSHIP_CREATIONS("friendship.create"),
-        SEND("notifications.send"),
-        RECEIVE("notifications.receive"),
-        STORAGE_WRITE("data.write"),
-        STORAGE_READ("data.read"),
-        STORAGE_UPDATE("data.update"),
-        STORAGE_GRANTS("data.grants"),
-        FILES_READ("file.read"),
-        FILES_WRITE("file.write"),
-        FILES_GRANTS("file.grants"),
-        SCRIPT_INVOKE("scripts.invoke")
+        ASSETS("assets","Access to APIs for reading and for asset downloading."),
+        ACCOUNT("account","Allows users to access their accounts, login and logout, modify their passwords."),
+        ACCOUNT_CREATION("account.create","Allows users to create new accounts (signup via username/password)."),
+        SOCIAL("social","Allows login/signup through supported social networks."),
+        LOST_PASSWORD("account.lost_password","Enables the workflow to reset a password via email."),
+        USERS("users","Allows to query users' profiles"),
+        FRIENDSHIP("friendship","Allows to know your followers or the people you follow on the social platform within BaasBox."),
+        FRIENDSHIP_CREATIONS("friendship.create","Enables the social functions of BaasBox: following/unfollowing among the users of the BaasBox server."),
+        SEND("notifications.send","Allows registered users to send push notifications to other users. Administrators can always send notifications to users."),
+        RECEIVE("notifications.receive","Allows apps to send device tokens they need in order to receive push notifications through BaasBox. If you disable these functions, apps wil no longer be able to register in order to receive push notifications from such server. Apps that are already registered will keep on receiving notifications."),
+        STORAGE_WRITE("data.write","Allows to create new Documents."),
+        STORAGE_READ("data.read","Allows to read Collections and Documents by querying them."),
+        STORAGE_UPDATE("data.update","Allows to update the contents of already existing Documents."),
+        STORAGE_GRANTS("data.grants","Enables the possibility to modify the ACL of Documents."),
+        FILES_READ("file.read","Allows to download the Files stored in BaasBox and query them."),
+        FILES_WRITE("file.write","Allows to create new Files."),
+        FILES_GRANTS("file.grants","Enables the possibility to modify the ACL of Files."),
+        SCRIPT_INVOKE("scripts.invoke","Allows to make calls to plugins.")
         ;
         public final String name;
+        public final String description;
+        
         private final static String PREFIX="baasbox.";
-        private Reserved(String name){
+        private Reserved(String name,String description){
             this.name=PREFIX+name;
+            this.description=description;
         }
     }
 }
