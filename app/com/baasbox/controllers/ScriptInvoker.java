@@ -97,12 +97,12 @@ public class ScriptInvoker extends Controller{
         reqJson.put("path",path);
         reqJson.put("remote",request.remoteAddress());
 
-        //todo this doesn't work with query strings
-        if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
             String textBody = body == null ? null : body.asText();
-            DynamicForm requestData = Form.form().bindFromRequest();
-            JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
             if (textBody == null) {
+            	//fixes issue 627
+               	Map<String, String> params = BodyHelper.requestData(request);
+                JsonNode jsonBody = Json.mapper().valueToTree(params);
                 reqJson.put("body", jsonBody);
             } else {
                 reqJson.put("body", textBody);
