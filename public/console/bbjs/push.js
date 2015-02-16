@@ -249,6 +249,29 @@ function PushConfController($scope){
 
 
 function PushTestController($scope){
-
+	$scope.payload=$("#push_template").html();
+	$scope.server_response="";
+	$scope.sending=false;
+	$scope.error=false;
+	$scope.sendPush = function(){
+		$scope.sending=true;
+		var url=window.location.origin + BBRoutes.com.baasbox.controllers.Push.sendUsers.url;
+		$.ajax({
+			type:"POST",
+			url:"/push/message",
+			data: $scope.payload,
+			contentType: "application/json",
+			processData: false
+		}).always(function (ajaxResult) {
+			$scope.$apply(function (){
+				$scope.sending=false;
+				$scope.server_response=
+					JSON.stringify(
+							JSON.parse(ajaxResult.responseText),{}
+							,2);
+				$scope.error=ajaxResult.status!=200;
+			});
+		});
+	};
 };
 

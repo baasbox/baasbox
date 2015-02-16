@@ -1,3 +1,9 @@
+@(version: String)
+<script type="bogus" id="push_template">{
+  "users": ["user1","user2"],
+  "message": "This is a test message!"
+}
+</script>
 <p class="hint">
     This is the Push Notifications Test Page. From here you can send Push messages to users to try settings and Push Notifications parameters
 </p>
@@ -9,18 +15,21 @@
 	<!-- Selector between old and new API -->
 	
 	<!-- Textarea to send payload -->
+	Please see <a target="_blank" href="http://www.baasbox.com/version/help/doc/@(version.toLowerCase().replaceAll("-snapshot",""))?shell#send-a-push-notification"> the online documentation</a> for details. <p />
+	Note that users admin, baasbox and internal_admin CANNOT receive push notifications.<p />
 						<div class="editor box-content" 
-							style="height: 300px;"
+							style="height: 150px;"
 							ui-ace="aceEditMode"
-							>
-						</div>
+							ng-model="payload"></div>
 	<!-- Button to send messages -->
 						<div class="form-actions" >
-							<button type="submit" ng-click="" class="btn btn-primary btn-small">Send</button>
+							<button ng-show="!sending"type="submit" ng-click="sendPush()" class="btn btn-primary btn-small">Send</button>
+							<span ng-show="sending">Sending....</span>
 						</div>
 	<!-- Area to see the result -->
-    					<div  class="errorBox">
-							<pre  class="errorBoxText">{{}}</pre>
+    					<div >
+    						Server Response:
+							<pre  ng-class="{errorBoxText: error}">{{server_response}}</pre>
 						</div>
     </div><!-- box content -->
 </div>

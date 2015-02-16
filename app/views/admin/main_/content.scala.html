@@ -1,3 +1,4 @@
+@(version: String)
 			<div id="content" class="span10">
 			<div class="row-fluid">
 			<!-- content starts -->
@@ -37,7 +38,7 @@
                 @admin.main_.content_.push_conf()
                 </div>
                 <div ng-show="menu=='push_test'">
-                @admin.main_.content_.push_test()
+                @admin.main_.content_.push_test(version)
                 </div>
                 <div ng-show="menu=='scripts'">
                 @admin.main_.content_.scripts()
