@@ -18,7 +18,7 @@ angular.module("console", ['ui.ace'])
 		function prompt(message,defaultValue){
 			var defer = $q.defer();
 			var response = $window.prompt(message,defaultValue);
-			if (response==null){
+			if (!response || /^\s*$/.test(response)){ //http://stackoverflow.com/a/3261380/3023373
 				defer.reject();
 			} else {
 				defer.resolve(response);
