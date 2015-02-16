@@ -5,7 +5,7 @@
 var  filesDataArray= new Array();
 
    function loadFilesData(){
-	    url=BBRoutes.com.baasbox.controllers.File.getAllFile().absoluteURL();
+	    url= window.location.origin + BBRoutes.com.baasbox.controllers.File.getAllFile().url;
 	    loadTable($('#fileTable'),filesDataTableDef,url,filesDataArray); //defined in datatable.js
     }
    
