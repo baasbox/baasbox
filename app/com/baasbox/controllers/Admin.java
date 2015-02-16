@@ -118,7 +118,7 @@ public class Admin extends Controller {
 			return badRequest("The request is malformed: check your query criteria");
 		}
 		try{
-			ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER.toString());
+			ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
@@ -140,7 +140,7 @@ public class Admin extends Controller {
 		if (user==null) return notFound("User " + username + " not found");
 		String ret="";
 		try{
-			ret=user.toJSON(JSONFormats.Formats.USER.toString());
+			ret=user.toJSON(JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}

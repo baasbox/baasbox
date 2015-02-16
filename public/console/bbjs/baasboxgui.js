@@ -467,6 +467,7 @@ function openUserEditForm(editUserName){
 	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
+	$("#txtLoginInfo").val(reverseJSON(userObject.system));
 	$('#addUserModal').modal('show');
 }
 
@@ -1537,6 +1538,9 @@ function setBradCrumb(type)
 	case "#push_conf":
 		sBradCrumb = "Push Settings";
 		break;
+	case "#push_test":
+		sBradCrumb = "Push Test";
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
@@ -1918,8 +1922,8 @@ function applySuccessMenu(action,data){
 		scope.data=data;
 	});
 	sessionStorage.latestMenu=action;
-	console.log(action);
-	console.log(scope);
+	//console.log(action);
+	//console.log(scope);
 }//applySuccessMenu
 
 function reloadFollowing(user){
@@ -2237,10 +2241,14 @@ function callMenu(action){
         case "#push_conf":
         	loadPushSettings(action);
             break;
+        case "#push_test":
+        	applySuccessMenu(action);
+            break;
 	}
 }//callMenu
 
 //PushConfController is defined into the push.js file
+//PushTestController is defined into the push.js file
 
 function PermissionsController($scope){}
 
