@@ -467,6 +467,7 @@ function openUserEditForm(editUserName){
 	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
+	$("#txtLoginInfo").val(reverseJSON(userObject.system));
 	$('#addUserModal').modal('show');
 }
 
