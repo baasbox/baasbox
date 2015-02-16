@@ -416,5 +416,5 @@ GET		/root/configuration										com.baasbox.controllers.Root.getOverridableCon
 # Home page & general API
 GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
 GET     /                           com.baasbox.controllers.Application.index()
-GET 	/*file						controllers.Assets.at(path="/public/", file)
+GET 	/*file						com.baasbox.controllers.MyAssets.at(path="/public/", file)
 OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)

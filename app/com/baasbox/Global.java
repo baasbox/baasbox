@@ -292,7 +292,7 @@ public class Global extends GlobalSettings {
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
 	
-	private ObjectNode prepareError(RequestHeader request, String error) {
+	public ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
 			result.put("result", "error");
