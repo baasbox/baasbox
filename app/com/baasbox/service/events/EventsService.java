@@ -1,16 +1,11 @@
 package com.baasbox.service.events;
 
-import com.baasbox.service.scripting.js.Json;
-import com.baasbox.util.EmptyConcurrentMap;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import play.Logger;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import com.baasbox.util.EmptyConcurrentMap;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Stub service for sse connections
@@ -23,6 +18,7 @@ public class EventsService {
     public static enum StatType{
         SCRIPT,
         ALL,
+        SYSTEM_LOGGER
     }
 
     private final static ConcurrentMap<StatType,ConcurrentMap<EventSource,EventSource>> STATS_CHANNELS =
@@ -40,14 +36,22 @@ public class EventsService {
         });
     }
 
-    public static void removeLogListener(EventSource src){
+    public static void removeScriptLogListener(EventSource src){
         removeListener(StatType.SCRIPT,src);
     }
 
-    public static void addLogListener(EventSource src){
+    public static void addScriptLogListener(EventSource src){
         addListener(StatType.SCRIPT,src);
     }
 
+    public static void removeSystemLogListener(EventSource src){
+        removeListener(StatType.SYSTEM_LOGGER,src);
+    }
+
+    public static void addSystemLogListener(EventSource src){
+        addListener(StatType.SYSTEM_LOGGER,src);
+    }
+    
     public static void removeListener(StatType channel,EventSource src){
         STATS_CHANNELS.computeIfPresent(channel,(ch,listeners)->{
             EventSource removed = listeners.remove(src);
@@ -73,7 +77,6 @@ public class EventsService {
         STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
             e.sendData(messageToSend);
             a.increment();
-
         });
 
         STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{

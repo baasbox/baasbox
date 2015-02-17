@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +77,7 @@ import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.dbmanager.DbManagerService;
+import com.baasbox.service.events.EventSource;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
@@ -106,6 +109,14 @@ public class Admin extends Controller {
 	static String backupDir = DbManagerService.backupDir;
 	static String fileSeparator = DbManagerService.fileSeparator;
 
+	public static Result getSystemLog(){
+        DbHelper.close(DbHelper.getConnection());
+        response().setContentType("text/event-stream");
+        return ok(EventSource.source((e)->{
+           
+        }));
+	}
+	
 	public static Result getUsers(){
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		Context ctx=Http.Context.current.get();

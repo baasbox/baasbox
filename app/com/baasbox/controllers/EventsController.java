@@ -75,8 +75,8 @@ public class EventsController {
             response().setContentType("text/event-stream");
             return ok(EventSource.source((eventSource) -> {
 
-                eventSource.onDisconnected(() -> EventsService.removeLogListener(eventSource));
-                EventsService.addLogListener(eventSource);
+                eventSource.onDisconnected(() -> EventsService.removeScriptLogListener(eventSource));
+                EventsService.addScriptLogListener(eventSource);
 
             }));
         } finally {

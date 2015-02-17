@@ -24,7 +24,6 @@ public class EventSource extends play.libs.EventSource {
     public void sendData(String s) {
         Logger.debug("SENDING");
         super.sendData(s);
-
     }
 
 
