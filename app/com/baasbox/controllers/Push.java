@@ -294,7 +294,7 @@ public class Push extends Controller {
 		for(int i=0;i<withError.length;i++) {
 			if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 		}
-		return ok();
+		return ok("Push Notification(s) has been sent");
 	}	 
 
 
