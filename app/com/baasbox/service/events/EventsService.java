@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 
+import com.baasbox.service.events.EventsService.StatType;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -66,24 +67,32 @@ public class EventsService {
     }
 
 
-    public static int publish(StatType type,JsonNode message) throws IllegalArgumentException{
-        if (type ==StatType.ALL){
-            throw new IllegalArgumentException("Cannot publish on all channel");
-        }
-        LongAdder a= new LongAdder();
+    public static int publish(StatType type,String message) throws IllegalArgumentException{
+    	 if (type ==StatType.ALL){
+             throw new IllegalArgumentException("Cannot publish on all channel");
+         }
+         LongAdder a= new LongAdder();
 
-        String messageToSend=message.toString();
-        
-        STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
-            e.sendData(messageToSend);
-            a.increment();
-        });
+         String messageToSend=message;
+         
+         STATS_CHANNELS.getOrDefault(type,DEFAULT).forEach((_e,e)->{
+             e.sendData(messageToSend);
+             a.increment();
+         });
 
-        STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{
-            e.sendData(messageToSend);
-            a.increment();
+         STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{
+             e.sendData(messageToSend);
+             a.increment();
 
-        });
-        return a.intValue();
+         });
+         return a.intValue();
     }
+    
+    public static int publish(StatType type,JsonNode message) throws IllegalArgumentException{
+        return publish(type,message.toString());
+    }
+
+	public static boolean areThereListeners(StatType type) {
+		return STATS_CHANNELS.get(type).isEmpty();
+	}
 }

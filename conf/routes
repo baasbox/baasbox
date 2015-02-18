@@ -19,6 +19,8 @@ GET 	/console/						com.baasbox.controllers.Application.login()
 GET     /console/js/routes      	 	com.baasbox.controllers.AllRoutes.javascriptRoutes()
 GET     /console/*file               	controllers.Assets.at(path="/public/console", file)
 
+# Admin log
+GET 	/admin/log						com.baasbox.controllers.EventsController.openSystemLogger
 
 #Assets action
 POST	/admin/asset						com.baasbox.controllers.Asset.post()

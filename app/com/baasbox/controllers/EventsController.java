@@ -18,69 +18,111 @@
 
 package com.baasbox.controllers;
 
+import static play.mvc.Controller.ctx;
+import static play.mvc.Controller.response;
+import static play.mvc.Results.badRequest;
+import static play.mvc.Results.forbidden;
+import static play.mvc.Results.ok;
+
+import java.util.Set;
+
+import org.slf4j.LoggerFactory;
+
+import play.Logger;
+import play.mvc.Result;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.SessionTokenAccess;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventSource;
+import com.baasbox.service.events.EventsService;
+import com.baasbox.service.events.EventsService.StatType;
+import com.baasbox.service.logging.BaasBoxAppender;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import play.Logger;
-import play.mvc.Result;
-
-import java.util.Set;
-
-import static play.mvc.Controller.*;
-import static play.mvc.Results.ok;
 
 /**
  * Created by eto on 13/10/14.
  */
 public class EventsController {
 
+	private static volatile Level initialLogInfo=null;
+	
+	private static Result doTask(StatType typeOfLog){
+        response().setContentType("text/event-stream");
+        return ok(EventSource.source((eventSource) -> {
+            eventSource.onDisconnected(() -> {
+            		EventsService.removeListener(typeOfLog,eventSource);
+            		if (!EventsService.areThereListeners(typeOfLog)){
+                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
+                    	.setLevel(initialLogInfo);
+                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
+                        .detachAppender(BaasBoxAppender.name);
+            		}
+            	});
+            EventsService.addListener(typeOfLog,eventSource);
+        }));
+	}
+	
     public static Result openLogger(){
+    	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
         try {
             if (Logger.isTraceEnabled())Logger.trace("Method start");
-
-            SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
-            boolean okCredentials = sessionTokenAccess.setCredential(ctx());
-            if (!okCredentials) {
-                return CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
-            } else {
-                String username = (String) ctx().args.get("username");
-                if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
-                        username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
-                    return forbidden("The user " + username + " cannot acces via REST");
-                }
-            }
-            String appcode = (String) ctx().args.get("appcode");
-            String username = (String) ctx().args.get("username");
-            String password = (String) ctx().args.get("password");
-            try {
-                DbHelper.open(appcode, username, password);
-                OUser user = DbHelper.getConnection().getUser();
-                Set<ORole> roles = user.getRoles();
-                if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
-                    return forbidden("Logs can only be read by administrators");
-                }
-            } catch (InvalidAppCodeException e) {
-                return badRequest(e.getMessage());
-            } finally {
-                DbHelper.close(DbHelper.getConnection());
-            }
-
-            response().setContentType("text/event-stream");
-            return ok(EventSource.source((eventSource) -> {
-
-                eventSource.onDisconnected(() -> EventsService.removeScriptLogListener(eventSource));
-                EventsService.addScriptLogListener(eventSource);
-
-            }));
+            return doTask(StatType.SCRIPT);
         } finally {
             if (Logger.isTraceEnabled()) Logger.trace("Method end");
+        }
+    }
+    
+    public static Result openSystemLogger(){
+    	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
+        try {
+            if (Logger.isTraceEnabled())Logger.trace("Method start");
+            if (initialLogInfo==null) 
+            	initialLogInfo= ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application"))
+            				.getLevel();
+            ch.qos.logback.classic.Logger logger = ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) ;
+            logger.setLevel(Level.DEBUG);
+            if (logger.getAppender(BaasBoxAppender.name) == null) 
+            	logger.addAppender(BaasBoxAppender.appender);
+            return doTask(StatType.SYSTEM_LOGGER);
+        } finally {
+            if (Logger.isTraceEnabled()) Logger.trace("Method end");
+        }
+    }
+    
+    private static boolean checkAuth(){
+        SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
+        boolean okCredentials = sessionTokenAccess.setCredential(ctx());
+        if (!okCredentials) {
+            return false;
+        } else {
+            String username = (String) ctx().args.get("username");
+            if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
+                    username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
+                return false;
+            }
+        }
+        String appcode = (String) ctx().args.get("appcode");
+        String username = (String) ctx().args.get("username");
+        String password = (String) ctx().args.get("password");
+        try {
+            DbHelper.open(appcode, username, password);
+            OUser user = DbHelper.getConnection().getUser();
+            Set<ORole> roles = user.getRoles();
+            if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
+                return false;
+            }
+            return true;
+        } catch (InvalidAppCodeException e) {
+            return false;
+        } finally {
+            DbHelper.close(DbHelper.getConnection());
         }
     }
 }
