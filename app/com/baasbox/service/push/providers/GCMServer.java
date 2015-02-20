@@ -35,7 +35,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONValue;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.service.push.PushNotInitializedException;
@@ -59,7 +59,7 @@ public class GCMServer extends PushProviderAbstract {
 
 	public boolean send(String message, List<String> deviceid, JsonNode bodyJson)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException, PushTimeToLiveFormatException, PushCollapseKeyFormatException {
-		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: "+message+" to the device "+deviceid);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("GCM Push message: "+message+" to the device "+deviceid);
 		if (!isInit) {
 			return true;
 		}
@@ -101,11 +101,11 @@ public class GCMServer extends PushProviderAbstract {
 		}
 		else time_to_live=MAX_TIME_TO_LIVE; //IF NULL WE SET DEFAULT VALUE (4 WEEKS)
 
-		if (Logger.isDebugEnabled()) Logger.debug("collapse_key: " + collapse_key.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("collapse_key: " + collapse_key.toString());
 
-		if (Logger.isDebugEnabled()) Logger.debug("time_to_live: " + time_to_live);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("time_to_live: " + time_to_live);
 
-		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Custom Data: " + customData.toString());
 
 		Sender sender = new Sender(apikey);
 		Message msg = new Message.Builder().addData("message", message)

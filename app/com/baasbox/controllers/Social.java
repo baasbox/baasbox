@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.scribe.model.Token;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Crypto;
 import play.libs.Json;
 import play.mvc.BodyParser;
@@ -106,7 +106,7 @@ public class Social extends Controller{
 		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp bodyJson: " + bodyJson);
 
 		String authToken = null;
 		String authSecret = null;
@@ -155,7 +155,7 @@ public class Social extends Controller{
 		}catch (BaasBoxSocialTokenValidationException e2) {
 			return badRequest("Unable to validate provided token");
 		}
-		if (Logger.isDebugEnabled()) Logger.debug("UserInfo received: " + result.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserInfo received: " + result.toString());
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		//Setting token as secret for one-token only social networks
@@ -190,7 +190,7 @@ public class Social extends Controller{
 			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			return ok(on);
 		}else{
-			if (Logger.isDebugEnabled()) Logger.debug("User does not exists with tokens...trying to create");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User does not exists with tokens...trying to create");
 			String username = UUID.randomUUID().toString();
 			Date signupDate = new Date();
 			try{

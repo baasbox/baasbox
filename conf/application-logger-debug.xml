@@ -103,6 +103,8 @@ See: https://www.playframework.com/documentation/2.2.x/SettingsLogger
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
+  <logger name="application.baasbox.eventsource" level="DEBUG" additivity="false"/>
+
   <logger name="akka" level="DEBUG" >
   	<appender-ref ref="AKKA_LOG_FILE" />
   	<appender-ref ref="STDOUT_ONLY_INFO" />

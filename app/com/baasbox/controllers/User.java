@@ -33,7 +33,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.stringtemplate.v4.ST;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.api.templates.Html;
 import play.libs.Json;
@@ -126,29 +126,29 @@ public class User extends Controller {
 	 */
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	public static Result getCurrentUser() throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODocument profile = UserService.getCurrentUser();
 		String result=prepareResponseToJson(profile);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok(result);
 	}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
 	public static Result getUser(String username) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (ArrayUtils.contains(
 				new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
 				username)) return badRequest(username + " cannot be queried");
 		ODocument profile = UserService.getUserProfilebyUsername(username);
 		if (profile==null) return notFound(username + " not found");
 		String result=prepareResponseToJson(profile);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok(result);
 	}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})	
 	public static Result getUsers() {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		List<ODocument> profiles=null;;
@@ -158,18 +158,18 @@ public class User extends Controller {
 			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
 		}
 		String result=prepareResponseToJson(profiles);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok(result);
 	}
 
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static Result signUp() throws JsonProcessingException, IOException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("signUp bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("signUp bodyJson: " + bodyJson);
 		if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		//check and validate input
 		if (!bodyJson.has("username"))
@@ -199,20 +199,20 @@ public class User extends Controller {
 			//due to issue 412, we have to reload the profile
 			profile=UserService.getUserProfilebyUsername(username);
 		} catch (InvalidJsonException e){
-			if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 			return badRequest("One or more profile sections is not a valid JSON object");
 		} catch (UserAlreadyExistsException e){
-			if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 			return badRequest(username + " already exists");
 		} catch (EmailAlreadyUsedException e){
-			if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 			return badRequest(username + ": the email provided is already in use");
 		} catch (Throwable e){
-			Logger.warn("signUp", e);
+			BaasBoxLogger.warn("signUp", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 		response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
@@ -232,7 +232,7 @@ public class User extends Controller {
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("updateuserName bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateuserName bodyJson: " + bodyJson);
 		if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 		if (bodyJson.get("username")==null || !bodyJson.get("username").isTextual())
 			return badRequest("'username' field must be a String");
@@ -250,11 +250,11 @@ public class User extends Controller {
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static Result updateProfile(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("updateProfile bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateProfile bodyJson: " + bodyJson);
 		if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 
 		//extract the profile	 fields
@@ -273,11 +273,11 @@ public class User extends Controller {
 		try {
 			profile=UserService.updateCurrentProfile(nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 		} catch (Throwable e){
-			Logger.warn("updateProfile", e);
+			BaasBoxLogger.warn("updateProfile", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 		return ok(prepareResponseToJson(profile)); 
 	}//updateProfile
@@ -298,7 +298,7 @@ public class User extends Controller {
 
 	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result resetPasswordStep1(String username){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 
 		//check and validate input
 		if (username == null)
@@ -323,13 +323,13 @@ public class User extends Controller {
 			String appCode = (String) Http.Context.current.get().args.get("appcode");
 			UserService.sendResetPwdMail(appCode,user);
 		} catch (PasswordRecoveryException e) {
-			Logger.warn("resetPasswordStep1", e);
+			BaasBoxLogger.warn("resetPasswordStep1", e);
 			return badRequest(e.getMessage());
 		} catch (Exception e) {
-			Logger.warn("resetPasswordStep1", e);
+			BaasBoxLogger.warn("resetPasswordStep1", e);
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok();
 	}
 
@@ -358,7 +358,7 @@ public class User extends Controller {
 				base64=base64.substring(0, base64.lastIndexOf('.'));
 			}
 			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
 			String[] tokens = tokenReceived.split("%%%%");
@@ -447,7 +447,7 @@ public class User extends Controller {
 			}
 			//loads the received token and extracts data by the hashcode in the url
 			tokenReceived = new String(Base64.decodeBase64(base64.getBytes()));
-			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
 			String[] tokens = tokenReceived.split("%%%%");
@@ -540,12 +540,12 @@ public class User extends Controller {
 		try {
 			UserService.resetUserPasswordFinalStep(username, password);
 		} catch (Throwable e){
-			Logger.warn("changeUserPassword", e);
+			BaasBoxLogger.warn("changeUserPassword", e);
 			DbHelper.getConnection().close();
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		} 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 		String ok_message = "Password changed";
 		if(isJSON) {
@@ -569,11 +569,11 @@ public class User extends Controller {
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static Result changePassword(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("changePassword bodyJson: " + bodyJson);
 		if (bodyJson==null) return badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json");
 
 		//check and validate input
@@ -593,10 +593,10 @@ public class User extends Controller {
 		try {
 			UserService.changePasswordCurrentUser(newPassword);
 		} catch (OpenTransactionException e) {
-			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e);
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok();
 	}	  
 
@@ -649,9 +649,9 @@ public class User extends Controller {
 			else password=bodyUrlEncoded.get("password")[0];
 			if(bodyUrlEncoded.get("appcode")==null) return badRequest("The 'appcode' field is missing");
 			else appcode=bodyUrlEncoded.get("appcode")[0];
-			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
 					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
@@ -659,7 +659,7 @@ public class User extends Controller {
 	
 			if (bodyUrlEncoded.get("login_data")!=null)
 				loginData=bodyUrlEncoded.get("login_data")[0];
-			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);
 		}else{
 			JsonNode bodyJson = body.asJson();
 			if(bodyJson.get("username")==null) return badRequest("The 'username' field is missing");
@@ -668,9 +668,9 @@ public class User extends Controller {
 			else password=bodyJson.get("password").asText();
 			if(bodyJson.get("appcode")==null) return badRequest("The 'appcode' field is missing");
 			else appcode=bodyJson.get("appcode").asText();
-			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
 					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
@@ -678,7 +678,7 @@ public class User extends Controller {
 	
 			if (bodyJson.get("login_data")!=null)
 				loginData=bodyJson.get("login_data").asText();
-			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);	
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);	
 		}
 		/* other useful parameter to receive and to store...*/		  	  
 		//validate user credentials
@@ -694,8 +694,8 @@ public class User extends Controller {
 				try{
 					loginInfo = Json.parse(loginData);
 				}catch(Exception e){
-					if (Logger.isDebugEnabled()) Logger.debug ("Error parsong login_data field");
-					if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Error parsong login_data field");
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug (ExceptionUtils.getFullStackTrace(e));
 					return badRequest("login_data field is not a valid json string");
 				}
 				Iterator<Entry<String, JsonNode>> it =loginInfo.fields();
@@ -709,10 +709,10 @@ public class User extends Controller {
 				UserService.registerDevice(data);
 			}
 		}catch (OSecurityAccessException e){
-			if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " +  e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  e.getMessage());
 			return unauthorized("user " + username + " unauthorized");
 		} catch (InvalidAppCodeException e) {
-			if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " + e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + e.getMessage());
 			return badRequest("user " + username + " unauthorized");
 		}finally{
 			if (db!=null && !db.isClosed()) db.close();
@@ -734,7 +734,7 @@ public class User extends Controller {
 		} catch (UserNotFoundException e) {
 			return badRequest(e.getMessage());
 		} catch (OpenTransactionException e) {
-			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e);
 		}
 		return ok();

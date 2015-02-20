@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.node.*;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.api.scripting.ScriptUtils;
 import jdk.nashorn.internal.runtime.Undefined;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
@@ -144,7 +144,7 @@ final class NashornMapper {
             return ScriptResult.NULL;
         } else {
 
-            Logger.warn("Mirror: %s, of type: %s",result,result.getClass());
+            BaasBoxLogger.warn("Mirror: %s, of type: %s",result,result.getClass());
             return ScriptResult.NULL;
         }
 

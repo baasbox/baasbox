@@ -1,6 +1,6 @@
 package com.baasbox.service.events;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,7 +26,7 @@ public class EventSource extends play.libs.EventSource {
     
     @Override
     public void sendData(String s) {
-        Logger.debug("EventSource: SENDING: "+id);
+        BaasBoxLogger.debug("EventSource: SENDING: "+id);
         super.sendData(s);
     }
 
@@ -34,7 +34,7 @@ public class EventSource extends play.libs.EventSource {
     @Override
     public void onConnected() {
     	this.id= cont.getAndIncrement();
-    	Logger.debug("EventSource: Connecting : " + id);
+    	BaasBoxLogger.debug("EventSource: Connecting : " + id);
         mHandler.accept(this);
     }
 

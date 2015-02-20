@@ -25,11 +25,7 @@ import static play.mvc.Results.ok;
 
 import java.util.Set;
 
-import org.slf4j.LoggerFactory;
-
-import play.Logger;
 import play.mvc.Result;
-import ch.qos.logback.classic.Level;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.SessionTokenAccess;
@@ -40,30 +36,28 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.events.EventSource;
 import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventsService.StatType;
-import com.baasbox.service.logging.BaasBoxEvenSourceAppender;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 /**
  * Created by eto on 13/10/14.
+ * 
+ * giastfader: added logging on SSE
  */
 public class EventsController {
 
-	private static volatile Level initialLogInfo=null;
 	
 	private static Result doTask(StatType typeOfLog){
         response().setContentType("text/event-stream");
         return ok(EventSource.source((eventSource) -> {
         	
             eventSource.onDisconnected(() -> {
-            		Logger.debug("Help! I'm loosing the connection....."+eventSource.id);;
+            		BaasBoxLogger.debug("Help! I'm loosing the connection....."+eventSource.id);;
             		boolean noMore=EventsService.removeListener(typeOfLog,eventSource);
             		if (typeOfLog==StatType.SYSTEM_LOGGER){
 	            		if (noMore){
-	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
-	                    	.setLevel(initialLogInfo);
-	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
-	                        .detachAppender(BaasBoxEvenSourceAppender.name);
+	                       BaasBoxLogger.stopEventSourceLogging();
 	            		}
             		}
             	});
@@ -74,27 +68,21 @@ public class EventsController {
     public static Result openLogger(){
     	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
         try {
-            if (Logger.isTraceEnabled())Logger.trace("Method start");
+            if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method start");
             return doTask(StatType.SCRIPT);
         } finally {
-            if (Logger.isTraceEnabled()) Logger.trace("Method end");
+            if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
         }
     }
     
     public static Result openSystemLogger(){
     	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
         try {
-            if (Logger.isTraceEnabled())Logger.trace("Method start");
-            if (initialLogInfo==null) 
-            	initialLogInfo= ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application"))
-            				.getLevel();
-            ch.qos.logback.classic.Logger logger = ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) ;
-            logger.setLevel(Level.DEBUG);
-            if (logger.getAppender(BaasBoxEvenSourceAppender.name) == null) 
-            	logger.addAppender(BaasBoxEvenSourceAppender.appender);
+            if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method start");
+            BaasBoxLogger.startEventSourceLogging();
             return doTask(StatType.SYSTEM_LOGGER);
         } finally {
-            if (Logger.isTraceEnabled()) Logger.trace("Method end");
+            if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
         }
     }
     

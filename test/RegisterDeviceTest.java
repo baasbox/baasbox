@@ -12,7 +12,7 @@ import org.apache.http.protocol.HTTP;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -70,8 +70,8 @@ public class RegisterDeviceTest extends AbstractTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 result: " + contentAsString(result));
 					assertRoute(result, "User A register 1st device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 				
 					//Register DEVICE for user testRegisterDeviceA with os android and pushToken pushToken1
@@ -81,8 +81,8 @@ public class RegisterDeviceTest extends AbstractTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice2 request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice2 result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice2 request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice2 result: " + contentAsString(result));
 					assertRoute(result, "User A register 2nd device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 					
 					ODatabaseRecordTx db = null;
@@ -142,8 +142,8 @@ public class RegisterDeviceTest extends AbstractTest {
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 result: " + contentAsString(result));
 						assertRoute(result, "User B register device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 						
 						

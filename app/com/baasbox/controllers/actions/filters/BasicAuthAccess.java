@@ -18,7 +18,7 @@ package com.baasbox.controllers.actions.filters;
 
 import com.baasbox.security.SessionKeys;
 import org.apache.commons.codec.binary.Base64;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 
@@ -32,11 +32,11 @@ public class BasicAuthAccess  implements IAccessMethod {
   
     @Override
 	public boolean setCredential (Context ctx)  {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		if (Logger.isDebugEnabled()) Logger.debug("BasicAuthHeader for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("BasicAuthHeader for resource " + Http.Context.current().request());
 		//retrieve AppCode
 		String appcode=RequestHeaderHelper.getAppCode(ctx);
-		if (Logger.isDebugEnabled()) Logger.debug(SessionKeys.APP_CODE + ": " + appcode);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(SessionKeys.APP_CODE + ": " + appcode);
 		ctx.args.put("appcode", appcode);
 		
 		String username = ""; 
@@ -47,7 +47,7 @@ public class BasicAuthAccess  implements IAccessMethod {
 		//--------------------------------------------------------------
 		String authHeader = ctx.request().getHeader(AUTHORIZATION);
         if (authHeader == null) { 
-        	if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + " header is null or missing");
+        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(AUTHORIZATION + " header is null or missing");
         	return false;
         }
 
@@ -55,11 +55,11 @@ public class BasicAuthAccess  implements IAccessMethod {
 
 		try {
             String auth = authHeader.substring(6);
-            if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + ": " + auth);
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(AUTHORIZATION + ": " + auth);
 
             decodedAuth = Base64.decodeBase64(auth);// new sun.misc.BASE64Decoder().decodeBuffer(auth);
         } catch (Exception e){
-            Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
+            BaasBoxLogger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
             return false;
         }
 //		} catch (IOException e1) {
@@ -71,30 +71,30 @@ public class BasicAuthAccess  implements IAccessMethod {
 //		}
 		
 
-        if (Logger.isDebugEnabled()) Logger.debug ("Decoded header: " + decodedAuth);
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Decoded header: " + decodedAuth);
     	String[] credString;
 		try {
 			credString = new String(decodedAuth, "UTF-8").split(":");
 		} catch (UnsupportedEncodingException e) {
-			Logger.error("UTF-8 encoding not supported, really???",e);
+			BaasBoxLogger.error("UTF-8 encoding not supported, really???",e);
 			throw new RuntimeException("UTF-8 encoding not supported, really???",e);
 		}
 
         if (credString == null || credString.length != 2) {
-        	if (Logger.isDebugEnabled()) Logger.debug(AUTHORIZATION + " header is not valid (has not user:password pair)");
+        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(AUTHORIZATION + " header is not valid (has not user:password pair)");
         	return false;
         }
         username = credString[0];
         password = credString[1];
        
-        if (Logger.isDebugEnabled()) Logger.debug("username: " + username);
-        if (Logger.isDebugEnabled()) Logger.debug("password: <hidden>");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("username: " + username);
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("password: <hidden>");
 
         ctx.args.put("username", username);
 		ctx.args.put("password", password);
 
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return true;
 	}
 

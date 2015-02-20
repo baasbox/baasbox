@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import jdk.nashorn.api.scripting.NashornException;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
@@ -64,7 +64,7 @@ class Nashorn {
      */
     void init() {
         try {
-            if(Logger.isDebugEnabled()) Logger.debug("Initializing prelude");
+            if(BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Initializing prelude");
             // get access to prelude and save mirror.
             ScriptObjectMirror mirror = (ScriptObjectMirror)mEngine.eval(ResLoader.jsPrelude());
             mRootAccess = mirror;
@@ -92,11 +92,11 @@ class Nashorn {
             Object result = emitEvent(moduleRef, call.event, call.eventData);
             ScriptResult scriptResult = mMapper.convertResult(result);
             call.validate(scriptResult);
-            if (Logger.isTraceEnabled())Logger.trace("ScriptResult: %s",scriptResult.toString());
+            if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("ScriptResult: %s",scriptResult.toString());
             return scriptResult;
         } catch (Throwable err){
             if (err instanceof NashornException){
-                if(Logger.isTraceEnabled())Logger.trace("Error in script");
+                if(BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Error in script");
 
                 Throwable cause = err.getCause();
                 NashornException exc =((NashornException) err);
@@ -116,7 +116,7 @@ class Nashorn {
 
 
     public Object require(String name) {
-        if (Logger.isTraceEnabled()) Logger.trace("Required: %s",name);
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Required: %s",name);
         syncCache();
         ScriptObjectMirror cached = cachedModules.get(name);
         if (cached == null) {
@@ -154,12 +154,12 @@ class Nashorn {
     private ScriptObjectMirror loadIntrinsicModule(String name) {
         String source = ResLoader.loadJsScript(name);
         if (source == null){
-            Logger.warn("Module not found");
+            BaasBoxLogger.warn("Module not found");
             return null;
         } else {
-            Logger.trace("Module loading");
+            BaasBoxLogger.trace("Module loading");
             ScriptObjectMirror mirror = makeModule(name, source);
-            Logger.trace("ModuleReady");
+            BaasBoxLogger.trace("ModuleReady");
             mirror=compileModule(mirror);
             return mirror;
         }
@@ -170,10 +170,10 @@ class Nashorn {
 
         ScriptObjectMirror cached = cachedModules.get(call.scriptName);
         if (cached == null){
-            if (Logger.isTraceEnabled()) Logger.trace("Loading module: %s",call.scriptName);
+            if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Loading module: %s",call.scriptName);
             cached = makeModule(call.scriptName,call.source);
             cached = compileModule(cached);
-            if(Logger.isTraceEnabled()) Logger.trace("Module compiled: %s",call.scriptName);
+            if(BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Module compiled: %s",call.scriptName);
             cachedModules.put(call.scriptName,cached);
         }
         return cached;

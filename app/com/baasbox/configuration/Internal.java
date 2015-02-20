@@ -20,7 +20,7 @@ package com.baasbox.configuration;
 
 import com.baasbox.configuration.index.IndexInternalConfiguration;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 
 /***
@@ -84,7 +84,7 @@ public enum Internal implements IProperties{
 			idx = new IndexInternalConfiguration();
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
@@ -102,7 +102,7 @@ public enum Internal implements IProperties{
 			idx = new IndexInternalConfiguration();
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
