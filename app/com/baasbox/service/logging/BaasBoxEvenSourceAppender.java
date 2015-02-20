@@ -9,15 +9,15 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventsService.StatType;
 
-public class BaasBoxAppender<E> extends  UnsynchronizedAppenderBase<E>{
+public class BaasBoxEvenSourceAppender<E> extends  UnsynchronizedAppenderBase<E>{
 
 	private final String PATTERN = "%date - %-5level - %logger: %t  %message %n%rootException";
 	
 	public static final String name = "BaasBoxAppender";
-	public static final BaasBoxAppender<ILoggingEvent> appender = new BaasBoxAppender<ILoggingEvent>();
+	public static final BaasBoxEvenSourceAppender<ILoggingEvent> appender = new BaasBoxEvenSourceAppender<ILoggingEvent>();
 	
 	private PatternLayout layout;
-	protected BaasBoxAppender(){
+	protected BaasBoxEvenSourceAppender(){
 		super();
 		this.setName(name);
 		this.layout=new PatternLayout();

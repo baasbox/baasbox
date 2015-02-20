@@ -40,7 +40,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.events.EventSource;
 import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventsService.StatType;
-import com.baasbox.service.logging.BaasBoxAppender;
+import com.baasbox.service.logging.BaasBoxEvenSourceAppender;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
@@ -63,7 +63,7 @@ public class EventsController {
 	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
 	                    	.setLevel(initialLogInfo);
 	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
-	                        .detachAppender(BaasBoxAppender.name);
+	                        .detachAppender(BaasBoxEvenSourceAppender.name);
 	            		}
             		}
             	});
@@ -90,8 +90,8 @@ public class EventsController {
             				.getLevel();
             ch.qos.logback.classic.Logger logger = ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) ;
             logger.setLevel(Level.DEBUG);
-            if (logger.getAppender(BaasBoxAppender.name) == null) 
-            	logger.addAppender(BaasBoxAppender.appender);
+            if (logger.getAppender(BaasBoxEvenSourceAppender.name) == null) 
+            	logger.addAppender(BaasBoxEvenSourceAppender.appender);
             return doTask(StatType.SYSTEM_LOGGER);
         } finally {
             if (Logger.isTraceEnabled()) Logger.trace("Method end");
