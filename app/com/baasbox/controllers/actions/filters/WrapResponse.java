@@ -17,39 +17,29 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
-import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
-import play.data.format.Formats;
+import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Http.RequestHeader;
-import play.mvc.Result;
 import play.mvc.Results;
+import play.mvc.SimpleResult;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.BBInternalConstants;
 import com.baasbox.controllers.CustomHttpCode;
-
-import play.mvc.SimpleResult;
-import play.libs.F;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class WrapResponse {
 	

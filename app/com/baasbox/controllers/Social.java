@@ -18,7 +18,6 @@
 
 package com.baasbox.controllers;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,14 +25,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.scribe.model.Token;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-import play.libs.Crypto;
 import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
@@ -42,7 +35,6 @@ import play.mvc.Http.Request;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
@@ -53,12 +45,15 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
 import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
 import com.baasbox.service.sociallogin.SocialLoginService;
 import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.user.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
