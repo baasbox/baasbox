@@ -2,7 +2,11 @@ package com.baasbox.service.events;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+
+import play.libs.Akka;
+import play.libs.F;
 
 import com.baasbox.service.events.EventsService.StatType;
 import com.baasbox.util.EmptyConcurrentMap;
@@ -26,8 +30,7 @@ public class EventsService {
             new ConcurrentHashMap<>();
 
     public static void addListener(StatType channel,EventSource src){
-
-        STATS_CHANNELS.compute(channel,(c,listeners)->{
+    	STATS_CHANNELS.compute(channel,(c,listeners)->{
             if (listeners == null){
                 listeners = new ConcurrentHashMap<EventSource, EventSource>();
             }
@@ -53,8 +56,15 @@ public class EventsService {
         addListener(StatType.SYSTEM_LOGGER,src);
     }
     
-    public static void removeListener(StatType channel,EventSource src){
-        STATS_CHANNELS.computeIfPresent(channel,(ch,listeners)->{
+    /**
+     * 
+     * @param channel
+     * @param src
+     * @return true if no more listeners are present for this channel type
+     */
+    public static boolean removeListener(StatType channel,EventSource src){
+    	
+        ConcurrentMap<EventSource, EventSource> remaining = STATS_CHANNELS.computeIfPresent(channel,(ch,listeners)->{
             EventSource removed = listeners.remove(src);
             if(removed!=null){
                 removed.close();
@@ -64,6 +74,7 @@ public class EventsService {
             }
             return listeners;
         });
+        return remaining==null||remaining.isEmpty();
     }
 
 
@@ -80,11 +91,7 @@ public class EventsService {
              a.increment();
          });
 
-         STATS_CHANNELS.getOrDefault(StatType.ALL,DEFAULT).forEach((_e,e)->{
-             e.sendData(messageToSend);
-             a.increment();
-
-         });
+         
          return a.intValue();
     }
     
@@ -92,7 +99,4 @@ public class EventsService {
         return publish(type,message.toString());
     }
 
-	public static boolean areThereListeners(StatType type) {
-		return STATS_CHANNELS.get(type).isEmpty();
-	}
 }

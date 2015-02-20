@@ -20,7 +20,6 @@ package com.baasbox.controllers;
 
 import static play.mvc.Controller.ctx;
 import static play.mvc.Controller.response;
-import static play.mvc.Results.badRequest;
 import static play.mvc.Results.forbidden;
 import static play.mvc.Results.ok;
 
@@ -31,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import play.Logger;
 import play.mvc.Result;
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.SessionTokenAccess;
@@ -56,13 +54,17 @@ public class EventsController {
 	private static Result doTask(StatType typeOfLog){
         response().setContentType("text/event-stream");
         return ok(EventSource.source((eventSource) -> {
+        	
             eventSource.onDisconnected(() -> {
-            		EventsService.removeListener(typeOfLog,eventSource);
-            		if (!EventsService.areThereListeners(typeOfLog)){
-                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
-                    	.setLevel(initialLogInfo);
-                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
-                        .detachAppender(BaasBoxAppender.name);
+            		Logger.debug("Help! I'm loosing the connection....."+eventSource.id);;
+            		boolean noMore=EventsService.removeListener(typeOfLog,eventSource);
+            		if (typeOfLog==StatType.SYSTEM_LOGGER){
+	            		if (noMore){
+	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
+	                    	.setLevel(initialLogInfo);
+	                        ((ch.qos.logback.classic.Logger)LoggerFactory.getLogger("application")) 
+	                        .detachAppender(BaasBoxAppender.name);
+	            		}
             		}
             	});
             EventsService.addListener(typeOfLog,eventSource);
