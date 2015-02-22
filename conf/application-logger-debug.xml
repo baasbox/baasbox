@@ -82,6 +82,7 @@ See: https://www.playframework.com/documentation/2.2.x/SettingsLogger
         		</rollingPolicy>
    		</appender>
 		  
+   		  
     <!-- ACCESS LOG -->
 		  <appender name="ACCESS_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
      			<file>${application.home}/logs/access.log</file>
@@ -102,19 +103,23 @@ See: https://www.playframework.com/documentation/2.2.x/SettingsLogger
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
+  <logger name="application.baasbox.eventsource" level="DEBUG" additivity="false"/>
+
   <logger name="akka" level="DEBUG" >
   	<appender-ref ref="AKKA_LOG_FILE" />
   	<appender-ref ref="STDOUT_ONLY_INFO" />
     <appender-ref ref="STDOUT_BUT_INFO" />
     <appender-ref ref="FILE_ONLY_INFO" />
     <appender-ref ref="FILE_BUT_INFO" />
+    <appender-ref ref="BB_APPENDER" />
   </logger>
 
-  <root level="ERROR">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT_ONLY_INFO" />
     <appender-ref ref="STDOUT_BUT_INFO" />
     <appender-ref ref="FILE_ONLY_INFO" />
     <appender-ref ref="FILE_BUT_INFO" />
+    <appender-ref ref="BB_APPENDER" />
   </root>
   
  

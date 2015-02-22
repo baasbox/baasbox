@@ -25,7 +25,7 @@ import org.apache.regexp.RESyntaxException;
 
 import com.baasbox.configuration.index.IndexPasswordRecoveryConfiguration;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public enum ImagesConfiguration implements IProperties{
 	IMAGE_ALLOWS_AUTOMATIC_RESIZE("image.allows.automatic.resize", "Enable or disable automatic resizing of images", Boolean.class),
@@ -105,7 +105,7 @@ public enum ImagesConfiguration implements IProperties{
 			idx = new IndexPasswordRecoveryConfiguration();
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
@@ -123,7 +123,7 @@ public enum ImagesConfiguration implements IProperties{
 			idx = new IndexPasswordRecoveryConfiguration();
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
@@ -183,7 +183,7 @@ public enum ImagesConfiguration implements IProperties{
 	public void override(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)

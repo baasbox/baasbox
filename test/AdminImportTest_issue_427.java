@@ -9,7 +9,7 @@ import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.libs.F.Callback;
 import play.test.TestBrowser;
@@ -59,12 +59,12 @@ public class AdminImportTest_issue_427 extends AbstractDocumentTest {
 					//deleting old test certificates
 					File folder =  Play.application().getFile("certificates");
 					if (folder.exists()){
-						Logger.info ("Deleting old test certificates...");
+						BaasBoxLogger.info ("Deleting old test certificates...");
 						File certificate = Play.application().getFile("certificates/TestFakeCertificateProd.p12");
 						if (certificate.exists()) certificate.delete();
 						certificate = Play.application().getFile("certificates/TestFakeCertificateSand.p12");
 						if (certificate.exists()) certificate.delete();
-						Logger.info ("...done");
+						BaasBoxLogger.info ("...done");
 					}
 					
 					//load a backup we did using v.0.8.3

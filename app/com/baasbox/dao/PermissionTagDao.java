@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.util.List;
 
@@ -93,7 +93,7 @@ public class PermissionTagDao  {
      * @throws Throwable
      */
     public ODocument createReserved(String name,String description,boolean enabled) throws Throwable {
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         try {
             if (existsPermissionTag(name)) throw new PermissionTagAlreadyExistsException("name> "+name);
         } catch (SqlInjectionException e){
@@ -104,7 +104,7 @@ public class PermissionTagDao  {
         document.field(DESCRIPTION,description);
         document.field(ENABLED,enabled);
         document.save();
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return document;
     }
 
@@ -126,9 +126,9 @@ public class PermissionTagDao  {
      * @throws SqlInjectionException
      */
     public boolean existsPermissionTag(String tagName) throws SqlInjectionException{
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         boolean exists = findByName(tagName)!=null;
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return exists;
     }
 
@@ -139,10 +139,10 @@ public class PermissionTagDao  {
      * @throws SqlInjectionException
      */
     public ODocument getByName(String tagName) throws SqlInjectionException {
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         OIdentifiable record = findByName(tagName);
         ODocument doc = record==null?null:(ODocument)db.load(record.getIdentity());
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return doc;
     }
 
@@ -155,7 +155,7 @@ public class PermissionTagDao  {
      * @throws com.baasbox.dao.exception.InvalidPermissionTagException
      */
     public boolean setEnabled(String tagName,boolean enabled) throws SqlInjectionException, InvalidPermissionTagException {
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         ODocument doc = getByName(tagName);
         if (doc == null) throw new InvalidPermissionTagException("tag does not exists");
         boolean oldValue=doc.<Boolean>field(ENABLED);
@@ -165,7 +165,7 @@ public class PermissionTagDao  {
             doc.save();
             changed = true;
         }
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return changed;
     }
 
@@ -177,11 +177,11 @@ public class PermissionTagDao  {
      * @throws com.baasbox.dao.exception.InvalidPermissionTagException
      */
     public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException {
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         ODocument doc = getByName(tagName);
         if (doc==null) throw new InvalidPermissionTagException("tag not found");
         boolean enabled = doc.<Boolean>field(ENABLED);
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return enabled;
     }
 

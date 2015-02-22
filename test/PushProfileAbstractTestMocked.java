@@ -14,7 +14,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
@@ -55,8 +55,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
 						Result result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("enablePushProfile result: " + contentAsString(result));
 						assertRoute(result, "configuration missing for the selected profile ("+profile1+")", getProfile1DisabledReturnCode(), null, false);
 
 					}
@@ -83,8 +83,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 					request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 					request = request.withJsonBody(getPayload("/pushDisableSandbox.json"), getMethod());
 					Result result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("disablePushSandboxMode result: " + contentAsString(result));
 					assertRoute(result, "configuration missing for the selected mode ("+profile+")", getProfile1SwitchReturnCode(), null, false);	
 				}
 			}
@@ -113,15 +113,15 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						// Too many profiles
 
 						request = new FakeRequest("POST", "/push/message/"+sFakeUser);
-						Logger.debug("Route: " + request);
-						Logger.debug("Users: " + sFakeUser);
+						BaasBoxLogger.debug("Route: " + request);
+						BaasBoxLogger.debug("Users: " + sFakeUser);
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadTooManyProfiles.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithTooManyProfiles request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithTooManyProfiles result: " + contentAsString(result));
 						assertRoute(result, "error with send, too many profiles", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 
 						continueOnFail(true);
@@ -132,8 +132,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfileNotSupported.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileNotSupported request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileNotSupported result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile not supported", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 
 						// Profile NOT Array of String
@@ -142,8 +142,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfileNotSupported.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotArrayString request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileNotArrayString result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileNotArrayString request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileNotArrayString result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile are not an Array of String", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 
 						//Push with key message different from String
@@ -153,8 +153,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithMessageDifferentFromString.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithMessageDifferentFromString result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithMessageDifferentFromString request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithMessageDifferentFromString result: " + contentAsString(result));
 						assertRoute(result, "error with send, value message is not a String", Status.BAD_REQUEST, CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription(), true);
 
 						// Value profiles different from array
@@ -164,8 +164,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithValueProfilesDifferentFromArray.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithValueProfilesDifferentFromArray result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithValueProfilesDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithValueProfilesDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, value profiles is not an array", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 					}
 				}
@@ -200,8 +200,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecifiedWithoutUsers.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueEmpty request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueEmpty result: " + contentAsString(result));
 						assertRoute(result, "error with send, key users empty", Status.BAD_REQUEST, CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription(), true);
 
 						// Users value different from array
@@ -210,8 +210,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithValueUsersDifferentFromArray.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, key users invalid", Status.BAD_REQUEST, CustomHttpCode.PUSH_USERS_FORMAT_INVALID.getDescription(), true);
 
 						// Profiles value MUST be Array of String
@@ -221,8 +221,8 @@ public abstract class PushProfileAbstractTestMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfilesValueExpressedInString.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueDifferentFromArray request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithUsersValueDifferentFromArray result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profiles format invalid(profile expressed on String)", Status.BAD_REQUEST, CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription(), true);
 					}
 				}

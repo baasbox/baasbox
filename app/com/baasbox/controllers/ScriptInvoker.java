@@ -37,7 +37,7 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.EventSource;
 import play.libs.F;
 import play.mvc.Controller;
@@ -77,7 +77,7 @@ public class ScriptInvoker extends Controller{
             ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
-            Logger.error("Error evaluating script",e);
+            BaasBoxLogger.error("Error evaluating script",e);
             return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
         }
 //        catch (IllegalStateException e){

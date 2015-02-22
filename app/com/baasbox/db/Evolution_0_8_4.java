@@ -24,7 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.Push;
 import com.baasbox.configuration.index.IndexPushConfiguration;
@@ -56,7 +56,7 @@ public class Evolution_0_8_4 implements IEvolution {
 
 	@Override
 	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
@@ -65,10 +65,10 @@ public class Evolution_0_8_4 implements IEvolution {
 			multiPushProfileSettings(db);
 			exposeSocialId(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 
 
@@ -76,7 +76,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	
 	//issue #195 Registered users should have access to anonymous resources
 		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
-			Logger.info("...updating registered role");
+			BaasBoxLogger.info("...updating registered role");
 			
 			RoleDao.getRole(DefaultRoles.ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("admin").getDocument().getRecord() ).save();
 			RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
@@ -89,7 +89,7 @@ public class Evolution_0_8_4 implements IEvolution {
 			RoleDao.getRole(DefaultRoles.BASE_ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
 			
 			db.getMetadata().reload();
-			Logger.info("...done");
+			BaasBoxLogger.info("...done");
 		}
 	
 	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
@@ -212,7 +212,7 @@ public class Evolution_0_8_4 implements IEvolution {
 					"update _bb_user set system.signUpDate=signUpDate;"
 				} 
 		);
-		Logger.info("...moving social ids. This can take several minutes....");
+		BaasBoxLogger.info("...moving social ids. This can take several minutes....");
 		Object listOfUser=DbHelper.genericSQLStatementExecute("select @rid,system.sso_tokens as social_network from _bb_user where system.sso_tokens is not null", new String[]{""});
 		for (Object doc: (List)listOfUser){
 			ODocument odoc = (ODocument)doc;

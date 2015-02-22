@@ -6,7 +6,7 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -67,7 +67,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	public UserInfo extractUserInfo(Response r) throws BaasBoxSocialException {
-		if (Logger.isDebugEnabled()) Logger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		ui.setId("mockid_" + this.token);
 		ui.setUsername("mockusername_" + this.token);

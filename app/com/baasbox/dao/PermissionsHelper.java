@@ -25,7 +25,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -155,67 +155,67 @@ public class PermissionsHelper {
 	}
 	
 	public static ODocument changeOwner(ODocument document,OUser user){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Set<ORID> set = new HashSet<ORID>();
 		set.add( user.getDocument().getIdentity() ); 
 		document.field( Permissions.ALLOW.toString(), set, OType.LINKSET ); 
 		document.save(); 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document;		
 	}	
 	
 	public static ODocument changeOwner(ODocument document,OIdentifiable user){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Set<OIdentifiable> set = new HashSet<OIdentifiable>();
 		set.add( user ); 
 		document.field( Permissions.ALLOW.toString(), set, OType.LINKSET ); 
 		document.save(); 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document;		
 	}
 
 	
 	public static ODocument grant(ODocument document, Permissions permission,
 			ORole role) {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (role==null){
-			Logger.warn("role is null! Grant command skipped");
+			BaasBoxLogger.warn("role is null! Grant command skipped");
 			return document;
 		}
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), role.getDocument().getIdentity());
 		document.save(); 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument grant(ODocument document, Permissions permission,
 			OUser user) {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 		document.save(); 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document; 
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			ORole role) {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), role.getDocument().getIdentity());
 		document.save();
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document;
 	}
 	
 	public static ODocument revoke(ODocument document, Permissions permission,
 			OUser user) {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 		document.save(); 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return document;
 	}
 }
