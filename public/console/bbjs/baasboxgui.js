@@ -1541,6 +1541,8 @@ function setBradCrumb(type)
 	case "#push_test":
 		sBradCrumb = "Push Test";
 		break;
+	case "#serverlog":
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
@@ -1894,6 +1896,12 @@ function setupMenu(){
 		$clink.parent('li').addClass('active');
 	});
 	$(".directLink").unbind("click");
+	$(".javascriptlink").click(function(e){
+		if($.browser.msie) e.which=1;
+		e.preventDefault();
+		var $clink=$(this);
+		callJsMenu($clink.attr('href'));
+	});
 	//initializeTours
 	$(".tour").click(function(){
 		for (var key in tours) {
@@ -1940,6 +1948,14 @@ function reloadFollowing(user){
             }
         }
     });
+}
+
+function callJsMenu(action){
+	switch (action)	{
+	case "#serverlog":
+		openLog(); //defined in log.js
+		break;
+	}
 }
 
 function callMenu(action){
@@ -2159,7 +2175,6 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getExports().ajax({
 			success: function(data){
 				applySuccessMenu(action,data["data"]);
-
 			}
 		});
 		break;
