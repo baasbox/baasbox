@@ -26,7 +26,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
@@ -56,7 +56,7 @@ public class ExportJob implements Runnable{
 			DbHelper.exportData(this.appcode,content);
 			
 			byte[] contentArr = content.toByteArray();
-			Logger.info(String.format("Writing %d bytes ",contentArr.length));
+			BaasBoxLogger.info(String.format("Writing %d bytes ",contentArr.length));
 			File tmpJson = File.createTempFile("export", ".json");
 			File manifest = File.createTempFile("manifest", ".txt");
 			
@@ -81,7 +81,7 @@ public class ExportJob implements Runnable{
     		
 
 		}catch(Exception e){
-			Logger.error(e.getMessage());
+			BaasBoxLogger.error(e.getMessage());
 		}finally{
 			try{
 				if(zip!=null)
@@ -91,7 +91,7 @@ public class ExportJob implements Runnable{
 			
 			}catch(Exception ioe){
 				ioe.getStackTrace();
-				Logger.error(ioe.getMessage());
+				BaasBoxLogger.error(ioe.getMessage());
 			}
 		}
 	}

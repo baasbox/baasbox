@@ -23,7 +23,7 @@ import com.baasbox.dao.exception.InvalidPermissionTagException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.util.List;
 import java.util.Set;
@@ -88,7 +88,7 @@ public class PermissionTagService {
             try {
                 dao.createReserved(tag.name,tag.description);
             } catch (Throwable throwable) {
-                if (Logger.isErrorEnabled()) Logger.error("Error while creating defaults tags");
+                if (BaasBoxLogger.isErrorEnabled()) BaasBoxLogger.error("Error while creating defaults tags");
                 throw new RuntimeException(throwable);
             }
         }
@@ -100,7 +100,7 @@ public class PermissionTagService {
             if (dao.existsPermissionTag(reserved.name)) return;
             dao.createReserved(reserved.name,reserved.description);
         }catch (Throwable error){
-            if (Logger.isErrorEnabled()) Logger.error("Error while creating reserved permission "+reserved.name,error);
+            if (BaasBoxLogger.isErrorEnabled()) BaasBoxLogger.error("Error while creating reserved permission "+reserved.name,error);
             throw new RuntimeException(error);
         }
     }

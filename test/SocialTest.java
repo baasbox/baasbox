@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
 import play.libs.Json;
 import play.mvc.Http.Status;
@@ -58,7 +58,7 @@ public class SocialTest extends AbstractTest {
 						
 						//there is the signupdate in system object?
 							String url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
@@ -78,7 +78,7 @@ public class SocialTest extends AbstractTest {
 							assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
 
 							url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUser, "passw1"));

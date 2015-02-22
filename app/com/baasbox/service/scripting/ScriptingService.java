@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.EventSource;
 
 import java.util.*;
@@ -166,7 +166,7 @@ public class ScriptingService {
 
             }
         } catch (ScriptEvalException e){
-            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation failed: deleting");
             updateCacheVersion();
             dao.invalidate(updated);
             dao.revertToLastVersion(updated);
@@ -182,16 +182,16 @@ public class ScriptingService {
      * @throws ScriptException
      */
     public static ScriptStatus create(JsonNode script) throws ScriptException {
-        if (Logger.isTraceEnabled()) Logger.trace("Method start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method start");
 
-        if (Logger.isDebugEnabled()) Logger.debug("Creating script");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating script");
         ScriptsDao dao = ScriptsDao.getInstance();
 
         ODocument doc = createScript(dao,script);
         compile(doc,true);
-        if (Logger.isDebugEnabled())Logger.debug("Script created");
+        if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("Script created");
 
-        if (Logger.isDebugEnabled())Logger.debug("Script installing");
+        if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("Script installing");
         ScriptStatus status;
         ScriptCall installation = ScriptCall.install(doc);
         try {
@@ -199,15 +199,15 @@ public class ScriptingService {
             ScriptResult res = invoke(installation);
             status = res.toScriptStatus();
             if (!status.ok){
-                if (Logger.isDebugEnabled()) Logger.debug("Script installation aborted by the script");
+                if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation aborted by the script");
                 doc.delete();
             }
         } catch (ScriptEvalException e){
-            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting - " + ExceptionUtils.getStackTrace(e));
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation failed: deleting - " + ExceptionUtils.getStackTrace(e));
             doc.delete();
             throw new ScriptException(e);
         }
-        if (Logger.isTraceEnabled()) Logger.trace("Method end");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
         return status;
     }
 
@@ -278,7 +278,7 @@ public class ScriptingService {
     }
 
     public static ScriptResult invoke(ScriptCall call) throws ScriptEvalException{
-        if (Logger.isDebugEnabled()) Logger.debug("Invoking script: " + call.scriptName);
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invoking script: " + call.scriptName);
         MAIN.set(call.scriptName);
         BaasboxScriptEngine engine = call.engine();
         try {
@@ -325,13 +325,13 @@ public class ScriptingService {
      * @throws ScriptEvalException
      */
     private static void compile(ODocument doc,boolean dropOnFailure) throws ScriptEvalException {
-        if (Logger.isDebugEnabled()) Logger.debug("Start Compile");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Start Compile");
         ScriptCall compile = ScriptCall.compile(doc);
         try {
             invoke(compile);
-            if (Logger.isDebugEnabled()) Logger.debug("End Compile");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("End Compile");
         } catch (ScriptEvalException e){
-            Logger.error("Failed Script compilation");
+            BaasBoxLogger.error("Failed Script compilation");
             if (dropOnFailure){
                 doc.delete();
             }else {
@@ -339,7 +339,7 @@ public class ScriptingService {
 
                 dao.revertToLastVersion(doc);
             }
-            if (Logger.isDebugEnabled()) Logger.debug("Script delete");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script delete");
             throw e;
         }
     }
@@ -419,7 +419,7 @@ public class ScriptingService {
 
             return node;
         } catch (Exception e) {
-            Logger.error("failed to connect: "+e.getMessage());
+            BaasBoxLogger.error("failed to connect: "+e.getMessage());
             throw e;
         }
 

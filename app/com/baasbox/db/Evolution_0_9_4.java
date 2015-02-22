@@ -3,7 +3,7 @@ package com.baasbox.db;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 /**
  * Created by eto on 10/23/14.
@@ -18,29 +18,29 @@ public class Evolution_0_9_4 implements IEvolution {
 
     @Override
     public void evolve(ODatabaseRecordTx db) {
-        Logger.info("Applying evolutions to evolve to the " + version + " level");
+        BaasBoxLogger.info("Applying evolutions to evolve to the " + version + " level");
         try{
             createDescriptionsForEndpointSwitches(db);
             createIndexOnEmail(db);
         }catch (Throwable e){
-            Logger.error("Error applying evolution to " + version + " level!!" ,e);
+            BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
             throw new RuntimeException(e);
         }
-        Logger.info ("DB now is on " + version + " level");
+        BaasBoxLogger.info ("DB now is on " + version + " level");
     }
 
 
     private void createIndexOnEmail(ODatabaseRecordTx db) {
-       	Logger.info("Creating index on email attribute...");
+       	BaasBoxLogger.info("Creating index on email attribute...");
        	DbHelper.execMultiLineCommands(db,true,
        			"create property _bb_userattributes.email string;",
        			"create index _bb_userattributes.email notunique;"
                 );
-       	Logger.info("...done");
+       	BaasBoxLogger.info("...done");
     }
 
 	private void createDescriptionsForEndpointSwitches(ODatabaseRecordTx db) {
-    	Logger.info("Creating descriptions for endpoint switches...");
+    	BaasBoxLogger.info("Creating descriptions for endpoint switches...");
     	 DbHelper.execMultiLineCommands(db,true,
                  "update _BB_permissions set description='Access to APIs for reading and for asset downloading.' where tag='baasbox.assets';",
                  "update _BB_permissions set description='Allows users to access their accounts, login and logout, modify their passwords.' where tag='baasbox.account';",
@@ -61,7 +61,7 @@ public class Evolution_0_9_4 implements IEvolution {
                  "update _BB_permissions set description='Enables the possibility to modify the ACL of Files.' where tag='baasbox.file.grants';",
                  "update _BB_permissions set description='Allows to make calls to plugins.' where tag='baasbox.scripts.invoke';"               
                  );
-    	Logger.info("...done");
+    	BaasBoxLogger.info("...done");
 	}
 
 }

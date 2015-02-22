@@ -30,7 +30,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -62,7 +62,7 @@ public class Root extends Controller {
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isDebugEnabled()) Logger.debug("resetAdminPassword bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetAdminPassword bodyJson: " + bodyJson);
 		//check and validate input
 		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		
 		if (!bodyJson.has("password"))	return badRequest("The 'password' field is missing into the body");
@@ -75,10 +75,10 @@ public class Root extends Controller {
 		} catch (SqlInjectionException e) {
 			return badRequest("The password is not valid");
 		} catch (UserNotFoundException e) {
-			Logger.error("User 'admin' not found!");
+			BaasBoxLogger.error("User 'admin' not found!");
 		    return internalServerError("User 'admin' not found!");
 		} catch (OpenTransactionException e) {
-			Logger.error (ExceptionUtils.getFullStackTrace(e));
+			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e);
 		}
 		return ok("Admin password reset");
@@ -251,7 +251,7 @@ public class Root extends Controller {
 					zipFile.delete();
 					return ok();		
 				}catch(Exception e){
-					Logger.error(ExceptionUtils.getStackTrace(e));
+					BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 					return internalServerError(ExceptionUtils.getStackTrace(e));
 				}finally{
 					try {

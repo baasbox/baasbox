@@ -18,7 +18,7 @@
 
 package com.baasbox.controllers;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -33,7 +33,7 @@ public class Generic extends Controller{
 		response().setHeader("Allow", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		if (Logger.isDebugEnabled()) Logger.debug(Json.stringify(Json.toJson(request().headers())));
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(Json.stringify(Json.toJson(request().headers())));
 		if (request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS")!=null)
 			response().setHeader("Access-Control-Allow-Headers",request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS"));
 		return ok();

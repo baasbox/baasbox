@@ -29,7 +29,7 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -89,7 +89,7 @@ public class FacebookLoginService extends SocialLoginService{
 	
 	@Override
 	public UserInfo extractUserInfo(Response r) throws BaasBoxFacebookException {
-		if (Logger.isDebugEnabled()) Logger.debug("FacebookLoginService.extractUserInfo: " + r.getCode() + ": " + r.getBody());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("FacebookLoginService.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
 		if (user.has("error")){

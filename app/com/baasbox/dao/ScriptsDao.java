@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.util.Collections;
 import java.util.Date;
@@ -97,13 +97,13 @@ public class ScriptsDao {
 
 
     public ODocument create(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore) throws ScriptException{
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         checkValidName(name);
         if (exists(name)){
             throw new ScriptAlreadyExistsException("Script "+name+" already exists");
         }
         ODocument doc = createPrivileged(name,language,code,isLibrary,active,initialStore);
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return doc;
     }
 
@@ -151,13 +151,13 @@ public class ScriptsDao {
     }
 
     public List<ODocument> getAll(QueryParams params) throws SqlInjectionException{
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         List<ODocument> docs= null;
         params = params==null?QueryParams.getInstance():params;
         OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME,params.justCountTheRecords(),params);
         docs = DbHelper.commandExecute(command,params.getParams());
 
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return docs;
     }
 
@@ -183,18 +183,18 @@ public class ScriptsDao {
     }
 
     public boolean exists(String name){
-        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
         boolean exists = findByName(name)!= null;
-        if (Logger.isDebugEnabled()) Logger.debug("Exists "+exists);
-        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Exists "+exists);
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
         return exists;
     }
 
     public ODocument getByName(String name){
-        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
         OIdentifiable id = findByName(name);
         ODocument doc  = id == null?null:(ODocument)db.load(id.getIdentity());
-        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
         return doc;
     }
 

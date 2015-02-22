@@ -15,7 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
@@ -63,8 +63,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profiles disabled", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 						
 						// Profile not enabled, with profile specified in Payload
@@ -73,8 +73,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile disabled, with profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						continueOnFail(true);
@@ -85,8 +85,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushPayloadWithoutProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabledWithoutProfileSpecified request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile disabled, without profile specified in Payload", getProfile1DisabledReturnCode(), null, true);
 
 						continueOnFail(true);
@@ -121,8 +121,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushNewApiPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						Result result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushProfilesDisabled request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushProfilesDisabled result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profiles disabled, without profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						// Profile not enabled, with profile specified in Payload
@@ -131,8 +131,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 						request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 						request = request.withJsonBody(getPayload("/pushNewApiPayloadWithProfileSpecified.json"), play.test.Helpers.POST);
 						result = routeAndCall(request);
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
-						if (Logger.isDebugEnabled()) Logger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabledWithProfileSpecified request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("sendPushWithProfileDisabled result: " + contentAsString(result));
 						assertRoute(result, "error with send, push profile disabled, with profile specified in Payload", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription(), true);
 
 						continueOnFail(true);
@@ -167,8 +167,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 							request = request.withJsonBody(getPayload("/pushDisableSandbox.json"), getMethod());
 							result = routeAndCall(request);
-							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
-							if (Logger.isDebugEnabled()) Logger.debug("disablePushSandboxMode result: " + contentAsString(result));
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("disablePushSandboxMode request: " + request.getWrappedRequest().headers());
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("disablePushSandboxMode result: " + contentAsString(result));
 							assertRoute(result, "switch sandbox for ("+listprofile+") disabled ", Status.OK, null, true);	
 						}
 						
@@ -180,8 +180,8 @@ public abstract class PushProfileAbstractTestNotMocked extends AbstractTest {
 							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 							request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
 							result = routeAndCall(request);
-							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
-							if (Logger.isDebugEnabled()) Logger.debug("enablePushProfile result: " + contentAsString(result));
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("enablePushProfile request: " + request.getWrappedRequest().headers());
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("enablePushProfile result: " + contentAsString(result));
 							assertRoute(result, "configuration missing for the selected profile ("+profile+")", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_CONFIG_INVALID.getDescription(), true);
 						}
 				}

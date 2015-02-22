@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.dao.IndexDao;
@@ -85,7 +85,7 @@ public class Evolution_0_7_0 implements IEvolution {
 
 	@Override
 	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			edgeAndClassOptimization(db);	
 			recreateDefaultRoles();
@@ -96,30 +96,30 @@ public class Evolution_0_7_0 implements IEvolution {
 			updateIndices(db);
 			updateDBVersion();
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
 	private void edgeAndClassOptimization(ODatabaseRecordTx db) {
-		Logger.info("...enabling edges and vertexes optimization attributes..:");
+		BaasBoxLogger.info("...enabling edges and vertexes optimization attributes..:");
 		ATTRIBUTES attribute = ODatabase.ATTRIBUTES.CUSTOM;
 		((ODatabaseComplex<?>) db).setInternal(attribute,  "useLightweightEdges=false");
 		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForEdgeLabel=false");
 		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForVertexLabel=false");
 		((ODatabaseComplex<?>) db).setInternal(attribute,  "useVertexFieldsForEdgeLabels=false");
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
 	private void updateDBVersion(){
-		Logger.info("changing db level version to " + version);
+		BaasBoxLogger.info("changing db level version to " + version);
 		Internal.DB_VERSION._setValue(version);
 	}
 	
 	
 	private void createNewIndexClass(ODatabaseRecordTx db){
-		Logger.info("...creating INDEX CLASS...");
+		BaasBoxLogger.info("...creating INDEX CLASS...");
 		OClass indexClass = db.getMetadata().getSchema().createClass(IndexDao.MODEL_NAME);
 		OProperty keyProp = indexClass.createProperty("key", OType.STRING);
 		keyProp.createIndex(INDEX_TYPE.UNIQUE);
@@ -135,14 +135,14 @@ public class Evolution_0_7_0 implements IEvolution {
 				"_bb_social_login",
 				"_bb_password_recovery"}
 		);
-		Logger.info("...migrating indices...");
+		BaasBoxLogger.info("...migrating indices...");
 		
 		Collection indices= db.getMetadata().getIndexManager().getIndexes();
 		for (Object in:indices){
 			OIndex i = (OIndex)in;
 			if (indicesName.contains(i.getName())){
 				//migrate the index
-				Logger.info("....." + i.getName());
+				BaasBoxLogger.info("....." + i.getName());
 				OIndexCursor cursor = i.cursor();
 				Set<Entry<Object, OIdentifiable>> entries = cursor.toEntries();
 				Iterator<Entry<Object, OIdentifiable>> it = entries.iterator();
@@ -152,7 +152,7 @@ public class Evolution_0_7_0 implements IEvolution {
 					Object valueOnDb=entry.getValue();
 					valueOnDb=db.load((ORID)valueOnDb);
 					if (valueOnDb!=null){
-						Logger.info(".....   key: " + key);
+						BaasBoxLogger.info(".....   key: " + key);
 						Object value=((ODocument)valueOnDb).field("value");
 						String indexKey = i.getName().toUpperCase()+":"+key;
 						ODocument newValue = new ODocument(IndexDao.MODEL_NAME);
@@ -166,12 +166,12 @@ public class Evolution_0_7_0 implements IEvolution {
 			
 		}//for each index defined on the db	
 		
-		Logger.info("...end indices migration");
+		BaasBoxLogger.info("...end indices migration");
 	}//update indices
 	
 	private void recreateDefaultRoles(){
-		Logger.info("Ricreating default roles");
-		Logger.info("reader");
+		BaasBoxLogger.info("Ricreating default roles");
+		BaasBoxLogger.info("reader");
 		ORole anonymRole = RoleDao.getRole("anonymoususer");
 		ORole reader = RoleDao.createRole(DefaultRoles.BASE_READER.toString(), anonymRole.getMode(),anonymRole.getRules());
 		
@@ -181,7 +181,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		reader.getDocument().field(RoleService.FIELD_ASSIGNABLE,DefaultRoles.BASE_READER.isAssignable());
 		reader.save();
 		
-		Logger.info("writer");;
+		BaasBoxLogger.info("writer");;
 		ORole regRole = RoleDao.getRole("registereduser");
 		ORole writer = RoleDao.createRole(DefaultRoles.BASE_WRITER.toString(), regRole.getMode(),regRole.getRules());
 		writer.getDocument().field(RoleService.FIELD_INTERNAL,true);
@@ -192,8 +192,8 @@ public class Evolution_0_7_0 implements IEvolution {
 	}
 	
 	private void updateOldRoles(){
-		Logger.info("Updating old roles");
-		Logger.info("anonymoususer");
+		BaasBoxLogger.info("Updating old roles");
+		BaasBoxLogger.info("anonymoususer");
 		ORole anonymRole = RoleDao.getRole("anonymoususer");
 		anonymRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
 		anonymRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
@@ -204,7 +204,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		anonymRole.save();
 		anonymRole=null;
 		
-		Logger.info("registered");
+		BaasBoxLogger.info("registered");
 		ORole regRole = RoleDao.getRole("registereduser");
 		regRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
 		regRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
@@ -215,7 +215,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		regRole.save();
 		regRole=null;
 		
-		Logger.info("backofficeuser");
+		BaasBoxLogger.info("backofficeuser");
 		ORole backRole = RoleDao.getRole("backofficeuser");
 		backRole.getDocument().field(RoleService.FIELD_INTERNAL,true);
 		backRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
@@ -227,7 +227,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		backRole.save();
 		backRole=null;
 		
-		Logger.info("administrator");
+		BaasBoxLogger.info("administrator");
 		//retrieves the "old" admin role
 		ORole oldAdminRole = RoleDao.getRole("admin");
 		//duplicates it
