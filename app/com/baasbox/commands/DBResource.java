@@ -3,7 +3,7 @@ package com.baasbox.commands;
 import java.util.Map;
 import java.util.UUID;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -88,7 +88,7 @@ class DBResource extends Resource {
     			DbHelper.reconnectAsAuthenticatedUser();
     		}catch(OSecurityAccessException e){
     			//if the script has changed username or password of the actual user, her credentials are not valid anymore and the db connection is lost
-    			Logger.warn("Database connection is not available inside a Plugin Script");
+    			BaasBoxLogger.warn("Database connection is not available inside a Plugin Script");
     			//swallow
     		}
         }

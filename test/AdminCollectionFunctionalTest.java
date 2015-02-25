@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -141,14 +141,14 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			result = routeAndCall(request);
-			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 5 - : " + play.test.Helpers.contentAsString(result));
+			BaasBoxLogger.debug("AdminCollectionFunctionalTest - check result - getCollection 5 - : " + play.test.Helpers.contentAsString(result));
 			
 			request = new FakeRequest("GET", "/admin/collection");
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			Result result4 = routeAndCall(request);
 			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
-			Logger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
+			BaasBoxLogger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
 			
 			} catch (JsonProcessingException e) {
 			Assert.fail(e.getMessage());

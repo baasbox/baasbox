@@ -28,7 +28,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.exception.BaasBoxPushException;
@@ -58,7 +58,7 @@ public class APNServer  extends PushProviderAbstract {
 
 	@Override
 	public boolean send(String message, List<String> deviceid, JsonNode bodyJson) throws Exception{	
-		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("APN Push message: "+message+" to the device "+deviceid);
 		if (!isInit) {
 			return true;
 		}
@@ -68,7 +68,7 @@ public class APNServer  extends PushProviderAbstract {
 		try{
 			service=getService();
 		} catch (com.notnoop.exceptions.InvalidSSLConfig e) {
-			Logger.error("Error sending push notification");
+			BaasBoxLogger.error("Error sending push notification");
 			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
 			//icallbackPush.onError(e.getMessage());
 		}
@@ -144,9 +144,9 @@ public class APNServer  extends PushProviderAbstract {
 			else badge=badgeNode.asInt();
 		}
 
-		if (Logger.isDebugEnabled()) Logger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
-		if (Logger.isDebugEnabled()) Logger.debug("Localized arguments: " + locArgs.toString());
-		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("APN Push message: "+message+" to the device "+deviceid +" with sound: " + sound + " with badge: " + badge + " with Action-Localized-Key: " + actionLocKey + " with Localized-Key: "+locKey);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Localized arguments: " + locArgs.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Custom Data: " + customData.toString());
 
 
 		PayloadBuilder payloadBuilder = APNS.newPayload()
@@ -168,8 +168,8 @@ public class APNServer  extends PushProviderAbstract {
 			try {	
 				service.push(deviceid, payload);	
 			} catch (NetworkIOException e) {
-				Logger.error("Error sending push notification");
-				Logger.error(ExceptionUtils.getStackTrace(e));
+				BaasBoxLogger.error("Error sending push notification");
+				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
 				//icallbackPush.onError(e.getMessage());
 			}
@@ -178,8 +178,8 @@ public class APNServer  extends PushProviderAbstract {
 				Date expiry = new Date(Long.MAX_VALUE);
 				service.push(deviceid,payload,expiry);
 			} catch (NetworkIOException e) {
-				Logger.error("Error sending enhanced push notification");
-				Logger.error(ExceptionUtils.getStackTrace(e));
+				BaasBoxLogger.error("Error sending enhanced push notification");
+				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
 				//icallbackPush.onError(e.getMessage());
 			}
@@ -292,7 +292,7 @@ public class APNServer  extends PushProviderAbstract {
 			ConfigurationFileContainer cfc = mp.readValue(json, ConfigurationFileContainer.class);
 			name = cfc.getName();
 		}catch(Exception e){
-			Logger.error(e.getMessage());
+			BaasBoxLogger.error(e.getMessage());
 			throw new RuntimeException(e);
 		}
 		if(name!=null && !name.equals("null")){

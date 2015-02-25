@@ -39,7 +39,7 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 import org.stringtemplate.v4.ST;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Crypto;
 
 import com.baasbox.BBConfiguration;
@@ -53,6 +53,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -153,7 +154,7 @@ public class UserService {
 			JsonNode privateAttributes,
 			JsonNode friendsAttributes,
 			JsonNode appUsersAttributes,
-			boolean generated) throws InvalidJsonException, UserAlreadyExistsException{
+			boolean generated) throws InvalidJsonException, UserAlreadyExistsException, EmailAlreadyUsedException{
 		return signUp (
 				username,
 				password,
@@ -240,7 +241,7 @@ public class UserService {
             JsonNode nonAppUserAttributes,
             JsonNode privateAttributes,
             JsonNode friendsAttributes,
-            JsonNode appUsersAttributes,boolean generated) throws InvalidJsonException,UserAlreadyExistsException{
+            JsonNode appUsersAttributes,boolean generated) throws InvalidJsonException,UserAlreadyExistsException, EmailAlreadyUsedException{
 			
 			if (StringUtils.isEmpty(username)) throw new IllegalArgumentException("username cannot be null or empty");
 			if (StringUtils.isEmpty(password)) throw new IllegalArgumentException("password cannot be null or empty");
@@ -248,6 +249,10 @@ public class UserService {
 			ODatabaseRecordTx db =  DbHelper.getConnection();
 			ODocument profile=null;
 			UserDao dao = UserDao.getInstance();
+			if (privateAttributes!=null && privateAttributes.has("email")) {
+				boolean checkEmail=dao.emailIsAlreadyUsed((String) privateAttributes.findValuesAsText("email").get(0));
+				if (checkEmail) throw new EmailAlreadyUsedException("The email provided is already in use by another user");
+			}
 			try{
 			    //because we have to create an OUser record and a User Object, we need a transaction
 			
@@ -498,7 +503,7 @@ public class UserService {
 		UserDao udao=UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
 		if(user==null){
-			if (Logger.isDebugEnabled()) Logger.debug("User " + username + " does not exist");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User " + username + " does not exist");
 			throw new UserNotFoundException("User " + username + " does not exist");
 		}
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
@@ -597,7 +602,7 @@ public class UserService {
 			email.addTo(userEmail);
 
 			email.setSubject(emailSubject);
-			if (Logger.isDebugEnabled()) {
+			if (BaasBoxLogger.isDebugEnabled()) {
 				StringBuilder logEmail = new StringBuilder()
 						.append("HostName: ").append(email.getHostName()).append("\n")
 						.append("SmtpPort: ").append(email.getSmtpPort()).append("\n")
@@ -626,15 +631,15 @@ public class UserService {
 
 						
 						.append("SentDate: ").append(email.getSentDate()).append("\n");
-				Logger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
+				BaasBoxLogger.debug("Password Recovery is ready to send: \n" + logEmail.toString());
 			}
 			email.send();
 
 		}  catch (EmailException authEx){
-			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(authEx));
+			BaasBoxLogger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(authEx));
 			throw new PasswordRecoveryException (errorString + " Could not reach the mail server. Please contact the server administrator");
 		}  catch (Exception e) {
-			Logger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(e));
+			BaasBoxLogger.error("ERROR SENDING MAIL:" + ExceptionUtils.getStackTrace(e));
 			throw new Exception (errorString,e);
 		}
 
@@ -663,7 +668,7 @@ public class UserService {
 				user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 				systemProps.save();
 				user.save();
-				if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("saved tokens for user ");
 				DbHelper.commitTransaction();
 			}
 		}catch(Exception e){
@@ -698,7 +703,7 @@ public class UserService {
 			registeredUserProp.field("_social",socialdata);
 			registeredUserProp.save();
 			user.save();
-			if (Logger.isDebugEnabled()) Logger.debug("saved tokens for user ");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("saved tokens for user ");
 			DbHelper.commitTransaction();
 
 		}catch(Exception e){

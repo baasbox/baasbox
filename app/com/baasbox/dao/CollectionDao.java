@@ -16,7 +16,7 @@
  */
 package com.baasbox.dao;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -62,7 +62,7 @@ public class CollectionDao extends NodeDao {
 	 */
 	public ODocument create(String collectionName) throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable {
 		if (DbHelper.isInTransaction()) throw new OpenTransactionException("Cannot create a collection within an open transaction");
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 
 		if (Character.isDigit(collectionName.charAt(0))){
 			throw new InvalidCollectionException("Collection names cannot start by a digit");
@@ -111,20 +111,20 @@ public class CollectionDao extends NodeDao {
 		anonymousRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + collectionName, ORole.PERMISSION_READ);
 		PermissionsHelper.grantRead(doc, registeredRole);
 		PermissionsHelper.grantRead(doc, anonymousRole);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return doc;
 	}//getNewModelInstance(String collectionName)
 	
 	public boolean existsCollection(String collectionName) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return (record!=null) ;
 	}
 	
 	public ODocument getByName(String collectionName) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
 		if (record==null) return null;
@@ -174,7 +174,7 @@ public class CollectionDao extends NodeDao {
 		} catch (Exception e) {
 			//rollback in case of error
 			DbHelper.rollbackTransaction();
-			if (Logger.isDebugEnabled()) Logger.debug ("An error occured deleting the collection " + name, e);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("An error occured deleting the collection " + name, e);
 			throw e;
 		}
 	}//delete

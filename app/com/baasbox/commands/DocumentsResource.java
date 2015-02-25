@@ -18,18 +18,27 @@
 
 package com.baasbox.commands;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
-import com.baasbox.dao.exception.*;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,12 +50,6 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import play.Logger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * {resource: 'documents',
@@ -127,7 +130,7 @@ class DocumentsResource extends BaseRestResource {
                 alterGrants(command, coll, rid, true, grant);
                 alterGrants(command, coll, rid, false, grant);
             } catch (Exception e){
-                Logger.error("error",e);
+                BaasBoxLogger.error("error",e);
                 throw  e;
             }
         } catch (UserNotFoundException e) {

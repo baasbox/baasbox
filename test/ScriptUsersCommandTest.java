@@ -1,27 +1,42 @@
-import com.baasbox.commands.CommandRegistry;
-import com.baasbox.commands.ScriptCommand;
-import com.baasbox.dao.exception.UserAlreadyExistsException;
-import com.baasbox.db.DbHelper;
-import com.baasbox.exception.InvalidJsonException;
-import com.baasbox.util.BBJson;
-import com.baasbox.service.user.UserService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import core.TestConfig;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.DELETE;
+import static play.test.Helpers.PUT;
+import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+
+import java.util.Date;
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import play.mvc.Result;
 import play.test.FakeRequest;
 
-import javax.ws.rs.core.MediaType;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import com.baasbox.commands.CommandRegistry;
+import com.baasbox.commands.ScriptCommand;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
+import com.baasbox.dao.exception.UserAlreadyExistsException;
+import com.baasbox.db.DbHelper;
+import com.baasbox.exception.InvalidJsonException;
+import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import static play.test.Helpers.*;
-import static org.junit.Assert.*;
+import core.TestConfig;
 
 /**
  * Created by eto on 29/09/14.
@@ -53,7 +68,7 @@ public class ScriptUsersCommandTest {
 
             try {
                 UserService.signUp(user,user,new Date(),visToAnon,visToUser,visToFriends,vistToReg,false);
-            } catch (InvalidJsonException|UserAlreadyExistsException e) {
+            } catch (InvalidJsonException|UserAlreadyExistsException|EmailAlreadyUsedException e) {
                 fail(ExceptionUtils.getFullStackTrace(e));
             }
             return user;

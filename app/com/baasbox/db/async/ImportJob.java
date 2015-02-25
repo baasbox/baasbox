@@ -18,7 +18,7 @@
 
 package com.baasbox.db.async;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.db.DbHelper;
 
@@ -37,7 +37,7 @@ public class ImportJob implements Runnable{
 		try{    
 			DbHelper.importData(appcode,content);
 		}catch(Exception e){
-			Logger.error(e.getMessage());
+			BaasBoxLogger.error(e.getMessage());
 			throw new RuntimeException(e);
 		}
 

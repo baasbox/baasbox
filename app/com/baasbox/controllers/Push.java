@@ -22,12 +22,16 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
 
+
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.db.DbHelper;
 import com.google.common.collect.ImmutableMap;
-import play.Logger;
+
 import play.libs.F;
+
+import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -61,10 +65,10 @@ public class Push extends Controller {
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> send(String username) throws Exception  {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
-		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("send bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription()));
 		}
@@ -95,6 +99,7 @@ public class Push extends Controller {
 		} else {
 			pushProfiles.add(1);
 		}
+
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 			boolean[] withError = new boolean[6];
 			PushService ps = new PushService();
@@ -102,54 +107,54 @@ public class Push extends Controller {
 				if (ps.validate(pushProfiles))
 					withError = ps.send(message, usernames, pushProfiles, bodyJson, withError);
 			} catch (UserNotFoundException e) {
-				Logger.error("Username not found " + username, e);
+				BaasBoxLogger.error("Username not found " + username, e);
 				return notFound("Username not found");
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (PushNotInitializedException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 			} catch (PushProfileDisabledException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(), CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
 			} catch (PushProfileInvalidException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 			} catch (UnknownHostException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(), CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 			} catch (InvalidRequestException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(), CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
 			} catch (PushSoundKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
 			} catch (PushBadgeFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
 			} catch (PushActionLocalizedKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
 			} catch (PushLocalizedKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 			} catch (PushLocalizedArgumentsFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 			} catch (PushCollapseKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
 			} catch (PushTimeToLiveFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
 			} catch (PushContentAvailableFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription());
 			} catch (PushCategoryFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getBbCode(), CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription());
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			for (int i = 0; i < withError.length; i++) {
 				if (withError[i])
 					return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(), CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
@@ -162,10 +167,10 @@ public class Push extends Controller {
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> sendUsers() throws Exception {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
-		if (Logger.isTraceEnabled()) Logger.trace("send bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("send bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(), CustomHttpCode.JSON_PAYLOAD_NULL.getDescription()));
 		}
@@ -225,6 +230,7 @@ public class Push extends Controller {
 		else {
 			pushProfiles.add(1);
 		}
+		
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			boolean[] withError=new boolean[6];
 			PushService ps=new PushService();
@@ -238,99 +244,97 @@ public class Push extends Controller {
 				return badRequest("The supplied name appears invalid (Sql Injection Attack detected)");
 			}
 			catch (PushNotInitializedException e){
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
 			}
 			catch (PushProfileDisabledException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_PROFILE_DISABLED.getBbCode(),CustomHttpCode.PUSH_PROFILE_DISABLED.getDescription());
 			}
 			catch (PushProfileInvalidException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_PROFILE_FORMAT_INVALID.getDescription());
 			}
 			catch (PushInvalidApiKeyException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
 			}
 			catch (UnknownHostException e){
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_HOST_UNREACHABLE.getBbCode(),CustomHttpCode.PUSH_HOST_UNREACHABLE.getDescription());
 			}
 			catch (InvalidRequestException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_INVALID_REQUEST.getBbCode(),CustomHttpCode.PUSH_INVALID_REQUEST.getDescription());
 			}
 			catch(IOException e){
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return badRequest(e.getMessage());
 			}
 			catch(PushSoundKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription());
 			}
 			catch(PushBadgeFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription());
 			}
 			catch(PushActionLocalizedKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription());
 			}
 			catch(PushLocalizedKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 			}
 			catch(PushLocalizedArgumentsFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription());
 			}
 			catch(PushCollapseKeyFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription());
 			}
 			catch(PushTimeToLiveFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription());
 			}
 			catch(PushContentAvailableFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription());
 			}
 			catch(PushCategoryFormatException e) {
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(e.getMessage());
 				return status(CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getBbCode(),CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription());
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 			for(int i=0;i<withError.length;i++) {
 				if(withError[i]) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 			}
-			return ok();
+			return ok("Push Notification(s) has been sent");
 		}));
 
+
 	}
+
 
 
 
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> enablePush(String os, String pushToken) {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if(os==null) {
 			return F.Promise.pure(badRequest("OS value cannot be null"));
 		}
 		if(pushToken==null) return F.Promise.pure(badRequest("pushToken value cannot be null"));
-		if (Logger.isDebugEnabled()) Logger.debug("Trying to enable push to OS: "+os+" pushToken: "+ pushToken);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Trying to enable push to OS: "+os+" pushToken: "+ pushToken);
 
 		Map<String, Object> data = ImmutableMap.of("os", os, UserDao.USER_PUSH_TOKEN, pushToken);
-
-//		HashMap<String, Object> data = new HashMap<String, Object>();
-//		data.put("os",os);
-//		data.put(UserDao.USER_PUSH_TOKEN, pushToken);
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			UserService.registerDevice(data);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok();
 		}));
 	}
@@ -338,14 +342,15 @@ public class Push extends Controller {
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> disablePush(String pushToken) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if(pushToken==null) return F.Promise.pure(badRequest("pushToken value cannot be null"));
-		if (Logger.isDebugEnabled()) Logger.debug("Trying to disable push to pushToken: "+ pushToken); 
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Trying to disable push to pushToken: "+ pushToken); 
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			UserService.unregisterDevice(pushToken);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok();
 		}));
+
 	}
 
 

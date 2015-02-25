@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 
 public class DocumentService {
@@ -286,11 +286,11 @@ public class DocumentService {
     public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
         String rid = null;
         if (isUUID) {
-            if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("id is an UUID, try to get a valid RID");
             String orid = GenericDao.getInstance().getRidNodeByUUID(id);
             if (orid == null) throw new RidNotFoundException(id);
             rid = orid;
-            if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Retrieved RID: "+ rid);
         } else {
             rid = "#"+id;
         }

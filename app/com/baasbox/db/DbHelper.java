@@ -34,10 +34,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
 import play.Play;
 import play.libs.F;
 import play.mvc.Http;
+import play.mvc.Result;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
@@ -45,7 +45,6 @@ import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
-import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
@@ -58,6 +57,7 @@ import com.baasbox.exception.SwitchUserContextException;
 import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
@@ -81,8 +81,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-
-import play.mvc.Result;
 
 public class DbHelper {
 
@@ -142,30 +140,30 @@ public class DbHelper {
 	}
 
 	public static void requestTransaction() {
-		if (Logger.isDebugEnabled())
-			Logger.debug("Request Transaction: transaction count -before-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Request Transaction: transaction count -before-: "
 					+ tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (!isInTransaction()) {
-			if (Logger.isTraceEnabled())
-				Logger.trace("Begin transaction");
+			if (BaasBoxLogger.isTraceEnabled())
+				BaasBoxLogger.trace("Begin transaction");
 			db.begin();
 		}
 		tranCount.set(tranCount.get().intValue() + 1);
-		if (Logger.isDebugEnabled())
-			Logger.debug("Request Transaction: transaction count -after-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Request Transaction: transaction count -after-: "
 					+ tranCount.get());
 	}
 
 	public static void commitTransaction() {
-		if (Logger.isDebugEnabled())
-			Logger.debug("Commit Transaction: transaction count -before-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Commit Transaction: transaction count -before-: "
 					+ tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()) {
 
-			if (Logger.isDebugEnabled())
-				Logger.debug("Commit transaction");
+			if (BaasBoxLogger.isDebugEnabled())
+				BaasBoxLogger.debug("Commit transaction");
 			tranCount.set(tranCount.get().intValue() - 1);
 			if (tranCount.get() < 0)
 				throw new RuntimeException("Commit without transaction!");
@@ -176,27 +174,28 @@ public class DbHelper {
 		} else
 			throw new NoTransactionException(
 					"There is no open transaction to commit");
-		if (Logger.isDebugEnabled())
-			Logger.debug("Commit Transaction: transaction count -after-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Commit Transaction: transaction count -after-: "
 					+ tranCount.get());
-
+		
 	}
 
 	public static void rollbackTransaction() {
-		if (Logger.isDebugEnabled())
-			Logger.debug("Rollback Transaction: transaction count -before-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Rollback Transaction: transaction count -before-: "
 					+ tranCount.get());
 		ODatabaseRecordTx db = getConnection();
 		if (isInTransaction()) {
-			if (Logger.isDebugEnabled())
-				Logger.debug("Rollback transaction");
+			if (BaasBoxLogger.isDebugEnabled())
+				BaasBoxLogger.debug("Rollback transaction");
 			db.getTransaction().rollback();
 			db.getTransaction().close();
 			tranCount.set(0);
 		}
-		if (Logger.isDebugEnabled())
-			Logger.debug("Rollback Transaction: transaction count -after-: "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("Rollback Transaction: transaction count -after-: "
 					+ tranCount.get());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Rollback Transaction: transaction count -after-: " + tranCount.get());
 	}
 
 	public static String selectQueryBuilder(String from, boolean count,
@@ -236,8 +235,8 @@ public class DbHelper {
 		if (!count && criteria.getPage() != null && criteria.getPage() != -1) {
 			ret += " limit " + criteria.getRecordPerPage();
 		}
-		if (Logger.isDebugEnabled())
-			Logger.debug("queryBuilder: " + ret);
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("queryBuilder: " + ret);
 		return ret;
 	}
 
@@ -260,15 +259,12 @@ public class DbHelper {
 			boolean count, QueryParams criteria) throws SqlInjectionException {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		OCommandRequest command = db.command(new OSQLSynchQuery<ODocument>(
-				selectQueryBuilder(from, count, criteria)));
-		if (!command.isIdempotent())
-			throw new SqlInjectionException();
-		if (Logger.isDebugEnabled())
-			Logger.debug("commandBuilder: ");
-		if (Logger.isDebugEnabled())
-			Logger.debug("  " + criteria.toString());
-		if (Logger.isDebugEnabled())
-			Logger.debug("  " + command.toString());
+				selectQueryBuilder(from, count, criteria)
+				));
+		if (!command.isIdempotent()) throw new SqlInjectionException();
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("commandBuilder: ");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  " + criteria.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  " + command.toString());
 		return command;
 	}
 
@@ -420,8 +416,8 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 		String databaseName = BBConfiguration.getDBDir();
-		if (Logger.isDebugEnabled())
-			Logger.debug("opening connection on db: " + databaseName + " for "
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("opening connection on db: " + databaseName + " for "
 					+ username);
 
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
@@ -474,8 +470,8 @@ public class DbHelper {
 	}
 
 	public static void close(ODatabaseRecordTx db) {
-		if (Logger.isDebugEnabled())
-			Logger.debug("closing connection");
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("closing connection");
 		if (db != null && !db.isClosed()) {
 			// HooksManager.unregisteredAll(db);
 			try {
@@ -487,19 +483,19 @@ public class DbHelper {
 				db.close();
 				tranCount.set(0);
 			}
-		} else if (Logger.isDebugEnabled())
-			Logger.debug("connection already close or null");
+		} else if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("connection already close or null");
 	}
 
 	public static ODatabaseRecordTx getConnection() {
 		ODatabaseRecordTx db = null;
 		try {
 			db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.get();
-			if (Logger.isDebugEnabled())
-				Logger.debug("Connection id: " + db + " "
+			if (BaasBoxLogger.isDebugEnabled())
+				BaasBoxLogger.debug("Connection id: " + db + " "
 						+ ((Object) db).hashCode());
 		} catch (ODatabaseException e) {
-			Logger.debug("Cound not retrieve the DB connection within this thread: "
+			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: "
 					+ e.getMessage());
 		}
 		return db;
@@ -522,26 +518,22 @@ public class DbHelper {
 				BBConfiguration.getBaasBoxUsername());
 	}
 
-	public static void createDefaultRoles() throws RoleNotFoundException,
-			RoleAlreadyExistsException {
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method Start");
+
+	public static void createDefaultRoles() throws RoleNotFoundException, RoleAlreadyExistsException{
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		RoleService.createInternalRoles();
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 
-	public static void createDefaultUsers() throws Exception {
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method Start");
+	public static void createDefaultUsers() throws Exception{
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		UserService.createDefaultUsers();
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 
-	public static void updateDefaultUsers() throws Exception {
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method Start");
+	
+	public static void updateDefaultUsers() throws Exception{
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		OUser user = db.getMetadata().getSecurity()
 				.getUser(BBConfiguration.getBaasBoxUsername());
@@ -553,16 +545,14 @@ public class DbHelper {
 		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
 		user.save();
 
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 
 	public static void populateDB() throws IOException {
 		ODatabaseRecordTx db = getConnection();
-		// DO NOT DELETE THE FOLLOWING LINE!
-		OrientGraphNoTx dbg = new OrientGraphNoTx(
-				getODatabaseDocumentTxConnection());
-		Logger.info("Populating the db...");
+		//DO NOT DELETE THE FOLLOWING LINE!
+		OrientGraphNoTx dbg =  new OrientGraphNoTx(getODatabaseDocumentTxConnection()); 
+		BaasBoxLogger.info("Populating the db...");
 		InputStream is;
 		if (Play.application().isProd())
 			is = Play.application().resourceAsStream(SCRIPT_FILE_NAME);
@@ -572,11 +562,9 @@ public class DbHelper {
 		List<String> script = IOUtils.readLines(is, "UTF-8");
 		is.close();
 
-		for (String line : script) {
-			if (Logger.isDebugEnabled())
-				Logger.debug(line);
-			if (!line.startsWith("--") && !line.trim().isEmpty()) { // skip
-																	// comments
+		for (String line:script){
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(line);
+			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		}
@@ -591,13 +579,12 @@ public class DbHelper {
 			uniqueId = new String(Base64.encodeBase64(u.toString().getBytes()));
 		}
 		Internal.INSTALLATION_ID._setValue(uniqueId);
-		Logger.info("Unique installation id is: " + uniqueId);
-		Logger.info("...done");
+		BaasBoxLogger.info("Unique installation id is: " + uniqueId);
+		BaasBoxLogger.info("...done");
 	}
 
-	public static void populateConfiguration() throws IOException,
-			ConfigurationException {
-		Logger.info("Load initial configuration...");
+	public static void populateConfiguration () throws IOException, ConfigurationException{
+		BaasBoxLogger.info("Load initial configuration...");
 		InputStream is;
 		if (Play.application().isProd())
 			is = Play.application().resourceAsStream(CONFIGURATION_FILE_NAME);
@@ -610,13 +597,12 @@ public class DbHelper {
 		CharSequence doubleDot = "..";
 		CharSequence dot = ".";
 
-		Set<String> sections = c.getSections();
-		for (String section : sections) {
-			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS
-					.get(section);
-			if (en == null) {
-				Logger.warn(section
-						+ " is not a valid configuration section, it will be skipped!");
+
+		Set<String> sections= c.getSections();
+		for (String section: sections){
+			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
+			if (en==null){
+				BaasBoxLogger.warn(section  + " is not a valid configuration section, it will be skipped!");
 				continue;
 			}
 			SubnodeConfiguration subConf = c.getSection(section);
@@ -628,33 +614,30 @@ public class DbHelper {
 													// if the key contain a dot,
 													// it will be doubled!
 				try {
-					Logger.info("Setting " + value + " to " + key);
+					BaasBoxLogger.info("Setting "+value+ " to "+key);
 					PropertiesConfigurationHelper.setByKey(en, key, value);
 				} catch (Exception e) {
-					Logger.warn("Error loading initial configuration: Section "
-							+ section + ", key: " + key + ", value: " + value,
-							e);
+					BaasBoxLogger.warn("Error loading initial configuration: Section " + section + ", key: " + key +", value: " + value, e);
 				}
 			}
 		}
 		is.close();
-		Logger.info("...done");
+		BaasBoxLogger.info("...done");
 	}
 
-	static void createDefaultPermissionTags() {
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method Start");
-		PermissionTagService.createDefaultPermissions();
-		if (Logger.isTraceEnabled())
-			Logger.trace("Method End");
-	}
 
-	public static void setupDb() throws Exception {
-		Logger.info("Creating default roles...");
+    static void createDefaultPermissionTags(){
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+        PermissionTagService.createDefaultPermissions();
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+    }
+
+	public static void setupDb() throws Exception{
+		BaasBoxLogger.info("Creating default roles...");
 		DbHelper.createDefaultRoles();
 		populateDB();
 		getConnection().getMetadata().getIndexManager().reload();
-		Logger.info("Creating default users...");
+		BaasBoxLogger.info("Creating default users...");
 		createDefaultUsers();
 		populateConfiguration();
 		createDefaultPermissionTags();
@@ -671,7 +654,7 @@ public class DbHelper {
 					new OCommandOutputListener() {
 						@Override
 						public void onMessage(String m) {
-							Logger.info(m);
+							BaasBoxLogger.info(m);
 						}
 					});
 			synchronized (DbHelper.class) {
@@ -697,9 +680,9 @@ public class DbHelper {
 			throws UnableToImportDbException {
 		ODatabaseRecordTx db = null;
 		java.io.File f = null;
-		try {
-			Logger.info("Initializing restore operation..:");
-			Logger.info("...dropping the old db..:");
+		try{
+			BaasBoxLogger.info("Initializing restore operation..:");
+			BaasBoxLogger.info("...dropping the old db..:");
 			DbHelper.shutdownDB(false);
 			f = java.io.File.createTempFile("import", ".json");
 			FileUtils.writeStringToFile(f, importData);
@@ -709,10 +692,10 @@ public class DbHelper {
 				}
 			}
 
-			db = getConnection();
-			Logger.info("...unregistering hooks...");
+			db=getConnection(); 
+			BaasBoxLogger.info("...unregistering hooks...");
 			HooksManager.unregisteredAll(db);
-			Logger.info("...drop the O-Classes...");
+			BaasBoxLogger.info("...drop the O-Classes...");
 			db.getMetadata().getSchema().dropClass("OFunction");
 			db.getMetadata().getSchema().dropClass("OSchedule");
 			db.getMetadata().getSchema().dropClass("ORIDs");
@@ -721,7 +704,7 @@ public class DbHelper {
 					new OCommandOutputListener() {
 						@Override
 						public void onMessage(String m) {
-							Logger.info("Restore db: " + m);
+							BaasBoxLogger.info("Restore db: " + m);
 						}
 					});
 
@@ -729,38 +712,38 @@ public class DbHelper {
 			oi.setUseLineFeedForRecords(true);
 			oi.setPreserveClusterIDs(true);
 			oi.setPreserveRids(true);
-			Logger.info("...starting import procedure...");
+			BaasBoxLogger.info("...starting import procedure...");
 			oi.importDatabase();
 			oi.close();
 
-			Logger.info("...setting up internal user credential...");
+			BaasBoxLogger.info("...setting up internal user credential...");
 			updateDefaultUsers();
-			Logger.info("...setting up DataBase attributes...");
+			BaasBoxLogger.info("...setting up DataBase attributes...");
 			setupAttributes();
-			Logger.info("...registering hooks...");
+			BaasBoxLogger.info("...registering hooks...");
 			evolveDB(db);
 			HooksManager.registerAll(db);
-			Logger.info("...extract iOS certificates...");
+			BaasBoxLogger.info("...extract iOS certificates...");
 			IosCertificateHandler.init();
 		} catch (Exception ioe) {
-			Logger.error("*** Error importing the db: ", ioe);
+			BaasBoxLogger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
 		} finally {
 			if (db != null && !db.isClosed()) {
 				db.close();
 			}
-			Logger.info("...releasing the db...");
+			BaasBoxLogger.info("...releasing the db...");
 			dbFreeze.set(false);
 			if (f != null && f.exists()) {
 				f.delete();
 			}
-			Logger.info("...restore terminated");
+			BaasBoxLogger.info("...restore terminated");
 		}
 	}
 
 	private static void setupAttributes() {
 		ODatabaseRecordTx db = DbHelper.getConnection();
-		DbHelper.execMultiLineCommands(db, Logger.isDebugEnabled(),
+		DbHelper.execMultiLineCommands(db, BaasBoxLogger.isDebugEnabled(),
 				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ",
 				"alter database custom useLightweightEdges=false",
 				"alter database custom useClassForEdgeLabel=false",
@@ -775,22 +758,23 @@ public class DbHelper {
 	 */
 	public static void evolveDB(ODatabaseRecordTx db) {
 		// check for evolutions
-		Logger.info("...looking for evolutions...");
+		BaasBoxLogger.info("...looking for evolutions...");
 		String fromVersion = "";
 		if (db.getMetadata().getIndexManager().getIndex("_bb_internal") != null) {
-			Logger.info("...db is < 0.7 ....");
+			BaasBoxLogger.info("...db is < 0.7 ....");
 			ORID o = (ORID) db.getMetadata().getIndexManager()
 					.getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
 			ODocument od = db.load(o);
 			fromVersion = od.field("value");
 		} else
 			fromVersion = Internal.DB_VERSION.getValueAsString();
-		Logger.info("...db version is: " + fromVersion);
+		
+		BaasBoxLogger.info("...db version is: " + fromVersion);
 		if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())) {
-			Logger.info("...imported DB needs evolutions!...");
+			BaasBoxLogger.info("...imported DB needs evolutions!...");
 			Evolutions.performEvolutions(db, fromVersion);
 			Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
-			Logger.info("DB version is now " + BBConfiguration.getApiVersion());
+			BaasBoxLogger.info("DB version is now " + BBConfiguration.getApiVersion());
 		}// end of evolutions
 	}
 
@@ -808,19 +792,19 @@ public class DbHelper {
 	public static void execMultiLineCommands(ODatabaseRecordTx db, boolean log,
 			String... commands) {
 
-		Logger.debug("Ready to execute these commands: " + commands);
+		BaasBoxLogger.debug("Ready to execute these commands: " + commands);
 		if (commands == null)
 			return;
 		for (String command : commands) {
 			if (command == null) {
-				Logger.warn("null command found!! skipping");
+				BaasBoxLogger.warn("null command found!! skipping");
 				continue;
 			}
 			if (log)
-				Logger.debug("sql:> " + command);
+				BaasBoxLogger.debug("sql:> " + command);
 			if (!command.startsWith("--") && !command.trim().isEmpty()) {
-				if (Logger.isDebugEnabled())
-					Logger.debug("Executing command: " + command);
+				if (BaasBoxLogger.isDebugEnabled())
+					BaasBoxLogger.debug("Executing command: " + command);
 				db.command(new OCommandSQL(command.replace(';', ' ')))
 						.execute();
 			}

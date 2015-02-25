@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.baasbox.controllers.actions.filters.*;
-import com.baasbox.util.ErrorToResult;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +37,6 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.json.simple.JSONObject;
 
-import play.Logger;
 import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -48,10 +45,13 @@ import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
 import play.mvc.Http.Response;
 import play.mvc.Result;
-import play.mvc.Results;
 import play.mvc.With;
 
 import com.baasbox.configuration.ImagesConfiguration;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
@@ -65,11 +65,13 @@ import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.FileTooBigException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.FileService;
 import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.ErrorToResult;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
@@ -228,23 +230,23 @@ public class File extends Controller {
                             for (String key : metadata.names()) {
                                 try {
                                     if (metadata.isMultiValued(key)) {
-                                        if (Logger.isDebugEnabled()) Logger.debug(key + ": ");
+                                        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(key + ": ");
                                         for (String value : metadata.getValues(key)) {
-                                            if (Logger.isDebugEnabled()) Logger.debug("   " + value);
+                                            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("   " + value);
                                         }
                                         extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), Arrays.asList(metadata.getValues(key)));
                                     } else {
-                                        if (Logger.isDebugEnabled()) Logger.debug(key + ": " + metadata.get(key));
+                                        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(key + ": " + metadata.get(key));
                                         extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), metadata.get(key));
                                     }
                                 } catch (Throwable e) {
-                                    Logger.warn("Unable to extract metadata for file " + fileName + ", key " + key);
+                                    BaasBoxLogger.warn("Unable to extract metadata for file " + fileName + ", key " + key);
                                 }
                             }
 
 
-                            if (Logger.isDebugEnabled()) Logger.debug(".................................");
-                            if (Logger.isDebugEnabled()) Logger.debug(new JSONObject(extractedMetaData).toString());
+                            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(".................................");
+                            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(new JSONObject(extractedMetaData).toString());
 
                             is.close();
                             is = new FileInputStream(fileContent);
@@ -261,7 +263,7 @@ public class File extends Controller {
                         } catch (JsonProcessingException e) {
                             throw new Exception("Error parsing acl field. HINTS: is it a valid JSON string?", e);
                         } catch (Throwable e) {
-                            Logger.error("Error parsing uploaded file", e);
+                            BaasBoxLogger.error("Error parsing uploaded file", e);
                             throw new Exception("Error parsing uploaded file", e);
                         } finally {
                             if (is != null) is.close();
@@ -401,7 +403,7 @@ public class File extends Controller {
                     e -> badRequest("the supplied id appears invalid (Sql Injection Attack detected)"))
             .when(IOException.class,
                     e ->{
-                        Logger.error("error retrieving file content " + id, e);
+                        BaasBoxLogger.error("error retrieving file content " + id, e);
                         return internalServerError(e.getMessage());
                     })
             .when(DocumentIsNotAnImageException.class,

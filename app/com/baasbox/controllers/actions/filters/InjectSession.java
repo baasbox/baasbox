@@ -16,7 +16,7 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -34,7 +34,7 @@ public class InjectSession extends Action.Simple {
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
@@ -53,7 +53,7 @@ public class InjectSession extends Action.Simple {
 		//executes the request
 		F.Promise<SimpleResult> result = delegate.call(ctx);
 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	    return result;
 	}
 

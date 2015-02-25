@@ -27,7 +27,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class Util {
 	/**
@@ -79,7 +79,7 @@ public class Util {
 
 	
 	public static void createZipFile(String path,File...files) {
-		if (Logger.isDebugEnabled()) Logger.debug("Zipping into:"+path);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Zipping into:"+path);
 		ZipOutputStream zip = null;
 		FileOutputStream dest = null;
 		try{

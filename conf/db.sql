@@ -28,6 +28,10 @@ create property _BB_User.visibleByFriend link _BB_UserAttributes;
 create property _BB_User.visibleByTheUser link _BB_UserAttributes;
 create property _BB_User._audit embedded;
 create property _BB_User.user link ouser;
+-- issue 447 - Restrict signup to 1 account per email
+create property _bb_userattributes.email string;
+--the enforcement of the uniqueness of registration email is performed by the code due the fact that there could be email fields in other profile sections
+create index _bb_userattributes.email notunique;
 
 
 --admin user

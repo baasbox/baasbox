@@ -39,12 +39,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.commons.lang.time.FastDateFormat;
+
 /**
  * Created by Andrea Tortorella on 01/07/14.
  */
 class ScriptsResource extends Resource {
     public static final Resource INSTANCE = new ScriptsResource();
-    private static SimpleDateFormat SDF = new SimpleDateFormat(BBInternalConstants.DATE_FORMAT_STRING);
+    private static FastDateFormat SDF = FastDateFormat.getInstance(BBInternalConstants.DATE_FORMAT_STRING);
 
     @Override
     public String name() {

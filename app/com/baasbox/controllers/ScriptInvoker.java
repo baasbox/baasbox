@@ -18,8 +18,23 @@
 
 package com.baasbox.controllers;
 
+import java.util.Map;
+
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+
+import play.Logger;
+import play.libs.F;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Result;
+import play.mvc.With;
+
 import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.actions.filters.*;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
@@ -31,21 +46,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-
-import play.Logger;
-import play.Play;
-import play.libs.F;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.With;
-import play.data.DynamicForm;
-import play.data.Form;
-
-import java.util.Map;
 
 /**
  * Invokes a script through restful api
@@ -60,6 +60,7 @@ public class ScriptInvoker extends Controller{
            ExtractQueryParameters.class})
     public static F.Promise<Result> invoke(String name,String path){
         return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()-> {
+
 
             ODocument serv = null;
             if (request().body().asText() != null && request().body().isMaxSizeExceeded())//fixes issue_561
@@ -96,17 +97,19 @@ public class ScriptInvoker extends Controller{
         reqJson.put("path",path);
         reqJson.put("remote",request.remoteAddress());
 
-		//TODO: this doesn't work with query strings
-		if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
-	        String textBody = body==null?null:body.asText();
-	        DynamicForm requestData = Form.form().bindFromRequest();
-	        JsonNode jsonBody = BBJson.mapper().valueToTree(requestData.data());
-	        if(textBody == null)
-	            reqJson.put("body",jsonBody);
-	        else
-	            reqJson.put("body",textBody);
-        }else{
-        	reqJson.put("body",body.asJson());
+
+        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+            String textBody = body == null ? null : body.asText();
+            if (textBody == null) {
+            	//fixes issue 627
+               	Map<String, String> params = BodyHelper.requestData(request);
+                JsonNode jsonBody = BBJson.mapper().valueToTree(params);
+                reqJson.put("body", jsonBody);
+            } else {
+                reqJson.put("body", textBody);
+            }
+        } else {
+            reqJson.put("body", body.asJson());
         }
         
         JsonNode queryJson = BBJson.mapper().valueToTree(query);

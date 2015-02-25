@@ -19,6 +19,8 @@ GET 	/console/						com.baasbox.controllers.Application.login()
 GET     /console/js/routes      	 	com.baasbox.controllers.AllRoutes.javascriptRoutes()
 GET     /console/*file               	controllers.Assets.at(path="/public/console", file)
 
+# Admin log
+GET 	/admin/log						com.baasbox.controllers.EventsController.openSystemLogger
 
 #Assets action
 POST	/admin/asset						com.baasbox.controllers.Asset.post()
@@ -416,5 +418,5 @@ GET		/root/configuration										com.baasbox.controllers.Root.getOverridableCon
 # Home page & general API
 GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
 GET     /                           com.baasbox.controllers.Application.index()
-GET 	/*file						controllers.Assets.at(path="/public/", file)
+GET 	/*file						com.baasbox.controllers.MyAssets.at(path="/public/", file)
 OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)

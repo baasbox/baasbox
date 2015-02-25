@@ -13,7 +13,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.libs.F.Callback;
 import play.test.TestBrowser;
@@ -78,7 +78,7 @@ public class RootImportTest extends AbstractRootTest {
 		running	(
 				testServer(TestConfig.SERVER_PORT,getFakeApplication()), HTMLUNIT, new Callback<TestBrowser>(){
 					public void invoke(TestBrowser browser){
-						if (Logger.isDebugEnabled()) Logger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Using zip file:"+correctZipFile.getAbsolutePath());
 						setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ROOT_ENC);
 						setMultipartFormData();

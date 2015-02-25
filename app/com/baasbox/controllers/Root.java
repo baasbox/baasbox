@@ -39,8 +39,10 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+
 import play.libs.F;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.*;
 import play.mvc.Http.MultipartFormData;
@@ -65,7 +67,7 @@ public class Root extends Controller {
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isDebugEnabled()) Logger.debug("resetAdminPassword bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetAdminPassword bodyJson: " + bodyJson);
 		//check and validate input
 		if (bodyJson==null) {
 			return F.Promise.pure(badRequest("The body payload cannot be empty."));
@@ -86,12 +88,12 @@ public class Root extends Controller {
 				ErrorToResult.when(SqlInjectionException.class,(e)-> badRequest("The password is not valid"))
 							 .when(UserNotFoundException.class,(e)->{
 								 String message = "User 'admin' not found!";
-								 Logger.error(message);
+								 BaasBoxLogger.error(message);
 								 return internalServerError(message);
 							 })
 							.when(OpenTransactionException.class,
 									(e)->{
-										Logger.error (ExceptionUtils.getFullStackTrace(e));
+										BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 										throw new RuntimeException(e);
 									}));
 	}
@@ -285,10 +287,11 @@ public class Root extends Controller {
 					DbManagerService.importDb(appcode, zis);
 					return ok();
 				}finally {
+					zipFile.delete();
 					DbHelper.close(DbHelper.getConnection());
 				}
 			}).recover((t)->{
-				Logger.error(ExceptionUtils.getStackTrace(t));
+				BaasBoxLogger.error(ExceptionUtils.getStackTrace(t));
 				return internalServerError(ExceptionUtils.getStackTrace(t));
 			});
 		}
