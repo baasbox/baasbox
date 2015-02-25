@@ -57,6 +57,7 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -122,7 +123,7 @@ public class Admin extends Controller {
 				return badRequest("The request is malformed: check your query criteria");
 			}
 			try{
-				ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER.toString());
+				ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
 			}catch (Throwable e){
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
@@ -150,7 +151,7 @@ public class Admin extends Controller {
 			}
 			String ret;
 			try {
-				ret = user.toJSON(JSONFormats.Formats.USER.toString());
+				ret = user.toJSON(JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
 			} catch (Throwable e) {
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
@@ -397,7 +398,10 @@ public class Admin extends Controller {
 						" they must be an object, not a value.");
 			}catch (UserAlreadyExistsException e){
 				return badRequest(e.getMessage());
-			}catch (Exception e) {
+			} catch (EmailAlreadyUsedException e){
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
+				return badRequest(username + ": the email provided is already in use");
+			} catch (Exception e) {
 				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e) ;
 			}
