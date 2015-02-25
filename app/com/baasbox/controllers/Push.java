@@ -315,7 +315,6 @@ public class Push extends Controller {
 			return ok("Push Notification(s) has been sent");
 		}));
 
-
 	}
 
 

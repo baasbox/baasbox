@@ -290,6 +290,10 @@ public class APNServer  extends PushProviderAbstract {
 		ObjectMapper mp = new ObjectMapper();
 		try{
 			ConfigurationFileContainer cfc = mp.readValue(json, ConfigurationFileContainer.class);
+			if (cfc==null){
+				isInit=false;
+				return;
+			}
 			name = cfc.getName();
 		}catch(Exception e){
 			BaasBoxLogger.error(e.getMessage());

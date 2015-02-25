@@ -262,8 +262,13 @@ function PushTestController($scope){
 			data: $scope.payload,
 			contentType: "application/json",
 			processData: false
-		}).always(function (ajaxResult) {
+		}).always(function (a, textStatus, b) {
 			$scope.$apply(function (){
+				//crazyness of JQuery https://github.com/jquery/api.jquery.com/issues/49#issue-5903283
+				var ajaxResult="";
+				if (textStatus==="error") ajaxResult=a;
+				else ajaxResult=b;
+				//------
 				$scope.sending=false;
 				$scope.server_response=
 					JSON.stringify(
