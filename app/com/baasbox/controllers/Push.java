@@ -21,11 +21,14 @@ package com.baasbox.controllers;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.service.logging.PushLogger;
+
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -36,6 +39,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushProfileDisabledException;
@@ -51,9 +55,12 @@ import com.baasbox.service.push.providers.PushLocalizedArgumentsFormatException;
 import com.baasbox.service.push.providers.PushLocalizedKeyFormatException;
 import com.baasbox.service.push.providers.PushSoundKeyFormatException;
 import com.baasbox.service.push.providers.PushTimeToLiveFormatException;
+import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
+import com.google.common.base.Joiner;
+import com.google.common.primitives.Booleans;
 
 @With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
 @BodyParser.Of(BodyParser.Json.class)
@@ -163,18 +170,27 @@ public class Push extends Controller {
 
 	public static Result sendUsers() throws Exception {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		PushLogger pushLogger = PushLogger.getInstance().init();
+		if (UserService.isAnAdmin(DbHelper.currentUsername())) {
+			pushLogger.enable();
+		}else{
+			pushLogger.disable();
+		}
+		
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("send bodyJson: " + bodyJson);
 		if (bodyJson==null) return status(CustomHttpCode.JSON_PAYLOAD_NULL.getBbCode(),CustomHttpCode.JSON_PAYLOAD_NULL.getDescription());		  
+		pushLogger.addMessage("Payload received: %s",bodyJson.toString());
 		JsonNode messageNode=bodyJson.findValue("message");
+		pushLogger.addMessage("Payload message received: %s", messageNode==null? "null":messageNode.asText());
 		if (messageNode==null) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());	  
 		if(!messageNode.isTextual()) return status(CustomHttpCode.PUSH_MESSAGE_INVALID.getBbCode(),CustomHttpCode.PUSH_MESSAGE_INVALID.getDescription());
 
 		String message=messageNode.asText();	
 
 		JsonNode usernamesNodes=bodyJson.get("users");
-
+		pushLogger.addMessage("users: %s", usernamesNodes==null? "null" : usernamesNodes.toString() );
 
 		List<String> usernames = new ArrayList<String>();
 
@@ -190,12 +206,14 @@ public class Push extends Controller {
 			hs.addAll(usernames);
 			usernames.clear();
 			usernames.addAll(hs);
+			pushLogger.addMessage("Users extracted: %s", Joiner.on(",").join(usernames));
 		}
 		else {
 			return status(CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getBbCode(),CustomHttpCode.PUSH_NOTFOUND_KEY_USERS.getDescription());
 		}
 
 		JsonNode pushProfilesNodes=bodyJson.get("profiles");
+		pushLogger.addMessage("profiles: %s", pushProfilesNodes==null? "null" : pushProfilesNodes.toString() );
 
 		List<Integer> pushProfiles = new ArrayList<Integer>();
 		if(!(pushProfilesNodes==null)){
@@ -209,15 +227,19 @@ public class Push extends Controller {
 			hs.addAll(pushProfiles);
 			pushProfiles.clear();
 			pushProfiles.addAll(hs);
-			
 		}
 		else {
 			pushProfiles.add(1);
 		}
+		pushLogger.addMessage("Profiles computed: %s", Joiner.on(",").join(pushProfiles));
+
 		boolean[] withError=new boolean[6];
 		PushService ps=new PushService();
 		try{
-			if(ps.validate(pushProfiles)) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
+			boolean isValid=(ps.validate(pushProfiles));
+			pushLogger.addMessage("Profiles validation: ", isValid);
+			if (isValid) withError=ps.send(message, usernames, pushProfiles, bodyJson, withError);
+			pushLogger.addMessage("Service result: %s", Booleans.join(", ", withError));
 		}
 		catch (UserNotFoundException e) {
 			return notFound("Username not found");
@@ -295,7 +317,7 @@ public class Push extends Controller {
 			if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 		}
 		return ok("Push Notification(s) has been sent");
-	}	 
+	}
 
 
 

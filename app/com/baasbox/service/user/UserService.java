@@ -859,4 +859,12 @@ public class UserService {
 		//warning! from this point there is no database available!
 	}
 	
+ 	public static boolean isAnAdmin(String username){
+		List<ODocument> res=(List<ODocument>) DbHelper.genericSQLStatementExecute(
+				"select count(*) from (traverse orole.inheritedRole from (select roles from ouser where name=?)) where name=\"administrator\""
+				, new Object[]{username});
+ 		if ((res.get(0)).field("count").equals(1L)) return true;
+ 		return false;
+ 	}
+
 }
