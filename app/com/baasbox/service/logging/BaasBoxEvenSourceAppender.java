@@ -28,6 +28,7 @@ public class BaasBoxEvenSourceAppender<E> extends  UnsynchronizedAppenderBase<E>
 	protected void append(E message) {
 		//TODO: this must be done in background to avoid blocking and/or performance issues
 		String toSend=formattedMessage((ILoggingEvent)message);
+		toSend=toSend.replace("\n", "<br>");
 		//System.out.println("****BAASBOX_APPENDER***: " + toSend);
 		EventsService.publish(StatType.SYSTEM_LOGGER, toSend);
 	}

@@ -26,7 +26,7 @@ import play.Logger.ALogger;
  */
 public class BaasBoxLogger  {
 	
-	private static final String EVENT_SOURCE_LOGGER="application.baasbox.eventsource";
+	private static String EVENT_SOURCE_LOGGER="application.baasbox.eventsource";
 
 	public static final ALogger eventSourceLogger = play.Logger.of(EVENT_SOURCE_LOGGER);
 	public static final org.slf4j.Logger playUnderlyingLogger = play.Logger.underlying();
