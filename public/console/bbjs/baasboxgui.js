@@ -1248,7 +1248,7 @@ $('#importDbForm').on('submit',function(){
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
-	var serverUrl=BBRoutes.com.baasbox.controllers.Admin.importDb().absoluteURL();
+	var serverUrl=window.location.origin + BBRoutes.com.baasbox.controllers.Admin.importDb().url;
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
