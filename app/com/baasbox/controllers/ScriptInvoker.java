@@ -115,6 +115,8 @@ public class ScriptInvoker extends Controller{
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
+        BaasBoxLogger.debug("Serialized request to pass to the script: ");
+        BaasBoxLogger.debug(reqJson.toString());
         return reqJson;
     }
 }

@@ -632,7 +632,6 @@ public class User extends Controller {
 	 * @throws JsonProcessingException 
 	 */
 	@With ({NoUserCredentialWrapFilter.class})
-	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
 	public static Result login() throws SqlInjectionException, JsonProcessingException, IOException {
 		String username="";
 		String password="";
@@ -640,7 +639,8 @@ public class User extends Controller {
 		String loginData=null;
 		
 		RequestBody body = request().body();
-		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded or application/json?");
+		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
+		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE));
 		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
 		if (bodyUrlEncoded!=null){
 			if(bodyUrlEncoded.get("username")==null) return badRequest("The 'username' field is missing");
@@ -662,6 +662,7 @@ public class User extends Controller {
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);
 		}else{
 			JsonNode bodyJson = body.asJson();
+			if (bodyJson==null) return badRequest("missing data : is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE));
 			if(bodyJson.get("username")==null) return badRequest("The 'username' field is missing");
 			else username=bodyJson.get("username").asText();
 			if(bodyJson.get("password")==null) return badRequest("The 'password' field is missing");
