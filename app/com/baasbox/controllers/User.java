@@ -639,7 +639,7 @@ public class User extends Controller {
 		String loginData=null;
 		
 		RequestBody body = request().body();
-		BaasBoxLogger.debug ("Login called. The body is: {}", body);
+		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
 		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE));
 		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
 		if (bodyUrlEncoded!=null){
