@@ -26,7 +26,7 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -74,7 +74,7 @@ public class TwitterLoginService extends SocialLoginService {
 
 	@Override
 	public Token getAccessTokenFromRequest(Request r,Session s) {
-		if (Logger.isDebugEnabled()) Logger.debug(Json.stringify(Json.toJson(s.keySet())));
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(Json.stringify(Json.toJson(s.keySet())));
 		if(s.get("twitter.token")!=null && s.get("twitter.secret")!=null){
 			String token = s.get("twitter.token");
 			String secret = s.get("twitter.secret");

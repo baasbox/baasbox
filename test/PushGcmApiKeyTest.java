@@ -10,7 +10,7 @@ import org.apache.http.protocol.HTTP;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Result;
 import play.mvc.Http.Status;
 import play.test.FakeRequest;
@@ -41,8 +41,8 @@ public class PushGcmApiKeyTest extends AbstractTest {
 							request = request.withHeader(HTTP.CONTENT_TYPE, MediaType.APPLICATION_JSON);
 							request = request.withJsonBody(getPayload(getDefaultPayload()), getMethod());
 							Result result = routeAndCall(request);
-							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey request: " + request.getWrappedRequest().headers());
-							if (Logger.isDebugEnabled()) Logger.debug("testSetApiKey result: " + contentAsString(result));
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testSetApiKey request: " + request.getWrappedRequest().headers());
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testSetApiKey result: " + contentAsString(result));
 							assertRoute(result, "testSetApiKey not valid", Status.SERVICE_UNAVAILABLE, CustomHttpCode.PUSH_INVALID_APIKEY.getDescription(), true);
 						
 					}

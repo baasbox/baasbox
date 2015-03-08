@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -74,8 +74,8 @@ public class AdminUserChangePasswordTest extends AbstractUserTest {
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withJsonBody(getPayload("/adminUserChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testRouteChangePassword result: " + contentAsString(result));
 					assertRoute(result, "testRouteChangePassword 1", Status.OK, null, false);
 					
 					continueOnFail(true);

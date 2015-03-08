@@ -18,7 +18,7 @@ angular.module("console", ['ui.ace'])
 		function prompt(message,defaultValue){
 			var defer = $q.defer();
 			var response = $window.prompt(message,defaultValue);
-			if (response==null){
+			if (!response || /^\s*$/.test(response)){ //http://stackoverflow.com/a/3261380/3023373
 				defer.reject();
 			} else {
 				defer.resolve(response);
@@ -467,6 +467,7 @@ function openUserEditForm(editUserName){
 	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
+	$("#txtLoginInfo").val(reverseJSON(userObject.system));
 	$('#addUserModal').modal('show');
 }
 
@@ -1537,6 +1538,11 @@ function setBradCrumb(type)
 	case "#push_conf":
 		sBradCrumb = "Push Settings";
 		break;
+	case "#push_test":
+		sBradCrumb = "Push Test";
+		break;
+	case "#serverlog":
+		break;
 	}
 
 	$("#bradcrumbItem").text(sBradCrumb);
@@ -1890,6 +1896,12 @@ function setupMenu(){
 		$clink.parent('li').addClass('active');
 	});
 	$(".directLink").unbind("click");
+	$(".javascriptlink").click(function(e){
+		if($.browser.msie) e.which=1;
+		e.preventDefault();
+		var $clink=$(this);
+		callJsMenu($clink.attr('href'));
+	});
 	//initializeTours
 	$(".tour").click(function(){
 		for (var key in tours) {
@@ -1918,8 +1930,8 @@ function applySuccessMenu(action,data){
 		scope.data=data;
 	});
 	sessionStorage.latestMenu=action;
-	console.log(action);
-	console.log(scope);
+	//console.log(action);
+	//console.log(scope);
 }//applySuccessMenu
 
 function reloadFollowing(user){
@@ -1936,6 +1948,14 @@ function reloadFollowing(user){
             }
         }
     });
+}
+
+function callJsMenu(action){
+	switch (action)	{
+	case "#serverlog":
+		openLog(); //defined in log.js
+		break;
+	}
 }
 
 function callMenu(action){
@@ -2155,7 +2175,6 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getExports().ajax({
 			success: function(data){
 				applySuccessMenu(action,data["data"]);
-
 			}
 		});
 		break;
@@ -2237,10 +2256,14 @@ function callMenu(action){
         case "#push_conf":
         	loadPushSettings(action);
             break;
+        case "#push_test":
+        	applySuccessMenu(action);
+            break;
 	}
 }//callMenu
 
 //PushConfController is defined into the push.js file
+//PushTestController is defined into the push.js file
 
 function PermissionsController($scope){}
 

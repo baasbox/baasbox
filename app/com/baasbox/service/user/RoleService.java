@@ -23,7 +23,7 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.GenericDao;
 import com.baasbox.dao.RoleDao;
@@ -76,7 +76,7 @@ public class RoleService {
 	public static void createInternalRoles(){
 		for (DefaultRoles r : DefaultRoles.values()){
 			ORole newRole;
-			if (Logger.isDebugEnabled()) Logger.debug("creating " + r.toString() + "...");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("creating " + r.toString() + "...");
 			if (!r.isOrientRole()){ //creates the new baasbox role
 				newRole = RoleDao.createRole(r.toString(), r.getInheritsFrom());
 			}else{	//retrieve the existing OrientDB role

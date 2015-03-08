@@ -41,7 +41,7 @@ Javascript helper functions for server side pagination of datatables
 					"sEcho":json["call_id"],
 					"aaData":json["data"]
 			}
-			//load the readed records into the external array
+			//load the read records into the external array
 			dataArray.length = 0;
 			dataArray.push.apply(dataArray, json["data"]);
 			

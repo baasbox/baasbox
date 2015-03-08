@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.IOException;
 import java.util.List;
@@ -130,7 +130,7 @@ class DocumentsResource extends BaseRestResource {
                 alterGrants(command, coll, rid, true, grant);
                 alterGrants(command, coll, rid, false, grant);
             } catch (Exception e){
-                Logger.error("error",e);
+                BaasBoxLogger.error("error",e);
                 throw  e;
             }
         } catch (UserNotFoundException e) {

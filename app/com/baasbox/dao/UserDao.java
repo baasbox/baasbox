@@ -20,7 +20,7 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
@@ -157,7 +157,7 @@ public class UserDao extends NodeDao  {
 		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
-		if (Logger.isDebugEnabled()) Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Found "+resultList.size() +" elements for given tokens");
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 
 		return result;
