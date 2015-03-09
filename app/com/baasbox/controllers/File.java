@@ -38,6 +38,7 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.json.simple.JSONObject;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.service.logging.BaasBoxLogger;
 
 import play.mvc.Controller;
@@ -198,11 +199,12 @@ public class File extends Controller {
 			        metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
 			        Parser parser = new AutoDetectParser();
 			        try{
-			        	parser.parse(is, contenthandler, metadata,new ParseContext());		
+			        	parser.parse(is, contenthandler, metadata,new ParseContext());
 			        }catch (Exception e){
 			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
-			        	metadata.add("parser_error", e.getMessage());
-			        	metadata.add("parser_exception", ExceptionUtils.getFullStackTrace(e));
+			        	metadata.add("_bb_parser_error", e.getMessage());
+			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
+			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
 			        }
 			        String contentType =  metadata.get(Metadata.CONTENT_TYPE);
 			       	if (StringUtils.isEmpty(contentType)) contentType="application/octet-stream";
