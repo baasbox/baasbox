@@ -28,8 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import net.sf.ehcache.search.expression.Criteria;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -39,7 +37,6 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.HtmlEmail;
 import org.stringtemplate.v4.ST;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Crypto;
 
 import com.baasbox.BBConfiguration;
@@ -53,6 +50,7 @@ import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.AdminCannotChangeRoleException;
 import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.ResetPasswordException;
@@ -66,6 +64,7 @@ import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -445,8 +444,9 @@ public class UserService {
 
 	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
-			JsonNode appUsersAttributes) throws InvalidJsonException,Exception{
+			JsonNode appUsersAttributes) throws InvalidJsonException,AdminCannotChangeRoleException,Exception{
 		try{
+			if (username.equalsIgnoreCase("admin")) throw new AdminCannotChangeRoleException("User 'admin' cannot change role");
 			DbHelper.requestTransaction();
 			UserDao udao=UserDao.getInstance();
 			ODocument profile=udao.getByUserName(username);

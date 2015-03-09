@@ -23,8 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +33,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -59,6 +56,7 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.AdminCannotChangeRoleException;
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.FileNotFoundException;
@@ -78,6 +76,7 @@ import com.baasbox.exception.RoleNotModifiableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.dbmanager.DbManagerService;
 import com.baasbox.service.events.EventSource;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
@@ -435,6 +434,8 @@ public class Admin extends Controller {
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 					" they must be an object, not a value.");
+		}catch (AdminCannotChangeRoleException e){
+			return badRequest("User 'admin' cannot change role");
 		}catch (Throwable e){
 			BaasBoxLogger.warn("signUp", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
