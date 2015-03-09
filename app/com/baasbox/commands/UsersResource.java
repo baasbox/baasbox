@@ -287,7 +287,7 @@ class UsersResource extends BaseRestResource {
             if (!RoleService.exists(role)){
                 throw new CommandExecutionException(command,"required role does not exists: "+role);
             }
-            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
             JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
             JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
             JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
