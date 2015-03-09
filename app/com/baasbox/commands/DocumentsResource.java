@@ -323,10 +323,21 @@ class DocumentsResource extends BaseRestResource {
             if (read!=null){
                 alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
             }
+            
+            //DEPRECATED
             JsonNode write = node.get("write");
             if (write!=null){
                 alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
             }
+            
+            //issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
+            //we now have to maintain both due retro-compatibility 
+            JsonNode update = node.get("update");
+            if (update!=null){
+                alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+            }
+            //------
+            
             JsonNode delete = node.get("delete");
             if (delete!=null){
                 alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);
