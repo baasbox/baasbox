@@ -132,23 +132,34 @@ public class ScriptsAdmin extends Controller{
 
     private static void validateBody(JsonNode body) throws ScriptException{
         if (body == null){
-            throw new ScriptException("missing body");
+            throw new ScriptException("Missing body");
         }
         JsonNode name = body.get(ScriptsDao.NAME);
         if (name == null || (!name.isTextual())|| name.asText().trim().length()==0) {
-            throw new ScriptException("missing required 'name' property");
+            throw new ScriptException("Missing required 'name' property");
         }
         JsonNode code = body.get(ScriptsDao.CODE);
         if (code == null||(!code.isTextual())||code.asText().trim().length()==0) {
-            throw new ScriptException("missing required 'code' property");
+            throw new ScriptException("Missing required 'code' property");
         }
         JsonNode lang = body.get(ScriptsDao.LANG);
         if (lang == null||(!lang.isTextual())||lang.asText().trim().length()==0) {
-            throw new ScriptException("missing required 'lang' property or it is not a string");
+            throw new ScriptException("Missing required 'lang' property or it is not a string");
         }
         if (ScriptLanguage.forName(lang.asText())==null){
         	throw new ScriptException("Language '"+lang.asText()+"' is not supported");
-        } 
+        }
+        JsonNode encoded = body.get(ScriptsDao.ENCODED);
+        if (encoded != null){
+        	if (!encoded.isTextual()){
+        		throw new ScriptException("The field 'encoded' must be a String");
+        	}
+        	try{
+        		ScriptsDao.ENCODED_TYPE.valueOf(encoded.asText().toUpperCase());
+        	}catch(IllegalArgumentException e){
+        		throw new ScriptException("The specified 'encoded' value is not valid");
+        	} 
+        }
     }
 
     public static Result list(){
