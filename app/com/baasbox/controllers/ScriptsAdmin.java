@@ -148,7 +148,7 @@ public class ScriptsAdmin extends Controller{
         }
         if (ScriptLanguage.forName(lang.asText())==null){
         	throw new ScriptException("Language '"+lang.asText()+"' is not supported");
-        }
+        } 
     }
 
     public static Result list(){
