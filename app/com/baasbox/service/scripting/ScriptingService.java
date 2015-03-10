@@ -356,7 +356,14 @@ public class ScriptingService {
         boolean isLibrary =library==null?false:library.asBoolean();
         JsonNode activeNode = node.get(ScriptsDao.ACTIVE);
         boolean active = activeNode == null?false:activeNode.asBoolean();
-        ODocument doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
+        JsonNode encoded = node.get(ScriptsDao.ENCODED);
+        ODocument doc;
+        if (encoded!=null && encoded.isTextual()){
+        	String encodedValue=encoded.asText();
+        	doc = dao.create(name, language.name, code, isLibrary, active, initialStorage,encodedValue);
+        }else{
+        	doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
+        }
         return doc;
     }
 
