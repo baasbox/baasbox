@@ -175,7 +175,7 @@ public class UserUpdateTest extends AbstractUserTest
 	                    result = route(request1);
 	                    assertRoute(result, "testUserChangeRole.changeRole", Status.OK, "\"roles\":[{\"name\":\"backoffice\"", true);
 						
-	                  //no change its role
+	                  //no change its role, just its profile sections
 	                    request1 = new FakeRequest(PUT, "/admin/user/"+userName);
 	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
@@ -191,11 +191,35 @@ public class UserUpdateTest extends AbstractUserTest
                     }catch (Exception e) {
                 		e.printStackTrace();
                 		fail();
-				}						
+                    }						
 				}
 			});
 	}
 
+	@Test
+	public void testAdminCannotChangeItsRole(){
+		running
+		(
+			getFakeApplication(), 	new Runnable() 	{
+				public void run() 	{
+					try {
+						FakeRequest request1 = new FakeRequest(PUT, "/admin/user/admin");
+	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	                    ObjectMapper mapper = new ObjectMapper();
+	                    JsonNode actualObj = mapper.readTree("{\"role\":\"registered\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
+	                    	 "\"visibleByRegisteredUsers\":{} }");
+	                    request1 = request1.withJsonBody(actualObj,PUT);
+	                    request1 = request1.withHeader("Content-Type", "application/json");
+	                    Result result = route(request1);
+	                    assertRoute(result, "testAdminCannotChangeItsRole.changeRole", Status.BAD_REQUEST, "User 'admin' cannot change role", true);
+					 }catch (Exception e) {
+	                		e.printStackTrace();
+	                		fail();
+					}				
+				};
+			});
+		}
 	
 	//@After
 	public void afterTest()

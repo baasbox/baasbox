@@ -25,6 +25,8 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.codec.binary.Base64;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -46,14 +48,32 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
+
 /**
  * Created by Andrea Tortorella on 10/06/14.
  */
 public class ScriptsDao {
+	
+	public enum ENCODED_TYPE{
+		BASE64;
+		
+		public String decode(String toDecode){
+			String toReturn="";
+			switch (this){
+			case BASE64:
+				byte[] decoded = Base64.decodeBase64(toDecode);
+				toReturn= StringUtils.newStringUtf8(decoded);
+			}
+			BaasBoxLogger.debug("Decode new script sent in {}. Input: {} Output: {}", BASE64,toDecode,toReturn);
+			return toReturn;
+		}
+	}
+	
     public static final String MODEL_NAME = "_BB_Script";
     public static final String NAME= "name";
     public static final String CODE= "code";
     public static final String LANG= "lang";
+    public static final String ENCODED= "encoded";
     public static final String LIB= "library";
     public static final String LOCAL_STORAGE= "_storage";
     public static final String INVALID = "_invalid";
@@ -97,15 +117,24 @@ public class ScriptsDao {
 
 
     public ODocument create(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore) throws ScriptException{
+    	return create( name, language, code, isLibrary, active, initialStore, null);
+    }
+    
+    public ODocument create(String name, String language, String code,
+			boolean isLibrary, boolean active, JsonNode initialStorage,String encodedValue) throws ScriptException {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         checkValidName(name);
         if (exists(name)){
             throw new ScriptAlreadyExistsException("Script "+name+" already exists");
         }
-        ODocument doc = createPrivileged(name,language,code,isLibrary,active,initialStore);
+        if (encodedValue!=null){
+        	code=ENCODED_TYPE.valueOf(encodedValue.toUpperCase()).decode(code);
+        }
+        ODocument doc = createPrivileged(name,language,code,isLibrary,active,initialStorage);
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return doc;
-    }
+	}
+    
 
     private ODocument createPrivileged(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore){
         ODocument doc = makeScript(name, language, code, isLibrary, active, initialStore);
@@ -225,4 +254,6 @@ public class ScriptsDao {
         script.save();
         return current!=activate;
     }
+
+	
 }

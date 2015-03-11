@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Metadata;
@@ -47,6 +48,7 @@ import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.With;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.ImagesConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
@@ -222,7 +224,14 @@ public class File extends Controller {
                             Metadata metadata = new Metadata();
                             metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
                             Parser parser = new AutoDetectParser();
-                            parser.parse(is, contenthandler, metadata, new ParseContext());
+        			        try{
+        			        	parser.parse(is, contenthandler, metadata,new ParseContext());
+        			        }catch (Exception e){
+        			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
+        			        	metadata.add("_bb_parser_error", e.getMessage());
+        			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
+        			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
+        			        }
                             String contentType = metadata.get(Metadata.CONTENT_TYPE);
                             if (StringUtils.isEmpty(contentType)) contentType = "application/octet-stream";
 
@@ -476,5 +485,6 @@ public class File extends Controller {
     public static Result updateAttachedData() {
         return status(NOT_IMPLEMENTED);
     }
+
 
 }

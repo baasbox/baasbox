@@ -37,6 +37,7 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
@@ -116,6 +117,8 @@ public class ScriptInvoker extends Controller{
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = BBJson.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
+        BaasBoxLogger.debug("Serialized request to pass to the script: ");
+        BaasBoxLogger.debug(reqJson.toString());
         return reqJson;
     }
 }

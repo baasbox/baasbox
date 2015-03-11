@@ -24,17 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.baasbox.controllers.actions.filters.*;
-import com.baasbox.exception.*;
-
-import com.baasbox.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.stringtemplate.v4.ST;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.api.templates.Html;
 import play.libs.F;
@@ -50,6 +45,13 @@ import play.mvc.With;
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.EmailAlreadyUsedException;
@@ -58,15 +60,23 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.JSONFormats;
+import com.baasbox.util.QueryParams;
+import com.baasbox.util.Util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -674,7 +684,6 @@ public class User extends Controller {
 	 * @throws JsonProcessingException 
 	 */
 	@With ({NoUserCredentialWrapFilterAsync.class})
-	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
 	public static F.Promise<Result> login()/* throws SqlInjectionException, JsonProcessingException, IOException */{
 		final String username;
 		final String password;
@@ -682,7 +691,9 @@ public class User extends Controller {
 		final String loginData;
 		
 		RequestBody body = request().body();
-		if (body==null)  return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded or application/json?"));
+		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
+		if (body==null) return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE)));
+		
 		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
 		if (bodyUrlEncoded!=null){
 			if(bodyUrlEncoded.get("username")==null) 
@@ -708,15 +719,24 @@ public class User extends Controller {
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);
 		}else{
 			JsonNode bodyJson = body.asJson();
+
+			if (bodyJson==null) 
+				return F.Promise.pure(badRequest("missing data : is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE)));
 			if(bodyJson.get("username")==null) 
 				return F.Promise.pure(badRequest("The 'username' field is missing"));
-			else username=bodyJson.get("username").asText();
+			else 
+				username=bodyJson.get("username").asText();
+			
 			if(bodyJson.get("password")==null) 
 				return F.Promise.pure(badRequest("The 'password' field is missing"));
-			else password=bodyJson.get("password").asText();
+			else 
+				password=bodyJson.get("password").asText();
+			
 			if(bodyJson.get("appcode")==null) 
 				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
-			else appcode=bodyJson.get("appcode").asText();
+			else 
+				appcode=bodyJson.get("appcode").asText();
+			
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		

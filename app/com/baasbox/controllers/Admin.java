@@ -22,6 +22,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+
+import java.net.MalformedURLException;
+
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +59,7 @@ import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.AdminCannotChangeRoleException;
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.FileNotFoundException;
@@ -470,14 +474,16 @@ public class Admin extends Controller {
 			try {
 				user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 			}catch(InvalidParameterException e){
-				return badRequest(e.getMessage());
+				return badRequest(e.getMessage());  
 			}catch (InvalidJsonException e){
-				return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() +
+				return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 						"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
 						", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
-						", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  +
+						", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
 						", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 						" they must be an object, not a value.");
+			}catch (AdminCannotChangeRoleException e){
+				return badRequest("User 'admin' cannot change role");
 			}catch (Throwable e){
 				BaasBoxLogger.warn("signUp", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));

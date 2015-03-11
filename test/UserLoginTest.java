@@ -1,3 +1,4 @@
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
@@ -6,14 +7,19 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.libs.F.Callback;
 import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
+import play.test.TestBrowser;
 
 import com.baasbox.security.SessionKeys;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,6 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import core.AbstractTest;
 import core.TestConfig;
+
+
 public class UserLoginTest extends AbstractTest
 {
 
@@ -100,17 +108,14 @@ public class UserLoginTest extends AbstractTest
 	{
 		running
 		(
-			getFakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
 				{
-					String sAuthEnc = TestConfig.AUTH_ADMIN_ENC;
 					
 					// Test login user
-					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					ObjectMapper om = new ObjectMapper();
 					JsonNode payload;
 					try {
@@ -119,11 +124,16 @@ public class UserLoginTest extends AbstractTest
 						Assert.fail(ExceptionUtils.getFullStackTrace((e)));
 						return;
 					}
-					request = request.withJsonBody(payload);
-					Result result = routeAndCall(request);
 					
-					assertRoute(result, "testRouteLoginUser", Status.OK, null, true);
-					String body = play.test.Helpers.contentAsString(result);
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+					httpRequest	( 
+							TestConfig.SERVER_URL + getRouteAddress(),
+							getMethod(),
+							payload
+					);
+					assertServer("testServerLoginUserJson", Status.OK, null, false);
+					
+					String body = getResponse();
 					
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
@@ -133,15 +143,52 @@ public class UserLoginTest extends AbstractTest
 					assertJSON(user, "admin");
 					
 					//test logout
-					request = new FakeRequest(POST, "/logout");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_TOKEN, token);
-					result = routeAndCall(request);
-					assertRoute(result, "testRouteLogoutUser", Status.OK, "\"result\":\"ok\",\"data\":\"user logged out\",\"http_code\":200", true);
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_TOKEN, token);
+					removeHeader(HttpHeaders.CONTENT_TYPE);
+					httpRequest	( 
+							TestConfig.SERVER_URL + "/logout",
+							POST
+					);
+					
+					assertServer("testServerLogoutUser", Status.OK, "\"result\":\"ok\",\"data\":\"user logged out\",\"http_code\":200", true);
 					
 				}
 			}
 		);		
 	}
 
+	
+	@Test
+	public void testRouteLoginUserPlainText()
+	{
+		running
+		(
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					
+					ObjectMapper om = new ObjectMapper();
+					JsonNode payload;
+					try {
+						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");
+					} catch (IOException e) {
+						Assert.fail(ExceptionUtils.getFullStackTrace((e)));
+						return;
+					}
+					
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
+					httpRequest	( 
+							TestConfig.SERVER_URL + getRouteAddress(),
+							getMethod(),
+							payload
+					);
+					assertServer("testServerLoginUserPlainText", Status.BAD_REQUEST, "Detected: text/plain", true);
+				}
+			}
+		);		
+	}	
 }
