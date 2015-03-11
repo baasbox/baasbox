@@ -5,7 +5,7 @@
 var  userDataArray= new Array();
 
    function loadUsersData(){
-	    url = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getUsers(collectionName).url;
+	    url = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getUsers().url;
 	    loadTable($('#userTable'),usersDataTableDef,url,userDataArray); //defined in datatable.js
     }
    
