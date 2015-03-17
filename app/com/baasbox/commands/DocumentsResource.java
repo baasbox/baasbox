@@ -191,8 +191,17 @@ class DocumentsResource extends BaseRestResource {
         JsonNode data = getData(command);
         String id = getDocumentId(command);
         try {
-            String rid = DocumentService.getRidByString(id, true);
-            ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
+    		String rid=null;
+        	try{
+        		rid = DocumentService.getRidByString(id, true);
+        	} catch (RidNotFoundException e) {
+                //swallow
+            }	
+            ODocument doc=null;
+            if (rid!=null) //update
+            	doc = DocumentService.update(coll, rid, (ObjectNode)data);
+            else // save
+            	doc = DocumentService.create(coll, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
             node.remove(TO_REMOVE);
@@ -207,13 +216,15 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+coll);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+e.getMessage());
         } catch (JsonProcessingException e) {
             throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
         } catch (IOException e) {
             throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+e.getMessage());
+		} catch (Throwable e){
+			throw new CommandExecutionException(command," error updating document: "+id+" message:"+e.getMessage());
 		}
     }
 
