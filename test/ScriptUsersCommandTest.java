@@ -54,6 +54,7 @@ public class ScriptUsersCommandTest {
             
             String uuid = UUID.randomUUID().toString();
             String user =USER_PREFIX+ uuid;
+            
 
             ObjectNode visToUser = mapper.createObjectNode();
             visToUser.put("val",x);
@@ -68,6 +69,8 @@ public class ScriptUsersCommandTest {
             ObjectNode param = mapper.createObjectNode();
             param.put("username",user);
             param.put("password", user);
+            //test custom ID
+            if (x==0)  param.put("id", user + "_0");
             
             param.put(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER,visToUser);
             param.put(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER,visToFriends);
@@ -83,6 +86,8 @@ public class ScriptUsersCommandTest {
             	JsonNode exec  = CommandRegistry.execute(cmd,null);
             	Logger.debug(exec.toString());
             	assertTrue(exec.isObject());
+            	assertNotNull(exec.get("id"));
+            	if (x==0) assertTrue("id is not valid. Expected " + user+"_0" + " received: "+exec.get("id").asText(),exec.get("id").asText().equals(user+"_0"));
                 assertNotNull(exec.get("visibleByTheUser"));
                 assertNotNull(exec.get("visibleByAnonymousUsers"));
                 assertNotNull(exec.get("visibleByRegisteredUsers"));
