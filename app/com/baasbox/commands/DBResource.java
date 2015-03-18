@@ -1,9 +1,10 @@
 package com.baasbox.commands;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -11,11 +12,16 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.GenericDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.SwitchUserContextException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 
@@ -45,6 +51,7 @@ class DBResource extends Resource {
                         .put("commitTransaction",DBResource::commitTransaction)
                         .put("rollbackTransaction",DBResource::rollbackTransaction)
                         .put("isAnId",DBResource::isAnId)
+                        .put("select",DBResource::select)
                         .build();
 
 //            ImmutableMap.of("switchUser", DBResource::switchUser,
@@ -62,6 +69,32 @@ class DBResource extends Resource {
 //        }
 //    };
 
+    private static JsonNode select(JsonNode c,JsonCallback callback) throws CommandException{
+    	JsonNode jParams = c.get(ScriptCommand.PARAMS);
+    	String statement = jParams.get("query").asText();
+    	BaasBoxLogger.debug("Executing query from a plugin: " + statement);
+        ArrayNode qryParams = (ArrayNode) jParams.get("array_of_params");
+        
+        ArrayList params=new ArrayList();
+        if (qryParams!=null) qryParams.forEach(j->{
+            if (j==null) params.add(null);
+            else params.add(j.asText());
+        });
+        ArrayNode lst;
+		try {
+	        List listToReturn = (List) DbHelper.genericSQLStatementExecute("select " + statement, params.toArray());
+	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC,true);
+	        BaasBoxLogger.debug("Query result: ");
+	        BaasBoxLogger.debug(s);
+			lst = (ArrayNode)Json.mapper().readTree(s);
+		} catch (IOException e) {
+			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+		} catch(OQueryParsingException e){
+			throw new CommandExecutionException(c,"Error parsing query: "+e.getMessage(),e);
+		}
+        return lst;
+    }
+    
     private static JsonNode beginTransaction(JsonNode c,JsonCallback callback) throws CommandException{
         DbHelper.requestTransaction();
         return NullNode.getInstance();
