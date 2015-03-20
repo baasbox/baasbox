@@ -5,6 +5,7 @@ WORKDIR /baasbox
 RUN wget --content-disposition http://www.baasbox.com/download/baasbox-stable.zip
 RUN unzip baasbox*.zip
 RUN rm baasbox*.zip
-RUN chmod +x baasbox-0.9.2/start # weak spot when version number changes
+RUN mv baasbox-*/ baasbox/
+RUN chmod +x baasbox/start
 EXPOSE 9000
-ENTRYPOINT baasbox-0.9.2/start
+ENTRYPOINT baasbox/start
