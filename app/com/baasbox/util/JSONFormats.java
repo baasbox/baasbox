@@ -94,11 +94,13 @@ public class JSONFormats {
 	}
 	
 	public static String prepareResponseToJson(List<ODocument> listOfDoc,JSONFormats.Formats format,boolean preserveAcl) throws IOException{
+		return prepareResponseToJson(listOfDoc, format.toString(), preserveAcl);
+	}
+	
+	public static String prepareResponseToJson(List<ODocument> listOfDoc,String format,boolean preserveAcl) throws IOException{
 		for (ODocument doc: listOfDoc){
 			JSONFormats.cutBaasBoxFields(doc,preserveAcl);
 		}
-		return OJSONWriter.listToJSON(listOfDoc,format.toString());
+		return OJSONWriter.listToJSON(listOfDoc,format);
 	}
-	
-	
 }
