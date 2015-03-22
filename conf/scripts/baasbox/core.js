@@ -26,7 +26,7 @@
  * Baasbox server version
  * @type {string}
  */
-exports.version = '0.9.2';
+exports.version = '0.9.4';
 
 
 //-------- WS (Remote API calls) --------
@@ -114,6 +114,23 @@ DB.rollback = function(){
     return null;
 };
 
+
+DB.select = function(query,array_of_params,depth){
+	if(! (typeof query === 'string')){
+		 throw new TypeError("missing query statement");
+	}
+	if(array_of_params && !(Object.prototype.toString.apply(array_of_params) === '[object Array]')){
+        throw new TypeError("second parameter must be an array. It is " + Object.prototype.toString.apply(array_of_params));
+    }
+	return _command({resource: 'db',
+        name: 'select',
+        params: {query:query,
+        	array_of_params:array_of_params,
+        	depth:depth
+        }
+	});
+};
+
 var ABORT  = Object.create(null);
 DB.ABORT = ABORT;
 
@@ -171,6 +188,8 @@ DB.ensureCollection = function(name){
         return true;
     }
 };
+
+
 //-------- END DB --------
 
 

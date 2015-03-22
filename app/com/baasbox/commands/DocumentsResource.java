@@ -286,7 +286,7 @@ class DocumentsResource extends BaseRestResource {
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
-            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
+            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));//.remove("@rid"));
             return lst;
         } catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
@@ -308,7 +308,8 @@ class DocumentsResource extends BaseRestResource {
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
                 ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
-                node.remove(TO_REMOVE).remove("@rid");
+                //necessary to create relations between documents
+                node.remove(TO_REMOVE);//.remove("@rid");
                 return node;
             }
         } catch (RidNotFoundException e) {

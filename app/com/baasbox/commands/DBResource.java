@@ -72,7 +72,12 @@ class DBResource extends Resource {
     private static JsonNode select(JsonNode c,JsonCallback callback) throws CommandException{
     	JsonNode jParams = c.get(ScriptCommand.PARAMS);
     	String statement = jParams.get("query").asText();
+    	JsonNode depthNode = jParams.get("depth");
+    	String depth="";
+    	if (depthNode!=null && depthNode.isTextual()) depth=",depth:"+depthNode.asText();
     	BaasBoxLogger.debug("Executing query from a plugin: " + statement);
+    	BaasBoxLogger.debug("...depth: " + depth);
+    	
         ArrayNode qryParams = (ArrayNode) jParams.get("array_of_params");
         
         ArrayList params=new ArrayList();
@@ -83,7 +88,7 @@ class DBResource extends Resource {
         ArrayNode lst;
 		try {
 	        List listToReturn = (List) DbHelper.genericSQLStatementExecute("select " + statement, params.toArray());
-	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC,true);
+	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC+depth,true);
 	        BaasBoxLogger.debug("Query result: ");
 	        BaasBoxLogger.debug(s);
 			lst = (ArrayNode)Json.mapper().readTree(s);
