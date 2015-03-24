@@ -261,7 +261,13 @@ class UsersResource extends BaseRestResource {
         JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
         JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
         try {
-            ODocument doc = UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
+            ODocument doc;
+            if (!params.has("id")){
+            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
+            }else{
+            	String id=params.get("id")!=null?params.get("id").asText():null;
+            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible,id);
+            }
             String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
             return Json.mapper().readTree(s);
         } catch (Exception e) {

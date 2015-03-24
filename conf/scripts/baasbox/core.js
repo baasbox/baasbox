@@ -131,6 +131,21 @@ DB.select = function(query,array_of_params,depth){
 	});
 };
 
+DB.exec = function(query,array_of_params){
+	if(! (typeof query === 'string')){
+		 throw new TypeError("missing statement to execute");
+	}
+	if(array_of_params && !(Object.prototype.toString.apply(array_of_params) === '[object Array]')){
+        throw new TypeError("second parameter must be an array. It is " + Object.prototype.toString.apply(array_of_params));
+    }
+	return _command({resource: 'db',
+        name: 'exec',
+        params: {statement:query,
+        	array_of_params:array_of_params
+        }
+	});
+};
+
 var ABORT  = Object.create(null);
 DB.ABORT = ABORT;
 
@@ -303,10 +318,12 @@ Users.create = function(){
         visibleByAnonymousUsers,
         visibleByRegisteredUsers,
         visibleByTheUser,
-        visibleByFriends;
+        visibleByFriends,
+        id;
     usr = pass = role = visibleByAnonymousUsers =
-        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = null;
+        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = id = null;
     switch (arguments.length){
+    	case 5: id = arguments[4];
         case 4:
             visibleByFriends = arguments[3].visibleByFriends;
             visibleByRegisteredUsers= arguments[3].visibleByRegisteredUsers;
@@ -331,6 +348,7 @@ Users.create = function(){
                      params: {username: usr,
                               password: pass,
                               role: role,
+                              id:id,
                               visibleByTheUser: visibleByTheUser,
                               visibleByAnonymousUsers: visibleByAnonymousUsers,
                               visibleByRegisteredUsers: visibleByRegisteredUsers,
@@ -348,7 +366,7 @@ Users.save = function(uzr){
         upd.visibleByAnonymousUsers = uzr.visibleByAnonymousUsers;
         upd.visibleByRegisteredUsers = uzr.visibleByRegisteredUsers;
         upd.visibleByTheUser = uzr.visibleByTheUser;
-
+        if (uzr.hasOwnProperty('id')) upd.id=uzr.id;
         if(isAdmin()) {
         	//admin can update any user
             upd.username = uzr.username;

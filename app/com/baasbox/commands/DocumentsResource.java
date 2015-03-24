@@ -205,7 +205,7 @@ class DocumentsResource extends BaseRestResource {
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
             node.remove(TO_REMOVE);
-            node.remove("@rid");
+            //node.remove("@rid");
             return node;
         } catch (RidNotFoundException e) {
             throw new CommandExecutionException(command,"document: "+id+" does not exists");
@@ -245,7 +245,7 @@ class DocumentsResource extends BaseRestResource {
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             JsonNode node = Json.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
-            n.remove(TO_REMOVE).remove("@rid");
+            n.remove(TO_REMOVE);
 //            n.remove("@rid");
             return n;
         } catch (InvalidCollectionException throwable) {

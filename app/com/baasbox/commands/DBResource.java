@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Created by eto on 22/09/14.
@@ -99,6 +100,38 @@ class DBResource extends Resource {
 		}
         return lst;
     }
+   
+    
+    private static JsonNode exec(JsonNode c,JsonCallback callback) throws CommandException{
+    	JsonNode jParams = c.get(ScriptCommand.PARAMS);
+    	String statement = jParams.get("statement").asText();
+    	BaasBoxLogger.debug("Executing statement from a plugin: " + statement);
+    	
+        ArrayNode qryParams = (ArrayNode) jParams.get("array_of_params");
+        
+        ArrayList params=new ArrayList();
+        if (qryParams!=null) qryParams.forEach(j->{
+            if (j==null) params.add(null);
+            else params.add(j.asText());
+        });
+        JsonNode lst;
+		try {
+	        Object listToReturn = (Object) DbHelper.genericSQLStatementExecute(statement, params.toArray());
+	        String s = "";
+	        if (listToReturn instanceof List ) s=JSONFormats.prepareResponseToJson((List)listToReturn, JSONFormats.Formats.GENERIC,true);
+	        else if (listToReturn instanceof ODocument) s=JSONFormats.prepareResponseToJson((ODocument)listToReturn, JSONFormats.Formats.GENERIC,true);
+	        else s=listToReturn.toString();
+	        BaasBoxLogger.debug("Statement result: ");
+	        BaasBoxLogger.debug(s);
+			lst = Json.mapper().readTree(s);
+		} catch (IOException e) {
+			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+		} catch(OQueryParsingException e){
+			throw new CommandExecutionException(c,"Error parsing statement: "+e.getMessage(),e);
+		}
+        return lst;
+    }
+    
     
     private static JsonNode beginTransaction(JsonNode c,JsonCallback callback) throws CommandException{
         DbHelper.requestTransaction();

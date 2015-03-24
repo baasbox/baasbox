@@ -472,6 +472,15 @@ public class UserService {
 	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
 			JsonNode appUsersAttributes) throws InvalidJsonException,AdminCannotChangeRoleException,Exception{
+
+			return updateProfile( username, role, nonAppUserAttributes,
+					 privateAttributes,  friendsAttributes,
+					 appUsersAttributes,null);
+	}
+	
+	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
+			JsonNode privateAttributes, JsonNode friendsAttributes,
+			JsonNode appUsersAttributes,String id) throws InvalidJsonException,AdminCannotChangeRoleException,Exception{
 		try{
 			if (username.equalsIgnoreCase("admin")) throw new AdminCannotChangeRoleException("User 'admin' cannot change role");
 			DbHelper.requestTransaction();
@@ -491,7 +500,6 @@ public class UserService {
 				}
 			}
 			
-			//TODO: update role
 			if (role!=null){
 				ORole newORole=RoleDao.getRole(role);
 				if (newORole==null) throw new InvalidParameterException(role + " is not a role");
@@ -503,6 +511,7 @@ public class UserService {
 				ouser.addRole(newORole);
 				ouser.save();
 			}
+			profile.field(BaasBoxPrivateFields.ID.toString(),id);
 			profile.save();
 			profile.reload();
 			DbHelper.commitTransaction();
