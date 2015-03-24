@@ -851,6 +851,7 @@ public class UserService {
 			//change all the reference in _author fields (this should be placed in a background task)
 			NodeDao.updateAuthor(currentUsername, newUsername);
 			LinkDao.updateAuthor(currentUsername, newUsername);
+			RoleDao.updateRole(RoleDao.getFriendRoleName(currentUsername),RoleDao.getFriendRoleName(newUsername));
 		}catch(UserNotFoundException | SqlInjectionException| OpenTransactionException e){
 			throw e;
 		}finally {
