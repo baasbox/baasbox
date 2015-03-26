@@ -53,6 +53,7 @@ class DBResource extends Resource {
                         .put("rollbackTransaction",DBResource::rollbackTransaction)
                         .put("isAnId",DBResource::isAnId)
                         .put("select",DBResource::select)
+                        .put("exec",DBResource::exec)
                         .build();
 
 //            ImmutableMap.of("switchUser", DBResource::switchUser,
