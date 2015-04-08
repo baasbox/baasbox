@@ -14,8 +14,9 @@ var  userDataArray= new Array();
 			"sPaginationType": "bootstrap",
 			"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 			"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
-					            var html = data;
+					            html = data;
 					            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
+					               html = full.user.name + (full.id?" <br> " + full.id:"");
 					               html = getActionButton("followers","user",data)+"&nbsp;"+html;
 					            }
 					            return html;

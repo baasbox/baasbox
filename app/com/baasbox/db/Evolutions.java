@@ -56,7 +56,8 @@ public class Evolutions {
 	
 	private static void  postEvolutionTasks(ODatabaseRecordTx db){
 		BaasBoxLogger.info("Performing post-evolutions tasks....");
-		//nothing todo here at the moment
+		 DbHelper.execMultiLineCommands(db,true,
+                 "rebuild index *");
 		BaasBoxLogger.info("...end");
 	}
 	

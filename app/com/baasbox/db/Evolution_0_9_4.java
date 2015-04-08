@@ -1,9 +1,13 @@
 package com.baasbox.db;
 
-import com.baasbox.service.permissions.PermissionTagService;
-import com.baasbox.service.permissions.Tags;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import java.util.UUID;
+
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
  * Created by eto on 10/23/14.
@@ -22,6 +26,7 @@ public class Evolution_0_9_4 implements IEvolution {
         try{
             createDescriptionsForEndpointSwitches(db);
             createIndexOnEmail(db);
+            insertIdforUsers(db);
         }catch (Throwable e){
             BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
             throw new RuntimeException(e);
@@ -30,7 +35,31 @@ public class Evolution_0_9_4 implements IEvolution {
     }
 
 
-    private void createIndexOnEmail(ODatabaseRecordTx db) {
+    private void insertIdforUsers(ODatabaseRecordTx db) {
+    	BaasBoxLogger.info("Generating IDs for users ...");
+    	// UUID() function is not available in OrientDB 1.7.10, so we have to define a one of ours
+    	OSQLEngine.getInstance().registerFunction("bb_uuid",
+    	                                          new OSQLFunctionAbstract("bb_uuid", 0, 0) {
+    	  public String getSyntax() {
+    	    return "bb_uuid()";
+    	  }
+    	  public boolean aggregateResults() {
+    	    return false;
+    	  }
+		@Override
+		public Object execute(Object iThis, OIdentifiable iCurrentRecord,
+				Object iCurrentResult, Object[] iParams,
+				OCommandContext iContext) {
+			return UUID.randomUUID().toString();
+		}
+    	});
+    	 DbHelper.execMultiLineCommands(db,true,
+                 "update _BB_User set id=bb_uuid();");
+    	 OSQLEngine.getInstance().unregisterFunction("bb_uuid");
+    	BaasBoxLogger.info("...done");
+	}
+
+	private void createIndexOnEmail(ODatabaseRecordTx db) {
        	BaasBoxLogger.info("Creating index on email attribute...");
        	DbHelper.execMultiLineCommands(db,true,
        			"create property _bb_userattributes.email string;",

@@ -191,12 +191,21 @@ class DocumentsResource extends BaseRestResource {
         JsonNode data = getData(command);
         String id = getDocumentId(command);
         try {
-            String rid = DocumentService.getRidByString(id, true);
-            ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
+    		String rid=null;
+        	try{
+        		rid = DocumentService.getRidByString(id, true);
+        	} catch (RidNotFoundException e) {
+                //swallow
+            }	
+            ODocument doc=null;
+            if (rid!=null) //update
+            	doc = DocumentService.update(coll, rid, (ObjectNode)data);
+            else // save
+            	doc = DocumentService.create(coll, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
             node.remove(TO_REMOVE);
-            node.remove("@rid");
+            //node.remove("@rid");
             return node;
         } catch (RidNotFoundException e) {
             throw new CommandExecutionException(command,"document: "+id+" does not exists");
@@ -207,13 +216,15 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+coll);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+e.getMessage());
         } catch (JsonProcessingException e) {
             throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
         } catch (IOException e) {
             throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+e.getMessage());
+		} catch (Throwable e){
+			throw new CommandExecutionException(command," error updating document: "+id+" message:"+e.getMessage());
 		}
     }
 
@@ -234,7 +245,7 @@ class DocumentsResource extends BaseRestResource {
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             JsonNode node = Json.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
-            n.remove(TO_REMOVE).remove("@rid");
+            n.remove(TO_REMOVE);
 //            n.remove("@rid");
             return n;
         } catch (InvalidCollectionException throwable) {
@@ -275,7 +286,7 @@ class DocumentsResource extends BaseRestResource {
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
-            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
+            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));//.remove("@rid"));
             return lst;
         } catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
@@ -297,7 +308,8 @@ class DocumentsResource extends BaseRestResource {
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
                 ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
-                node.remove(TO_REMOVE).remove("@rid");
+                //necessary to create relations between documents
+                node.remove(TO_REMOVE);//.remove("@rid");
                 return node;
             }
         } catch (RidNotFoundException e) {

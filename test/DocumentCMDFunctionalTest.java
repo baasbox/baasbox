@@ -20,19 +20,28 @@
 import static play.test.Helpers.DELETE;
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
+import static play.test.Helpers.POST;
 import static play.test.Helpers.PUT;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.HttpHeaders;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import play.libs.F.Callback;
 import play.mvc.Http.Status;
@@ -103,6 +112,28 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 				}
 			}
 		);
+	}
+	@Test
+	public void testRouteCreateWithGivenID()
+	{
+		running	(getFakeApplication(), new Runnable() {
+				public void run() {
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					String id=UUID.randomUUID().toString();
+					ObjectMapper om=new ObjectMapper();
+					String docString="{\"id\":\""+id+"\",\"key\":\"value_"+id+"\"}";
+				 	FakeRequest request = new FakeRequest(POST, getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					try {
+						request = request.withJsonBody(om.readTree(docString));
+					} catch (Exception e) {
+						fail(ExceptionUtils.getFullStackTrace(e));
+					}
+					Result result = routeAndCall(request); 
+					assertRoute(result, "testRouteCreateWithGivenID CREATE", Status.OK, "\"id\":\""+id+"\",\"key\":\"value_"+id+"\"", true);
+				}
+		});
 	}
 	
 	@Test

@@ -26,7 +26,7 @@
  * Baasbox server version
  * @type {string}
  */
-exports.version = '0.9.2';
+exports.version = '0.9.4';
 
 
 //-------- WS (Remote API calls) --------
@@ -114,6 +114,38 @@ DB.rollback = function(){
     return null;
 };
 
+
+DB.select = function(query,array_of_params,depth){
+	if(! (typeof query === 'string')){
+		 throw new TypeError("missing query statement");
+	}
+	if(array_of_params && !(Object.prototype.toString.apply(array_of_params) === '[object Array]')){
+        throw new TypeError("second parameter must be an array. It is " + Object.prototype.toString.apply(array_of_params));
+    }
+	return _command({resource: 'db',
+        name: 'select',
+        params: {query:query,
+        	array_of_params:array_of_params,
+        	depth:depth
+        }
+	});
+};
+
+DB.exec = function(query,array_of_params){
+	if(! (typeof query === 'string')){
+		 throw new TypeError("missing statement to execute");
+	}
+	if(array_of_params && !(Object.prototype.toString.apply(array_of_params) === '[object Array]')){
+        throw new TypeError("second parameter must be an array. It is " + Object.prototype.toString.apply(array_of_params));
+    }
+	return _command({resource: 'db',
+        name: 'exec',
+        params: {statement:query,
+        	array_of_params:array_of_params
+        }
+	});
+};
+
 var ABORT  = Object.create(null);
 DB.ABORT = ABORT;
 
@@ -171,6 +203,8 @@ DB.ensureCollection = function(name){
         return true;
     }
 };
+
+
 //-------- END DB --------
 
 
@@ -284,10 +318,12 @@ Users.create = function(){
         visibleByAnonymousUsers,
         visibleByRegisteredUsers,
         visibleByTheUser,
-        visibleByFriends;
+        visibleByFriends,
+        id;
     usr = pass = role = visibleByAnonymousUsers =
-        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = null;
+        visibleByFriends = visibleByTheUser = visibleByRegisteredUsers = id = null;
     switch (arguments.length){
+    	case 5: id = arguments[4];
         case 4:
             visibleByFriends = arguments[3].visibleByFriends;
             visibleByRegisteredUsers= arguments[3].visibleByRegisteredUsers;
@@ -312,6 +348,7 @@ Users.create = function(){
                      params: {username: usr,
                               password: pass,
                               role: role,
+                              id:id,
                               visibleByTheUser: visibleByTheUser,
                               visibleByAnonymousUsers: visibleByAnonymousUsers,
                               visibleByRegisteredUsers: visibleByRegisteredUsers,
@@ -329,7 +366,7 @@ Users.save = function(uzr){
         upd.visibleByAnonymousUsers = uzr.visibleByAnonymousUsers;
         upd.visibleByRegisteredUsers = uzr.visibleByRegisteredUsers;
         upd.visibleByTheUser = uzr.visibleByTheUser;
-
+        if (uzr.hasOwnProperty('id')) upd.id=uzr.id;
         if(isAdmin()) {
         	//admin can update any user
             upd.username = uzr.username;
