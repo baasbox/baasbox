@@ -282,6 +282,7 @@ public class DbHelper {
 	 */
 	public static Object genericSQLStatementExecute(String statement, Object[] params){
 		OCommandRequest command = genericSQLStatementCommandBuilder(statement);
+		BaasBoxLogger.debug("Command to execute: " + command.toString() );
 		Object ret = genericSQLCommandExecute(command,params);
 		return ret;
 	}

@@ -14,6 +14,8 @@
 						</div>
 						<p class="hint">
 							Provide the required information to create/modify a user profile.
+							<br />
+							ID is optional, if not provided the system will generate a random one.
 						</p>
 							<fieldset>
 								<div id="errorAddUser" class="alert alert-error hide">
@@ -26,6 +28,12 @@
 								<label class="control-label" for="txtUsername">Username*</label>
 								<div class="controls">
 								  <input class="input-xlarge focused" id="txtUsername" type="text" value="" required>
+								</div>
+							  </div>
+							   <div class="control-group">
+								<label class="control-label" for="txtUsername">ID</label>
+								<div class="controls">
+								  <input class="input-xlarge focused" id="txtUserId" type="text" value="">
 								</div>
 							  </div>
 							  <div class="control-group groupUserPwd">

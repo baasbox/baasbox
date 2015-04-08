@@ -66,6 +66,7 @@ import com.baasbox.exception.RoleIsNotAssignableException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -232,6 +233,32 @@ public class UserService {
 		systemProps.save();
 	}
 
+	public static ODocument  signUp (
+            String username,
+            String password,
+            Date signupDate,
+            String role,
+            JsonNode nonAppUserAttributes,
+            JsonNode privateAttributes,
+            JsonNode friendsAttributes,
+            JsonNode appUsersAttributes,boolean generated,String id) throws InvalidJsonException,UserAlreadyExistsException, EmailAlreadyUsedException{
+		
+		ODocument profile=signUp( username,
+         password,
+         signupDate,
+         role,
+         nonAppUserAttributes,
+         privateAttributes,
+         friendsAttributes,
+         appUsersAttributes, generated);
+		//since 0.9.4 we can indicate an arbitrary id for users.
+		if (StringUtils.isNotBlank(id)){
+			profile.field(BaasBoxPrivateFields.ID.toString(),id);
+			profile.save();
+		}
+		return profile;
+	}
+	
 	public static ODocument  signUp (
             String username,
             String password,
@@ -445,6 +472,15 @@ public class UserService {
 	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
 			JsonNode privateAttributes, JsonNode friendsAttributes,
 			JsonNode appUsersAttributes) throws InvalidJsonException,AdminCannotChangeRoleException,Exception{
+
+			return updateProfile( username, role, nonAppUserAttributes,
+					 privateAttributes,  friendsAttributes,
+					 appUsersAttributes,null);
+	}
+	
+	public static ODocument updateProfile(String username,String role,JsonNode nonAppUserAttributes,
+			JsonNode privateAttributes, JsonNode friendsAttributes,
+			JsonNode appUsersAttributes,String id) throws InvalidJsonException,AdminCannotChangeRoleException,Exception{
 		try{
 			if (username.equalsIgnoreCase("admin")) throw new AdminCannotChangeRoleException("User 'admin' cannot change role");
 			DbHelper.requestTransaction();
@@ -464,7 +500,6 @@ public class UserService {
 				}
 			}
 			
-			//TODO: update role
 			if (role!=null){
 				ORole newORole=RoleDao.getRole(role);
 				if (newORole==null) throw new InvalidParameterException(role + " is not a role");
@@ -476,6 +511,7 @@ public class UserService {
 				ouser.addRole(newORole);
 				ouser.save();
 			}
+			profile.field(BaasBoxPrivateFields.ID.toString(),id);
 			profile.save();
 			profile.reload();
 			DbHelper.commitTransaction();

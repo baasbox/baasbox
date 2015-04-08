@@ -19,9 +19,9 @@ package com.baasbox.dao;
 import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
@@ -29,6 +29,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -99,6 +100,9 @@ public class UserDao extends NodeDao  {
 		doc.field(FIELD_CREATION_DATE,new Date());
 
 		doc.field(USER_LINK,user.getDocument().getIdentity());
+		//since 0.9.4 each username has also an id
+		doc.field(BaasBoxPrivateFields.ID.toString(),UUID.randomUUID().toString());
+		
 		doc.save();
 		return doc;
 	}

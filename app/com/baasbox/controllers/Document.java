@@ -25,7 +25,6 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -52,11 +51,13 @@ import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
@@ -68,6 +69,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
 public class Document extends Controller {
@@ -282,8 +284,9 @@ public class Document extends Controller {
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			ODocument document=null;
+			JsonNode bodyJson = null;
 			try{
-				JsonNode bodyJson= body.asJson();
+				bodyJson= body.asJson();
 				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be a JSON object");
 				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("creating document in collection: " + collection);
@@ -298,6 +301,8 @@ public class Document extends Controller {
 				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (InvalidModelException e) {
 				return badRequest("ACL fields are not valid: " + e.getMessage());
+			} catch (ORecordDuplicatedException e) {
+				return badRequest("Provided ID already exists: " + bodyJson.get(BaasBoxPrivateFields.ID.toString()));
 			}catch (Throwable e){
 					BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 					return internalServerError(ExceptionUtils.getFullStackTrace(e));
