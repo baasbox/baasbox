@@ -19,11 +19,9 @@ package com.baasbox.dao;
 import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
-import com.baasbox.dao.exception.InvalidCriteriaException;
-
-import play.Logger;
-
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
@@ -31,6 +29,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -101,6 +100,9 @@ public class UserDao extends NodeDao  {
 		doc.field(FIELD_CREATION_DATE,new Date());
 
 		doc.field(USER_LINK,user.getDocument().getIdentity());
+		//since 0.9.4 each username has also an id
+		doc.field(BaasBoxPrivateFields.ID.toString(),UUID.randomUUID().toString());
+		
 		doc.save();
 		return doc;
 	}
@@ -159,7 +161,7 @@ public class UserDao extends NodeDao  {
 		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
-		if (Logger.isDebugEnabled()) Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Found "+resultList.size() +" elements for given tokens");
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 
 		return result;
@@ -186,6 +188,13 @@ public class UserDao extends NodeDao  {
 		if (existsUserName(currentUsername)){
 			Object command = DbHelper.genericSQLStatementExecute("update ouser set name=? where name=?", new String[]{newUsername,currentUsername});
 		}else throw new UserNotFoundException(currentUsername + " does not exists");
+	}
+
+	public boolean emailIsAlreadyUsed(String email) {
+		String selectStatement="select from _bb_user where visibleByTheUser.email= ?";
+		List<ODocument> ret=(List<ODocument>)DbHelper.genericSQLStatementExecute(selectStatement, new String[]{email});
+		if (ret.size()!=0) return true;
+		return false;
 	}
 
 }

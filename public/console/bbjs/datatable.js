@@ -45,7 +45,7 @@ var sDomGlobal="R<'row-fluid'<'span6'l><'span6'f>r><'row-fluid'<'span12'i><'span
 					"sEcho":json["call_id"],
 					"aaData":json["data"]
 			}
-			//load the readed records into the external array
+			//load the read records into the external array
 			dataArray.length = 0;
 			dataArray.push.apply(dataArray, json["data"]);
 			

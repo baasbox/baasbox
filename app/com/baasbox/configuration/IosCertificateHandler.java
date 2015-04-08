@@ -28,7 +28,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 
 import com.baasbox.BBConfiguration;
@@ -61,7 +61,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				try {
 					currentValue =new ObjectMapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
 				} catch (Exception e) {
-					if (Logger.isDebugEnabled()) Logger.debug("unable to convert value to ConfigurationFileContainer");
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("unable to convert value to ConfigurationFileContainer");
 				}
 			}else if (iCurrentValue instanceof ConfigurationFileContainer){
 				currentValue = (ConfigurationFileContainer)iCurrentValue;
@@ -73,7 +73,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 					try{
 						FileUtils.forceDelete(oldFile);
 					}catch(Exception e){
-						Logger.error(e.getMessage());
+						BaasBoxLogger.error(e.getMessage());
 					}
 				}
 			}
@@ -96,7 +96,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 
 			}else{
-				Logger.warn("Ios Certificate Handler invoked with wrong parameters");
+				BaasBoxLogger.warn("Ios Certificate Handler invoked with wrong parameters");
 				//TODO:throw an exception?
 			}
 
@@ -120,7 +120,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			ConfigurationFileContainer sandbox3 = Push.PROFILE3_SANDBOX_IOS_CERTIFICATE.getValueAsFileContainer();
 			
 			if(prod!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for default profile:"+prod.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating production certificate for default profile:"+prod.getName());
 				File prodCertificate =  new File(folder+sep+prod.getName());
 				if(!prodCertificate.exists()){
 					try{
@@ -135,7 +135,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 			}
 			if(sandbox!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for default profile:"+sandbox.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating sandbox certificate for default profile:"+sandbox.getName());
 				File sandboxCertificate =  new File(folder+sep+sandbox.getName());
 				if(!sandboxCertificate.exists()){
 					try{
@@ -151,7 +151,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			}
 			
 			if(prod2!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for profile 2:"+prod2.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating production certificate for profile 2:"+prod2.getName());
 				File prodCertificate =  new File(folder+sep+prod2.getName());
 				if(!prodCertificate.exists()){
 					try{
@@ -166,7 +166,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 			}
 			if(sandbox2!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for profile 2:"+sandbox2.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating sandbox certificate for profile 2:"+sandbox2.getName());
 				File sandboxCertificate =  new File(folder+sep+sandbox2.getName());
 				if(!sandboxCertificate.exists()){
 					try{
@@ -182,7 +182,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 			}
 			
 			if(prod3!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating production certificate for profile 3:"+prod3.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating production certificate for profile 3:"+prod3.getName());
 				File prodCertificate =  new File(folder+sep+prod3.getName());
 				if(!prodCertificate.exists()){
 					try{
@@ -197,7 +197,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 				}
 			}
 			if(sandbox3!=null){
-				if (Logger.isDebugEnabled()) Logger.debug("Creating sandbox certificate for profile 3:"+sandbox3.getName());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating sandbox certificate for profile 3:"+sandbox3.getName());
 				File sandboxCertificate =  new File(folder+sep+sandbox3.getName());
 				if(!sandboxCertificate.exists()){
 					try{

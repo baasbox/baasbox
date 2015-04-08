@@ -18,7 +18,7 @@ package com.baasbox.controllers.actions.filters;
 
 import java.util.Set;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -37,11 +37,11 @@ public class CheckAdminRoleFilter extends Action.Simple{
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
-		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole user: " + ctx.args.get("username"));
 		
 		OUser user=DbHelper.getConnection().getUser();
 		Set<ORole> roles=user.getRoles();
@@ -52,7 +52,7 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		}else {
 			result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
 	}
 

@@ -24,17 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.baasbox.controllers.actions.filters.*;
-import com.baasbox.exception.*;
-
-import com.baasbox.util.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.stringtemplate.v4.ST;
 
-import play.Logger;
 import play.Play;
 import play.api.templates.Html;
 import play.libs.F;
@@ -50,22 +45,38 @@ import play.mvc.With;
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.PasswordRecovery;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.JSONFormats;
+import com.baasbox.util.QueryParams;
+import com.baasbox.util.Util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,7 +125,7 @@ public class User extends Controller {
 	 */
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> getCurrentUser() throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 			ODocument profile = UserService.getCurrentUser();
 			return ok(prepareResponseToJson(profile));
@@ -123,7 +134,7 @@ public class User extends Controller {
 
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> getUser(String username) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (ArrayUtils.contains(
 				new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
 				username)){
@@ -134,14 +145,14 @@ public class User extends Controller {
 					ODocument profile = UserService.getUserProfilebyUsername(username);
 					if (profile==null) return notFound(username + " not found");
 					String result=prepareResponseToJson(profile);
-					if (Logger.isTraceEnabled()) Logger.trace("Method End");
+					if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 					return ok(result);
 				}));
 	}
 
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
 	public static F.Promise<Result> getUsers() {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
@@ -155,26 +166,16 @@ public class User extends Controller {
 				 return internalServerError();
 			 }
 		});
-//		List<ODocument> profiles=null;;
-//
-//		try {
-//			profiles = UserService.getUsers(criteria,true);
-//		} catch (SqlInjectionException e) {
-//			return badRequest(ExceptionUtils.getMessage(e) + " -- " + ExceptionUtils.getRootCauseMessage(e));
-//		}
-//		String result=prepareResponseToJson(profiles);
-//		if (Logger.isTraceEnabled()) Logger.trace("Method End");
-//		return ok(result);
 	}
 
 	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> signUp() throws IOException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("signUp bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("signUp bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json"));
 		}
@@ -201,7 +202,6 @@ public class User extends Controller {
 		if (StringUtils.isEmpty(password)) {
 			return F.Promise.pure(status(422, "The password field cannot be empty"));
 		}
-
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			//try to signup new user
 			ODocument profile = null;
@@ -210,17 +210,20 @@ public class User extends Controller {
 				//due to issue 412, we have to reload the profile
 				profile=UserService.getUserProfilebyUsername(username);
 			} catch (InvalidJsonException e){
-				if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 				return badRequest("One or more profile sections is not a valid JSON object");
 			} catch (UserAlreadyExistsException e){
-				if (Logger.isDebugEnabled()) Logger.debug("signUp", e);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 				return badRequest(username + " already exists");
+			} catch (EmailAlreadyUsedException e){
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
+				return badRequest(username + ": the email provided is already in use");
 			} catch (Throwable e){
-				Logger.warn("signUp", e);
+				BaasBoxLogger.warn("signUp", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 				else return internalServerError(e.getMessage());
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
@@ -241,7 +244,7 @@ public class User extends Controller {
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("updateuserName bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateuserName bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json"));
 		}
@@ -258,11 +261,11 @@ public class User extends Controller {
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> updateProfile(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("updateProfile bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateProfile bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json"));
 		}
@@ -284,15 +287,14 @@ public class User extends Controller {
 			try {
 				profile=UserService.updateCurrentProfile(nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 			} catch (Throwable e){
-				Logger.warn("updateProfile", e);
+				BaasBoxLogger.warn("updateProfile", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 				else return internalServerError(e.getMessage());
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 			return ok(prepareResponseToJson(profile));
 		}));
-
 	}//updateProfile
 
 
@@ -302,9 +304,10 @@ public class User extends Controller {
 		return F.Promise.pure(status(NOT_IMPLEMENTED));
 	}
 
-	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-	public static F.Promise<Result> resetPasswordStep1(String username){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+
+	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
+	public static  F.Promise<Result> resetPasswordStep1(String username){
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 
 		//check and validate input
 		if (username == null) {
@@ -332,16 +335,15 @@ public class User extends Controller {
 				String appCode = (String) Context.current.get().args.get("appcode");
 				UserService.sendResetPwdMail(appCode, user);
 			} catch (PasswordRecoveryException e) {
-				Logger.warn("resetPasswordStep1", e);
+				BaasBoxLogger.warn("resetPasswordStep1", e);
 				return badRequest(e.getMessage());
 			} catch (Exception e) {
-				Logger.warn("resetPasswordStep1", e);
+				BaasBoxLogger.warn("resetPasswordStep1", e);
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok();
 		}));
-
 	}
 
 
@@ -373,7 +375,7 @@ public class User extends Controller {
 			}
 
 			tokenReceived = new String(Base64.decodeBase64(decBase64.getBytes()));
-			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetPasswordStep2 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
 			String[] tokens = tokenReceived.split("%%%%");
@@ -469,7 +471,7 @@ public class User extends Controller {
 			}
 			//loads the received token and extracts data by the hashcode in the url
 			tokenReceived = new String(Base64.decodeBase64(decBase64.getBytes()));
-			if (Logger.isDebugEnabled()) Logger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("resetPasswordStep3 - sRandom: " + tokenReceived);
 
 			//token format should be APP_Code%%%%Username%%%%ResetTokenId
 			String[] tokens = tokenReceived.split("%%%%");
@@ -562,12 +564,12 @@ public class User extends Controller {
 		try {
 			UserService.resetUserPasswordFinalStep(username, password);
 		} catch (Throwable e){
-			Logger.warn("changeUserPassword", e);
+			BaasBoxLogger.warn("changeUserPassword", e);
 			DbHelper.getConnection().close();
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			else return internalServerError(e.getMessage());
 		} 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 		String ok_message = "Password changed";
 		if(isJSON) {
@@ -594,11 +596,11 @@ public class User extends Controller {
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> changePassword(){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isTraceEnabled()) Logger.trace("changePassword bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("changePassword bodyJson: " + bodyJson);
 		if (bodyJson==null) {
 			return F.Promise.pure(badRequest("The body payload cannot be empty. Hint: put in the request header Content-Type: application/json"));
 		}
@@ -622,10 +624,10 @@ public class User extends Controller {
 			try {
 				UserService.changePasswordCurrentUser(newPassword);
 			} catch (OpenTransactionException e) {
-				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e);
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok();
 		}));
 	}	  
@@ -682,7 +684,6 @@ public class User extends Controller {
 	 * @throws JsonProcessingException 
 	 */
 	@With ({NoUserCredentialWrapFilterAsync.class})
-	@BodyParser.Of(BodyParser.FormUrlEncoded.class)
 	public static F.Promise<Result> login()/* throws SqlInjectionException, JsonProcessingException, IOException */{
 		final String username;
 		final String password;
@@ -690,7 +691,9 @@ public class User extends Controller {
 		final String loginData;
 		
 		RequestBody body = request().body();
-		if (body==null)  return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded or application/json?"));
+		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
+		if (body==null) return F.Promise.pure(badRequest("missing data: is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE)));
+		
 		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
 		if (bodyUrlEncoded!=null){
 			if(bodyUrlEncoded.get("username")==null) 
@@ -702,9 +705,9 @@ public class User extends Controller {
 			if(bodyUrlEncoded.get("appcode")==null) 
 				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
 			else appcode=bodyUrlEncoded.get("appcode")[0];
-			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
 					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
@@ -713,21 +716,30 @@ public class User extends Controller {
 			if (bodyUrlEncoded.get("login_data")!=null)
 				loginData=bodyUrlEncoded.get("login_data")[0];
 			else loginData=null;
-			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);
 		}else{
 			JsonNode bodyJson = body.asJson();
+
+			if (bodyJson==null) 
+				return F.Promise.pure(badRequest("missing data : is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE)));
 			if(bodyJson.get("username")==null) 
 				return F.Promise.pure(badRequest("The 'username' field is missing"));
-			else username=bodyJson.get("username").asText();
+			else 
+				username=bodyJson.get("username").asText();
+			
 			if(bodyJson.get("password")==null) 
 				return F.Promise.pure(badRequest("The 'password' field is missing"));
-			else password=bodyJson.get("password").asText();
+			else 
+				password=bodyJson.get("password").asText();
+			
 			if(bodyJson.get("appcode")==null) 
 				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
-			else appcode=bodyJson.get("appcode").asText();
-			if (Logger.isDebugEnabled()) Logger.debug("Username " + username);
-			if (Logger.isDebugEnabled()) Logger.debug("Password " + password);
-			if (Logger.isDebugEnabled()) Logger.debug("Appcode " + appcode);		
+			else 
+				appcode=bodyJson.get("appcode").asText();
+			
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
 					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
@@ -736,7 +748,7 @@ public class User extends Controller {
 			if (bodyJson.get("login_data")!=null)
 				loginData=bodyJson.get("login_data").asText();
 			else loginData=null;
-			if (Logger.isDebugEnabled()) Logger.debug("LoginData" + loginData);	
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("LoginData" + loginData);	
 		}
 
 		return F.Promise.promise(()->{
@@ -748,8 +760,8 @@ public class User extends Controller {
 					try {
 						loginInfo =Json.parse(loginData);
 					} catch (Exception e){
-						if (Logger.isDebugEnabled()) Logger.debug ("Error parsong login_data field");
-						if (Logger.isDebugEnabled()) Logger.debug (ExceptionUtils.getFullStackTrace(e));
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Error parsong login_data field");
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug (ExceptionUtils.getFullStackTrace(e));
 						return badRequest("login_data field is not a valid json string");
 					}
 
@@ -762,7 +774,6 @@ public class User extends Controller {
 						data.put(key,value);
 					}
 					UserService.registerDevice(data);
-
 				}
 				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
@@ -772,14 +783,13 @@ public class User extends Controller {
 				JsonNode jn = mapper.readTree(user);
 				return ok(jn);
 			} catch (OSecurityAccessException e){
-				if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " +  e.getMessage());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  e.getMessage());
 				return unauthorized("user " + username + " unauthorized");
 			} catch (InvalidAppCodeException e) {
-				if (Logger.isDebugEnabled()) Logger.debug("UserLogin: " + e.getMessage());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + e.getMessage());
 				return badRequest("user " + username + " unauthorized");
 			}
 		});
-
 	}
 
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
@@ -791,7 +801,7 @@ public class User extends Controller {
 			} catch (UserNotFoundException e) {
 				return badRequest(e.getMessage());
 			} catch (OpenTransactionException e) {
-				Logger.error (ExceptionUtils.getFullStackTrace(e));
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e);
 			}
 			return ok();

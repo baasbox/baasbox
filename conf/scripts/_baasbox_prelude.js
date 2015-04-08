@@ -161,9 +161,10 @@ var GLOBAL=this;
                 var cb =(typeof command.callback === 'function')
                             ? new JsJsonCallback(command.callback,m,JSON)
                             : null;
-                Internal.log("callback: "+ (cb != null));
-                Internal.log("command "+JSON.stringify(command));
-                var resp = Api.execCommand(JSON.stringify(command),cb);
+                var cmdToExec=JSON.stringify(command);
+                Internal.log("callback: " + (cb != null));
+                Internal.log("command: " + cmdToExec);
+                var resp = Api.execCommand(cmdToExec,cb);
                 if (resp === null|| resp === undefined) {
                     return null;
                 }

@@ -19,7 +19,7 @@ package com.baasbox.dao;
 import java.util.List;
 import java.util.UUID;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.BBCache;
 import com.baasbox.dao.exception.InvalidCriteriaException;
@@ -59,9 +59,9 @@ public class GenericDao {
 	
 	public ODocument get(ORID rid) {
 		ODatabaseRecordTx db =DbHelper.getConnection();
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODocument doc=db.load(rid);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return doc;
 	}
 	

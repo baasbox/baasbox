@@ -18,7 +18,7 @@
 
 package com.baasbox.db;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
@@ -34,22 +34,22 @@ public class Evolution_0_8_3 implements IEvolution {
 
 	@Override
 	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			setIndexOnUsername(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
 	private void setIndexOnUsername(ODatabaseRecordTx db) {
-		Logger.info("..creating index on _bb_user.user.name..:");
-      		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
+		BaasBoxLogger.info("..creating index on _bb_user.user.name..:");
+      		DbHelper.execMultiLineCommands(db,BaasBoxLogger.isDebugEnabled(),
       	            "create index _bb_user.user.name unique;"
       	        );
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
     

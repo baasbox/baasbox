@@ -39,7 +39,7 @@ import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -115,7 +115,7 @@ public abstract class SocialLoginService {
 		if(this.needToken()){
 			t = this.service.getRequestToken();
 			if(this.socialNetwork.equals("twitter")){
-				if (Logger.isDebugEnabled()) Logger.debug("setting token");
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("setting token");
 				s.put("twitter.token",t.getToken());
 				s.put("twitter.secret",t.getSecret());
 			}

@@ -4,12 +4,13 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
 import play.libs.F.Callback;
 import play.libs.Json;
 import play.mvc.Http.Status;
@@ -17,7 +18,11 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
+import com.baasbox.dao.RoleDao;
+import com.baasbox.db.DbHelper;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +63,7 @@ public class SocialTest extends AbstractTest {
 						
 						//there is the signupdate in system object?
 							String url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
@@ -78,7 +83,7 @@ public class SocialTest extends AbstractTest {
 							assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
 
 							url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUser, "passw1"));
@@ -155,7 +160,7 @@ public class SocialTest extends AbstractTest {
 							String sessionToken = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 							String username = jsonRes.get("data").get("user").get("name").textValue();
 							
-							//now let's change the username
+							//now let's change the username (issue 426)
 							
 							request = new FakeRequest("PUT", "/me/username");
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -167,6 +172,17 @@ public class SocialTest extends AbstractTest {
 							result = routeAndCall(request);
 							assertRoute(result, "testSocialChangeUsername - change username", 200, "", false);
 							
+							//issue 724 - change username feature must change the friendship role too
+							try {
+								DbHelper.open("1234567890", "admin", "admin");
+								Object checkChangeRole=DbHelper.genericSQLStatementExecute("select from ORole where name=?", 
+										new String []{RoleDao.getFriendRoleName(newUsername)});
+								Assert.assertTrue("ChangeUsername: The role has not be changed",((List)checkChangeRole).size()==1);
+							} catch (Exception e) {
+								Assert.fail(ExceptionUtils.getFullStackTrace(e));
+							} finally{
+								DbHelper.close(DbHelper.getConnection());
+							}
 							
 							//perform a social login again
 							FakeRequest request2 = new FakeRequest(getMethod(), getRouteAddress());

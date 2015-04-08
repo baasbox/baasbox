@@ -1,27 +1,40 @@
-import com.baasbox.commands.CommandRegistry;
-import com.baasbox.commands.ScriptCommand;
-import com.baasbox.dao.exception.UserAlreadyExistsException;
-import com.baasbox.db.DbHelper;
-import com.baasbox.exception.InvalidJsonException;
-import com.baasbox.util.BBJson;
-import com.baasbox.service.user.UserService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import core.TestConfig;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.DELETE;
+import static play.test.Helpers.PUT;
+import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+
+import java.util.TreeSet;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.protocol.HTTP;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import play.Logger;
 import play.mvc.Result;
 import play.test.FakeRequest;
 
-import javax.ws.rs.core.MediaType;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import com.baasbox.commands.CommandRegistry;
+import com.baasbox.commands.ScriptCommand;
+import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.dao.UserDao;
+import com.baasbox.db.DbHelper;
+import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import static play.test.Helpers.*;
-import static org.junit.Assert.*;
+import core.TestConfig;
 
 /**
  * Created by eto on 29/09/14.
@@ -38,8 +51,10 @@ public class ScriptUsersCommandTest {
         BBJson.ObjectMapperExt mapper = BBJson.mapper();
         key = UUID.randomUUID().toString();
         return IntStream.range(0, howMany).mapToObj((x)->{
+            
             String uuid = UUID.randomUUID().toString();
             String user =USER_PREFIX+ uuid;
+            
 
             ObjectNode visToUser = mapper.createObjectNode();
             visToUser.put("val",x);
@@ -51,9 +66,40 @@ public class ScriptUsersCommandTest {
             ObjectNode visToFriends = mapper.createObjectNode();
             visToFriends.put("friends","friends-"+x);
 
+            ObjectNode param = mapper.createObjectNode();
+            param.put("username",user);
+            param.put("password", user);
+            //test custom ID
+            if (x==0)  param.put("id", user + "_0");
+            
+            param.put(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER,visToUser);
+            param.put(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER,visToFriends);
+            param.put(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER,vistToReg);
+            param.put(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER,visToAnon);
+            
+            ObjectNode cmd = mapper.createObjectNode();
+            cmd.put(ScriptCommand.RESOURCE,"users");
+            cmd.put(ScriptCommand.NAME,"post");
+            cmd.put(ScriptCommand.PARAMS, param);
+            
             try {
-                UserService.signUp(user,user,new Date(),visToAnon,visToUser,visToFriends,vistToReg,false);
-            } catch (InvalidJsonException|UserAlreadyExistsException e) {
+            	JsonNode exec  = CommandRegistry.execute(cmd,null);
+            	Logger.debug(exec.toString());
+            	assertTrue(exec.isObject());
+            	assertNotNull(exec.get("id"));
+            	if (x==0) assertTrue("id is not valid. Expected " + user+"_0" + " received: "+exec.get("id").asText(),exec.get("id").asText().equals(user+"_0"));
+                assertNotNull(exec.get("visibleByTheUser"));
+                assertNotNull(exec.get("visibleByAnonymousUsers"));
+                assertNotNull(exec.get("visibleByRegisteredUsers"));
+                assertNotNull(exec.get("visibleByFriends"));
+                
+                assertNotNull(exec.get("visibleByTheUser").get("val"));
+                assertNotNull(exec.get("visibleByAnonymousUsers").get("anon"));
+                assertNotNull(exec.get("visibleByRegisteredUsers").get("uuid"));
+                assertNotNull(exec.get("visibleByFriends").get("friends"));
+                
+            	//UserService.signUp(user,user,new Date(),visToAnon,visToUser,visToFriends,vistToReg,false);
+            } catch (CommandException e) {
                 fail(ExceptionUtils.getFullStackTrace(e));
             }
             return user;
@@ -177,7 +223,7 @@ public class ScriptUsersCommandTest {
                 Result invoke = routeAndCall(put);
                 String s = contentAsString(invoke);
                 JsonNode body = mapper.readTreeOrMissing(s);
-                assertEquals("ok",body.get("result").asText());
+                assertEquals("I expect 'OK', but received: " + body.toString(),"ok",body.get("result").asText());
                 assertEquals(sRandUsers.first(),body.path("data").path("user").path("name").asText());
                 assertNotNull(body.path("data").path("user").path("visibleByFriends"));
 

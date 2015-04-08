@@ -110,6 +110,11 @@ public class RoleDao {
 		public static void delete(String name) {
 			DbHelper.getConnection().getMetadata().getSecurity().dropRole(name);
 		}
+
+		public static void updateRole(String fromName,String toName) {
+			String statement ="update ORole set name = ? where name = ?";
+			DbHelper.genericSQLStatementExecute(statement, new String[]{toName,fromName});
+		}
 		
 		
 }

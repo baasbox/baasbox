@@ -32,8 +32,10 @@ import com.baasbox.db.DbHelper;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
+
 import play.libs.F;
+import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -91,12 +93,12 @@ public class Asset extends Controller{
 			try {
 				doc = AssetService.getByName(name);
 			} catch (IllegalArgumentException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 
 			}
@@ -126,12 +128,12 @@ public class Asset extends Controller{
 				response().setHeader("Content-Length", Long.toString(output.length));
 				return ok(output);
 			} catch (IllegalArgumentException | InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
-				Logger.error("error retrieving asset file content " + name, e);
+				BaasBoxLogger.error("error retrieving asset file content " + name, e);
 				throw e;
 			} catch (DocumentIsNotAnImageException e) {
 				return badRequest("The requested asset is not an image and cannot be resized");
@@ -164,12 +166,12 @@ public class Asset extends Controller{
 				response().setHeader("Content-Length", Long.toString(output.length));
 				return ok(output);
 			} catch (IllegalArgumentException| InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
-				Logger.error("error retrieving asset file content " + name, e);
+				BaasBoxLogger.error("error retrieving asset file content " + name, e);
 				throw e;
 			} catch (DocumentIsNotAnImageException e) {
 				return badRequest("The requested asset is not an image and cannot be resized");
@@ -200,12 +202,12 @@ public class Asset extends Controller{
 				response().setHeader("Content-Length", Long.toString(output.length));
 				return ok(output);
 			} catch (IllegalArgumentException|InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
-				Logger.error("error retrieving asset file content " + name, e);
+				BaasBoxLogger.error("error retrieving asset file content " + name, e);
 				throw e;
 			} catch (DocumentIsNotAnImageException e) {
 				return badRequest("The requested asset is not an image and cannot be resized");
@@ -217,7 +219,6 @@ public class Asset extends Controller{
 				return badRequest("The picture resize is disable");
 			}
 		}));
-
 	}
 
 	/***
@@ -243,12 +244,12 @@ public class Asset extends Controller{
 				//return ok(new ByteArrayInputStream(out.toByteArray()));
 				return ok(out.toByteArray());
 			} catch (IllegalArgumentException | InvalidModelException e) {
-				Logger.error("error retrieving asset " + name, e);
+				BaasBoxLogger.error("error retrieving asset " + name, e);
 				throw e;
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied name appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
-				Logger.error("error retrieving asset file content " + name, e);
+				BaasBoxLogger.error("error retrieving asset file content " + name, e);
 				throw e;
 			}
 		}));

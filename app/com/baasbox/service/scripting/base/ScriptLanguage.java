@@ -45,7 +45,7 @@ public enum ScriptLanguage implements ScriptEngineFactory {
             return JS;
         }
         for (ScriptLanguage l:values()){
-            if (l.name.equals(lang)){
+            if (l.name.equalsIgnoreCase(lang)){
                 return l;
             }
         }
