@@ -130,6 +130,7 @@ public class Admin extends Controller {
 		}
 		try{
 			ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
+			ret=JSONFormats.prepareResponseToJson(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN);
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
