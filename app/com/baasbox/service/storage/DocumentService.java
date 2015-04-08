@@ -71,9 +71,11 @@ public class DocumentService {
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
-			//since 0.9.4 clients can choose their own ids. So if provided we use them
+			//since 0.9.4 clients can choose their own IDs (inside a plugin). So if provided we use them
 			if (bodyJson.get(BaasBoxPrivateFields.ID.toString())!=null && bodyJson.get(BaasBoxPrivateFields.ID.toString()).isTextual()){
-				doc.field(BaasBoxPrivateFields.ID.toString(),bodyJson.get("id").asText());
+				String id=bodyJson.get("id").asText();
+				doc.field(BaasBoxPrivateFields.ID.toString(),id);
+				if (GenericDao.getInstance().getRidNodeByUUID(id)!=null) throw new ORecordDuplicatedException("An object with the supplied ID (" + id + ") already exists") ;
 			}
 			dao.save(doc);
 			DbHelper.commitTransaction();

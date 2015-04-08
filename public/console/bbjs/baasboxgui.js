@@ -549,7 +549,11 @@ function openDocumentEditForm(id,collection){
 		docObject["@class"] = collection;
 	}
 	populateDocumentEditForm(docObject);
-
+	if (id==null){ //new doc the id can be supplied
+		//$("#txtDocumentId").prop("disabled", false); <<--- the server does not support it yet (only via plugin)
+	}else{ //we are updating the doc so the id cannot be modified
+		$("#txtDocumentId").prop("disabled", true); 
+	}
 	$('#addDocumentModal').modal('show');
 }
 
