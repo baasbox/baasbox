@@ -129,7 +129,6 @@ public class Admin extends Controller {
 			return badRequest("The request is malformed: check your query criteria");
 		}
 		try{
-			ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
 			ret=JSONFormats.prepareResponseToJson(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN);
 		}catch (Throwable e){
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
