@@ -84,6 +84,7 @@ import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
 import com.baasbox.service.push.providers.PushInvalidApiKeyException;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.StatisticsService;
 import com.baasbox.service.user.RoleService;
@@ -127,7 +128,7 @@ public class Admin extends Controller {
 				return badRequest("The request is malformed: check your query criteria");
 			}
 			try{
-				ret=OJSONWriter.listToJSON(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
+				ret=JSONFormats.prepareResponseToJson(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN);
 			}catch (Throwable e){
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
@@ -377,9 +378,14 @@ public class Admin extends Controller {
 		JsonNode privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
 		JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
 		JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
-		String username= bodyJson.findValuesAsText("username").get(0);
-		String password= bodyJson.findValuesAsText("password").get(0);
-		String role= bodyJson.findValuesAsText("role").get(0);
+
+		JsonNode userID = bodyJson.get(BaasBoxPrivateFields.ID.toString());
+		
+		String username=(String) bodyJson.findValuesAsText("username").get(0);
+		String password=(String)  bodyJson.findValuesAsText("password").get(0);
+		String role=(String)  bodyJson.findValuesAsText("role").get(0);
+		String id = (userID!=null && userID.isTextual())? userID.asText():null;
+
 
 		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
@@ -390,7 +396,7 @@ public class Admin extends Controller {
 		//try to signup new user
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			try {
-				UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+				UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false,id);
 			}catch(InvalidParameterException e){
 				return badRequest(e.getMessage());
 			}catch (InvalidJsonException e){
@@ -412,7 +418,6 @@ public class Admin extends Controller {
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return created();
 		}));
-
 	}//createUser
 
 

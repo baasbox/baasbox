@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import com.baasbox.commands.exceptions.CommandException;
@@ -40,10 +41,11 @@ import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.util.BBJson;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -254,7 +256,13 @@ class UsersResource extends BaseRestResource {
         JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
         JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
         try {
-            ODocument doc = UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
+            ODocument doc;
+            if (!params.has("id")){
+            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
+            }else{
+            	String id=params.get("id")!=null?params.get("id").asText():null;
+            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible,id);
+            }
             String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
             return BBJson.mapper().readTree(s);
         } catch (Exception e) {
@@ -270,6 +278,11 @@ class UsersResource extends BaseRestResource {
             String username = getUsername(command);
             JsonNode password = params.get("password");
             if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
+            JsonNode id = params.get(BaasBoxPrivateFields.ID.toString());
+            String idString=null;
+            if (id!=null && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
+            if (id!=null && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
+            if (id!=null && id.isTextual()) idString=id.asText();
             JsonNode roleNode = params.get("role");
             String role;
             if (roleNode == null){
@@ -289,7 +302,7 @@ class UsersResource extends BaseRestResource {
 
             ODocument user = UserService.signUp(username, password.asText(),
                                                 new Date(), role,
-                                                anonymousVisible,userVisible,friendsVisible, registeredVisible, false);
+                                                anonymousVisible,userVisible,friendsVisible, registeredVisible, false,idString);
             String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
             return BBJson.mapper().readTree(userNode);
         } catch (InvalidJsonException | IOException e) {

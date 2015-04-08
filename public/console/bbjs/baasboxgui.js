@@ -229,6 +229,8 @@ $('.btn-adduser').click(function(e){
 	$(".groupUserPwd").removeClass("hide");
 	$("#txtUsername").removeClass("disabled");
 	$("#txtUsername").prop('disabled', false);
+	$("#txtUserId").removeClass("disabled");
+	$("#txtUserId").prop('disabled', false);
 	$('#addUserModal').modal('show');
 }); // Show Modal for Add User
 
@@ -454,6 +456,8 @@ function openUserEditForm(editUserName){
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
+	$("#txtUserId").addClass("disabled");
+	$("#txtUserId").prop('disabled', true);
 	$("#userTitle").text("Edit User information");
 	$(".groupUserPwd").addClass("hide");
 	for(i=0;i<userDataArray.length;i++)
@@ -462,6 +466,7 @@ function openUserEditForm(editUserName){
 			userObject = userDataArray[i];
 	}
 	$("#txtUsername").val(userObject.user.name);
+	$("#txtUserId").val(userObject.id);
     loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
 	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
@@ -482,6 +487,8 @@ function openChangePasswordUserForm(changePassword){
     $("#userTitle").text("Change password");
     $("#txtUserName").addClass("disabled");
     $("#txtUserName").prop('disabled', true);
+    $("#txtUserId").addClass("disabled");
+    $("#txtUserId").prop('disabled', true);
     $(".groupUserPwd").removeClass("hide");
     for(i=0;i<userDataArray.length;i++)
     {
@@ -489,6 +496,7 @@ function openChangePasswordUserForm(changePassword){
             userObject = userDataArray[i];
     }
     $("#txtUserName").val(userObject.user.name);
+    $("#txtUserId").val(userObject.id);
     $('#changePwdUserModal').modal('show');
 }
 
@@ -541,7 +549,11 @@ function openDocumentEditForm(id,collection){
 		docObject["@class"] = collection;
 	}
 	populateDocumentEditForm(docObject);
-
+	if (id==null){ //new doc the id can be supplied
+		//$("#txtDocumentId").prop("disabled", false); <<--- the server does not support it yet (only via plugin)
+	}else{ //we are updating the doc so the id cannot be modified
+		$("#txtDocumentId").prop("disabled", true); 
+	}
 	$('#addDocumentModal').modal('show');
 }
 
@@ -817,7 +829,8 @@ function addUser()
 {
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
-	var role = $("#cmbSelectRole").val();
+	var id = 		$("#txtUserId").val();
+	var role = 		$("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
@@ -827,6 +840,7 @@ function addUser()
 			{
 				data: JSON.stringify({"username": userName,
 					"password": password,
+					"id": id,
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
 					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
@@ -850,6 +864,7 @@ function updateUser()
 {
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
+	var password = $("#txtUserId").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends
@@ -1451,7 +1466,7 @@ function getActionButton(action, actionType,parameters){
         tooltip="Change ACL..."
 		break;
     case "followers":
-        iconType="icon-user";
+        iconType="fa fa-users";
         classType="btn-info";
         labelName="";
         tooltip="Followees...."
