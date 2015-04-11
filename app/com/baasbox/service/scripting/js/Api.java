@@ -26,11 +26,17 @@ import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import jdk.nashorn.internal.runtime.ECMAErrors;
 import jdk.nashorn.internal.runtime.ECMAException;
+
 import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+
+import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -83,5 +89,23 @@ public class Api {
 
     public static Object require(String name){
         return NashornEngine.getNashorn().require(name);
+    }
+    
+    public static String btoa (String stringToConvert){
+    	try {
+			return Base64.encodeBase64String(stringToConvert.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
+    }
+    
+    public static String atob (String stringToConvert){
+    	try {
+			return new String(Base64.decodeBase64(stringToConvert),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
     }
 }

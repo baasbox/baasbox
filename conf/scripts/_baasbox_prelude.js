@@ -239,6 +239,20 @@ var GLOBAL=this;
         }
         return mod.module.exports;
     };
+    
+    Module.prototype.btoa = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.btoa(stringToConvert);
+    }
+    
+    Module.prototype.atob = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.atob(stringToConvert);
+    }
 
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
