@@ -511,7 +511,7 @@ public class UserService {
 				ouser.addRole(newORole);
 				ouser.save();
 			}
-			profile.field(BaasBoxPrivateFields.ID.toString(),id);
+			if (id!=null) profile.field(BaasBoxPrivateFields.ID.toString(),id);
 			profile.save();
 			profile.reload();
 			DbHelper.commitTransaction();
