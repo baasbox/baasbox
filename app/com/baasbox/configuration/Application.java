@@ -28,6 +28,10 @@ import com.google.common.annotations.VisibleForTesting;
 
 public enum Application implements IProperties{
 	APPLICATION_NAME("application.name", "The App name", String.class),
+    PASSWORD_MIN_CHARS("password.min_chars", "The minimum number of characters required in a password.", Integer.class),
+    PASSWORD_REQ_NUMBER("password.req_number", "Determines whether the user's password requires at least one number.", Boolean.class),
+    PASSWORD_REQ_SYMBOL("password.req_symbol", "Determines whether the user's password requires at least one symbol character.", Boolean.class),
+    PASSWORD_REQ_CAPITAL("password.req_capital", "Determines whether the user's password requires at least one capital letter.", Boolean.class),
 	SESSION_TOKENS_TIMEOUT("session_tokens.timeout", "The expiration time of the session tokens (in minutes). WARNING: the admin console refreshes the session token every 5 minutes, if you set a value lower than 5, you may experience disconnection from the console. To disable expiration set it to 0.", Integer.class,
 			//this callback function is invoked when the value changes. It sets the timeout for the session tokens
 			new IPropertyChangeCallback(){
