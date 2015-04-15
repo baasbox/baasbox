@@ -56,8 +56,9 @@ object ApplicationBuild extends Build {
 				  "org.apache.tika" % "tika-parsers" % "1.7",
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
-          "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
-          "com.notnoop.apns" % "apns" % "1.0.0.Beta4"
+          "com.orientechnologies" % "orientdb-graphdb" % "1.7.10-DC",
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta4",
+          "org.mindrot" % "jbcrypt" % "0.3m"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
@@ -72,7 +73,8 @@ object ApplicationBuild extends Build {
       resolvers := Seq(
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-		      "eaio" at "http://eaio.com/maven2"
+		      "eaio" at "http://eaio.com/maven2",
+        "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/.m2/repository"
 	      )
        ,baas := {
           val distributionName = name.value.toLowerCase + "-" + version.value
