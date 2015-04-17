@@ -564,7 +564,7 @@ public class UserService {
 			//Send mail
 			HtmlEmail email = null;
 
-			URL resetUrl = new URL(Application.NETWORK_HTTP_SSL.getValueAsBoolean()? "https" : "http", siteUrl, sitePort, "/user/password/reset/"+sBase64Random); 
+			URL resetUrl = new URL(Application.NETWORK_HTTP_SSL.getValueAsBoolean()? "https" : "http", siteUrl, "/user/password/reset/"+sBase64Random);
 
 			//HTML Email Text
 			ST htmlMailTemplate = new ST(htmlEmail, '$', '$');
