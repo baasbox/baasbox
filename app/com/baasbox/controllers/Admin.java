@@ -22,9 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-import java.net.MalformedURLException;
-
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,7 +118,7 @@ public class Admin extends Controller {
 
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
 			List<ODocument> users=null;
-			String ret;
+			String ret="{[]}";
 			try{
 				users = UserService.getUsers(criteria);
 			}catch (SqlInjectionException e ){
