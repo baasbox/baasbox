@@ -210,11 +210,7 @@ public class User extends Controller {
 			if (!password.matches(".*[!@#$%^&*].*")) return status(422,"The password needs to contain at least one special character.");
 		}
 
-		if (password.length() <= com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger()) return status(422,"The password needs to contain at least 5 characters.");
-
-
-
-
+		if (password.length() <= com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger()) return status(422,"The password needs to contain at least " +com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger() +" characters.");
 
 
 
@@ -333,7 +329,9 @@ public class User extends Controller {
 			return badRequest("The 'username' field is missing in the URL, please check the documentation");
 
 		if (!UserService.exists(username))
-			return badRequest("Username " + username + " not found!");
+			return ok();
+		    // Replaced this message as it can be used for user account enumeration
+			//return badRequest("Username " + username + " not found!");
 
 		QueryParams criteria = QueryParams.getInstance().where("user.name=?").params(new String [] {username});
 		ODocument user;
@@ -344,7 +342,9 @@ public class User extends Controller {
 
 			ODocument attrObj = user.field(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
 			if (attrObj == null || attrObj.field("email") == null)
-				return badRequest("Cannot reset password, the \"email\" attribute is not defined into the user's private profile");
+				return ok();
+				// Replaced this message as it can be used for user account enumeration.
+				//return badRequest("Cannot reset password, the \"email\" attribute is not defined into the user's private profile");
 
 			// if (UserService.checkResetPwdAlreadyRequested(username)) return badRequest("You have already requested a reset of your password.");
 
@@ -535,6 +535,37 @@ public class User extends Controller {
 		if (!password.equals(repeatPassword)){
 			errorString="The new \"password\" field and the \"repeat password\" field must be the same.";
 		}
+
+
+		// Validate the user's password against the password policy
+
+		if (username.equals(password)) {
+			errorString="The password cannot be the same as the username.";
+		}
+		if (password.equals(password.toUpperCase())) {
+			errorString="The password needs to have at least one lowercase character.";
+		}
+
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_NUMBER.getValueAsBoolean() == true) {
+			if (!password.matches(".*\\d.*")) {
+				errorString="The password needs to contain at least one digit.";
+			}
+		}
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_CAPITAL.getValueAsBoolean() == true) {
+			if (password.equals(password.toLowerCase())) {
+				errorString="The password needs to have at least one uppercase character.";
+			}
+		}
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_SYMBOL.getValueAsBoolean() == true) {
+			if (!password.matches(".*[!@#$%^&*].*")) {
+				errorString="The password needs to contain at least one special character.";
+			}
+		}
+		if (password.length() <= com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger()) {
+			errorString="The password needs to contain at least " +com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger() +" characters.";
+		}
+
+
 		if (!errorString.isEmpty()){
 			if(isJSON) {
 				result.put("user_name", username);
