@@ -175,8 +175,10 @@ public class Social extends Controller{
 			}
 			
 			String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
-			
-			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password);
+
+			Integer hashedUserAgent = Math.abs(request().getHeader("User-Agent").hashCode());
+
+			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password, hashedUserAgent);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			ObjectNode on = Json.newObject();
 			if(existingUser!=null){
@@ -197,7 +199,8 @@ public class Social extends Controller{
 				UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
 				ODocument profile=UserService.getUserProfilebyUsername(username);
 				UserService.addSocialLoginTokens(profile,result);
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+				Integer hashedUserAgent = Math.abs(request().getHeader("User-Agent").hashCode());
+				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password, hashedUserAgent);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 				ObjectNode on = Json.newObject();
 				if(profile!=null){

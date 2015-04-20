@@ -34,10 +34,10 @@ public class SessionTokenAccess implements IAccessMethod  {
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
-		
+		Integer hashedUserAgent = Math.abs(ctx.request().getHeader("User-Agent").hashCode());
 		if (token!=null) {
 			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Received session token " + token);
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token, hashedUserAgent);
 			  if (sessionData!=null){
 				  	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Token identified: ");
 					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));

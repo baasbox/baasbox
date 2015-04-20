@@ -84,23 +84,30 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	}	//setTimeout
 	
 	@Override
-	public ImmutableMap<SessionKeys, ? extends Object> setSession(String AppCode, String username,	String password) {
+	public ImmutableMap<SessionKeys, ? extends Object> setSession(String AppCode, String username,	String password, Integer userAgent) {
 		UUID token = UUID.randomUUID();
 		ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
 				(SessionKeys.APP_CODE, AppCode, 
-						SessionKeys.TOKEN, token.toString(),
+						SessionKeys.TOKEN, token.toString()+"-"+userAgent,
 						SessionKeys.USERNAME, username,
 						SessionKeys.PASSWORD,password,
 						SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInMilliseconds);
-		sessions.put(token.toString(), info);
+
+		sessions.put(token.toString()+"-"+userAgent, info);
 		return info;
 	}
 
 	@Override
-	public ImmutableMap<SessionKeys, ? extends Object> getSession(String token) {
+	public ImmutableMap<SessionKeys, ? extends Object> getSession(String token, Integer userAgent) {
 		if (isExpired(token)){
 			return null;
 		}
+		System.out.println("Checking session using agent: " + userAgent);
+		System.out.println("Comparing to: " + token.substring(37,token.length()));
+		if(!userAgent.toString().equals(token.substring(37,token.length()))) {
+			return null;
+		}
+
 		ImmutableMap<SessionKeys, ? extends Object> info = sessions.get(token);
 		ImmutableMap<SessionKeys, ? extends Object> newInfo	= ImmutableMap.of
 				(SessionKeys.APP_CODE, info.get(SessionKeys.APP_CODE),
@@ -125,12 +132,18 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	}
 	
 	private boolean isExpired(String token){
+		System.out.println("Checking if token expired:" + token);
 		ImmutableMap<SessionKeys, ? extends Object> info = sessions.get(token);
-		if (info==null) return true;
-		if (expiresInMilliseconds!=0 && (new Date()).getTime()>(Long)info.get(SessionKeys.EXPIRE_TIME)){
-			removeSession(token);
+		if (info==null) {
+			System.out.println("Info doens't exist for token");
 			return true;
 		}
+		if (expiresInMilliseconds!=0 && (new Date()).getTime()>(Long)info.get(SessionKeys.EXPIRE_TIME)){
+			removeSession(token);
+			System.out.println("Token IS expired");
+			return true;
+		}
+		System.out.println("Token isn't expired");
 		return false;
 	}
 	

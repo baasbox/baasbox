@@ -40,8 +40,9 @@ public class InjectSession extends Action.Simple {
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
+		Integer hashedUserAgent = Math.abs(ctx.request().getHeader("User-Agent").hashCode());
 		if (token!=null) {
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token, hashedUserAgent);
 			  if (sessionData!=null){
 					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
 					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));

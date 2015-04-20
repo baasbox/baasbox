@@ -237,7 +237,8 @@ public class User extends Controller {
 			else return internalServerError(e.getMessage());
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+		Integer hashedUserAgent = Math.abs(request().getHeader("User-Agent").hashCode());
+		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password, hashedUserAgent);
 		response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
 		String result=prepareResponseToJson(profile);
@@ -696,6 +697,8 @@ public class User extends Controller {
 		String password="";
 		String appcode="";
 		String loginData=null;
+
+
 		
 		RequestBody body = request().body();
 		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
@@ -777,8 +780,18 @@ public class User extends Controller {
 		}finally{
 			if (db!=null && !db.isClosed()) db.close();
 		}
-		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+
+
+		// Get the user agent to include as part of the session token
+
+		Integer hashedUserAgent = Math.abs(request().getHeader("User-Agent").hashCode());
+		System.out.println("HASHED: " + hashedUserAgent);
+
+
+		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password, hashedUserAgent);
 		response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+
+		System.out.println("Set session token: " + response().getHeaders());
 
 		ObjectMapper mapper = new ObjectMapper();
 		user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
