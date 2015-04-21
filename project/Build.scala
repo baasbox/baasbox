@@ -57,7 +57,7 @@ object ApplicationBuild extends Build {
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
           "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
-          "com.notnoop.apns" % "apns" % "1.0.0.Beta4"
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta6"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
