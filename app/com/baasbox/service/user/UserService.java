@@ -168,9 +168,7 @@ public class UserService {
 	}
 
 	public static void registerDevice(HashMap<String,Object> data) throws SqlInjectionException{
-		ODocument user=getCurrentUser();
-		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+		String username = DbHelper.getCurrentUserNameFromConnection();
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		String os=(String) data.get(UserDao.USER_DEVICE_OS);
 		boolean found=false;
@@ -179,6 +177,7 @@ public class UserService {
 		
 		List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
 
+		//prevents more users use the same os/token pair and duplications of os/token pairs
 		for(ODocument record: sqlresult ) {
 			List<ODocument> login_Infos=record.field(UserDao.USER_LOGIN_INFO);
 			for (ODocument login_Info : login_Infos){
@@ -190,6 +189,10 @@ public class UserService {
 			record.save();	
 		}
 	
+		ODocument user=getUserProfilebyUsername(username);
+		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
+		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+		
 		for (ODocument loginInfo : loginInfos){
 
 			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
