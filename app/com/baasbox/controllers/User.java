@@ -175,7 +175,9 @@ public class User extends Controller {
 		if (!bodyJson.has("username"))
 			return badRequest("The 'username' field is missing");
 		if (!bodyJson.has("password"))
-			return badRequest("The 'password' field is missing");		
+			return badRequest("The 'password' field is missing");
+
+
 
 		//extract mandatory fields
 		JsonNode nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
@@ -192,6 +194,30 @@ public class User extends Controller {
 		}
 		if (StringUtils.isEmpty(password)) return status(422,"The password field cannot be empty");
 
+		// Validate the user's password against the password policy
+
+		if (username.equals(password)) return status(422,"The password cannot be the same as the username.");
+
+		if (password.equals(password.toUpperCase())) return status(422,"The password needs to have at least one lowercase character.");
+
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_NUMBER.getValueAsBoolean() == true) {
+			if (!password.matches(".*\\d.*")) return status(422,"The password needs to contain at least one digit.");
+		}
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_CAPITAL.getValueAsBoolean() == true) {
+			if (password.equals(password.toLowerCase())) return status(422,"The password needs to have at least one uppercase character.");
+		}
+		if(com.baasbox.configuration.Application.PASSWORD_REQ_SYMBOL.getValueAsBoolean() == true) {
+			if (!password.matches(".*[!@#$%^&*].*")) return status(422,"The password needs to contain at least one special character.");
+		}
+
+		if (password.length() <= com.baasbox.configuration.Application.PASSWORD_MIN_CHARS.getValueAsInteger()) return status(422,"The password needs to contain at least 5 characters.");
+
+
+
+
+
+
+
 		//try to signup new user
 		ODocument profile = null;
 		try {
@@ -203,10 +229,12 @@ public class User extends Controller {
 			return badRequest("One or more profile sections is not a valid JSON object");
 		} catch (UserAlreadyExistsException e){
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
-			return badRequest(username + " already exists");
+            // Return a generic error message if the username is already in use.
+			return badRequest("Error signing up");
 		} catch (EmailAlreadyUsedException e){
+            // Return a generic error message if the email is already in use.
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
-			return badRequest(username + ": the email provided is already in use");
+			return badRequest("Error signing up");
 		} catch (Throwable e){
 			BaasBoxLogger.warn("signUp", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -284,7 +312,7 @@ public class User extends Controller {
 
 
 
-	@With ({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
+	@With({AdminCredentialWrapFilter.class, ConnectToDBFilter.class})
 	public static Result exists(String username){
 		return status(NOT_IMPLEMENTED);
 		/*
