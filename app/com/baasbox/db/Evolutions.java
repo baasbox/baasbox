@@ -23,8 +23,8 @@ import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public class Evolutions {
@@ -58,6 +58,13 @@ public class Evolutions {
 		BaasBoxLogger.info("Performing post-evolutions tasks....");
 		 DbHelper.execMultiLineCommands(db,true,
                  "rebuild index *");
+		if (BBConfiguration.configuration.getBoolean(BBConfiguration.ORIENT_START_CLUSTER)){
+			//in case of internal clustering support we have to drop some constaints because of http://orientdb.com/docs/last/orientdb.wiki/Graph-Schema.html#constraints
+			 DbHelper.execMultiLineCommands(db,true,
+	                 "alter property _BB_Node._links mandatory=false",
+	                 "alter property _BB_NodeVertex._node mandatory=false");
+			
+		}
 		BaasBoxLogger.info("...end");
 	}
 	
@@ -79,10 +86,11 @@ public class Evolutions {
 
 		ev = (IEvolution)new Evolution_0_9_0();
 		me.put(ev.getFinalVersion(),ev);
-		ev = (IEvolution)new Evolution_1_0_0_M1();
-		me.put(ev.getFinalVersion(),ev);
 		ev = (IEvolution)new Evolution_0_9_4();
 		me.put(ev.getFinalVersion(),ev);
+		ev = (IEvolution)new Evolution_1_0_0_M1();
+		me.put(ev.getFinalVersion(),ev);
+		
 	}
 	
 	public Collection<IEvolution> getEvolutions(){
