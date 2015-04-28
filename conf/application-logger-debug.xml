@@ -101,7 +101,8 @@ See: https://www.playframework.com/documentation/2.2.x/SettingsLogger
   <!-- these are overridden by application.conf (when in dev)-->  
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
-
+  <logger name="com.orientechnologies" level="DEBUG" />
+  
   <logger name="akka" level="DEBUG" >
   	<appender-ref ref="AKKA_LOG_FILE" />
   	<appender-ref ref="STDOUT_ONLY_INFO" />
