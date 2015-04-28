@@ -86,7 +86,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static String getDBDir(){
-		return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
+		if (getDBFullPath().lastIndexOf(File.separator) > -1)
+			return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
+		else return getDBFullPath();
 	}
 	
 	public static Boolean getWrapResponse(){
