@@ -284,8 +284,8 @@ public class Global extends GlobalSettings {
 	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getRootPassword())+"\" resources=\"*\"/>"
 	    			   + "</users>"
 	    			   + "<properties>"
-	    			   + (BBConfiguration.getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
-	    			   :"")
+	    			   //+ (BBConfiguration.getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
+	    			   //:"")
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
 	    			   + "<entry name=\"log.console.level\" value=\"WARNING\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"WARNING\"/>"
