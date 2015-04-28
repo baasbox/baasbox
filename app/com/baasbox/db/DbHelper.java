@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -423,8 +425,11 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 
-		String databaseName=BBConfiguration.getDBFullPath();
-		
+		//String databaseName=BBConfiguration.getDBFullPath();
+		Path currentRelativePath = Paths.get("");
+		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
+		String databaseName=currentRelativePath.toAbsolutePath().toString()+"/databases/baasbox";
+				
 		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();

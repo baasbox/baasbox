@@ -25,6 +25,8 @@ import static play.mvc.Results.notFound;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
@@ -116,13 +118,16 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
+				  /*
 				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
 					justCreated  = true;
                     info("DB has been create successfully");
+                   
 				}
+				 */
 			  } catch (Throwable e) {
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
@@ -223,13 +228,13 @@ public class Global extends GlobalSettings {
 			ClassNotFoundException, InvocationTargetException,
 			NoSuchMethodException, IOException {
 		if (BBConfiguration.getOrientEnableRemoteConnection() || BBConfiguration.getOrientStartCluster()){
+			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
+				Logger.info("*** DUMP of OrientDB deamon configuration: ");
+				Logger.info(getOrientConfString());
+			}
 			Logger.info("Starting OrientDB deamon...");
 			server = OServerMain.create();
 			String deamonConf=getOrientConfString();
-			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
-				Logger.info("*** DUMP of OrientDB deamon configuration: ");
-				Logger.info(deamonConf);
-			}
 			server.startup(deamonConf);
 			server.activate();
 			Logger.info("...done");
@@ -237,6 +242,9 @@ public class Global extends GlobalSettings {
 	}
 
 	private String getOrientConfString() {
+		Path currentRelativePath = Paths.get("");
+		Path dbPath=currentRelativePath.resolve(BBConfiguration.getDBDir());
+		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
 		String toReturn=
  			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 	    			   + "<orient-server>"
@@ -244,11 +252,14 @@ public class Global extends GlobalSettings {
 	    			   + (BBConfiguration.getOrientStartCluster()?
 		    			     " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
 		    			   + " <parameters>"
-		    	          // + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+		    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
 		    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
 		    	           + "     <parameter name=\"configuration.db.default\""
-		    	           + "                value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/default-distributed-db-config.json\"/>"
-		    	           + "     <parameter name=\"configuration.hazelcast\" value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/hazelcast.xml\"/>"
+		    	           //+ "                value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/default-distributed-db-config.json\"/>"
+		    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
+		    	           + "     <parameter name=\"configuration.hazelcast\" "
+		    	           //+ "				  value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/hazelcast.xml\"/>"
+		    	           + "				  value=\"conf/hazelcast.xml\"/>"
 		    	           + "     <parameter name=\"conflict.resolver.impl\""
 		    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
 	
@@ -272,12 +283,15 @@ public class Global extends GlobalSettings {
 	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getRootPassword())+"\" resources=\"*\"/>"
 	    			   + "</users>"
 	    			   + "<properties>"
+	    			   + (BBConfiguration.getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
+	    			   :"")
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
-	    			   + "<entry name=\"log.console.level\" value=\"ALL\"/>"
-	    			   + "<entry name=\"log.file.level\" value=\"ALL\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"WARNING\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"WARNING\"/>"
 	    			   // + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
-	    			   + "<entry value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/db/\" name=\"server.database.path\" />"
-	    			 
+	    			  // + "<entry name=\"server.database.path\"  "
+	    			  // + "		 value=\"" + BBConfiguration.getDBFullPath() + "\"/>"
+	    			  // + "		 value=\"" + dbPath.toAbsolutePath().toString() + "/\"/>"
 	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
 	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
