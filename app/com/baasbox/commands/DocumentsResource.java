@@ -18,18 +18,27 @@
 
 package com.baasbox.commands;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
-import com.baasbox.dao.exception.*;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,12 +50,6 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import play.Logger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * {resource: 'documents',
@@ -127,7 +130,7 @@ class DocumentsResource extends BaseRestResource {
                 alterGrants(command, coll, rid, true, grant);
                 alterGrants(command, coll, rid, false, grant);
             } catch (Exception e){
-                Logger.error("error",e);
+                BaasBoxLogger.error("error",e);
                 throw  e;
             }
         } catch (UserNotFoundException e) {
@@ -188,12 +191,21 @@ class DocumentsResource extends BaseRestResource {
         JsonNode data = getData(command);
         String id = getDocumentId(command);
         try {
-            String rid = DocumentService.getRidByString(id, true);
-            ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
+    		String rid=null;
+        	try{
+        		rid = DocumentService.getRidByString(id, true);
+        	} catch (RidNotFoundException e) {
+                //swallow
+            }	
+            ODocument doc=null;
+            if (rid!=null) //update
+            	doc = DocumentService.update(coll, rid, (ObjectNode)data);
+            else // save
+            	doc = DocumentService.create(coll, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
             node.remove(TO_REMOVE);
-            node.remove("@rid");
+            //node.remove("@rid");
             return node;
         } catch (RidNotFoundException e) {
             throw new CommandExecutionException(command,"document: "+id+" does not exists");
@@ -204,13 +216,15 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+coll);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+e.getMessage());
         } catch (JsonProcessingException e) {
             throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
         } catch (IOException e) {
             throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+e.getMessage());
+		} catch (Throwable e){
+			throw new CommandExecutionException(command," error updating document: "+id+" message:"+e.getMessage());
 		}
     }
 
@@ -231,7 +245,7 @@ class DocumentsResource extends BaseRestResource {
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
             JsonNode node = BBJson.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
-            n.remove(TO_REMOVE).remove("@rid");
+            n.remove(TO_REMOVE);
 //            n.remove("@rid");
             return n;
         } catch (InvalidCollectionException throwable) {
@@ -272,7 +286,7 @@ class DocumentsResource extends BaseRestResource {
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
             ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
-            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
+			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
             return lst;
         } catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
@@ -294,7 +308,7 @@ class DocumentsResource extends BaseRestResource {
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
                 ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
-                node.remove(TO_REMOVE).remove("@rid");
+				node.remove(TO_REMOVE);
                 return node;
             }
         } catch (RidNotFoundException e) {
@@ -320,10 +334,21 @@ class DocumentsResource extends BaseRestResource {
             if (read!=null){
                 alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
             }
+            
+            //DEPRECATED
             JsonNode write = node.get("write");
             if (write!=null){
                 alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
             }
+            
+            //issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
+            //we now have to maintain both due retro-compatibility 
+            JsonNode update = node.get("update");
+            if (update!=null){
+                alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+            }
+            //------
+            
             JsonNode delete = node.get("delete");
             if (delete!=null){
                 alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);

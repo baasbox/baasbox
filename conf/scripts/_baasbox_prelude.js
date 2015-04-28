@@ -161,9 +161,10 @@ var GLOBAL=this;
                 var cb =(typeof command.callback === 'function')
                             ? new JsJsonCallback(command.callback,m,JSON)
                             : null;
-                Internal.log("callback: "+ (cb != null));
-                Internal.log("command "+JSON.stringify(command));
-                var resp = Api.execCommand(JSON.stringify(command),cb);
+                var cmdToExec=JSON.stringify(command);
+                Internal.log("callback: " + (cb != null));
+                Internal.log("command: " + cmdToExec);
+                var resp = Api.execCommand(cmdToExec,cb);
                 if (resp === null|| resp === undefined) {
                     return null;
                 }
@@ -238,6 +239,20 @@ var GLOBAL=this;
         }
         return mod.module.exports;
     };
+    
+    Module.prototype.btoa = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.btoa(stringToConvert);
+    }
+    
+    Module.prototype.atob = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.atob(stringToConvert);
+    }
 
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});

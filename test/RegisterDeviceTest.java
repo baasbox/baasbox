@@ -12,7 +12,7 @@ import org.apache.http.protocol.HTTP;
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -63,107 +63,117 @@ public class RegisterDeviceTest extends AbstractTest {
 					Result result = routeAndCall(request);
 					assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUserA+"\"", true);
 								
-					//Register DEVICE for user testRegisterDeviceA with os os and pushToken pushToken
-					String os="os";
+					//Register DEVICE for user testRegisterDeviceA with os 'ios' and pushToken pushToken
+					String os="ios";
 					String pushToken="pushToken";
 					request = new FakeRequest("PUT", "/push/enable/"+os+"/"+pushToken);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 result: " + contentAsString(result));
 					assertRoute(result, "User A register 1st device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 				
 					//Register DEVICE for user testRegisterDeviceA with os android and pushToken pushToken1
-					os="os";
+					os="android";
 					pushToken="pushToken1";
 					request = new FakeRequest("PUT", "/push/enable/"+os+"/"+pushToken);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice2 request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice2 result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice2 request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice2 result: " + contentAsString(result));
 					assertRoute(result, "User A register 2nd device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 					
 					ODatabaseRecordTx db = null;
 					
-					try {
-						 db = com.baasbox.db.DbHelper.getOrOpenConnection(TestConfig.VALUE_APPCODE, TestConfig.ADMIN_USERNAME, TestConfig.AUTH_ADMIN_PASS);
-					} catch (InvalidAppCodeException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
-					List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
-					
-					ODocument userA = null;
-					try {
-						userA = UserService.getUserProfilebyUsername(sFakeUserA);
-					} catch (SqlInjectionException e) {
-						Assert.fail("Error with RegisterDevice Test");
-						e.printStackTrace();
-					}
-					
-					//com.baasbox.db.DbHelper.reconnectAsAdmin();
-					
-					ODocument systemProps=userA.field(UserDao.ATTRIBUTES_SYSTEM);
-					ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-					boolean found=false;
-					
-					for (ODocument loginInfo : loginInfos){
-
-						if (loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
-							found=true;
+					try{
+						try {
+							 db = com.baasbox.db.DbHelper.getOrOpenConnection(TestConfig.VALUE_APPCODE, TestConfig.ADMIN_USERNAME, TestConfig.AUTH_ADMIN_PASS);
+						} catch (InvalidAppCodeException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
-					}
-					if (!found){
-						Assert.fail("Error with test RegisterDevice");
-					}
-					
-					// Prepare test for user B
-					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUserB);
-                    sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
-					sAuthEnc = TestConfig.encodeAuth(sFakeUserB, sPwd);
-					
-					
-					// Create user B
-				    request = new FakeRequest("POST", "/user");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withJsonBody(node, "POST");
-					result = routeAndCall(request);
-					assertRoute(result, "routeCreateUser B check username", Status.CREATED, "name\":\""+sFakeUserB+"\"", true);
-					
-					
-					//Register DEVICE for user testRegisterDeviceA with os os and pushToken pushToken
-					os="os";
-					pushToken="pushToken";
-					request = new FakeRequest("PUT", "/push/enable/"+os+"/"+pushToken);
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
-					result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice1 result: " + contentAsString(result));
-					assertRoute(result, "User B register device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
-					
-					
-					try {
-						userA = UserService.getUserProfilebyUsername(sFakeUserA);
-					} catch (SqlInjectionException e) {
-						Assert.fail("Error with RegisterDevice Test");
-						e.printStackTrace();
-					}
-					
-					systemProps=userA.field(UserDao.ATTRIBUTES_SYSTEM);
-					loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-					
-					for (ODocument loginInfo : loginInfos){
-
-						if (loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
+						
+						List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
+						
+						ODocument userA = null;
+						try {
+							userA = UserService.getUserProfilebyUsername(sFakeUserA);
+						} catch (SqlInjectionException e) {
+							Assert.fail("Error with RegisterDevice Test");
+							e.printStackTrace();
+						}
+						
+						//com.baasbox.db.DbHelper.reconnectAsAdmin();
+						
+						ODocument systemProps=userA.field(UserDao.ATTRIBUTES_SYSTEM);
+						ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+						boolean found=false;
+						
+						for (ODocument loginInfo : loginInfos){
+	
+							if (loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
+								found=true;
+							}
+						}
+						if (!found){
 							Assert.fail("Error with test RegisterDevice");
 						}
+						
+						// Prepare test for user B
+						node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUserB);
+	                    sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
+						sAuthEnc = TestConfig.encodeAuth(sFakeUserB, sPwd);
+						
+						
+						// Create user B
+					    request = new FakeRequest("POST", "/user");
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withJsonBody(node, "POST");
+						result = routeAndCall(request);
+						assertRoute(result, "routeCreateUser B check username", Status.CREATED, "name\":\""+sFakeUserB+"\"", true);
+						
+						
+						//Register DEVICE for user testRegisterDeviceA with os os and pushToken pushToken
+						os="os";
+						pushToken="pushToken";
+						request = new FakeRequest("PUT", "/push/enable/"+os+"/"+pushToken);
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
+						result = routeAndCall(request);
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 request: " + request.getWrappedRequest().headers());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("userAregisterDevice1 result: " + contentAsString(result));
+						assertRoute(result, "User B register device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
+						
+						
+						try {
+							userA = UserService.getUserProfilebyUsername(sFakeUserA);
+						} catch (SqlInjectionException e) {
+							Assert.fail("Error with RegisterDevice Test");
+							e.printStackTrace();
+						}
+						
+						systemProps=userA.field(UserDao.ATTRIBUTES_SYSTEM);
+						loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
+						
+						for (ODocument loginInfo : loginInfos){
+	
+							if (loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
+								Assert.fail("Error with test RegisterDevice");
+							}
+						}
+					}finally{
+						com.baasbox.db.DbHelper.close(db);
 					}
+					//admin can load the login_info structure
 					
-				   //com.baasbox.db.DbHelper.close(db);
+					request = new FakeRequest("GET", "/admin/user/" + sFakeUserA);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result = routeAndCall(request);
+					assertRoute(result, "Admin can load login_info", Status.OK, "\"login_info\":[{\"pushToken\":\"pushToken\",\"os\":\"ios\"},{\"os\":\"android\",\"pushToken\":\"pushToken1\"}]", true);
+					assertRoute(result, "Admin can load login_info (system attribute)", Status.OK, "},\"system\":{\"", true);
 
 				}
 			}

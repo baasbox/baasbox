@@ -19,7 +19,7 @@
 package com.baasbox.service.scripting.js;
 
 import com.baasbox.service.scripting.base.*;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import javax.script.*;
 
@@ -34,7 +34,7 @@ public class NashornEngine implements BaasboxScriptEngine {
     private static final ThreadLocal<Nashorn> NASHORN = new ThreadLocal<Nashorn>(){
         @Override
         protected Nashorn initialValue() {
-            if (Logger.isDebugEnabled())Logger.debug("Creating new nashorn instance");
+            if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("Creating new nashorn instance");
             ScriptEngine engine = sEngine.newEngine();
             Nashorn nashorn = new Nashorn(engine);
             nashorn.init();
@@ -71,7 +71,7 @@ public class NashornEngine implements BaasboxScriptEngine {
         try {
             return evaluator.eval(call);
         } catch (ScriptEvalException e){
-            Logger.error("Eval failure");
+            BaasBoxLogger.error("Eval failure");
             throw e;
         }
     }

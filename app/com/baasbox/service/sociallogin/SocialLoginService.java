@@ -25,7 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -39,7 +39,7 @@ import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -115,7 +115,7 @@ public abstract class SocialLoginService {
 		if(this.needToken()){
 			t = this.service.getRequestToken();
 			if(this.socialNetwork.equals("twitter")){
-				if (Logger.isDebugEnabled()) Logger.debug("setting token");
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("setting token");
 				s.put("twitter.token",t.getToken());
 				s.put("twitter.secret",t.getSecret());
 			}
@@ -222,7 +222,7 @@ public abstract class SocialLoginService {
 
 	public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException{
 		String url = getValidationURL(token);
-		HttpClient client = new DefaultHttpClient();
+		HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
 		HttpGet method = new HttpGet(url);
 
 		BasicResponseHandler brh = new BasicResponseHandler();

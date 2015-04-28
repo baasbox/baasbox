@@ -18,7 +18,7 @@
 
 package com.baasbox.configuration;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import org.apache.commons.lang3.BooleanUtils;
 
@@ -89,7 +89,7 @@ public enum PasswordRecovery implements IProperties{
 		      else
 		    	  parsedValue = newValue;
 	    }catch (Exception e){
-	    	Logger.warn(newValue + " value is invalid for key " + key + "\nNULL will be stored");
+	    	BaasBoxLogger.warn(newValue + " value is invalid for key " + key + "\nNULL will be stored");
 	    }
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);		
 		IndexPasswordRecoveryConfiguration idx;
@@ -97,7 +97,7 @@ public enum PasswordRecovery implements IProperties{
 			idx = new IndexPasswordRecoveryConfiguration();
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
@@ -115,7 +115,7 @@ public enum PasswordRecovery implements IProperties{
 			idx = new IndexPasswordRecoveryConfiguration();
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
@@ -175,7 +175,7 @@ public enum PasswordRecovery implements IProperties{
 	public void override(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)

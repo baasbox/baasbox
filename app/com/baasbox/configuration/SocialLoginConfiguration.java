@@ -18,7 +18,7 @@
 
 package com.baasbox.configuration;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.index.IndexSocialLoginConfiguration;
 
@@ -84,7 +84,7 @@ public enum SocialLoginConfiguration implements IProperties{
 			idx = new IndexSocialLoginConfiguration();
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}	
 	}
@@ -102,7 +102,7 @@ public enum SocialLoginConfiguration implements IProperties{
 			idx = new IndexSocialLoginConfiguration();
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
@@ -162,7 +162,7 @@ public enum SocialLoginConfiguration implements IProperties{
 	public void override(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)

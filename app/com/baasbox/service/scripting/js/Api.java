@@ -26,11 +26,17 @@ import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import jdk.nashorn.internal.runtime.ECMAErrors;
 import jdk.nashorn.internal.runtime.ECMAException;
-import play.Logger;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+
+import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -46,7 +52,7 @@ public class Api {
         try {
             JsonNode node = BBJson.mapper().readTree(commandStr);
             if (!node.isObject()){
-                Logger.error("Command is not an object");
+                BaasBoxLogger.error("Command is not an object");
                 throw ECMAErrors.typeError("Invalid command");
             }
             ObjectNode o = (ObjectNode)node;
@@ -56,13 +62,13 @@ public class Api {
             }
             JsonNode exec = CommandRegistry.execute(node,callback);
             String res = exec== null?null:exec.toString();
-            Logger.debug("Command result: "+res);
+            BaasBoxLogger.debug("Command result: "+res);
             return res;
         } catch (IOException e) {
-            Logger.error("IoError "+e.getMessage(),e);
+            BaasBoxLogger.error("IoError "+e.getMessage(),e);
             throw ECMAErrors.typeError(e,"Invalid command definition");
         } catch (CommandException e){
-            Logger.error("CommandError: "+e.getMessage(),e);
+            BaasBoxLogger.error("CommandError: "+e.getMessage(),e);
             throw new ECMAException(e.getMessage(),e);
         }
     }
@@ -83,5 +89,23 @@ public class Api {
 
     public static Object require(String name){
         return NashornEngine.getNashorn().require(name);
+    }
+    
+    public static String btoa (String stringToConvert){
+    	try {
+			return Base64.encodeBase64String(stringToConvert.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
+    }
+    
+    public static String atob (String stringToConvert){
+    	try {
+			return new String(Base64.decodeBase64(stringToConvert),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
     }
 }

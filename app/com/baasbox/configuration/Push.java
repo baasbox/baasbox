@@ -20,7 +20,7 @@ package com.baasbox.configuration;
 
 import org.apache.commons.lang.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.exception.ConfigurationException;
@@ -220,7 +220,7 @@ public enum Push implements IProperties	{
 	@Override
 	public void _setValue(Object newValue) {
 		Object parsedValue=null;
-		if (Logger.isDebugEnabled()) Logger.debug("Type:"+type+" Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Type:"+type+" Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
 		try{
 			if (newValue != null)
 				if (type == Boolean.class)
@@ -237,7 +237,7 @@ public enum Push implements IProperties	{
 				else
 					parsedValue = newValue;
 		}catch (Exception e){
-			Logger.warn(newValue + " value is invalid for key " + key + "\nNULL will be stored");
+			BaasBoxLogger.warn(newValue + " value is invalid for key " + key + "\nNULL will be stored");
 		}
 		if (changeCallback != null) changeCallback.change(getValue(), newValue);		
 		IndexPushConfiguration idx;
@@ -252,7 +252,7 @@ public enum Push implements IProperties	{
 				idx.put(key, parsedValue);
 			}
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
@@ -271,7 +271,7 @@ public enum Push implements IProperties	{
 			idx = new IndexPushConfiguration();
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
@@ -345,7 +345,7 @@ public enum Push implements IProperties	{
 	public void override(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)

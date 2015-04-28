@@ -18,18 +18,26 @@
 
 package com.baasbox.service.scripting.js;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.internal.runtime.Undefined;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.*;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import jdk.nashorn.internal.runtime.Undefined;
-import play.Logger;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.LongNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
  * This implements mappings of data to/from javascript
@@ -141,7 +149,7 @@ final class NashornMapper {
             return ScriptResult.NULL;
         } else {
 
-            Logger.warn("Mirror: %s, of type: %s",result,result.getClass());
+            BaasBoxLogger.warn("Mirror: %s, of type: %s",result,result.getClass());
             return ScriptResult.NULL;
         }
 
