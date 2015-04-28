@@ -131,18 +131,22 @@ public class StatisticsService {
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
-			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+			if (BBConfiguration.getStatisticsSystemOS() && db!=null) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
 			else dbProp.put("path", "N/A");
-			dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
-			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
-			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
+			dbProp.put("timezone", db==null?"":db.getStorage().getConfiguration().getTimeZone());
+			dbProp.put("locale.language", db==null?"":db.getStorage().getConfiguration().getLocaleLanguage());
+			dbProp.put("locale.country", db==null?"":db.getStorage().getConfiguration().getLocaleCountry());
 			
 			HashMap map = new HashMap();
 			map.put("properties", dbProp);
-			map.put("status", db.getStatus());
-			map.put("configuration", dbConfiguration());
+			map.put("status", db==null?"":db.getStatus());
+			map.put("configuration", db==null?"":dbConfiguration());
+			try{
 			map.put("physical_size", DbHelper.getDBTotalSize());
 			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
+			}catch (Exception e){
+				//swallow
+			}
 			map.put("size_threshold_percentage", BBConfiguration.getDBAlertThreshold());
 			
 			
