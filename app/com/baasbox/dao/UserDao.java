@@ -85,7 +85,7 @@ public class UserDao extends NodeDao  {
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException {
 		OrientGraph db = DbHelper.getOrientGraphConnection();
-		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
+		if (existsUserName(username)) throw new UserAlreadyExistsException("Error signing up");
 		OUser user=null;
 		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{DefaultRoles.REGISTERED_USER.toString()});
 		else {

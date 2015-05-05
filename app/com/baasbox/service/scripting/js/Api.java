@@ -49,6 +49,7 @@ public class Api {
     }
 
     public static String execCommand(String commandStr,JsonCallback callback){
+    	BaasBoxLogger.debug("Command to execute: "+commandStr);
         try {
             JsonNode node = BBJson.mapper().readTree(commandStr);
             if (!node.isObject()){
