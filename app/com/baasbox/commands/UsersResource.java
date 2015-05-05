@@ -285,9 +285,9 @@ class UsersResource extends BaseRestResource {
             if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
             JsonNode id = params.get(BaasBoxPrivateFields.ID.toString());
             String idString=null;
-            if (id!=null && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
-            if (id!=null && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
-            if (id!=null && id.isTextual()) idString=id.asText();
+            if (!(id instanceof NullNode) && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
+            if (!(id instanceof NullNode) && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
+            if (!(id instanceof NullNode) && id.isTextual()) idString=id.asText();
             JsonNode roleNode = params.get("role");
             String role;
             if (roleNode == null){
