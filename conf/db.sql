@@ -155,3 +155,21 @@ create property _BB_Script._invalid boolean;
 alter property _BB_Script._invalid mandatory=true;
 alter property _BB_Script._invalid notnull=true;
 create index _BB_Script.name unique;
+
+-- Authentication
+create class _BB_DBCredentials;
+create property _BB_DBCredentials.dbuser String;
+alter property _BB_DBCredentials.dbuser mandatory = true;
+alter property _BB_DBCredentials.dbuser notnull = true;
+create property _BB_DBCredentials.dbpassword String;
+alter property _BB_DBCredentials.dbpassword mandatory = true;
+alter property _BB_DBCredentials.dbpassword notnull = true;
+
+create class _BB_Authenticator;
+create property _BB_Authenticator.provider String;
+alter property _BB_Authenticator.provider mandatory = true;
+alter property _BB_Authenticator.provider notnull = true;
+create property _BB_Authenticator.dbuser link;
+
+
+-- todo add refresh token store
