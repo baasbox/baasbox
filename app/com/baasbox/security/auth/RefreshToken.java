@@ -9,9 +9,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Created by Andrea Tortorella on 5/11/15.
  */
 public class RefreshToken {
-    private long issued;
-    private long expiration;
-    private String tokenUUID;
+    private final long issued;
+    private final long expiration;
+    private final String tokenUUID;
+
 
     public RefreshToken(long issued,long expiration,String uuid){
         this.issued = issued;
@@ -20,14 +21,21 @@ public class RefreshToken {
     }
 
     public String encode(String secret){
-        ObjectNode token = Json.mapper().createObjectNode();
-        token.put("iat",issued);
-        token.put("exp",expiration);
-        token.put("id",tokenUUID);
+        ObjectNode token = toJson();
         String tokenSerial = Encoding.encodeBase64(token);
         String signature = Encoding.signHS256(tokenSerial, secret);
         return tokenSerial+"."+signature;
     }
+
+    private ObjectNode toJson()
+    {
+        ObjectNode token = Json.mapper().createObjectNode();
+        token.put("iat",issued);
+        token.put("exp",expiration);
+        token.put("id",tokenUUID);
+        return token;
+    }
+
 
     public static RefreshToken decode(String refresh,String secret) throws AuthException{
         int i = refresh.indexOf('.');
@@ -53,5 +61,40 @@ public class RefreshToken {
         throw new AuthException("invalid token");
     }
 
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
+        RefreshToken token = (RefreshToken) o;
+
+        if (issued != token.issued) {
+            return false;
+        }
+        if (expiration != token.expiration) {
+            return false;
+        }
+        return tokenUUID.equals(token.tokenUUID);
+
+    }
+
+    @Override
+    public int hashCode()
+    {
+        int result = (int) (issued ^ (issued >>> 32));
+        result = 31 * result + (int) (expiration ^ (expiration >>> 32));
+        result = 31 * result + tokenUUID.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString()
+    {
+        return toJson().toString();
+    }
 }
