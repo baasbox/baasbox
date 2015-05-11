@@ -69,7 +69,7 @@ public class TokenTests
         String payload = original.substring(start + 1, end);
         String s = Encoding.decodeBase64(payload);
         ObjectNode node =(ObjectNode) Json.mapper().readTreeOrMissing(s);
-        node.put(SUBJECT,"random");
+        node.put("sub","random");
         String tamperedPayload = Encoding.encodeBase64(node);
         return original.substring(0,start)+'.'+tamperedPayload+'.'+original.substring(end+1);
     }
