@@ -37,7 +37,7 @@ public class JWTToken
     private String jti; // salt
     public Claims claims;
 
-    private JWTToken(String iss, long iat, long exp, long nbf,
+    public JWTToken(String iss, long iat, long exp, long nbf,
                      String sub, String aud, String nonce,
                      String jti, String method, Claims claims)
     {
@@ -67,10 +67,10 @@ public class JWTToken
         return issuedAt;
     }
 
-
     public String getMethod() {
         return amr;
     }
+
 
     public static JWTToken decode(String token,String secret) throws AuthException{
         int indexFirstDot = token.indexOf('.');
@@ -96,11 +96,11 @@ public class JWTToken
         if (!jwtJson.isObject()){
             throw new AuthException("invalid token");
         }
-        return jsonToJWT((ObjectNode)jwtJson);
+        return jsonToJWT((ObjectNode) jwtJson);
     }
 
 
-    private static JWTToken jsonToJWT(ObjectNode payload){
+    public static JWTToken jsonToJWT(ObjectNode payload){
         String iss = payload.path(ISSUER).asText();
         long iat = payload.path(ISSUED_AT).asLong();
         long exp = payload.path(EXPIRES_AT).asLong(-1);
@@ -111,9 +111,12 @@ public class JWTToken
         String jti = payload.path(JTI).asText();
         String method = payload.path(AUTH_METHOD).asText();
         ObjectNode claimsJson = (ObjectNode)payload.get(EXTRA_CLAIMS);
-        Claims claims = new Claims(claimsJson);
-
-
+        Claims claims;
+        if (claimsJson != null) {
+            claims = new Claims(claimsJson);
+        } else {
+            claims = null;
+        }
         return new JWTToken(iss,iat,exp,nbf,sub,aud,nonce,jti,method,claims);
     }
 
@@ -187,5 +190,64 @@ public class JWTToken
         }
     }
 
+
+    @Override
+    public String toString()
+    {
+        return encodeJson(this).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        JWTToken token = (JWTToken) o;
+        if (issuedAt != token.issuedAt) {
+            return false;
+        }
+        if (expiresAt != token.expiresAt) {
+            return false;
+        }
+        if (notBefore != token.notBefore) {
+            return false;
+        }
+        if (!issuer.equals(token.issuer)) {
+            return false;
+        }
+        if (subject != null ? !subject.equals(token.subject) : token.subject != null) {
+            return false;
+        }
+        if (audience != null ? !audience.equals(token.audience) : token.audience != null) {
+            return false;
+        }
+        if (nonce != null ? !nonce.equals(token.nonce) : token.nonce != null) {
+            return false;
+        }
+        if (!amr.equals(token.amr)) {
+            return false;
+        }
+        if (!jti.equals(token.jti)) {
+            return false;
+        }
+        return !(claims != null ? !claims.equals(token.claims) : token.claims != null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = issuer.hashCode();
+        result = 31 * result + (int) (issuedAt ^ (issuedAt >>> 32));
+        result = 31 * result + (int) (expiresAt ^ (expiresAt >>> 32));
+        result = 31 * result + (int) (notBefore ^ (notBefore >>> 32));
+        result = 31 * result + (subject != null ? subject.hashCode() : 0);
+        result = 31 * result + (audience != null ? audience.hashCode() : 0);
+        result = 31 * result + (nonce != null ? nonce.hashCode() : 0);
+        result = 31 * result + amr.hashCode();
+        result = 31 * result + jti.hashCode();
+        return result;
+    }
 
 }
