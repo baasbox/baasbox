@@ -4,6 +4,8 @@ import com.baasbox.service.scripting.js.Json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.UUID;
+
 
 /**
  * Created by Andrea Tortorella on 5/11/15.
@@ -96,5 +98,10 @@ public class RefreshToken {
     public String toString()
     {
         return toJson().toString();
+    }
+
+    public static RefreshToken create(long epochSecond)
+    {
+        return new RefreshToken(epochSecond,-1, UUID.randomUUID().toString());
     }
 }
