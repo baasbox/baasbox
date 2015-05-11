@@ -5,10 +5,8 @@ import com.baasbox.security.auth.Encoding;
 import com.baasbox.security.auth.JWTToken;
 
 import com.baasbox.service.scripting.js.Json;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import play.Logger;
 
 import java.time.Clock;
 import java.util.UUID;
@@ -27,7 +25,7 @@ public class TokenTests
         JWTToken token = makeNewToken();
 
         String encrypted = token.encode("secret");
-
+        
         try {
             JWTToken decoded = JWTToken.decode(encrypted,"secret");
 

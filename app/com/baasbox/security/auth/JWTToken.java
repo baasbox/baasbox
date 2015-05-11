@@ -35,11 +35,11 @@ public class JWTToken
     private String nonce; // client id
     private String amr; // authentication method reference
     private String jti; // salt
-    public Claims claims;
+    public ObjectNode claims;
 
     public JWTToken(String iss, long iat, long exp, long nbf,
                      String sub, String aud, String nonce,
-                     String jti, String method, Claims claims)
+                     String jti, String method, ObjectNode claims)
     {
         this.issuer = iss;
         this.issuedAt = iat;
@@ -110,10 +110,10 @@ public class JWTToken
         String nonce = payload.path(CLIENT_ID).asText();
         String jti = payload.path(JTI).asText();
         String method = payload.path(AUTH_METHOD).asText();
-        ObjectNode claimsJson = (ObjectNode)payload.get(EXTRA_CLAIMS);
-        Claims claims;
-        if (claimsJson != null) {
-            claims = new Claims(claimsJson);
+        JsonNode claimsNode = payload.get(EXTRA_CLAIMS);
+        ObjectNode claims;
+        if (claimsNode != null && claimsNode.isObject()){
+            claims = (ObjectNode)claimsNode;
         } else {
             claims = null;
         }
@@ -164,7 +164,7 @@ public class JWTToken
         encoded.put(CLIENT_ID,token.nonce);
         encoded.put(AUTH_METHOD, token.amr);
         if (token.claims != null) {
-            encoded.put(EXTRA_CLAIMS, token.claims.encode());
+            encoded.put(EXTRA_CLAIMS, token.claims);
         }
         return encoded;
     }
@@ -175,21 +175,6 @@ public class JWTToken
         header.put(TYPE,JWT);
         return header;
     }
-
-
-
-    public static class Claims {
-        private ObjectNode wrapped;
-
-        private Claims(ObjectNode node){
-            this.wrapped = node;
-        }
-
-        public ObjectNode encode(){
-            return wrapped;
-        }
-    }
-
 
     @Override
     public String toString()
