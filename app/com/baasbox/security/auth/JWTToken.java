@@ -1,6 +1,6 @@
 package com.baasbox.security.auth;
 
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -82,7 +82,7 @@ public class JWTToken
             throw new AuthException("invalid token format");
         }
         String headerPart = token.substring(0, indexFirstDot);
-        JsonNode headerNode = Json.mapper().readTreeOrMissing(Encoding.decodeBase64(headerPart));
+        JsonNode headerNode = BBJson.mapper().readTreeOrMissing(Encoding.decodeBase64(headerPart));
         validateHeader(headerNode);
         String payload = token.substring(0, indexSecondDot);
         String userSignature = token.substring(indexSecondDot + 1);
@@ -92,7 +92,7 @@ public class JWTToken
         }
 
         String jwtPayload = payload.substring(indexFirstDot+1);
-        JsonNode jwtJson = Json.mapper().readTreeOrMissing(Encoding.decodeBase64(jwtPayload));
+        JsonNode jwtJson = BBJson.mapper().readTreeOrMissing(Encoding.decodeBase64(jwtPayload));
         if (!jwtJson.isObject()){
             throw new AuthException("invalid token");
         }
@@ -149,7 +149,7 @@ public class JWTToken
 
 
     private static ObjectNode encodeJson(JWTToken token){
-        ObjectNode encoded = Json.mapper().createObjectNode();
+        ObjectNode encoded = BBJson.mapper().createObjectNode();
         encoded.put(ISSUER,token.issuer);
         encoded.put(ISSUED_AT,token.issuedAt);
         if (token.expiresAt != -1) {
@@ -170,7 +170,7 @@ public class JWTToken
     }
 
     private static ObjectNode createHeader(){
-        ObjectNode header = Json.mapper().createObjectNode();
+        ObjectNode header = BBJson.mapper().createObjectNode();
         header.put(ALGORITHM,ALGORITHM_TYPE);
         header.put(TYPE,JWT);
         return header;

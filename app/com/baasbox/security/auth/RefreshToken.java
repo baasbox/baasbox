@@ -1,6 +1,6 @@
 package com.baasbox.security.auth;
 
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -31,7 +31,7 @@ public class RefreshToken {
 
     private ObjectNode toJson()
     {
-        ObjectNode token = Json.mapper().createObjectNode();
+        ObjectNode token = BBJson.mapper().createObjectNode();
         token.put("iat",issued);
         token.put("exp",expiration);
         token.put("id",tokenUUID);
@@ -50,7 +50,7 @@ public class RefreshToken {
         if (!verify.equals(signature)){
             throw new AuthException("Invalid token");
         }
-        JsonNode node = Json.mapper().readTreeOrMissing(Encoding.decodeBase64(payload));
+        JsonNode node = BBJson.mapper().readTreeOrMissing(Encoding.decodeBase64(payload));
         return decodeRefresh(node);
     }
 
