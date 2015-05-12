@@ -174,7 +174,8 @@ public class RegisterDeviceTest extends AbstractTest {
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "Admin can load login_info", Status.OK, "system\":{\"login_info\":[{\"pushToken\":\"", true);
+					assertRoute(result, "Admin can load login_info", Status.OK, "\"login_info\":[{\"pushToken\":\"pushToken\",\"os\":\"ios\"},{\"os\":\"android\",\"pushToken\":\"pushToken1\"}]", true);
+					assertRoute(result, "Admin can load login_info (system attribute)", Status.OK, "},\"system\":{\"", true);
 
 				}
 			}

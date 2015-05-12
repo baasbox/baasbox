@@ -40,6 +40,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
+
 /**
  * Created by eto on 13/10/14.
  * 
@@ -65,6 +66,7 @@ public class EventsController {
         }));
 	}
 	
+
     public static Result openLogger(){
     	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
         try {

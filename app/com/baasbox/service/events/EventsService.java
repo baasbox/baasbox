@@ -2,15 +2,11 @@ package com.baasbox.service.events;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
-import play.libs.Akka;
-import play.libs.F;
-
-import com.baasbox.service.events.EventsService.StatType;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
+
 
 /**
  * Stub service for sse connections

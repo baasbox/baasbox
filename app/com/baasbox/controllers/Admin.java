@@ -22,11 +22,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+
 import java.net.MalformedURLException;
+
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
@@ -34,10 +37,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Play;
+import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.Json;
 import play.libs.WS;
-import play.libs.WS.Response;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -50,10 +53,10 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.IProperties;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
+import com.baasbox.controllers.actions.filters.CheckAdminRoleFilterAsync;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
-import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.AdminCannotChangeRoleException;
@@ -103,12 +106,138 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
+@With  ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class, CheckAdminRoleFilterAsync.class,ExtractQueryParameters.class})
 public class Admin extends Controller {
+
+	//todo async
 
 	static String backupDir = DbManagerService.backupDir;
 	static String fileSeparator = DbManagerService.fileSeparator;
 
+	public static F.Promise<Result> getUsers(){
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+
+
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+			List<ODocument> users=null;
+			String ret;
+			try{
+				users = UserService.getUsers(criteria);
+			}catch (SqlInjectionException e ){
+				return badRequest("The request is malformed: check your query criteria");
+			}
+			try{
+				ret=JSONFormats.prepareResponseToJson(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN);
+			}catch (Throwable e){
+				return internalServerError(ExceptionUtils.getFullStackTrace(e));
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			response().setContentType("application/json");
+			return ok(ret);
+
+		}));
+	}
+
+	public static F.Promise<Result> getUser(String username){
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
+
+			ODocument user = null;
+			try {
+				user = UserService.getUserProfilebyUsername(username);
+			} catch (SqlInjectionException e1) {
+				return badRequest("The request is malformed: check your query criteria");
+			}
+			if (user == null) {
+				return notFound("User " + username + " not found");
+			}
+			String ret;
+			try {
+				ret = user.toJSON(JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
+			} catch (Throwable e) {
+				return internalServerError(ExceptionUtils.getFullStackTrace(e));
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			response().setContentType("application/json");
+			return ok(ret);
+		}));
+	}
+
+	public static F.Promise<Result> getCollections(){
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		Context ctx=Http.Context.current.get();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+			List<ImmutableMap> result=null;
+			try {
+				QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+				List<ODocument> collections = CollectionService.getCollections(criteria);
+				result = StatisticsService.collectionsDetails(collections);
+			} catch (Exception e){
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+				return internalServerError(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			response().setContentType("application/json");
+			return ok(toJson(result));
+
+		}));
+	}
+
+	public static F.Promise<Result> createCollection(String name) {
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try{
+				CollectionService.create(name);
+			}catch (CollectionAlreadyExistsException e) {
+				return badRequest(e.getMessage());
+			}catch (InvalidCollectionException e) {
+				return badRequest("The collection name " + name + " is invalid");
+			}catch (InvalidModelException e){
+				return badRequest(e.getMessage());
+			}catch (Throwable e){
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+				throw e;
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return created();
+		}));
+
+	}
+
+	public static F.Promise<Result> getDBStatistics(){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			ODatabaseRecordTx db = DbHelper.getConnection();
+			ImmutableMap response;
+			try {
+				String bbId = Internal.INSTALLATION_ID.getValueAsString();
+				if (bbId==null) bbId="00-00-00"; //--<<--- this prevents an OrientDB bug retrieving keys
+				response = ImmutableMap.<String,Object>builder().
+						put("installation", (Object)ImmutableMap.of(
+								"bb_id",bbId
+								,"bb_version", Internal.DB_VERSION.getValueAsString()
+						))
+						.put("db", StatisticsService.db())
+						.put("data",StatisticsService.data())
+						.put("os",StatisticsService.os())
+						.put("java",StatisticsService.java())
+						.put("memory",StatisticsService.memory()).build();
+
+			} catch (SqlInjectionException e) {
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
+				return internalServerError(e.getMessage());
+			} catch (InvalidCollectionException e) {
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
+				return internalServerError(e.getMessage());
+			}
+			response().setContentType("application/json");
+			return ok(toJson(response));
+		}));
+	}
+	
 	public static Result getSystemLog(){
         DbHelper.close(DbHelper.getConnection());
         response().setContentType("text/event-stream");
@@ -116,129 +245,28 @@ public class Admin extends Controller {
            
         }));
 	}
-	
-	public static Result getUsers(){
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		Context ctx=Http.Context.current.get();
-		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		List<ODocument> users=null;
-		String ret="{[]}";
-		try{
-			users = com.baasbox.service.user.UserService.getUsers(criteria);
-		}catch (SqlInjectionException e ){
-			return badRequest("The request is malformed: check your query criteria");
-		}
-		try{
-			ret=JSONFormats.prepareResponseToJson(users,JSONFormats.Formats.USER_LOAD_BY_ADMIN);
-		}catch (Throwable e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		response().setContentType("application/json");
-		return ok(ret);
-	}
 
-	public static Result getUser(String username){
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		Context ctx=Http.Context.current.get();
 
-		ODocument user=null;
-		try {
-			user = com.baasbox.service.user.UserService.getUserProfilebyUsername(username);
-		} catch (SqlInjectionException e1) {
-			return badRequest("The request is malformed: check your query criteria");
-		}
-		if (user==null) return notFound("User " + username + " not found");
-		String ret="";
-		try{
-			ret=user.toJSON(JSONFormats.Formats.USER_LOAD_BY_ADMIN.toString());
-		}catch (Throwable e){
-			return internalServerError(ExceptionUtils.getFullStackTrace(e));
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		response().setContentType("application/json");
-		return ok(ret);
-	}
-
-	public static Result getCollections(){
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-
-		List<ImmutableMap> result=null;
-		try {
-			Context ctx=Http.Context.current.get();
-			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-			List<ODocument> collections = CollectionService.getCollections(criteria);
-			result = StatisticsService.collectionsDetails(collections);
-		} catch (Exception e){
-			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		response().setContentType("application/json");
-		return ok(toJson(result));
-	}
-
-	public static Result createCollection(String name) throws Throwable{
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		try{
-			CollectionService.create(name);
-		}catch (CollectionAlreadyExistsException e) {
-			return badRequest(e.getMessage()); 
-		}catch (InvalidCollectionException e) {
-			return badRequest("The collection name " + name + " is invalid");
-		}catch (InvalidModelException e){
-			return badRequest(e.getMessage());
-		}catch (Throwable e){
-			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			throw e;
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return created();
-	}
-
-	public static Result getDBStatistics(){
-		ODatabaseRecordTx db = DbHelper.getConnection();
-		ImmutableMap response;
-		try {
-			String bbId = Internal.INSTALLATION_ID.getValueAsString();
-			if (bbId==null) bbId="00-00-00"; //--<<--- this prevents an OrientDB bug retrieving keys
-			response = ImmutableMap.<String,Object>builder().
-					put("installation", (Object)ImmutableMap.of(
-							"bb_id",bbId
-							,"bb_version", Internal.DB_VERSION.getValueAsString()
-							))
-							.put("db", StatisticsService.db())
-							.put("data",StatisticsService.data())
-							.put("os",StatisticsService.os())
-							.put("java",StatisticsService.java())
-							.put("memory",StatisticsService.memory()).build();
-
-		} catch (SqlInjectionException e) {
-			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		} catch (InvalidCollectionException e) {
-			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		}
-		response().setContentType("application/json");
-		return ok(toJson(response));
-	}
-
-	public static Result createRole(String name){
+	public static F.Promise<Result> createRole(String name){
 		String inheritedRole=DefaultRoles.REGISTERED_USER.toString();
-		String description="";
+		String description;
 		JsonNode json = request().body().asJson();
 		if(json != null) {
 			description = Objects.firstNonNull(json.findPath("description").textValue(),"");
+		} else {
+			description = "";
 		}
-		try {
-			RoleService.createRole(name, inheritedRole, description);
-		} catch (RoleNotFoundException e) {
-			return badRequest("Role " + inheritedRole + " does not exist. Hint: check the 'inheritedRole' in your payload");
-		} catch (RoleAlreadyExistsException e) {
-			return badRequest("Role " + name + " already exists");
-		}
-		return created();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				RoleService.createRole(name, inheritedRole, description);
+			} catch (RoleNotFoundException e) {
+				return badRequest("Role " + inheritedRole + " does not exist. Hint: check the 'inheritedRole' in your payload");
+			} catch (RoleAlreadyExistsException e) {
+				return badRequest("Role " + name + " already exists");
+			}
+			return created();
+		}));
+
 	}
 
 	/**
@@ -253,26 +281,32 @@ public class Admin extends Controller {
 	 * @param name the role name to edit
 	 * @return
 	 */
-	public static Result editRole(String name){
-		String description="";
-		String newName="";
+	public static F.Promise<Result> editRole(String name){
+		String description;
+		String newName;
 		JsonNode json = request().body().asJson();
 		if(json != null) {
 			description = json.findPath("description").textValue();
 			newName = json.findPath("new_name").textValue();
+		} else {
+			description="";
+			newName="";
 		}
-		try {
-			RoleService.editRole(name, null, description,newName);
-		} catch (RoleNotModifiableException e) {
-			return badRequest("Role " + name + " is not modifiable");
-		} catch (RoleNotFoundException e) {
-			return notFound("Role " + name + " does not exists");
-		}catch (ORecordDuplicatedException e){
-			return badRequest("Role " + name + " already exists");
-		} catch (OIndexException e){
-			return badRequest("Role " + name + " already exists");
-		}
-		return ok();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				RoleService.editRole(name, null, description,newName);
+			} catch (RoleNotModifiableException e) {
+				return badRequest("Role " + name + " is not modifiable");
+			} catch (RoleNotFoundException e) {
+				return notFound("Role " + name + " does not exists");
+			}catch (ORecordDuplicatedException e){
+				return badRequest("Role " + name + " already exists");
+			} catch (OIndexException e){
+				return badRequest("Role " + name + " already exists");
+			}
+			return ok();
+		}));
+
 	}
 
 
@@ -282,22 +316,26 @@ public class Admin extends Controller {
 	 * @return
 	 */
 
-	public static Result deleteRole(String name){
-		try {
-			RoleService.delete(name);
-		} catch (RoleNotFoundException e) {
-			return notFound("Role " + name + " does not exist");
-		} catch (RoleNotModifiableException e) {
-			badRequest("Role " + name + " is not deletable. HINT: maybe you tried to delete an internal role?");
-		}
-		return ok();
+	public static F.Promise<Result> deleteRole(String name){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				RoleService.delete(name);
+			} catch (RoleNotFoundException e) {
+				return notFound("Role " + name + " does not exist");
+			} catch (RoleNotModifiableException e) {
+				badRequest("Role " + name + " is not deletable. HINT: maybe you tried to delete an internal role?");
+			}
+			return ok();
+		}));
 	}
 
-	public static Result getRoles() throws SqlInjectionException{
-		List<ODocument> listOfRoles=RoleService.getRoles();
-		String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
-		response().setContentType("application/json");
-		return ok(ret);
+	public static F.Promise<Result> getRoles() throws SqlInjectionException{
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			List<ODocument> listOfRoles=RoleService.getRoles();
+			String ret = OJSONWriter.listToJSON(listOfRoles, JSONFormats.Formats.ROLES.toString());
+			response().setContentType("application/json");
+			return ok(ret);
+		}));
 	}
 
 	/***
@@ -306,18 +344,19 @@ public class Admin extends Controller {
 	 * @return
 	 * @throws SqlInjectionException
 	 */
-	public static Result getRole(String name) throws SqlInjectionException{
-		List<ODocument> listOfRoles=RoleService.getRoles(name);
-		if (listOfRoles.size()==0) return notFound("Role " + name + " not found");
-		ODocument role = listOfRoles.get(0);
-		String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());
-		response().setContentType("application/json");
-		return ok(ret);
+	public static F.Promise<Result> getRole(String name) throws SqlInjectionException{
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			List<ODocument> listOfRoles = RoleService.getRoles(name);
+			if (listOfRoles.size() == 0) return notFound("Role " + name + " not found");
+			ODocument role = listOfRoles.get(0);
+			String ret = role.toJSON(JSONFormats.Formats.ROLES.toString());
+			response().setContentType("application/json");
+			return ok(ret);
+		}));
 	}
 
 	/* create user in any role */
-
-	public static Result createUser(){
+	public static F.Promise<Result> createUser(){
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 
@@ -325,18 +364,22 @@ public class Admin extends Controller {
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp bodyJson: " + bodyJson);
 
 		//check and validate input
-		if (!bodyJson.has("username"))
-			return badRequest("The 'username' field is missing");
-		if (!bodyJson.has("password"))
-			return badRequest("The 'password' field is missing");		
-		if (!bodyJson.has("role"))
-			return badRequest("The 'role' field is missing");	
+		if (!bodyJson.has("username")) {
+			return F.Promise.pure(badRequest("The 'username' field is missing"));
+		}
+		if (!bodyJson.has("password")) {
+			return F.Promise.pure(badRequest("The 'password' field is missing"));
+		}
+		if (!bodyJson.has("role")) {
+			return F.Promise.pure(badRequest("The 'role' field is missing"));
+		}
 
 		//extract fields
 		JsonNode nonAppUserAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
 		JsonNode privateAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
 		JsonNode friendsAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
 		JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+
 		JsonNode userID = bodyJson.get(BaasBoxPrivateFields.ID.toString());
 		
 		String username=(String) bodyJson.findValuesAsText("username").get(0);
@@ -344,40 +387,44 @@ public class Admin extends Controller {
 		String role=(String)  bodyJson.findValuesAsText("role").get(0);
 		String id = (userID!=null && userID.isTextual())? userID.asText():null;
 
+
 		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
-			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
-				return badRequest("The email address must be valid.");
+			if (!Util.validateEmail(privateAttributes.findValuesAsText("email").get(0)) )
+				return F.Promise.pure(badRequest("The email address must be valid."));
 		}
 
 		//try to signup new user
-		try {
-			UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false,id);
-		}catch(InvalidParameterException e){
-			return badRequest(e.getMessage());  
-		}catch (InvalidJsonException e){
-			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
-					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
-					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
-					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
-					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
-					" they must be an object, not a value.");
-		}catch (UserAlreadyExistsException e){
-			return badRequest(e.getMessage());
-		} catch (EmailAlreadyUsedException e){
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
-			return badRequest(username + ": the email provided is already in use");
-		} catch (Exception e) {
-			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e) ;
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return created();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				UserService.signUp(username, password, null,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false,id);
+			}catch(InvalidParameterException e){
+				return badRequest(e.getMessage());
+			}catch (InvalidJsonException e){
+				return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() +
+						"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
+						", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
+						", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  +
+						", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
+						" they must be an object, not a value.");
+			}catch (UserAlreadyExistsException e){
+				return badRequest(e.getMessage());
+			} catch (EmailAlreadyUsedException e){
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
+				return badRequest(username + ": the email provided is already in use");
+			} catch (Exception e) {
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e) ;
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return created();
+		}));
 	}//createUser
 
 
-	public static Result updateUser(String username){
+	public static F.Promise<Result> updateUser(String username){
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+
 		Http.RequestBody body = request().body();
 
 		JsonNode bodyJson= body.asJson();
@@ -413,40 +460,44 @@ public class Admin extends Controller {
 			}
 
 		}catch(Exception npe){
-			return badRequest("The '"+ missingField+"' field is missing");
+			return F.Promise.pure(badRequest("The '" + missingField + "' field is missing"));
 		}
-		String role=null;
+
+		final String  role;
 		if (bodyJson.has("role"))
 			role= (String)  bodyJson.findValuesAsText("role").get(0);
+		else role=null;
 
 		if (privateAttributes.has("email")) {
 			//check if email address is valid
 			if (!Util.validateEmail((String) (String) privateAttributes.findValuesAsText("email").get(0)) )
-				return badRequest("The email address must be valid.");
+				return F.Promise.pure(badRequest("The email address must be valid."));
 		}
 
-		ODocument user=null;
-		//try to update new user
-		try {
-			user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
-		}catch(InvalidParameterException e){
-			return badRequest(e.getMessage());  
-		}catch (InvalidJsonException e){
-			return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
-					"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
-					", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
-					", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
-					", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
-					" they must be an object, not a value.");
-		}catch (AdminCannotChangeRoleException e){
-			return badRequest("User 'admin' cannot change role");
-		}catch (Throwable e){
-			BaasBoxLogger.warn("signUp", e);
-			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return ok(user.toJSON(Formats.USER.toString()));
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			ODocument user=null;
+			//try to update new user
+			try {
+				user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
+			}catch(InvalidParameterException e){
+				return badRequest(e.getMessage());  
+			}catch (InvalidJsonException e){
+				return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
+						"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
+						", " + UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER+
+						", " + UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER  + 
+						", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
+						" they must be an object, not a value.");
+			}catch (AdminCannotChangeRoleException e){
+				return badRequest("User 'admin' cannot change role");
+			}catch (Throwable e){
+				BaasBoxLogger.warn("signUp", e);
+				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
+				else return internalServerError(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return ok(user.toJSON(Formats.USER.toString()));
+		}));
 	}//updateUser
 
 	/***
@@ -456,36 +507,37 @@ public class Admin extends Controller {
 	 * @throws UserNotFoundException 
 	 * @throws SqlInjectionException 
 	 */
-	public static Result changePassword(String username) throws SqlInjectionException, UserNotFoundException{
+	public static F.Promise<Result> changePassword(String username) throws SqlInjectionException, UserNotFoundException{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson(); //{"password":"Password"}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("changePassword bodyJson: " + bodyJson);
 		
-		if (bodyJson==null) return badRequest("The body payload cannot be empty.");		  
+		if (bodyJson==null) return F.Promise.pure(badRequest("The body payload cannot be empty."));
 		JsonNode passwordNode=bodyJson.findValue("password");
 		
-		if (passwordNode==null) return badRequest("The body payload doesn't contain password field");
+		if (passwordNode==null) return F.Promise.pure(badRequest("The body payload doesn't contain password field"));
 		String password=passwordNode.asText();	  
-		
-		try{
-			UserService.changePassword(username, password);
-		} catch (UserNotFoundException e) {
-		    BaasBoxLogger.debug("Username not found " + username, e);
-		    return notFound("Username not found");
-		} catch (OpenTransactionException e) {
-			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e);
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return ok();	
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try{
+				UserService.changePassword(username, password);
+			} catch (UserNotFoundException e) {
+				BaasBoxLogger.debug("Username not found " + username, e);
+				return notFound("Username not found");
+			} catch (OpenTransactionException e) {
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return ok();
+		}));
 	}
 
 	
 	
 
-	public static Result dropUser(){
-		return status(NOT_IMPLEMENTED);
+	public static F.Promise<Result> dropUser(){
+		return F.Promise.pure(status(NOT_IMPLEMENTED));
 	}
 
 	/***
@@ -494,139 +546,190 @@ public class Admin extends Controller {
 	 * @param name the Collection to drop
 	 * @return
 	 */
-	public static Result dropCollection(String name){
+	public static F.Promise<Result> dropCollection(String name){
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		try {
-			CollectionService.drop(name);
-		}catch (SqlInjectionException e){
-			return badRequest("The Collection name "+ name +" is malformed or invalid.");
-		}catch (InvalidCollectionException e){
-			return notFound("The Collection " + name + " does not exist");
-		}catch (Exception e){
-			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
-		}
-		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		response().setContentType("application/json");
-		return ok();
-	}
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 
-
-
-	public static Result deleteDocument(){
-		return status(NOT_IMPLEMENTED);
-	}
-
-	public static Result dumpConfiguration(String returnType){
-		String dump="";
-		if (returnType.equals("txt")) {
-			dump= PropertiesConfigurationHelper.dumpConfiguration();
-			response().setContentType("application/text");
-		}else if (returnType.equals("json")){
-			dump = PropertiesConfigurationHelper.dumpConfigurationAsJson();
+			try {
+				CollectionService.drop(name);
+			} catch (SqlInjectionException e) {
+				return badRequest("The Collection name " + name + " is malformed or invalid.");
+			} catch (InvalidCollectionException e) {
+				return notFound("The Collection " + name + " does not exist");
+			} catch (Exception e) {
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+				return internalServerError(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			response().setContentType("application/json");
-		}
-		return ok(dump);
+			return ok();
+		}));
 	}
 
-	public static Result setConfiguration(String section, String subSection, String key, String value) throws PushNotInitializedException, PushSwitchException, MalformedURLException, IOException, PushInvalidApiKeyException{
+
+
+	public static F.Promise<Result> deleteDocument(){
+		return F.Promise.pure(status(NOT_IMPLEMENTED));
+	}
+
+	public static F.Promise<Result> dumpConfiguration(String returnType){
+		//String dump="";
+		if (returnType.equals("txt")) {
+			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+				String dump= PropertiesConfigurationHelper.dumpConfiguration();
+				response().setContentType("application/text");
+				return ok(dump);
+			}));
+
+		}else if (returnType.equals("json")){
+			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+				String dump = PropertiesConfigurationHelper.dumpConfigurationAsJson();
+				response().setContentType("application/json");
+				return ok(dump);
+			}));
+
+		} else {
+			return F.Promise.pure(ok(""));
+		}
+		//return F.Promise.pure(ok(dump));
+	}
+
+	public static F.Promise<Result> setConfiguration(String section, String subSection, String key, String value)
+			/*throws PushNotInitializedException, PushSwitchException, MalformedURLException, IOException, PushInvalidApiKeyException*/{
 		
 		Class conf = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
-		if (conf==null) return notFound(section + " is not a valid configuration section");
-		boolean inQueryString =false;
+		if (conf==null) {
+			return F.Promise.pure(notFound(section + " is not a valid configuration section"));
+		}
+		//boolean inQueryString =false;
+
 		String contentType = request().getHeader(CONTENT_TYPE);
 		if(StringUtils.isEmpty(contentType)){
-			return badRequest("The content-type request header should be present in order to successfully update a setting.");
+			return F.Promise.pure(badRequest("The content-type request header should be present in order to successfully update a setting."));
 		}
 		if(StringUtils.isEmpty(key)){
-			return badRequest("The key parameter should be specified in the url.");
+			return F.Promise.pure(badRequest("The key parameter should be specified in the url."));
 		}
-		try {
-			Http.RequestBody b = request().body();
-			if(contentType.indexOf("application/json")>-1){
-				JsonNode bodyJson= b.asJson();
-				if(StringUtils.isEmpty(value)){
-					value = bodyJson.has("value")?bodyJson.get("value").textValue():null;
-				}else{
-					inQueryString = true;
+
+		Http.RequestBody b = request().body();
+		if(contentType.contains("application/json")){
+			JsonNode bodyJson= b.asJson();
+			String propertyValue;
+			boolean inQueryString;
+			if (StringUtils.isEmpty(value)){
+				propertyValue = bodyJson.has("value")?bodyJson.get("value").textValue():null;
+				inQueryString = false;
+			} else {
+				propertyValue = value;
+				inQueryString = true;
+			}
+			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+				PropertiesConfigurationHelper.setByKey(conf,key,propertyValue);
+				String message = "";
+				if(inQueryString){
+					message = "You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.";
 				}
-				if(StringUtils.isEmpty(value)){
-					return badRequest(String.format("Value for %s section has not been specified.Hint: pass them as a query string (soon deprecated) or as a json object in the request {'value':'...'}",section));
-				}
-				PropertiesConfigurationHelper.setByKey(conf, key, value);
-			
-			}else{
-				
-				IProperties i = (IProperties)PropertiesConfigurationHelper.findByKey(conf, key);
-				if(i.getType().equals(ConfigurationFileContainer.class)){
+				return ok(message);
+			})).recover((t) -> handleConfError(propertyValue, t));
+
+		} else {
+			try {
+				IProperties i =(IProperties)PropertiesConfigurationHelper.findByKey(conf,key);
+				if (i.getType().equals(ConfigurationFileContainer.class)){
 					MultipartFormData  body = request().body().asMultipartFormData();
-					if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+					if (body==null) {
+						return F.Promise.pure(badRequest("missing data: is the body multipart/form-data?"));
+					}
 					FilePart file = body.getFile("file");
-					if(file==null) return badRequest("missing file");
+					if(file==null) {
+						return F.Promise.pure(badRequest("missing file"));
+					}
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					try{
 						FileUtils.copyFile(file.getFile(),baos);
 						Object fileValue = new ConfigurationFileContainer(file.getFilename(), baos.toByteArray());
 						baos.close();
-						conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+						return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+							conf.getMethod("setValue",Object.class).invoke(i,fileValue);
+							return ok();
+						})).recover(t->handleConfError("",t));
+
 					}catch(Exception e){
-						internalServerError(e.getMessage());
+						return F.Promise.pure(internalServerError(e.getMessage()));
 					}
 				}
+				return F.Promise.pure(badRequest());
+			} catch (ConfigurationException e) {
+				String message = e.getMessage();
+				return F.Promise.pure(badRequest(message==null?"":message));
 			}
-		
-		} catch (PushNotInitializedException e) {
-		 	return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
-		} catch (PushSwitchException e) {
-			return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
-		}catch (IllegalStateException e) {
-			return badRequest("This configuration value is not editable");
-		}catch (PushInvalidApiKeyException e) {
-		 	return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());		
-		} catch (NumberFormatException e) {
-			return badRequest(value + " must be a number");
-		} catch (ConfigurationException e) {
-			return badRequest(e.getMessage());
 		}
-		String message = "";
-		if(inQueryString){
-			message = "You provided key and value in the query string.In order to prevent security issue consider moving those value into the body of the request.";
-		}
-		return ok(message);
+
 	}
 
-	public static Result getConfiguration(String section) throws  Throwable{
-		response().setContentType("application/json");
-		return ok(PropertiesConfigurationHelper.dumpConfigurationSectionAsFlatJson(section));
+	private static Result handleConfError(String value, Throwable t) throws Throwable {
+		try {
+            throw t;
+        } catch (PushNotInitializedException e) {
+            return status(CustomHttpCode.PUSH_CONFIG_INVALID.getBbCode(), CustomHttpCode.PUSH_CONFIG_INVALID.getDescription());
+        } catch (PushSwitchException e) {
+            return status(CustomHttpCode.PUSH_SWITCH_EXCEPTION.getBbCode(),CustomHttpCode.PUSH_SWITCH_EXCEPTION.getDescription());
+        }catch (IllegalStateException e) {
+            return badRequest("This configuration value is not editable");
+        }catch (PushInvalidApiKeyException e) {
+            return status(CustomHttpCode.PUSH_INVALID_APIKEY.getBbCode(),CustomHttpCode.PUSH_INVALID_APIKEY.getDescription());
+        } catch (NumberFormatException e) {
+            return badRequest(value + " must be a number");
+        } catch (ConfigurationException e) {
+            return badRequest(e.getMessage());
+        }
 	}
 
-	public static Result getLatestVersion() {
-		String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
+	public static F.Promise<Result> getConfiguration(String section) throws  Throwable{
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			response().setContentType("application/json");
+			return ok(PropertiesConfigurationHelper.dumpConfigurationSectionAsFlatJson(section));
+		}));
+	}
+
+	public static F.Promise<Result> getLatestVersion() {
+		final String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
+		final String errorMessage = "Could not reach BAASBOX site to check for new versions";
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Calling " + urlToCall);
-		try{
-			final Promise<Response> promise = WS.url(urlToCall).get();
-			return status(promise.get().getStatus(),promise.get().getBody());
-		}catch(Exception e){
-			BaasBoxLogger.warn("Could not reach BAASBOX site to check for new versions");
-		}
-		return status(503,"Could not reach BAASBOX site to check for new versions");
+		return WS.url(urlToCall).get().recover((e)->{
+			BaasBoxLogger.warn(errorMessage);
+			return null;
+		}).map((resp)->{
+			if (resp==null){
+				return status(503,errorMessage);
+			} else {
+				return status(resp.getStatus(),resp.getBody());
+			}
+		});
+
 	}//getLatestVersion
 
 
-	public static Result dropDb(Long timeout){
-		Result r = null;
-		try{
-			DbHelper.shutdownDB(true);
-			if(timeout>0){
-				BaasBoxLogger.info(String.format("Sleeping for %d seconds",timeout/1000));
-				Thread.sleep(timeout);
+	public static F.Promise<Result> dropDb(Long timeout){
+		return Promise.promise(() -> {
+			try {
+				DbHelper.openFromContext(ctx());
+				DbHelper.shutdownDB(true);
+				return ok();
+			}finally {
+				DbHelper.close(DbHelper.getConnection());
 			}
-			r = ok();
-		}catch(Exception e){
-			BaasBoxLogger.error(e.getMessage());
-			r = internalServerError(e.getMessage());
-		}
-		return r;
+		}).recover((e)->{
+			String msg = e.getMessage();
+			BaasBoxLogger.error(msg);
+			return internalServerError(msg);
+		}).flatMap((s)->{
+			if (timeout>0){
+				return Promise.delayed(()->s,timeout,TimeUnit.MILLISECONDS);
+			} else {
+				return Promise.pure(s);
+			}
+		});
 	}
 
 
@@ -641,18 +744,20 @@ public class Admin extends Controller {
 	 * so, querying for the file name with the /admin/db/:filename could return a 404
 	 * @return a 202 accepted code and a json representation containing the filename of the generated file
 	 */
-	public static Result exportDb(){
+	public static F.Promise<Result> exportDb(){
 		String appcode = (String)ctx().args.get("appcode");
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
-			unauthorized("appcode can not be null");
+			return Promise.pure(unauthorized("appcode can not be null"));
 		}
-		String fileName="";
-		try {
-			fileName = DbManagerService.exportDb(appcode);
-		} catch (FileNotFoundException e) {
-			return internalServerError(e.getMessage());
-		}
-		return status(202,Json.toJson(fileName));
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			try {
+				String fileName="";
+				fileName = DbManagerService.exportDb(appcode);
+				return status(202, Json.toJson(fileName));
+			} catch (FileNotFoundException e) {
+				return internalServerError(e.getMessage());
+			}
+		}));
 	}
 
 	/**
@@ -664,13 +769,13 @@ public class Admin extends Controller {
 	 * 
 	 * @return a 200 ok code and the stream of the file
 	 */
-	public static Result getExport(String fileName){
+	public static F.Promise<Result> getExport(String fileName){
 		java.io.File file = new java.io.File(backupDir+fileSeparator+fileName);
 		if(!file.exists()){
-			return notFound();
+			return F.Promise.pure(notFound());
 		}else{
 			response().setContentType("application/zip"); //added in Play 2.2.1. it is very strange because the content type should be set by the framework
-			return ok(file);
+			return F.Promise.pure(ok(file));
 		}
 	}
 
@@ -684,15 +789,17 @@ public class Admin extends Controller {
 	 * @return a 200 code if the file is deleted correctly or a 404.If the file could not
 	 * be deleted a 500 error code is returned
 	 */
-	public static Result deleteExport(String fileName){
-		try {
-			DbManagerService.deleteExport(fileName);
-		} catch (FileNotFoundException e1) {
-			return notFound();
-		} catch (IOException e1) {
-			return internalServerError("Unable to delete export.It will be deleted on the next reboot."+fileName);
-		}
-		return ok();
+	public static F.Promise<Result> deleteExport(String fileName){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			try {
+				DbManagerService.deleteExport(fileName);
+			} catch (FileNotFoundException e1) {
+				return notFound();
+			} catch (IOException e1) {
+				return internalServerError("Unable to delete export.It will be deleted on the next reboot." + fileName);
+			}
+			return ok();
+		}));
 	}
 
 	/**
@@ -703,9 +810,11 @@ public class Admin extends Controller {
 	 * 
 	 * @return a 200 ok code and a json representation containing the list of files stored in the db backup folder
 	 */
-	public static Result getExports(){
-		List<String> fileNames = DbManagerService.getExports();
-		return ok(Json.toJson(fileNames));
+	public static F.Promise<Result> getExports(){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			List<String> fileNames = DbManagerService.getExports();
+			return ok(Json.toJson(fileNames));
+		}));
 	}
 
 	/**
@@ -716,16 +825,20 @@ public class Admin extends Controller {
 	 * 
 	 * @return a 200 Status code when the import is successfull,a 500 status code otherwise
 	 */
-	public static Result importDb(){
+	public static F.Promise<Result> importDb(){
 		String appcode = (String)ctx().args.get("appcode");
 		if(appcode == null || StringUtils.isEmpty(appcode.trim())){
-			unauthorized("appcode can not be null");
+			return F.Promise.pure(unauthorized("appcode can not be null"));
 		}
 		MultipartFormData  body = request().body().asMultipartFormData();
-		if (body==null) return badRequest("missing data: is the body multipart/form-data?");
+		if (body==null) {
+			return F.Promise.pure(badRequest("missing data: is the body multipart/form-data?"));
+		}
 		FilePart fp = body.getFile("file");
-
-		if (fp!=null){
+		if (fp == null){
+			return F.Promise.pure(badRequest("The form was submitted without a multipart file field."));
+		}
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			ZipInputStream zis = null;
 			try{
 				java.io.File multipartFile=fp.getFile();
@@ -735,7 +848,7 @@ public class Admin extends Controller {
 				zis = 	new ZipInputStream(new FileInputStream(zipFile));
 				DbManagerService.importDb(appcode, zis);
 				zipFile.delete();
-				return ok();	
+				return ok();
 			}catch(org.apache.xmlbeans.impl.piccolo.io.FileFormatException e){
 				BaasBoxLogger.warn(e.getMessage());
 				return badRequest(e.getMessage());
@@ -751,9 +864,7 @@ public class Admin extends Controller {
 					// Nothing to do here
 				}
 			}
-		}else{
-			return badRequest("The form was submitted without a multipart file field.");
-		}
+		}));
 	}//importDb
 
 
@@ -764,19 +875,21 @@ public class Admin extends Controller {
 	 * @param username
 	 * @return
 	 */
-	public static Result disable(String username){
+	public static F.Promise<Result> disable(String username){
 		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-			return badRequest("Cannot disable/suspend internal users");
-		try {
-			UserService.disableUser(username);
-		} catch (UserNotFoundException e) {
-			return badRequest(e.getMessage());
-		} catch (OpenTransactionException e) {
-			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e);
-		}
-		return ok();
+			return F.Promise.pure(badRequest("Cannot disable/suspend internal users"));
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				UserService.disableUser(username);
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+			}
+			return ok();
+		}));
 	}
 
 	/***
@@ -785,19 +898,21 @@ public class Admin extends Controller {
 	 * @param username
 	 * @return
 	 */
-	public static Result enable(String username){
+	public static F.Promise<Result> enable(String username){
 		if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 				username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-			return badRequest("Cannot enable/activate internal users");
-		try {
-			UserService.enableUser(username);
-		} catch (UserNotFoundException e) {
-			return badRequest(e.getMessage());
-		} catch (OpenTransactionException e) {
-			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-			throw new RuntimeException(e);
-		}
-		return ok();
+			return F.Promise.pure(badRequest("Cannot enable/activate internal users"));
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			try {
+				UserService.enableUser(username);
+			} catch (UserNotFoundException e) {
+				return badRequest(e.getMessage());
+			} catch (OpenTransactionException e) {
+				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
+				throw new RuntimeException(e);
+			}
+			return ok();
+		}));
 	}
 	
 	/**
@@ -807,7 +922,7 @@ public class Admin extends Controller {
 	 * @param theFollowed
 	 * @return
 	 */
-	public static Result createFollowRelationship(String follower,String theFollowed){
+	public static F.Promise<Result> createFollowRelationship(String follower,String theFollowed){
 		/**
 		 * Test if the usernames provided do not match internal users' usernames 
 		 */
@@ -815,39 +930,43 @@ public class Admin extends Controller {
 				follower.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())) || 
 				(theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) || 
 						theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())))
-			return badRequest("Cannot create followship relationship with internal users");
+			return F.Promise.pure(badRequest("Cannot create followship relationship with internal users"));
 
-		boolean firstUserExists = UserService.exists(follower);
-		boolean secondUserExists = UserService.exists(theFollowed);
-		if(firstUserExists && secondUserExists){
-			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
-			if(RoleService.hasRole(follower, friendshipRole)){
-				return badRequest("User "+follower+" is already a friend of "+theFollowed);
-			}
-			try{
-				UserService.addUserToRole(follower,friendshipRole);
-				return created();
-			}catch(Exception e){
-				return internalServerError(e.getMessage());
-			}
-			
-		}else{
-			StringBuilder errorString = new StringBuilder("The user");
-			if(!firstUserExists && !secondUserExists){
-				errorString = new StringBuilder("Both the users do not exists in the db.");
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			boolean firstUserExists = UserService.exists(follower);
+			boolean secondUserExists = UserService.exists(theFollowed);
+			if(firstUserExists && secondUserExists){
+				String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
+				if(RoleService.hasRole(follower, friendshipRole)){
+					return badRequest("User "+follower+" is already a friend of "+theFollowed);
+				}
+				try{
+					UserService.addUserToRole(follower,friendshipRole);
+					return created();
+				}catch(Exception e){
+					return internalServerError(e.getMessage());
+				}
+
+			}else{
+				StringBuilder errorString = new StringBuilder("The user");
+				if(!firstUserExists && !secondUserExists){
+					errorString = new StringBuilder("Both the users do not exists in the db.");
+					return notFound(errorString.toString());
+				}
+				if(!firstUserExists){
+					errorString.append(" ").append(follower).append(" ");
+				}
+				if(!secondUserExists){
+					errorString.append(" ").append(theFollowed).append(" ");
+				}
+				errorString.append(" does not exists on the db");
 				return notFound(errorString.toString());
-			}
-			if(!firstUserExists){
-				errorString.append(" ").append(follower).append(" ");
-			}
-			if(!secondUserExists){
-				errorString.append(" ").append(theFollowed).append(" ");
-			}
-			errorString.append(" does not exists on the db");
-			return notFound(errorString.toString());
 
 
-		}
+			}
+		}));
+
+
 	}
 	
 	/**
@@ -857,114 +976,127 @@ public class Admin extends Controller {
 	 * @param theFollowed
 	 * @return
 	 */
-	public static Result removeFollowRelationship(String follower,String theFollowed){
+	public static F.Promise<Result> removeFollowRelationship(String follower,String theFollowed){
 		/**
 		 * Test if the usernames provided do not match internal users' usernames 
 		 */
-		boolean firstUserExists = UserService.exists(follower);
-		boolean secondUserExists = UserService.exists(theFollowed);
-		if(firstUserExists && secondUserExists){
-			String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
-			if(!RoleService.hasRole(follower, friendshipRole)){
-				return notFound("User "+follower+" is not a friend of "+theFollowed);
-			}
-			try{
-				UserService.removeUserFromRole(follower,friendshipRole);
-				return ok();
-			}catch(Exception e){
-				return internalServerError(e.getMessage());
-			}
-			
-		}else{
-			StringBuilder errorString = new StringBuilder("The user");
-			if(!firstUserExists && !secondUserExists){
-				errorString = new StringBuilder("Both the users do not exists in the db.");
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			boolean firstUserExists = UserService.exists(follower);
+			boolean secondUserExists = UserService.exists(theFollowed);
+			if(firstUserExists && secondUserExists){
+				String friendshipRole = RoleDao.FRIENDS_OF_ROLE +theFollowed;
+				if(!RoleService.hasRole(follower, friendshipRole)){
+					return notFound("User "+follower+" is not a friend of "+theFollowed);
+				}
+				try{
+					UserService.removeUserFromRole(follower,friendshipRole);
+					return ok();
+				}catch(Exception e){
+					return internalServerError(e.getMessage());
+				}
+
+			}else{
+				StringBuilder errorString = new StringBuilder("The user");
+				if(!firstUserExists && !secondUserExists){
+					errorString = new StringBuilder("Both the users do not exists in the db.");
+					return notFound(errorString.toString());
+				}
+				if(!firstUserExists){
+					errorString.append(" ").append(follower).append(" ");
+				}
+				if(!secondUserExists){
+					errorString.append(" ").append(theFollowed).append(" ");
+				}
+				errorString.append(" does not exists on the db");
 				return notFound(errorString.toString());
 			}
-			if(!firstUserExists){
-				errorString.append(" ").append(follower).append(" ");
-			}
-			if(!secondUserExists){
-				errorString.append(" ").append(theFollowed).append(" ");
-			}
-			errorString.append(" does not exists on the db");
-			return notFound(errorString.toString());
+		}));
 
-
-		}
 	}
 	
-	public static Result following(String username){
-		if(!UserService.exists(username)){
-			return notFound("User "+username+" does not exists");
-		}
-		 OUser user = UserService.getOUserByUsername(username);
-		 Set<ORole> roles = user.getRoles();
-		 List<String> usernames = new ArrayList<String>();
-		 for (ORole oRole : roles) {
-			  
-			if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
-				usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
+	public static F.Promise<Result> following(String username){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+
+			if(!UserService.exists(username)){
+				return notFound("User "+username+" does not exists");
 			}
-		 }
-		 if(usernames.isEmpty()){
-			 return ok(User.prepareResponseToJson(new ArrayList<ODocument>()));
-		 }else{
-			 List<ODocument> followers;
-			try {
-				followers = UserService.getUserProfilebyUsernames(usernames);
-				return ok(User.prepareResponseToJson(followers));
-			} catch (Exception e) {
-				BaasBoxLogger.error(e.getMessage());
-				return internalServerError(e.getMessage());
+			OUser user = UserService.getOUserByUsername(username);
+			Set<ORole> roles = user.getRoles();
+			List<String> usernames = new ArrayList<String>();
+			for (ORole oRole : roles) {
+
+				if(oRole.getName().startsWith(RoleDao.FRIENDS_OF_ROLE)){
+					usernames.add(StringUtils.difference(RoleDao.FRIENDS_OF_ROLE,oRole.getName()));
+				}
 			}
-		 }
+			if(usernames.isEmpty()){
+				return ok(User.prepareResponseToJson(new ArrayList<ODocument>()));
+			}else{
+				List<ODocument> followers;
+				try {
+					followers = UserService.getUserProfilebyUsernames(usernames);
+					return ok(User.prepareResponseToJson(followers));
+				} catch (Exception e) {
+					BaasBoxLogger.error(e.getMessage());
+					return internalServerError(e.getMessage());
+				}
+			}
+		}));
 	}
 
     /// permissions
-    public static Result getPermissionTag(String name){
-        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-        Result res;
-        try {
-            final ImmutableMap<String, Object> tag = PermissionTagService.getPermissionTagMap(name);
-            if (tag==null){
-                res = notFound("tag permission "+name+" does not exists");
-            } else {
-                res = ok(toJson(tag));
-            }
-        } catch (SqlInjectionException e) {
-            res = badRequest(e.getMessage());
-        }
-        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-        return res;
+    public static F.Promise<Result> getPermissionTag(String name){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			Result res;
+			try {
+				final ImmutableMap<String, Object> tag = PermissionTagService.getPermissionTagMap(name);
+				if (tag==null){
+					res = notFound("tag permission "+name+" does not exists");
+				} else {
+					res = ok(toJson(tag));
+				}
+			} catch (SqlInjectionException e) {
+				res = badRequest(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return res;
+		}));
+
     }
 
-    public static Result setPermissionTagEnabled(String name,boolean enable){
-        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-        Result res;
-        try {
-            PermissionTagService.setTagEnabled(name,enable);
-            res = ok("success");
-        } catch (InvalidPermissionTagException e) {
-            res = notFound("tag permission "+name+" does not exists");
-        } catch (SqlInjectionException e) {
-            res = badRequest(e.getMessage());
-        }
-        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-        return res;
+    public static F.Promise<Result> setPermissionTagEnabled(String name,boolean enable){
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			Result res;
+			try {
+				PermissionTagService.setTagEnabled(name,enable);
+				res = ok("success");
+			} catch (InvalidPermissionTagException e) {
+				res = notFound("tag permission "+name+" does not exists");
+			} catch (SqlInjectionException e) {
+				res = badRequest(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return res;
+		}));
+
     }
 
-    public static Result getPermissionTags(){
-        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
-        Result res;
-        try{
-            ImmutableMap<String, Object[]> tags = PermissionTagService.getPermissionTagsMap();
-            res = ok(toJson(tags));
-        } catch (Throwable e){
-            BaasBoxLogger.error(e.getMessage());
-            res = internalServerError(e.getMessage());
-        }
-        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
-        return res;
+    public static F.Promise<Result> getPermissionTags(){
+        return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+			if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
+			Result res;
+			try{
+				ImmutableMap<String, Object[]> tags = PermissionTagService.getPermissionTagsMap();
+				res = ok(toJson(tags));
+			} catch (Throwable e){
+				BaasBoxLogger.error(e.getMessage());
+				res = internalServerError(e.getMessage());
+			}
+			if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
+			return res;
+		}));
+
     }
 }

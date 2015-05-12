@@ -25,9 +25,8 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.events.EventsService;
-import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -79,8 +78,9 @@ class ScriptsResource extends Resource {
         if (idOfTheModule ==null){
             idOfTheModule =command.get(ScriptCommand.ID);
         }
-        ObjectNode message = Json.mapper().createObjectNode();
-        message.put("message",par.get("message"));
+
+        ObjectNode message = BBJson.mapper().createObjectNode();
+        message.put("message",par);
         message.put("args",par.get("args"));
         message.put("script",idOfTheModule);
         message.put("date",SDF.format(new Date()));
@@ -155,7 +155,7 @@ class ScriptsResource extends Resource {
         } else {
             String s = result.toJSON();
             try {
-                ObjectNode jsonNode =(ObjectNode) Json.mapper().readTree(s);
+                ObjectNode jsonNode =(ObjectNode) BBJson.mapper().readTree(s);
                 jsonNode.remove("@version");
                 jsonNode.remove("@type");
                 return jsonNode;

@@ -21,10 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import com.baasbox.exception.UserNotFoundException;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
+import com.baasbox.BBCache;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -32,6 +29,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -49,7 +47,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
@@ -143,6 +140,7 @@ public abstract class NodeDao  {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
+				if (!DbHelper.isInTransaction()) BBCache.cacheUUIDtoRID(token.toString(),doc.getIdentity().toString());
 			    return doc;
 		}catch (Throwable e){
 			throw e;

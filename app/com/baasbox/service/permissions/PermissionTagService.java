@@ -34,7 +34,7 @@ import java.util.Set;
  */
 public class PermissionTagService {
 
-    public static boolean areAllTagsEnabled(Set<String> tags) throws InvalidPermissionTagException, SqlInjectionException {
+    public static boolean areAllTagsEnabled(Set<String> tags) throws InvalidPermissionTagException, SqlInjectionException,Exception {
         if (tags==null||tags.isEmpty()) return true;
         PermissionTagDao dao = PermissionTagDao.getInstance();
         for (String tag:tags){
@@ -45,7 +45,7 @@ public class PermissionTagService {
         return true;
     }
 
-    public static boolean isAtLeastOneTagEnabled(Set<String> tags) throws InvalidPermissionTagException, SqlInjectionException {
+    public static boolean isAtLeastOneTagEnabled(Set<String> tags) throws InvalidPermissionTagException, SqlInjectionException,Exception {
         if (tags==null||tags.isEmpty()) return true;
         PermissionTagDao dao=PermissionTagDao.getInstance();
         for (String tag:tags){
@@ -54,7 +54,7 @@ public class PermissionTagService {
         return false;
     }
 
-    public static boolean isTagEnabled(String tag) throws InvalidPermissionTagException, SqlInjectionException {
+    public static boolean isTagEnabled(String tag) throws InvalidPermissionTagException, SqlInjectionException,Exception {
         if (tag==null) return true;
         PermissionTagDao dao = PermissionTagDao.getInstance();
         return dao.isEnabled(tag);

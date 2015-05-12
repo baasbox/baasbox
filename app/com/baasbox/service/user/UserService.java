@@ -167,13 +167,14 @@ public class UserService {
 				generated) ;
 	}
 
-	public static void registerDevice(HashMap<String,Object> data) throws SqlInjectionException{
+	public static void registerDevice(Map<String,Object> data) throws SqlInjectionException{
 		String username = DbHelper.getCurrentUserNameFromConnection();
+
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		String os=(String) data.get(UserDao.USER_DEVICE_OS);
 		boolean found=false;
 
-		com.baasbox.db.DbHelper.reconnectAsAdmin();
+		DbHelper.reconnectAsAdmin();
 		
 		List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
 
@@ -181,18 +182,18 @@ public class UserService {
 		for(ODocument record: sqlresult ) {
 			List<ODocument> login_Infos=record.field(UserDao.USER_LOGIN_INFO);
 			for (ODocument login_Info : login_Infos){
-				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && (login_Info.field(UserDao.USER_DEVICE_OS).equals(os))){
+				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) &&
+						(login_Info.field(UserDao.USER_DEVICE_OS).equals(os))){
 					login_Infos.remove(login_Info);
 					break;
 				}
 			}
 			record.save();	
 		}
-	
+
 		ODocument user=getUserProfilebyUsername(username);
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-		
 		for (ODocument loginInfo : loginInfos){
 
 			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
@@ -205,9 +206,10 @@ public class UserService {
 			systemProps.save();
 		}
 		
-		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
+		DbHelper.reconnectAsAuthenticatedUser();
 
 	}
+
 	public static void unregisterDevice(String pushToken) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);

@@ -40,7 +40,7 @@ public class Tags {
      * @throws InvalidPermissionTagException
      * @throws SqlInjectionException
      */
-    public static boolean verifyAccess(Http.Context ctx) throws InvalidPermissionTagException, SqlInjectionException {
+    public static boolean verifyAccess(Http.Context ctx) throws InvalidPermissionTagException, SqlInjectionException,Exception {
         if (DbHelper.isConnectedAsAdmin(true)){
             return true;
         }

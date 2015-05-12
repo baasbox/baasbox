@@ -18,14 +18,15 @@
 
 package com.baasbox.controllers;
 
-import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class Generic extends Controller{
 
@@ -39,7 +40,7 @@ public class Generic extends Controller{
 		return ok();
 	}
 	
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	public static Result refreshSessionToken(){
 		return ok(); 
 	}

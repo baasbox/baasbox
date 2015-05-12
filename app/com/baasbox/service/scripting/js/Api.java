@@ -23,6 +23,7 @@ import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jdk.nashorn.internal.runtime.ECMAErrors;
@@ -44,7 +45,7 @@ public class Api {
     public static String execCommand(String commandStr,JsonCallback callback){
     	BaasBoxLogger.debug("Command to execute: "+commandStr);
         try {
-            JsonNode node = Json.mapper().readTree(commandStr);
+            JsonNode node = BBJson.mapper().readTree(commandStr);
             if (!node.isObject()){
                 BaasBoxLogger.error("Command is not an object");
                 throw ECMAErrors.typeError("Invalid command");

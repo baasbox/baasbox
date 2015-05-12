@@ -1,5 +1,5 @@
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import core.TestConfig;
@@ -50,7 +50,7 @@ public class ScriptStorageTest {
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                         .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
                 Result res = routeAndCall(req);
-                JsonNode result = Json.mapper().readTree(contentAsString(res));
+                JsonNode result = BBJson.mapper().readTree(contentAsString(res));
                 fail(result.toString());
 
             }catch (Exception e){
@@ -66,7 +66,7 @@ public class ScriptStorageTest {
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                          .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
                 Result res = routeAndCall(req);
-                JsonNode result = Json.mapper().readTree(contentAsString(res));
+                JsonNode result = BBJson.mapper().readTree(contentAsString(res));
                 JsonNode data = result.path("data");
                 assertTrue(data.path("integer").isIntegralNumber());
                 assertTrue(data.path("double").isDouble());
@@ -91,11 +91,11 @@ public class ScriptStorageTest {
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                         .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
                         .withHeader("Content-Type","application/json")
-                        .withJsonBody(Json.mapper().createObjectNode());
+                        .withJsonBody(BBJson.mapper().createObjectNode());
 
                 Result res = routeAndCall(req);
                 String s = contentAsString(res);
-                JsonNode resp =Json.mapper().readTree(s);
+                JsonNode resp = BBJson.mapper().readTree(s);
 
                 assertEquals(0,resp.path("data").path("val").asInt());
 
@@ -103,11 +103,11 @@ public class ScriptStorageTest {
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                         .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
                         .withHeader("Content-Type","application/json")
-                        .withJsonBody(Json.mapper().createObjectNode());
+                        .withJsonBody(BBJson.mapper().createObjectNode());
 
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp =Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
                 assertEquals(1,resp.path("data").path("val").asInt());
 
@@ -119,7 +119,7 @@ public class ScriptStorageTest {
 
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp =Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
                 assertEquals(1,resp.path("data").path("val").asInt());
 
@@ -129,7 +129,7 @@ public class ScriptStorageTest {
 
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp =Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
                 assertEquals(1,resp.path("data").path("_storage").path("val").asInt());
 
@@ -147,13 +147,13 @@ public class ScriptStorageTest {
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                          .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
                         .withHeader("Content-Type","application/json")
-                        .withJsonBody(Json.mapper().createObjectNode().put("store","store"));
+                        .withJsonBody(BBJson.mapper().createObjectNode().put("store","store"));
 
                 Result res = routeAndCall(req);
                 String s = contentAsString(res);
-                JsonNode resp =Json.mapper().readTree(s);
+                JsonNode resp = BBJson.mapper().readTree(s);
 
-                assertEquals(Json.mapper().createObjectNode().put("store","store"),resp.path("data").path("storage"));
+                assertEquals(BBJson.mapper().createObjectNode().put("store","store"),resp.path("data").path("storage"));
 
                 req = new FakeRequest(GET,"/plugin/"+SCRIPT_STORAGE_GET_SET);
                 req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
@@ -161,18 +161,18 @@ public class ScriptStorageTest {
 
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp = Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
-                assertEquals(Json.mapper().createObjectNode().put("store","store"),resp.path("data").path("storage"));
+                assertEquals(BBJson.mapper().createObjectNode().put("store","store"),resp.path("data").path("storage"));
 
                 req = new FakeRequest(POST,"/plugin/"+ SCRIPT_STORAGE_GET_SET);
                 req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE)
                         .withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC)
                         .withHeader("Content-Type","application/json")
-                        .withJsonBody(Json.mapper().createObjectNode());
+                        .withJsonBody(BBJson.mapper().createObjectNode());
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp =Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
                 assertEquals(NullNode.getInstance(),resp.path("data").path("storage"));
 
@@ -182,7 +182,7 @@ public class ScriptStorageTest {
 
                 res = routeAndCall(req);
                 s = contentAsString(res);
-                resp = Json.mapper().readTree(s);
+                resp = BBJson.mapper().readTree(s);
 
                 assertEquals(NullNode.getInstance(),resp.path("data").path("storage"));
             }catch (Exception e){

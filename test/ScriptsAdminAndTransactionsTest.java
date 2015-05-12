@@ -20,7 +20,7 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,7 +68,7 @@ public class ScriptsAdminAndTransactionsTest {
     public void canRunCodeTransactionally(){
         running(fakeApplication(),()->{
             try {
-                ObjectMapper mapper = Json.mapper();
+                ObjectMapper mapper = BBJson.mapper();
                 String operation = "normal";
                 ObjectNode node =mapper.createObjectNode();
                 node.put("collection",TEST_COLLECTION);
@@ -100,7 +100,7 @@ public class ScriptsAdminAndTransactionsTest {
         running(fakeApplication(),()->{
             try {
                 String collName = "script-collection-"+UUID.randomUUID();
-                ObjectNode node = Json.mapper().createObjectNode();
+                ObjectNode node = BBJson.mapper().createObjectNode();
                 node.put("coll",collName);
                 FakeRequest req = new FakeRequest(POST, "/plugin/"+TEST_SUDO);
                 req = req.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -108,7 +108,7 @@ public class ScriptsAdminAndTransactionsTest {
                 req = req.withJsonBody(node);
                 Result result = routeAndCall(req);
                 String resultString = contentAsString(result);
-                JsonNode resp = Json.mapper().readTree(resultString);
+                JsonNode resp = BBJson.mapper().readTree(resultString);
                 assertTrue(resp.path("data").path("exists").asBoolean());
 
             } catch (Exception  e){

@@ -14,7 +14,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.SwitchUserContextException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -93,7 +93,7 @@ class DBResource extends Resource {
 	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC+depth,true);
 	        BaasBoxLogger.debug("Query result: ");
 	        BaasBoxLogger.debug(s);
-			lst = (ArrayNode)Json.mapper().readTree(s);
+			lst = (ArrayNode)BBJson.mapper().readTree(s);
 		} catch (IOException e) {
 			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
 		} catch(OQueryParsingException e){
@@ -124,7 +124,7 @@ class DBResource extends Resource {
 	        else s=listToReturn.toString();
 	        BaasBoxLogger.debug("Statement result: ");
 	        BaasBoxLogger.debug(s);
-			lst = Json.mapper().readTree(s);
+			lst = BBJson.mapper().readTree(s);
 		} catch (IOException e) {
 			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
 		} catch(OQueryParsingException e){
@@ -206,7 +206,7 @@ class DBResource extends Resource {
     	}catch (CommandParsingException e){
     		return BooleanNode.valueOf(false);
     	}
-    	ORID ret=GenericDao.getInstance().getRidNodeByUUID(id);
+    	String ret=GenericDao.getInstance().getRidNodeByUUID(id);
         return BooleanNode.valueOf(!(ret==null));
     }
     

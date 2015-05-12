@@ -30,7 +30,7 @@ import com.baasbox.commands.ScriptCommand;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.dao.UserDao;
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -43,12 +43,12 @@ public class ScriptUsersCommandTest {
 
     private static TreeSet<String>  sRandUsers;
     private static String sTestUser;
-    private static final Json.ObjectMapperExt mapper = Json.mapper();
+    private static final BBJson.ObjectMapperExt mapper = BBJson.mapper();
     private static final String USER_PREFIX = "script-users-test-";
     private static String key;
 
     private static TreeSet<String> createUsers(int howMany){
-        Json.ObjectMapperExt mapper = Json.mapper();
+        BBJson.ObjectMapperExt mapper = BBJson.mapper();
         key = UUID.randomUUID().toString();
         return IntStream.range(0, howMany).mapToObj((x)->{
             
@@ -223,7 +223,7 @@ public class ScriptUsersCommandTest {
                 Result invoke = routeAndCall(put);
                 String s = contentAsString(invoke);
                 JsonNode body = mapper.readTreeOrMissing(s);
-                assertEquals("ok",body.get("result").asText());
+                assertEquals("I expect 'OK', but received: " + body.toString(),"ok",body.get("result").asText());
                 assertEquals(sRandUsers.first(),body.path("data").path("user").path("name").asText());
                 assertNotNull(body.path("data").path("user").path("visibleByFriends"));
 

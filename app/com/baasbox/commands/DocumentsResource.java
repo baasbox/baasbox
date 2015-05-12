@@ -18,18 +18,27 @@
 
 package com.baasbox.commands;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
-import com.baasbox.dao.exception.*;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,19 +46,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import org.apache.commons.lang.exception.ExceptionUtils;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * {resource: 'documents',
@@ -203,7 +203,7 @@ class DocumentsResource extends BaseRestResource {
             else // save
             	doc = DocumentService.create(coll, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
+            ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
             node.remove(TO_REMOVE);
             //node.remove("@rid");
             return node;
@@ -243,7 +243,7 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             }
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            JsonNode node = Json.mapper().readTree(fmt);
+            JsonNode node = BBJson.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
             n.remove(TO_REMOVE);
 //            n.remove("@rid");
@@ -285,8 +285,8 @@ class DocumentsResource extends BaseRestResource {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
-            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));//.remove("@rid"));
+            ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
+			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
             return lst;
         } catch (SqlInjectionException | IOException e) {
             throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
@@ -307,9 +307,8 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
-                ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
-                //necessary to create relations between documents
-                node.remove(TO_REMOVE);//.remove("@rid");
+                ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
+				node.remove(TO_REMOVE);
                 return node;
             }
         } catch (RidNotFoundException e) {
