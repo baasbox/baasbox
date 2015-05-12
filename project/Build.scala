@@ -57,7 +57,7 @@ object ApplicationBuild extends Build {
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
           "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
-          "com.notnoop.apns" % "apns" % "1.0.0.Beta4",
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta6",
           "ch.qos.logback" % "logback-classic" % "1.1.2",
           "org.slf4j" % "slf4j-api" % "1.7.6"
 
@@ -72,6 +72,7 @@ object ApplicationBuild extends Build {
        sources in doc in Compile := List(),
 
       resolvers := Seq(
+      	  "typesafe" at "https://repo.typesafe.com/typesafe/releases/",
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
 		      "eaio" at "http://eaio.com/maven2"
