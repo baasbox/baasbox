@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
@@ -95,9 +97,9 @@ class DBResource extends Resource {
 	        BaasBoxLogger.debug(s);
 			lst = (ArrayNode)Json.mapper().readTree(s);
 		} catch (IOException e) {
-			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
-			throw new CommandExecutionException(c,"Error parsing query: "+e.getMessage(),e);
+			throw new CommandExecutionException(c,"Error parsing query: "+ExceptionUtils.getMessage(e),e);
 		}
         return lst;
     }
@@ -126,9 +128,9 @@ class DBResource extends Resource {
 	        BaasBoxLogger.debug(s);
 			lst = Json.mapper().readTree(s);
 		} catch (IOException e) {
-			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
-			throw new CommandExecutionException(c,"Error parsing statement: "+e.getMessage(),e);
+			throw new CommandExecutionException(c,"Error parsing statement: "+ExceptionUtils.getMessage(e),e);
 		}
         return lst;
     }
@@ -184,7 +186,7 @@ class DBResource extends Resource {
 //            return NullNode.getInstance();
 //        }catch (Exception e){
 //            commit = false;
-//            throw new CommandExecutionException(command,e.getMessage(),e);
+//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 //        } finally {
 //            if (commit){
 //                DbHelper.commitTransaction();

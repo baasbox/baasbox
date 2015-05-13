@@ -183,7 +183,7 @@ public class DbManagerService {
 					throw new FileFormatException("The import file is empty");
 				}
 			}catch(FileFormatException e){
-				BaasBoxLogger.error(e.getMessage());
+				BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 				throw e;
 			}catch(Throwable e){
 				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));

@@ -141,7 +141,7 @@ public class Document extends Controller {
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
 			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		response().setContentType("application/json");
@@ -165,7 +165,7 @@ public class Document extends Controller {
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
 			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 
 		try{
@@ -203,7 +203,7 @@ public class Document extends Controller {
 					}
 				}
 				}catch(PartValidationException pve){
-					return badRequest(pve.getMessage());
+					return badRequest(ExceptionUtils.getMessage(pve));
 				}
 				PartsParser pl = new PartsParser(queryParts);
 				String rid = DocumentService.getRidByString(id, isUUID);
@@ -211,7 +211,7 @@ public class Document extends Controller {
 				
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			} catch (InvalidCollectionException e) {
 				return notFound(collectionName + " is not a valid collection name");
 			} catch (InvalidModelException e) {
@@ -221,9 +221,9 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound(id + " not found"); 
 			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			} catch (InvalidCriteriaException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -242,7 +242,7 @@ public class Document extends Controller {
 				doc=DocumentService.get(collectionName, rid);
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			} catch (InvalidCollectionException e) {
 				return notFound(collectionName + " is not a valid collection name");
 			} catch (InvalidModelException e) {
@@ -252,7 +252,7 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound(id + " not found"); 
 			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage()); 
+				return notFound(ExceptionUtils.getMessage(e)); 
 			} 
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -269,7 +269,7 @@ public class Document extends Controller {
 				doc=DocumentService.get(rid);
 				if (doc==null) return notFound();
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch (ODatabaseException e){
 				return notFound(rid + " unknown");  
 			} 
@@ -294,13 +294,13 @@ public class Document extends Controller {
 				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
 				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			}catch (InvalidJsonException e){
 				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
 			}catch (UpdateOldVersionException e){
 				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (InvalidModelException e) {
-				return badRequest("ACL fields are not valid: " + e.getMessage());
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
 			} catch (ORecordDuplicatedException e) {
 				return badRequest("Provided ID already exists: " + bodyJson.get(BaasBoxPrivateFields.ID.toString()));
 			}catch (Throwable e){
@@ -330,7 +330,7 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound("Document " + id + " not found");
 			}catch (AclNotValidException e){
-				return badRequest("ACL fields are not valid: " + e.getMessage());		
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));		
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (RidNotFoundException e){
@@ -380,7 +380,7 @@ public class Document extends Controller {
 						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
 						objParts.add(lexer.parse(p, i+1));
 					}catch(PartValidationException pve){
-						return badRequest(pve.getMessage());
+						return badRequest(ExceptionUtils.getMessage(pve));
 					}catch(Exception e){
 						return badRequest("Unable to parse document parts");
 					}
@@ -388,7 +388,7 @@ public class Document extends Controller {
 				PartsParser pp = new PartsParser(objParts);
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson,pp);   
 			}catch (MissingNodeException e){
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
@@ -402,7 +402,7 @@ public class Document extends Controller {
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to modify the document " + id);
 			}catch (RidNotFoundException rnfe){
-					return notFound(rnfe.getMessage());	
+					return notFound(ExceptionUtils.getMessage(rnfe));	
 			}catch (Throwable e){
 				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -425,9 +425,9 @@ public class Document extends Controller {
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to delete " + id);  
 			} catch (InvalidCollectionException e) {
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			} catch (Throwable e ){
-				internalServerError(e.getMessage());
+				internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok("");
@@ -493,7 +493,7 @@ public class Document extends Controller {
 			} catch (RidNotFoundException e) {
 				return notFound("id " + id + " not found");
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (UserNotFoundException e) {
 				return notFound("user " + username + " not found");
 			} catch (InvalidCollectionException e) {
@@ -507,7 +507,7 @@ public class Document extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToUser
@@ -524,7 +524,7 @@ public class Document extends Controller {
 			} catch (RidNotFoundException e) {
 				return notFound("id " + id + " no found");
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("role " + rolename + " not found");
 			} catch (InvalidCollectionException e) {
@@ -538,7 +538,7 @@ public class Document extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToRole
@@ -556,9 +556,9 @@ public class Document extends Controller {
 				acl = new PermissionJsonWrapper(bodyJson, true);
 				doc=DocumentService.setAcl(collectionName, uuid, acl);
 			} catch (AclNotValidException e) {
-				return badRequest("ACL fields are not valid: " + e.getMessage());
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (InvalidCollectionException e) {
 				return notFound("collection " + collectionName + " not found");
 			} catch (InvalidModelException e) {

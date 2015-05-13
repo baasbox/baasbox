@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
 import com.baasbox.service.query.PartsLexer;
@@ -43,7 +44,7 @@ public class PartParserTest {
 			assertTrue(p instanceof Field);
 			assertEquals("field",((Field)p).fieldName);
 		}catch(PartValidationException pve){
-			fail(pve.getMessage());
+			fail(ExceptionUtils.getMessage(pve));
 		}
 		
 	}
@@ -56,7 +57,7 @@ public class PartParserTest {
 			fail();
 		}catch(Exception pve){
 			assertTrue(pve instanceof PartValidationException);
-			assertTrue(pve.getMessage().toLowerCase().indexOf("unrecognized")>-1);
+			assertTrue(ExceptionUtils.getMessage(pve).toLowerCase().indexOf("unrecognized")>-1);
 		}
 		
 	}
@@ -69,7 +70,7 @@ public class PartParserTest {
 			fail();
 		}catch(Exception pve){
 			assertTrue(pve instanceof PartValidationException);
-			assertTrue(pve.getMessage().toLowerCase().indexOf("private")>-1);
+			assertTrue(ExceptionUtils.getMessage(pve).toLowerCase().indexOf("private")>-1);
 		}
 		
 	}
@@ -82,7 +83,7 @@ public class PartParserTest {
 			fail();
 		}catch(Exception pve){
 			assertTrue(pve instanceof PartValidationException);
-			assertTrue(pve.getMessage().toLowerCase().indexOf("private")>-1);
+			assertTrue(ExceptionUtils.getMessage(pve).toLowerCase().indexOf("private")>-1);
 		}
 		
 	}
@@ -96,7 +97,7 @@ public class PartParserTest {
 			assertEquals("field",((ArrayField)p).fieldName);
 			assertEquals(0,((ArrayField)p).arrayIndex);
 		}catch(PartValidationException pve){
-			fail(pve.getMessage());
+			fail(ExceptionUtils.getMessage(pve));
 		}
 		
 	}
@@ -108,7 +109,7 @@ public class PartParserTest {
 			PartsLexer.Part p = parser.parse(field, 1);
 			assertEquals(1,((ArrayField)p).arrayIndex);
 		}catch(PartValidationException pve){
-			fail(pve.getMessage());
+			fail(ExceptionUtils.getMessage(pve));
 		}
 		
 	}
@@ -120,7 +121,7 @@ public class PartParserTest {
 			PartsLexer.Part p = parser.parse(field, 1);
 			assertEquals(1042,((ArrayField)p).arrayIndex);
 		}catch(PartValidationException pve){
-			fail(pve.getMessage());
+			fail(ExceptionUtils.getMessage(pve));
 		}
 		
 	}

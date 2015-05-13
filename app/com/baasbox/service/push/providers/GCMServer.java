@@ -117,7 +117,7 @@ public class GCMServer extends PushProviderAbstract {
 		sender.send(msg, deviceid , 1);
 
 
-		// icallbackPush.onError(e.getMessage());
+		// icallbackPush.onError(ExceptionUtils.getMessage(e));
 
 		// icallbackPush.onSuccess();
 		return false;

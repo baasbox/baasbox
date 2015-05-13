@@ -40,6 +40,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
 /**
@@ -92,7 +93,7 @@ class ScriptsResource extends Resource {
         try {
             return ScriptingService.callJsonSync(command.get(ScriptCommand.PARAMS));
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -138,14 +139,14 @@ class ScriptsResource extends Resource {
             try {
                 result = ScriptingService.swap(id,callback);
             } catch (ScriptException e) {
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         } else if ("trade".equals(action)){
             if (callback==null) throw new CommandExecutionException(command,"missing function callback");
             try {
                 result = ScriptingService.trade(id,callback);
             } catch (ScriptException e) {
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         } else {
             throw new CommandParsingException(command,"unknown action: "+action);

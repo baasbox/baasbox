@@ -25,13 +25,12 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-
-import com.baasbox.service.logging.BaasBoxLogger;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
 import com.baasbox.db.DbHelper;
-import com.baasbox.exception.UnableToExportDbException;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class ExportJob implements Runnable{
 
@@ -81,7 +80,7 @@ public class ExportJob implements Runnable{
     		
 
 		}catch(Exception e){
-			BaasBoxLogger.error(e.getMessage());
+			BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 		}finally{
 			try{
 				if(zip!=null)
@@ -91,7 +90,7 @@ public class ExportJob implements Runnable{
 			
 			}catch(Exception ioe){
 				ioe.getStackTrace();
-				BaasBoxLogger.error(ioe.getMessage());
+				BaasBoxLogger.error(ExceptionUtils.getMessage(ioe));
 			}
 		}
 	}

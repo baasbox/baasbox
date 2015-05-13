@@ -33,6 +33,8 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 /**
  * Created by Andrea Tortorella on 04/07/14.
  */
@@ -81,7 +83,7 @@ class CollectionsResource extends Resource {
         } catch (InvalidCollectionException e) {
             return BooleanNode.getFalse();
         } catch (Exception e){
-            throw new CommandExecutionException(command,"Error dropping collection: "+e.getMessage());
+            throw new CommandExecutionException(command,"Error dropping collection: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -102,9 +104,9 @@ class CollectionsResource extends Resource {
             boolean res =CollectionService.exists(coll);
             return res? BooleanNode.getTrue():BooleanNode.getFalse();
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,e.getMessage());
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e));
         } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"Invalid collection '"+coll+"':"+e.getMessage());
+            throw new CommandExecutionException(command,"Invalid collection '"+coll+"':"+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -118,9 +120,9 @@ class CollectionsResource extends Resource {
         } catch (CollectionAlreadyExistsException e) {
             return BooleanNode.getFalse();
         } catch (InvalidCollectionException e){
-            throw new CommandExecutionException(command,"Invalid collection name: "+e.getMessage());
+            throw new CommandExecutionException(command,"Invalid collection name: "+ExceptionUtils.getMessage(e));
         } catch (Throwable e) {
-            throw new CommandExecutionException(command,"Error creating collection: "+e.getMessage());
+            throw new CommandExecutionException(command,"Error creating collection: "+ExceptionUtils.getMessage(e));
         }
     }
 

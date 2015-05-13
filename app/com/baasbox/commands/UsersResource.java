@@ -104,7 +104,7 @@ class UsersResource extends BaseRestResource {
 
                 return Json.mapper().readTreeOrMissing(s);
             } catch (SqlInjectionException e){
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         };
     }
@@ -115,7 +115,7 @@ class UsersResource extends BaseRestResource {
 //            String s = JSONFormats.prepareResponseToJson(friendsOf, JSONFormats.Formats.USER);
 //            return Json.mapper().readTreeOrMissing(s);
 //        } catch (SqlInjectionException | IOException e) {
-//            throw new CommandExecutionException(command,e.getMessage(),e);
+//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 //        }
 //    }
 
@@ -147,7 +147,7 @@ class UsersResource extends BaseRestResource {
         try {
             return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -157,13 +157,13 @@ class UsersResource extends BaseRestResource {
             String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
             return Json.mapper().readTree(s);
         } catch (UserNotFoundException e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         } catch (AlreadyFriendsException e) {
             return NullNode.getInstance();
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -271,7 +271,7 @@ class UsersResource extends BaseRestResource {
             String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
             return Json.mapper().readTree(s);
         } catch (Exception e) {
-            throw new CommandExecutionException(command,"Error updating user: "+e.getMessage());
+            throw new CommandExecutionException(command,"Error updating user: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -326,9 +326,9 @@ class UsersResource extends BaseRestResource {
             String response = prepareResponseToJson(users);
             return Json.mapper().readTree(response);
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command, "error executing command: " + e.getMessage());
+            throw new CommandExecutionException(command, "error executing command: " + ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command, "error parsing response: " + e.getMessage());
+            throw new CommandExecutionException(command, "error parsing response: " + ExceptionUtils.getMessage(e));
         }
     }
 
@@ -344,9 +344,9 @@ class UsersResource extends BaseRestResource {
             String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
             return Json.mapper().readTree(resp);
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error parsing response: "+e.getMessage());
+            throw new CommandExecutionException(command,"error parsing response: "+ExceptionUtils.getMessage(e));
         }
     }
 

@@ -84,7 +84,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithVersionNull(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateWithVersionNull CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -99,7 +99,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithVersion(getRouteAddress(collectionName));
 						assertRoute(result, "createWithVersion CREATE", Status.BAD_REQUEST, "UpdateOldVersionException: Are you trying to create a document with a @version field?", true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -131,7 +131,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustCollection(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustCollection CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -145,7 +145,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustOneElement(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustOneElement CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -160,7 +160,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustOneElementAsString(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustOneElementAsString CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
