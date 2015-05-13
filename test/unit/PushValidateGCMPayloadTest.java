@@ -1,30 +1,14 @@
 package unit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.exception.BaasBoxPushException;
-import com.baasbox.service.push.providers.APNServer;
 import com.baasbox.service.push.providers.GCMServer;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.core.type.ResolvedType;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.notnoop.apns.APNS;
-import com.notnoop.apns.PayloadBuilder;
 
 public class PushValidateGCMPayloadTest {
 	@Test

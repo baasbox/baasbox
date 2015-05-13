@@ -194,7 +194,7 @@ class LinksResource extends BaseRestResource {
 			
 			return lst;
 		} catch (SqlInjectionException | IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} 
     }
 

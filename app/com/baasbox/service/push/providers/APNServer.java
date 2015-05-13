@@ -75,7 +75,7 @@ public class APNServer  extends PushProviderAbstract {
 			pushLogger.addMessage("   Exception is: %s ", ExceptionUtils.getStackTrace(e));
 			BaasBoxLogger.error("Error sending push notification");
 			throw new PushNotInitializedException("Error decrypting certificate.Verify your password for given certificate");
-			//icallbackPush.onError(e.getMessage());
+			//icallbackPush.onError(ExceptionUtils.getMessage(e));
 		}
 
 
@@ -182,7 +182,7 @@ public class APNServer  extends PushProviderAbstract {
 				BaasBoxLogger.error("Error sending push notification");
 				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
-				//icallbackPush.onError(e.getMessage());
+				//icallbackPush.onError(ExceptionUtils.getMessage(e));
 			}
 		} else {
 			try {
@@ -194,7 +194,7 @@ public class APNServer  extends PushProviderAbstract {
 				BaasBoxLogger.error("Error sending enhanced push notification");
 				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new PushNotInitializedException("Error processing certificate, maybe it's revoked");
-				//icallbackPush.onError(e.getMessage());
+				//icallbackPush.onError(ExceptionUtils.getMessage(e));
 			}
 
 		}
@@ -309,7 +309,7 @@ public class APNServer  extends PushProviderAbstract {
 			}
 			name = cfc.getName();
 		}catch(Exception e){
-			BaasBoxLogger.error(e.getMessage());
+			BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 			throw new RuntimeException(e);
 		}
 		if(name!=null && !name.equals("null")){

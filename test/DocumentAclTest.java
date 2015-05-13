@@ -23,6 +23,7 @@ import static play.test.Helpers.running;
 import java.util.Date;
 import java.util.UUID;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.json.JSONObject;
 import org.junit.Assert;
 
@@ -117,7 +118,7 @@ public class DocumentAclTest extends AbstractDocumentTest
 						//docJson.put(Permissions.ALLOW_READ, )
 						//DocumentService.create(collection, bodyJson)
 					} catch (Throwable e) {
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}

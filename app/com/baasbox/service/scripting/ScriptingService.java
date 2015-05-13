@@ -288,7 +288,7 @@ public class ScriptingService {
             if (e instanceof ScriptEvalException){
                 throw (ScriptEvalException)e;
             } else {
-                throw new ScriptEvalException(e.getMessage(),e);
+                throw new ScriptEvalException(ExceptionUtils.getMessage(e),e);
             }
         }finally {
             MAIN.set(null);
@@ -410,7 +410,7 @@ public class ScriptingService {
     private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
         try {
             ObjectNode node = Json.mapper().createObjectNode();
-            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
+            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body));
 
             int status = resp.getStatus();
             node.put("status",status);
@@ -426,7 +426,7 @@ public class ScriptingService {
 
             return node;
         } catch (Exception e) {
-            BaasBoxLogger.error("failed to connect: "+e.getMessage());
+            BaasBoxLogger.error("failed to connect: "+ ExceptionUtils.getMessage(e));
             throw e;
         }
 
