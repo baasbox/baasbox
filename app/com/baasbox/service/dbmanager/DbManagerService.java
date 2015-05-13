@@ -174,7 +174,7 @@ public class DbManagerService {
 				}else{
 					throw new FileFormatException("Looks like zip file does not contain a manifest file");
 				}
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Importing: "+fileContent);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Importing: ",fileContent);
 				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
 					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();
