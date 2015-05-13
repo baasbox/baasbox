@@ -70,6 +70,7 @@ object ApplicationBuild extends Build {
        sources in doc in Compile := List(),
 
       resolvers := Seq(
+      	  "typesafe" at "https://repo.typesafe.com/typesafe/releases/",
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
 		      "eaio" at "http://eaio.com/maven2"
