@@ -225,11 +225,6 @@ class DBResource extends Resource {
             throw new CommandParsingException(command,"missing id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 

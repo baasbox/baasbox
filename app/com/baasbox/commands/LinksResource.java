@@ -226,11 +226,6 @@ class LinksResource extends BaseRestResource {
             throw new CommandParsingException(command,"missing link id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"link id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 

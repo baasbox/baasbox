@@ -398,11 +398,6 @@ class DocumentsResource extends BaseRestResource {
             throw new CommandParsingException(command,"missing document id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"document id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 
