@@ -35,8 +35,8 @@ import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.mvc.Http;
 
@@ -58,6 +58,7 @@ import com.baasbox.exception.SwitchUserContextException;
 import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.exception.UnableToExportDbException;
 import com.baasbox.exception.UnableToImportDbException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
@@ -407,7 +408,7 @@ public class DbHelper {
 			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
-			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: " + e.getMessage());
+			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: " + ExceptionUtils.getMessage(e));
 		}
 		return db;
 	}

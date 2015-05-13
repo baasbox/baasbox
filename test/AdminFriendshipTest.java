@@ -1,19 +1,25 @@
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.DELETE;
+import static play.test.Helpers.GET;
+import static play.test.Helpers.POST;
+import static play.test.Helpers.contentAsString;
+import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.running;
+
 import java.util.UUID;
 
-import core.AbstractTest;
-import core.TestConfig;
-import static play.test.Helpers.*;
-import static org.junit.Assert.*;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import org.json.JSONException;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.json.JSONObject;
 import org.junit.Test;
 
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
+import core.AbstractTest;
+import core.TestConfig;
 public class AdminFriendshipTest extends AbstractTest{
 
 
@@ -102,7 +108,7 @@ public class AdminFriendshipTest extends AbstractTest{
 						r = routeAndCall(fk);
 						assertRoute(r, "Get friendships.", Status.OK, "{\"result\":\"ok\",\"data\":[],\"http_code\":200}", false);
 						}catch(Exception e){
-							fail(e.getMessage());
+							fail(ExceptionUtils.getMessage(e));
 						}
 					}
 				});
@@ -124,7 +130,7 @@ public class AdminFriendshipTest extends AbstractTest{
 						deleteUnexistentFriendship(follower, toFollow);
 						
 						}catch(Exception e){
-							fail(e.getMessage());
+							fail(ExceptionUtils.getMessage(e));
 						}
 					}
 				});
@@ -146,7 +152,7 @@ public class AdminFriendshipTest extends AbstractTest{
 						createFriendshipWithUnexistentUser(follower,toFollow);
 						
 						}catch(Exception e){
-							fail(e.getMessage());
+							fail(ExceptionUtils.getMessage(e));
 						}
 					}
 

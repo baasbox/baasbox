@@ -162,7 +162,7 @@ public class Root extends Controller {
 			try {
 				fileName = DbManagerService.exportDb(appcode);
 			} catch (FileNotFoundException e) {
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return status(202,Json.toJson(fileName));
 		}
@@ -289,7 +289,7 @@ public class Root extends Controller {
 				if (newDBAlert!=null && !newDBAlert.isInt() && newDBAlert.asInt()<1) throw new IllegalArgumentException(BBConfiguration.DB_ALERT_THRESHOLD + " must be a positive integer value");
 				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0) throw new IllegalArgumentException(BBConfiguration.DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
 			}catch (Throwable e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}
 			if (newDBAlert!=null) BBConfiguration.setDBAlertThreshold(newDBAlert.asInt());
 			if (newDBSize!=null) BBConfiguration.setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
@@ -299,7 +299,7 @@ public class Root extends Controller {
 			try {
 				return ok(new ObjectMapper().writeValueAsString(returnMap));
 			} catch (JsonProcessingException e) {
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 		}
 		
@@ -311,7 +311,7 @@ public class Root extends Controller {
 			try {
 				return ok(new ObjectMapper().writeValueAsString(returnMap));
 			} catch (JsonProcessingException e) {
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 		}
 		

@@ -212,7 +212,7 @@ public class User extends Controller {
 		} catch (Throwable e){
 			BaasBoxLogger.warn("signUp", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+			else return internalServerError(ExceptionUtils.getMessage(e));
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
@@ -277,7 +277,7 @@ public class User extends Controller {
 		} catch (Throwable e){
 			BaasBoxLogger.warn("updateProfile", e);
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+			else return internalServerError(ExceptionUtils.getMessage(e));
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -326,7 +326,7 @@ public class User extends Controller {
 			UserService.sendResetPwdMail(appCode,user);
 		} catch (PasswordRecoveryException e) {
 			BaasBoxLogger.warn("resetPasswordStep1", e);
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (Exception e) {
 			BaasBoxLogger.warn("resetPasswordStep1", e);
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -385,7 +385,7 @@ public class User extends Controller {
 			if (isJSON)  {
 				result.put("status", "KO");
 				result.put("user_name",username);
-				result.put("error",e.getMessage());
+				result.put("error",ExceptionUtils.getMessage(e));
 				result.put("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(result);
@@ -393,7 +393,7 @@ public class User extends Controller {
 			else {
 				ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
 				pageTemplate.add("user_name",username);
-				pageTemplate.add("error",e.getMessage());
+				pageTemplate.add("error",ExceptionUtils.getMessage(e));
 				pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				return badRequest(Html.apply(pageTemplate.render()));
 			}
@@ -481,7 +481,7 @@ public class User extends Controller {
 		}catch (Exception e){
 			if(isJSON) {
 				result.put("user_name", username);
-				result.put("error", e.getMessage());
+				result.put("error", ExceptionUtils.getMessage(e));
 				result.put("application_name", com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(result);
@@ -490,7 +490,7 @@ public class User extends Controller {
 			else {
 				ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
 				pageTemplate.add("user_name",username);
-				pageTemplate.add("error",e.getMessage());
+				pageTemplate.add("error",ExceptionUtils.getMessage(e));
 				pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(Html.apply(pageTemplate.render()));
@@ -545,7 +545,7 @@ public class User extends Controller {
 			BaasBoxLogger.warn("changeUserPassword", e);
 			DbHelper.getConnection().close();
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+			else return internalServerError(ExceptionUtils.getMessage(e));
 		} 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -712,10 +712,10 @@ public class User extends Controller {
 				UserService.registerDevice(data);
 			}
 		}catch (OSecurityAccessException e){
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  ExceptionUtils.getMessage(e));
 			return unauthorized("user " + username + " unauthorized");
 		} catch (InvalidAppCodeException e) {
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + ExceptionUtils.getMessage(e));
 			return badRequest("user " + username + " unauthorized");
 		}finally{
 			if (db!=null && !db.isClosed()) db.close();
@@ -735,7 +735,7 @@ public class User extends Controller {
 		try {
 			UserService.disableCurrentUser();
 		} catch (UserNotFoundException e) {
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (OpenTransactionException e) {
 			BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e);
@@ -751,23 +751,23 @@ public class User extends Controller {
 		try{
 			UserService.getOUserByUsername(currentUsername);
 		}catch(Exception e){
-			return internalServerError(e.getMessage()); 
+			return internalServerError(ExceptionUtils.getMessage(e)); 
 		}
 		try {
 			ODocument followed = FriendShipService.follow(currentUsername, toFollowUsername);
 			return created(prepareResponseToJson(followed));
 		} catch (UserToFollowNotExistsException e){
-			return notFound(e.getMessage());
+			return notFound(ExceptionUtils.getMessage(e));
 		}catch (UserNotFoundException e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		} catch (AlreadyFriendsException e) {
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (SqlInjectionException e) {
 			return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
 		} catch (IllegalArgumentException e){
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		}catch (Exception e){
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 
 	}
@@ -834,9 +834,9 @@ public class User extends Controller {
 				return notFound("User "+currentUsername+" is not a friend of "+toUnfollowUsername);
 			}
 		} catch (UserNotFoundException e) {
-			return notFound(e.getMessage());
+			return notFound(ExceptionUtils.getMessage(e));
 		} catch (Exception e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 	}
 

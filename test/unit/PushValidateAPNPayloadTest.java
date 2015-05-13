@@ -1,29 +1,15 @@
 package unit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.service.push.providers.APNServer;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.core.type.ResolvedType;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.notnoop.apns.APNS;
-import com.notnoop.apns.PayloadBuilder;
 
 public class PushValidateAPNPayloadTest {
 	@Test
@@ -47,7 +33,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -57,7 +43,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try {
 			//ArrayNode
@@ -67,7 +53,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for content-available",CustomHttpCode.PUSH_CONTENT_AVAILABLE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -96,7 +82,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e){
-			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -106,7 +92,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			//ArrayNode
@@ -116,7 +102,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for category",CustomHttpCode.PUSH_CATEGORY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 
 	}
@@ -145,7 +131,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e){
-			Assert.assertEquals("Validate failed for sound",CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for sound",CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -155,7 +141,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for sound", CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for sound", CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			//ArrayNode
@@ -165,7 +151,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for sound", CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for sound", CustomHttpCode.PUSH_SOUND_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 
 	}
@@ -191,7 +177,7 @@ public class PushValidateAPNPayloadTest {
 				jNode.put("actionLocalizedKey", 123);
 				APNServer.validatePushPayload(jNode);
 			} catch (BaasBoxPushException e) {
-				Assert.assertEquals("Validate failed for ActionLocalizedKey",CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+				Assert.assertEquals("Validate failed for ActionLocalizedKey",CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 			}
 			try{
 				ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -201,7 +187,7 @@ public class PushValidateAPNPayloadTest {
 				APNServer.validatePushPayload(jNode);
 			}
 			catch(BaasBoxPushException e) {
-				Assert.assertEquals("Validate failed for ActionLocalizedKey", CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+				Assert.assertEquals("Validate failed for ActionLocalizedKey", CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 			}
 			try{
 				//ArrayNode
@@ -211,7 +197,7 @@ public class PushValidateAPNPayloadTest {
 				APNServer.validatePushPayload(jNode);
 			}
 			catch(BaasBoxPushException e) {
-				Assert.assertEquals("Validate failed for ActionLocalizedKey", CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+				Assert.assertEquals("Validate failed for ActionLocalizedKey", CustomHttpCode.PUSH_ACTION_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 			}
 	
 		
@@ -238,7 +224,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -248,7 +234,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try {
 			//ArrayNode
@@ -258,7 +244,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Badge",CustomHttpCode.PUSH_BADGE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -283,7 +269,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -293,7 +279,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try {
 			//ArrayNode
@@ -303,7 +289,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Key",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -330,7 +316,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e){
-			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try {
 			// int
@@ -338,7 +324,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_ARGUMENTS_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try {
 			//ObjectNode
@@ -348,7 +334,7 @@ public class PushValidateAPNPayloadTest {
 			APNServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for Localized Arguments",CustomHttpCode.PUSH_LOCALIZED_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 	}
 	

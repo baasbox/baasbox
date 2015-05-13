@@ -233,7 +233,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".value"));
 						PropertiesConfigurationHelper.override(key,value);
 					} catch (Exception e) {
-                        error ("Error overriding the setting " + key + " with the value " + value + ": " +e.getMessage());
+                        error ("Error overriding the setting " + key + " with the value " + value + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
     				//sets the visibility
@@ -243,7 +243,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".visible"));
 						PropertiesConfigurationHelper.setVisible(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+						error ("Error overriding the visible attribute for setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".editable")){ //or maybe we have to 
     				//sets the possibility to edit the value via REST API by the admin
@@ -253,7 +253,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".editable"));
 						PropertiesConfigurationHelper.setEditable(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+						error ("Error overriding the editable attribute setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else { 
     				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
@@ -335,7 +335,7 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public F.Promise<SimpleResult> onError(RequestHeader request, Throwable throwable) {
 		  error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
-		  ObjectNode result = prepareError(request, throwable.getMessage());
+		  ObjectNode result = prepareError(request, ExceptionUtils.getMessage(throwable));
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));

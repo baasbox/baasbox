@@ -12,15 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
 import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 public class JsonQueryTest {
 
 	@Test
@@ -158,7 +159,7 @@ public class JsonQueryTest {
 			JsonTree.write(json, pp, jsonData.get("data"));
 			fail();
 		}catch(Exception e){
-			assertEquals("title2.firstLetter is not a valid path",e.getMessage());
+			assertEquals("title2.firstLetter is not a valid path",ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -177,7 +178,7 @@ public class JsonQueryTest {
 			JsonTree.write(json, pp, jsonData.get("data"));
 			assertEquals(4,JsonTree.read(json, pp).asInt(0));
 		}catch(Exception e){
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -205,7 +206,7 @@ public class JsonQueryTest {
 			ArrayNode result = (ArrayNode)jn;  
 			assertEquals(result,an);
 		}catch(Exception e){
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -234,7 +235,7 @@ public class JsonQueryTest {
 			ArrayNode result = (ArrayNode)jn;  
 			assertEquals(result,an);
 		}catch(Exception e){
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -262,7 +263,7 @@ public class JsonQueryTest {
 			ArrayNode result = (ArrayNode)jn;  
 			assertEquals(result,an);
 		}catch(Exception e){
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -291,7 +292,7 @@ public class JsonQueryTest {
 			ArrayNode result = (ArrayNode)jn;  
 			assertEquals(result,an);
 		}catch(Exception e){
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -312,7 +313,7 @@ public class JsonQueryTest {
 			assertTrue(json.has("author"));
 		}catch(Exception e){
 			e.printStackTrace();
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -335,7 +336,7 @@ public class JsonQueryTest {
 			assertTrue(json.has("author"));
 		}catch(Exception e){
 			e.printStackTrace();
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -358,7 +359,7 @@ public class JsonQueryTest {
 			assertTrue(json.get("author").has("role"));
 		}catch(Exception e){
 			e.printStackTrace();
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -383,7 +384,7 @@ public class JsonQueryTest {
 			
 		}catch(Exception e){
 			e.printStackTrace();
-			fail(e.getMessage());
+			fail(ExceptionUtils.getMessage(e));
 		}
 	}
 	

@@ -16,13 +16,16 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import com.baasbox.security.SessionKeys;
+import java.io.UnsupportedEncodingException;
+
 import org.apache.commons.codec.binary.Base64;
-import com.baasbox.service.logging.BaasBoxLogger;
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import play.mvc.Http;
 import play.mvc.Http.Context;
 
-import java.io.UnsupportedEncodingException;
+import com.baasbox.security.SessionKeys;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 /**
  * Inject the admin credentials into the args argument
@@ -59,14 +62,14 @@ public class BasicAuthAccess  implements IAccessMethod {
 
             decodedAuth = Base64.decodeBase64(auth);// new sun.misc.BASE64Decoder().decodeBuffer(auth);
         } catch (Exception e){
-            BaasBoxLogger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
+            BaasBoxLogger.error("Cannot decode " + AUTHORIZATION + " header. " + ExceptionUtils.getMessage(e));
             return false;
         }
 //		} catch (IOException e1) {
 //			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e1.getMessage());
 //			return false;
 //		} catch (StringIndexOutOfBoundsException e){
-//			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
+//			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + ExceptionUtils.getMessage(e));
 //			return false;
 //		}
 		

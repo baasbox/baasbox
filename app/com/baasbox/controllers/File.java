@@ -202,7 +202,7 @@ public class File extends Controller {
 			        	parser.parse(is, contenthandler, metadata,new ParseContext());
 			        }catch (Exception e){
 			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
-			        	metadata.add("_bb_parser_error", e.getMessage());
+			        	metadata.add("_bb_parser_error", ExceptionUtils.getMessage(e));
 			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
 			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
 			        }
@@ -291,7 +291,7 @@ public class File extends Controller {
 		try {
 			listOfFiles = FileService.getFiles(criteria);
 		} catch (InvalidCriteriaException e) {
-			return badRequest(e.getMessage()!=null?e.getMessage():"");
+			return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 		} catch (SqlInjectionException e) {
 			return badRequest("the supplied criteria appear invalid (Sql Injection Attack detected)");
 		}
@@ -395,7 +395,7 @@ public class File extends Controller {
 				if (grant) FileService.grantPermissionToRole(id, permission, rolename);
 				else       FileService.revokePermissionToRole(id, permission, rolename);
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("role " + rolename + " not found");
 			} catch (OSecurityAccessException e ){
@@ -403,7 +403,7 @@ public class File extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToRole
@@ -415,7 +415,7 @@ public class File extends Controller {
 				if (grant) FileService.grantPermissionToUser(id, permission, username);
 				else       FileService.revokePermissionToUser(id, permission, username);
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("user " + username + " not found");
 			} catch (OSecurityAccessException e ){
@@ -423,7 +423,7 @@ public class File extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToUser

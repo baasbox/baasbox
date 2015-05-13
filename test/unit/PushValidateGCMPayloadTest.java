@@ -1,30 +1,15 @@
 package unit;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.exception.BaasBoxPushException;
-import com.baasbox.service.push.providers.APNServer;
 import com.baasbox.service.push.providers.GCMServer;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.core.type.ResolvedType;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.notnoop.apns.APNS;
-import com.notnoop.apns.PayloadBuilder;
 
 public class PushValidateGCMPayloadTest {
 	@Test
@@ -48,7 +33,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e){
-			Assert.assertEquals("Validate failed for collapse_key",CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for collapse_key",CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -58,7 +43,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for collapse_key", CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for collapse_key", CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			//ArrayNode
@@ -68,7 +53,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for collapse_key", CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for collapse_key", CustomHttpCode.PUSH_COLLAPSE_KEY_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 
 	}
@@ -94,7 +79,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e){
-			Assert.assertEquals("Validate failed for time_to_live",CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for time_to_live",CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			// String
@@ -102,7 +87,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			ObjectNode aNode = JsonNodeFactory.instance.objectNode();
@@ -112,7 +97,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 		try{
 			//ArrayNode
@@ -122,7 +107,7 @@ public class PushValidateGCMPayloadTest {
 			GCMServer.validatePushPayload(jNode);	
 		}
 		catch(BaasBoxPushException e) {
-			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),e.getMessage());
+			Assert.assertEquals("Validate failed for time_to_live", CustomHttpCode.PUSH_TIME_TO_LIVE_FORMAT_INVALID.getDescription(),ExceptionUtils.getMessage(e));
 		}
 
 	}
