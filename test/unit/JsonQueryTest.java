@@ -159,7 +159,7 @@ public class JsonQueryTest {
 			JsonTree.write(json, pp, jsonData.get("data"));
 			fail();
 		}catch(Exception e){
-			assertEquals("title2.firstLetter is not a valid path",ExceptionUtils.getMessage(e));
+			assertEquals("title2.firstLetter is not a valid path",e.getMessage());
 		}
 	}
 	
