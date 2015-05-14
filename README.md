@@ -1,9 +1,13 @@
 BaasBox
 =======
 
-BaasBox is an Open Source project that aims to provide a general purpose back end for mobile and web apps.
+BaasBox is an Open Source project that aims to provide a backend for mobile and web apps.
 
 Further information can be found at [www.baasbox.com](http://www.baasbox.com/ "BaasBox site").
+
+API and SDKs documentation is [here](http://www.baasbox.com/documentation/ "BaasBox Docs").
+
+Community forum is [here](https://groups.google.com/forum/#!forum/baasbox "BaasBox community forum"). 
 
 Build BaasBox
 -------------
@@ -24,7 +28,10 @@ Go to your local BaasBox source code directory and type:
 Play! will build BaasBox and will create a .zip file in the ./dist directory.
 
 The .zip file contains everything you need to run BaasBox.
-Unzip it, set the execution permission on the start.sh file and run it.
+Unzip it, set the execution permission on the start file and run it.
+
+Windows users can use the start.bat file.
+
 BaasBox will create a new database in the ./db directory, and it will start.
 
 To test it visit <http://localhost:9000> and you will see the BaasBox start page.
