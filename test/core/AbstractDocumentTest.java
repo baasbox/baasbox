@@ -163,14 +163,14 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 					// No AppCode, No Authorization
 					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
 					Result result = routeAndCall(request);
-					assertRoute(result, "No AppCode No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
+					assertRoute(result, "No AppCode No Authorization", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 	
 					
 					// Invalid AppCode
 					request = request.withHeader(TestConfig.KEY_APPCODE, "12345890");
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertRoute(result, "Invalid AppCode", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 	
 					// Invalid Authorization
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -182,7 +182,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 					request = new FakeRequest(getMethod(), getRouteAddress());
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					result = routeAndCall(request);
-					assertRoute(result, "No AppCode", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+					assertRoute(result, "No AppCode", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 				}
 			}
 		);		
@@ -204,14 +204,14 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 					// No AppCode, No Authorization
 					removeAllHeaders();
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("No AppCode, No Authorization", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE_NO_AUTH, true);
+					assertServer("No AppCode, No Authorization", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 					
 					
 					// Invalid AppCode
 					setHeader(TestConfig.KEY_APPCODE, "1");
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("Invalid AppCode", UNAUTHORIZED, TestConfig.MSG_INVALID_APP_CODE, true);
+					assertServer("Invalid AppCode", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 	
 					// Invalid Authorization
 					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -223,7 +223,7 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 					removeHeader(TestConfig.KEY_APPCODE);
 					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					httpRequest(getURLAddress(), getMethod(), getDefaultPayload());
-					assertServer("No AppCode", BAD_REQUEST, TestConfig.MSG_NO_APP_CODE, true);
+					assertServer("No AppCode", UNAUTHORIZED, TestConfig.GENERIC_AUTHENTICATION_FAILURE, true);
 	            }
 	        }
 		);

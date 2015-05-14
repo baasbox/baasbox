@@ -45,60 +45,30 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		F.Promise<SimpleResult> tempResult = null;
 		Http.Context.current.set(ctx);
-		String token = ctx.request().getHeader(SessionKeys.TOKEN.toString());
-		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
-		String authHeader = ctx.request().getHeader("authorization");
-		String appCode = RequestHeaderHelper.getAppCode(ctx);
+		IAccessMethod method = IAccessMethod.getAccessMethod(ctx,true);
 
-		boolean isCredentialOk = false;
-		boolean anonymousInjected = false;
-		// if there is no credentials (token or auth header) it means that there
-		// is an anonymous access, let's check only the presence of the appcode
-		if (StringUtils.isEmpty(token) && StringUtils.isEmpty(authHeader)) {
-			if (!StringUtils.isEmpty(appCode)) {
-				// inject the internal username/password
-				ctx.args.put("username", BBConfiguration.getBaasBoxUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxPassword());
-				ctx.args.put("appcode", appCode);
-				isCredentialOk = true;
-				anonymousInjected = true;
-			} else {
-				tempResult = F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
-			}
+		if (!method.isValid()){
+			tempResult = F.Promise.pure(unauthorized("Missing required or invalid authorization info"));
 		}
 
-		// checks if there is just a basic auth header, but without the appCode
-		if (!isCredentialOk) {
-			if (!StringUtils.isEmpty(authHeader)
-					&& StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("There is basic auth header, but the appcode is missing");
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invalid App Code, AppCode is empty!");
-				tempResult = F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
-			}
-		}
-
-		// until now, no error has been found
 		if (tempResult == null) {
-			if (!isCredentialOk) // means that no aunoymous access has been
-									// detected, so let's check pther auth way:
-									// session token or basic auth
-				if (!StringUtils.isEmpty(token))
-					isCredentialOk = (new SessionTokenAccess())
-							.setCredential(ctx);
-				else
-					isCredentialOk = (new BasicAuthAccess()).setCredential(ctx);
+			boolean isCredentialOk = method.setCredential(ctx);
 
 			if (!isCredentialOk) { // no way.... no anoymous access, but the
 									// supplied credentials aren't valid
-				tempResult = F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
+				if (method.isAnonymous()){
+					tempResult = F.Promise.pure(unauthorized("Missing required or invalid authorization info"));
+				} else {
+					tempResult = F.Promise.pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
+				}
 			} else // valid credentials have been found
 			// internal administrator is not allowed to access via REST
 			if (((String) ctx.args.get("username"))
 					.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					|| (((String) ctx.args.get("username"))
 							.equalsIgnoreCase(BBConfiguration
-									.getBaasBoxUsername()) && !anonymousInjected))
-				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username")
+									.getBaasBoxUsername()) && !method.isAnonymous()))
+				tempResult = F.Promise.pure(forbidden("The user " + ctx.args.get("username")
 						+ " cannot access via REST"));
 
 			// if everything is ok.....
@@ -111,7 +81,7 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 		SimpleResult result = wr.wrap(ctx, tempResult);
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(result.toString());
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return F.Promise.<SimpleResult>pure(result);
+		return F.Promise.pure(result);
 	}
 
 }

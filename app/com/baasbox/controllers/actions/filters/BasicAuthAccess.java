@@ -29,7 +29,11 @@ import java.io.UnsupportedEncodingException;
  */
 public class BasicAuthAccess  implements IAccessMethod {
     private static final String AUTHORIZATION = "authorization";
-  
+
+    public static final IAccessMethod INSTANCE = new BasicAuthAccess();
+
+    private BasicAuthAccess(){}
+
     @Override
 	public boolean setCredential (Context ctx)  {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
@@ -62,13 +66,6 @@ public class BasicAuthAccess  implements IAccessMethod {
             BaasBoxLogger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
             return false;
         }
-//		} catch (IOException e1) {
-//			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e1.getMessage());
-//			return false;
-//		} catch (StringIndexOutOfBoundsException e){
-//			Logger.error("Cannot decode " + AUTHORIZATION + " header. " + e.getMessage());
-//			return false;
-//		}
 		
 
         if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Decoded header: " + decodedAuth);
@@ -80,7 +77,7 @@ public class BasicAuthAccess  implements IAccessMethod {
 			throw new RuntimeException("UTF-8 encoding not supported, really???",e);
 		}
 
-        if (credString == null || credString.length != 2) {
+        if (credString.length != 2) {
         	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(AUTHORIZATION + " header is not valid (has not user:password pair)");
         	return false;
         }

@@ -72,7 +72,7 @@ public class ConnectToDBFilterAsync extends Action.Simple {
         	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));
         }catch (InvalidAppCodeException e){
 			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
-			return result = F.Promise.<SimpleResult>pure(unauthorized(e.getMessage()));	
+			return result = F.Promise.<SimpleResult>pure(unauthorized("Missing required or invalid authorization info"));
         }catch(ShuttingDownDBException sde){
         	String message = sde.getMessage();
         	Logger.info(message);

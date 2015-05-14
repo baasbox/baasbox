@@ -56,7 +56,7 @@ public class AdminCredentialWrapFilterAsync extends Action.Simple {
 		
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
 	    	if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
-	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
+	    	tempResult= F.Promise.pure(unauthorized("Missing required or invalid authorization info"));
 		}
 		
 		//executes the request

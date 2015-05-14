@@ -336,7 +336,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
 					Result result = routeAndCall(request);
-					assertRoute(result, "testAccessDocumentsWithoutAuth.not_exists", Status.NOT_FOUND, null, false);
+					assertRoute(result, "testAccessDocumentsWithoutAuth.not_exists", Status.NOT_FOUND, null, false);//FIXME is this correct?
 					
 					//Admin creates a collection					
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();		

@@ -61,6 +61,8 @@ public class TestConfig
 	public static final String MSG_ASSET_ALREADY_EXISTS = "An asset with the same name already exists";
 	public static final String MSG_NO_APP_CODE_NO_AUTH = "Missing Session Token, Authorization info and even the AppCode";
 
+	public static final String GENERIC_AUTHENTICATION_FAILURE = "Missing required or invalid authorization info";
+
 	static
 	{
 		AUTH_ADMIN_ENC = encodeAuth(AUTH_ADMIN);

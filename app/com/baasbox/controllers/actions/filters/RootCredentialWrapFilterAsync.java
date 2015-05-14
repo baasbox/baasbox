@@ -41,25 +41,17 @@ public class RootCredentialWrapFilterAsync extends Action.Simple {
 	public F.Promise<SimpleResult> call(Context ctx) throws Throwable {
 		F.Promise<SimpleResult> tempResult=null;
 		Context.current.set(ctx);
-		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
-		if (StringUtils.isEmpty(token)) token = ctx.request().getQueryString(SessionKeys.TOKEN.toString());
-		String authHeader = ctx.request().getHeader("authorization");
+		IAccessMethod method = IAccessMethod.getAccessMethod(ctx);
+
 		boolean isCredentialOk=false;
 
-		if (StringUtils.isEmpty(token) && StringUtils.isEmpty(authHeader)){
-			if (!StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx)))
-				tempResult=F.Promise.<SimpleResult>pure(unauthorized("Missing both Session Token and Authorization info"));
-			else
-				tempResult=F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
-		}else if (!StringUtils.isEmpty(authHeader) && StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
-			if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
-			if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
-	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
+		if (!method.isValid()) {
+			tempResult = F.Promise.pure(unauthorized("Missing required or invalid authorization info"));
 		}
 
+
 		if (tempResult == null){
-			if (!StringUtils.isEmpty(token)) isCredentialOk=(new SessionTokenAccess()).setCredential(ctx);
-			else isCredentialOk=(new BasicAuthAccess()).setCredential(ctx);
+			isCredentialOk = method.setCredential(ctx);
 
 			if (!isCredentialOk){
 				//tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
@@ -68,9 +60,9 @@ public class RootCredentialWrapFilterAsync extends Action.Simple {
 			} else	if //internal administrator is not allowed to access via REST
 						(((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 						||
-						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
-								tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
-			else /*if (tempResult==null) always null*/{
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())) {
+				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username") + " cannot access via REST"));
+			} else /*if (tempResult==null) always null*/{
 
 				//if everything is ok.....
 				//let's check the root credentials
@@ -83,7 +75,7 @@ public class RootCredentialWrapFilterAsync extends Action.Simple {
 				//let's check the appCode
 				String appCode=(String) Context.current().args.get("appcode");
 				if (appCode==null || !appCode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
-					tempResult=F.Promise.<SimpleResult>pure(unauthorized("Authentication info not valid or not provided: " + appCode + " is an Invalid App Code"));
+					tempResult=F.Promise.<SimpleResult>pure(unauthorized("Missing required or invalid authorization info"));
 				//injects the internal admin credentials in case the controller have to connect with the DB
 				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
 				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());

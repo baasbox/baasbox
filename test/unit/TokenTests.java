@@ -5,7 +5,7 @@ import com.baasbox.security.auth.Encoding;
 import com.baasbox.security.auth.JWTToken;
 
 import com.baasbox.security.auth.RefreshToken;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 
@@ -101,7 +101,7 @@ public class TokenTests
         int end = original.indexOf('.');
         String payloadb64 = original.substring(0, end);
         String payload = Encoding.decodeBase64(payloadb64);
-        ObjectNode node = (ObjectNode)Json.mapper().readTreeOrMissing(payload);
+        ObjectNode node = (ObjectNode) BBJson.mapper().readTreeOrMissing(payload);
         node.put("id","dsfafasfa");
         String tampered = Encoding.encodeBase64(node);
         return tampered+'.'+original.substring(end+1);
@@ -112,7 +112,7 @@ public class TokenTests
         int end = original.indexOf('.',start+1);
         String payload = original.substring(start + 1, end);
         String s = Encoding.decodeBase64(payload);
-        ObjectNode node =(ObjectNode) Json.mapper().readTreeOrMissing(s);
+        ObjectNode node =(ObjectNode) BBJson.mapper().readTreeOrMissing(s);
         node.put("sub","random");
         String tamperedPayload = Encoding.encodeBase64(node);
         return original.substring(0,start)+'.'+tamperedPayload+'.'+original.substring(end+1);

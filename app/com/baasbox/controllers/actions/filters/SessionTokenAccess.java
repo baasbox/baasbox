@@ -28,6 +28,10 @@ import com.google.common.collect.ImmutableMap;
 
 public class SessionTokenAccess implements IAccessMethod  {
 
+	public static final SessionTokenAccess INSTANCE = new SessionTokenAccess();
+
+	private SessionTokenAccess(){}
+
 	@Override
 	public boolean setCredential(Context ctx)  {
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenAccess");

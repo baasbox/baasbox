@@ -50,7 +50,7 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
 			result = delegate.call(ctx);
 		}else {
-			result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
+			result=F.Promise.pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;

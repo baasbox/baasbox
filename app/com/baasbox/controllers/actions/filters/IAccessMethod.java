@@ -18,10 +18,57 @@
 
 package com.baasbox.controllers.actions.filters;
 
+import com.baasbox.security.SessionKeys;
+import com.google.common.base.Strings;
+import play.Logger;
+import play.mvc.Http;
 import play.mvc.Http.Context;
 
 public interface IAccessMethod {
 
-	public boolean setCredential(Context ctx);
+	boolean setCredential(Context ctx);
+
+	default boolean isValid(){
+		return true;
+	}
+
+	default boolean isAnonymous(){return false;}
+
+	static IAccessMethod getAccessMethod(Context ctx,boolean allowAnonymousAccess){
+		Http.Request request = ctx.request();
+		String bbtoken = request.getHeader(SessionKeys.TOKEN.toString());
+		if (Strings.isNullOrEmpty(bbtoken)) {
+			bbtoken = request.getQueryString(SessionKeys.TOKEN.toString());
+		}
+
+		if (bbtoken != null) {
+			if (Logger.isDebugEnabled()) Logger.debug("Session token strategy");
+			return SessionTokenAccess.INSTANCE;
+		}
+
+		String auth = request.getHeader("authorization");
+		String appcode = RequestHeaderHelper.getAppCode(ctx);
+		boolean missingAuth = Strings.isNullOrEmpty(auth);
+		boolean missingAppcode = Strings.isNullOrEmpty(appcode);
+		if (missingAuth){
+			if (missingAppcode){
+				if (Logger.isDebugEnabled()){
+					Logger.debug("No auth strategy is available");
+					Logger.debug("There is basic auth header but the appcode is missing");
+					Logger.debug("Invalid App Code, AppCode is empty");
+				}
+				return InvalidAccessMethod.INSTANCE;
+			} else if (allowAnonymousAccess){
+				return AnonymousAccessMethod.INSTANCE;
+			}
+		}
+		if (Logger.isDebugEnabled())Logger.debug("Basic auth strategy selected");
+		return BasicAuthAccess.INSTANCE;
+
+	}
+
+	static IAccessMethod getAccessMethod(Context ctx){
+		return getAccessMethod(ctx,false);
+	}
 
 }
