@@ -42,8 +42,8 @@ public interface IAccessMethod {
 		}
 
 		if (bbtoken != null) {
-			if (Logger.isDebugEnabled()) Logger.debug("Session token strategy");
-			return SessionTokenAccess.INSTANCE;
+			if (Logger.isDebugEnabled()) Logger.debug("Session token strategy selected");
+			return JWTAccessMethod.INSTANCE;
 		}
 
 		String auth = request.getHeader("authorization");
@@ -62,8 +62,15 @@ public interface IAccessMethod {
 				return AnonymousAccessMethod.INSTANCE;
 			}
 		}
-		if (Logger.isDebugEnabled())Logger.debug("Basic auth strategy selected");
-		return BasicAuthAccess.INSTANCE;
+		if (auth.startsWith("Basic ")){
+			if (Logger.isDebugEnabled())Logger.debug("Basic auth strategy selected");
+			return BasicAuthAccess.INSTANCE;
+		} else {
+			if (Logger.isDebugEnabled())Logger.debug("JWT token strategy selected");
+			return JWTAccessMethod.INSTANCE;
+		}
+
+		//return auth.startsWith("Basic ")?BasicAuthAccess.INSTANCE:JWTAccessMethod.INSTANCE;
 
 	}
 

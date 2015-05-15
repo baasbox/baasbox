@@ -15,4 +15,5 @@ public class Credentials {
         this.method = method;
         this.clientNonce = clientNonce;
     }
+
 }

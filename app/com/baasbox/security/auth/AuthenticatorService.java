@@ -1,12 +1,15 @@
 package com.baasbox.security.auth;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import play.Logger;
 
 import java.time.Clock;
@@ -50,6 +53,18 @@ public class AuthenticatorService
     }
 
 
+    public Optional<Tokens> login(Credentials credentials) throws SqlInjectionException {
+        CredentialsDao cdao = CredentialsDao.getInstance();
+        Optional<String> storedCredentials = cdao.getCredentials(credentials.username, credentials.password);
+        return storedCredentials.map(pwd -> {
+                    Tokens tks = generateTokenPair(credentials.username, credentials.clientNonce, TEMP_SECRET, DURATION, true, TEMP_RSECRET);
+                    TokenDao.getInstance().storeToken(tks.refresh.get(), credentials.username);
+                    return tks.attachDbPassword(pwd);
+                }
+        );
+    }
+
+
     public Tokens signup(Credentials credentials,JsonNode nonAppAttributes,JsonNode privateAttributes,JsonNode friendsAttributes,JsonNode appAttributes) throws Exception{
         if (Strings.isNullOrEmpty(credentials.username)) throw new IllegalArgumentException("Missing username");
         if (Strings.isNullOrEmpty(credentials.password)) throw new IllegalArgumentException("Missing password");
@@ -77,10 +92,26 @@ public class AuthenticatorService
     }
 
 
+    public Optional<String> accessInternalPasswordByJWT(JWTToken token) {
+        if (token != null){
+            //token has been validated
+            CredentialsDao cdao = CredentialsDao.getInstance();
+            try {
+                return cdao.getCredentials(token.getSubject());
+            } catch (SqlInjectionException e) {
+                if (Logger.isDebugEnabled())Logger.debug("Sql injection: "+ ExceptionUtils.getMessage(e));
+                return Optional.empty();
+            }
+        }
+        return Optional.empty();
+    }
 
-
+    public Optional<JWTToken> validateJWTToken(String token){
+        return validateJWTToken(token, TEMP_SECRET);
+    }
 
     public Optional<JWTToken> validateJWTToken(String token,String secret){
+        if (Strings.isNullOrEmpty(token))return Optional.empty();
         try {
             Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
 
@@ -95,9 +126,6 @@ public class AuthenticatorService
         return Optional.empty();
     }
 
-    public String loadUserFromRefresh(RefreshToken token){
-        return null;
-    }
 
     public Optional<RefreshToken> validateRefreshToken(String token,String rsecret){
             Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
@@ -146,7 +174,7 @@ public class AuthenticatorService
                                     String secret, Duration duration,
                                     boolean refresh,
                                     String rsecret){
-        Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
+        Instant now = mClock.instant();
         Instant expires = duration == null?null:now.plus(duration);
         String jti = genNonRepetableRandom();
         JWTToken token = new JWTToken(mIssuer,
@@ -162,20 +190,19 @@ public class AuthenticatorService
         String encodedRefreshToken;
 
         if (refresh) {
-            RefreshToken rtoken = RefreshToken.create(now.getEpochSecond(),genNonRepetableRandom());
+            RefreshToken rtoken = RefreshToken.create(now.getEpochSecond() * 1000 + (now.getNano() / 1000), genNonRepetableRandom());
             encodedRefreshToken = rtoken.encode(rsecret);
-            TokenDao dao = TokenDao.getInstance();
-            dao.storeToken(encodedRefreshToken,user);
         } else {
             encodedRefreshToken = null;
         }
 
-        return Tokens.create(token.encode(secret),encodedRefreshToken);
+        return Tokens.create(token.encode(secret), encodedRefreshToken);
     }
 
     private String genNonRepetableRandom(){
         UUID uuid = UUID.randomUUID();
         Instant now = mClock.instant();
-        return Encoding.encodeBase64(uuid.toString()+now.toString());
+        return Encoding.encodeBase64(uuid.toString() + now.toString());
     }
+
 }

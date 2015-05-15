@@ -238,4 +238,7 @@ public class JWTToken
         return result;
     }
 
+    public String getAudience() {
+        return audience;
+    }
 }

@@ -21,8 +21,10 @@ package com.baasbox.service.permissions;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.security.auth.JWTToken;
 import play.mvc.Http;
 
+import javax.naming.Context;
 import java.util.Set;
 
 /**
@@ -32,6 +34,12 @@ import java.util.Set;
  */
 public class Tags {
     public final static String KEY ="tag";
+
+    public static boolean verifyAccess(Http.Context ctx,JWTToken jwt) throws Exception {
+        //todo put role in jwt
+        Set<String> tags = (Set<String>)ctx.args.get(KEY);
+        return PermissionTagService.areAllTagsEnabled(tags);
+    }
 
     /**
      * Verifies if the current endpoint is enabled

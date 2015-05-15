@@ -17,6 +17,10 @@
 package com.baasbox.controllers.actions.filters;
 
 
+import com.baasbox.BBConfiguration;
+import com.baasbox.security.auth.AuthenticatorService;
+import com.baasbox.security.auth.JWTToken;
+import com.google.common.base.Strings;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Logger;
@@ -35,6 +39,7 @@ import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
+import java.util.Optional;
 
 
 /**
@@ -56,34 +61,58 @@ public class ConnectToDBFilterAsync extends Action.Simple {
         if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
-		String appcode=(String)Http.Context.current().args.get("appcode");
-		ODatabaseRecordTx database = null;
-		F.Promise<SimpleResult> result=null;
-		
-		//check user credentials
-        try{
-        	database=DbHelper.open(appcode,username,password);
+		String appcode = (String) Context.current().args.get("appcode");
 
-            if(!Tags.verifyAccess(ctx)){
-                return  F.Promise.<SimpleResult>pure(forbidden("Endpoint has been disabled"));
-            }
-        }catch (OSecurityAccessException e){
-        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
-        	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));
-        }catch (InvalidAppCodeException e){
-			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
-			return result = F.Promise.<SimpleResult>pure(unauthorized("Missing required or invalid authorization info"));
-        }catch(ShuttingDownDBException sde){
-        	String message = sde.getMessage();
-        	Logger.info(message);
-        	return F.Promise.<SimpleResult>pure(status(503,message));
-		}finally{
-			Http.Context.current.set(ctx); 
-			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) DbHelper.rollbackTransaction();
-			DbHelper.close(database);
+		if (Strings.isNullOrEmpty(password)&& Context.current().args.containsKey("jwt")){
+			// at this point we are sure that the user is authorized
+			// so we just retrieve it's real password
+			ODatabaseRecordTx db = null;
+			try {
+				db = DbHelper.open(appcode, BBConfiguration.getBaasBoxAdminUsername(),BBConfiguration.getBaasBoxAdminPassword());
+				JWTToken jwt = (JWTToken)Context.current().args.get("jwt");
+				if (!Tags.verifyAccess(ctx,jwt)){
+					return F.Promise.pure(forbidden("Endpoint has been disabled"));
+				}
+				Optional<String> pwd = AuthenticatorService.getInstance().accessInternalPasswordByJWT(jwt);
+				if (!pwd.isPresent()){
+					return F.Promise.pure(unauthorized("User "+jwt.getSubject()+" is not authorized to access"));
+				} else {
+					Context.current().args.put("password",pwd.get());
+				}
+
+			} finally {
+				Context.current.set(ctx);
+				if (DbHelper.getConnection()!= null && DbHelper.isInTransaction()) DbHelper.rollbackTransaction();
+				DbHelper.close(db);
+			}
 		}
+//		ODatabaseRecordTx database = null;
+//		F.Promise<SimpleResult> result=null;
+//
+//		//check user credentials
+//        try{
+//        	database=DbHelper.open(appcode,username,password);
+//
+//            if(!Tags.verifyAccess(ctx)){
+//                return  F.Promise.<SimpleResult>pure(forbidden("Endpoint has been disabled"));
+//            }
+//        }catch (OSecurityAccessException e){
+//        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
+//        	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));
+//        }catch (InvalidAppCodeException e){
+//			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
+//			return result = F.Promise.<SimpleResult>pure(unauthorized("Missing required or invalid authorization info"));
+//        }catch(ShuttingDownDBException sde){
+//        	String message = sde.getMessage();
+//        	Logger.info(message);
+//        	return F.Promise.<SimpleResult>pure(status(503,message));
+//		}finally{
+//			Http.Context.current.set(ctx);
+//			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) DbHelper.rollbackTransaction();
+//			DbHelper.close(database);
+//		}
 		
-		result = delegate.call(ctx).recover(exc->{
+		return delegate.call(ctx).recover(exc->{
 			SimpleResult resultExec;
 			try{
 				throw exc;
@@ -99,7 +128,7 @@ public class ConnectToDBFilterAsync extends Action.Simple {
 			}
 			return resultExec;
 		});
-		return result;
+		//return result;
 	}
 
 }
