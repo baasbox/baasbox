@@ -24,9 +24,10 @@ public enum SessionKeys {
 	USERNAME ("USERNAME"),
 	PASSWORD ("PASSWORD"),
 	START_TIME ("START_TIME"),
-	EXPIRE_TIME ("EXPIRE_TIME");
-	
-	private String key; 
+	EXPIRE_TIME ("EXPIRE_TIME"),
+	REFRESH("X-BB_REFRESH");
+
+	private String key;
 	private SessionKeys(String key) { 
 	    this.key = key; 
 	} 

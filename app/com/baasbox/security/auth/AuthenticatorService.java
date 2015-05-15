@@ -1,117 +1,181 @@
 package com.baasbox.security.auth;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.baasbox.BBConfiguration;
+import com.baasbox.db.DbHelper;
+import com.baasbox.service.user.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Strings;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import play.Logger;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Andrea Tortorella on 5/11/15.
  */
 public class AuthenticatorService
 {
-    private final AuthenticatorFactory mAuthMethodFactory;
+
+    //fixme fixed fields need to be read from somewhere
+    private static final Duration DURATION = Duration.of(15, ChronoUnit.MINUTES);
+    private static final String TEMP_SECRET = "secret";
+    private static final String TEMP_RSECRET = "rsecret";
+
+    public static final String AUTH_METHOD ="baasbox";
+
+    private static final AuthenticatorService INSTANCE = new AuthenticatorService(Clock.systemUTC(),
+            "baasbox.com",AUTH_METHOD);
+
     private final Clock mClock;
+    private final String mIssuer;
+    private final String mAuthMethod;
 
-    private final String issuer;
-    private final String appcode;
-
-
-
-    protected AuthenticatorService(Clock clock,String issuer,String appcode){
+    public AuthenticatorService(Clock clock,String issuer,String authMethod) {
         this.mClock = clock;
-        this.mAuthMethodFactory = AuthenticatorFactory.getDefault();
-        this.issuer = issuer;
-        this.appcode = appcode;
+        this.mIssuer = issuer;
+        this.mAuthMethod = authMethod;
+
+    }
+
+    public static AuthenticatorService getInstance(){
+        return INSTANCE;
     }
 
 
-    public boolean authorize(String authHeader,String encryptionKey) throws AuthException {
-        JWTToken token = JWTToken.decode(authHeader, encryptionKey);
-        if (isJWTTimeout(token)){
-            return false; // ?? should return a reason of failure?
+    public Tokens signup(Credentials credentials,JsonNode nonAppAttributes,JsonNode privateAttributes,JsonNode friendsAttributes,JsonNode appAttributes) throws Exception{
+        if (Strings.isNullOrEmpty(credentials.username)) throw new IllegalArgumentException("Missing username");
+        if (Strings.isNullOrEmpty(credentials.password)) throw new IllegalArgumentException("Missing password");
+        try {
+            DbHelper.requestTransaction();
+            CredentialsDao cdao = CredentialsDao.getInstance();
+            String internalPassword = genNonRepetableRandom();
+            // we have credentials
+            ODocument credentialsRecord =cdao.createUserCredentials(credentials.username, credentials.password, internalPassword);
+            // we have the user
+            ODocument user = UserService.signUp(credentials.username, internalPassword, new Date(), nonAppAttributes, privateAttributes, friendsAttributes, appAttributes, false);
+
+            // tokens are generated
+            Tokens tokens = generateTokenPair(credentials.username, credentials.clientNonce, TEMP_SECRET, DURATION, true, TEMP_RSECRET);
+
+            // refrehs token is stored in the index
+            TokenDao.getInstance().storeToken(tokens.refresh.get(), credentials.username);
+            DbHelper.commitTransaction();
+
+            return tokens;
+        } catch (Exception e){
+            DbHelper.rollbackTransaction();
+            throw e;
         }
-        String authMethod = token.getMethod();
-        Authenticator authenticator = mAuthMethodFactory.getAuthenticator(authMethod);
-        return authenticator.authorize(token);
     }
 
-    public Tokens login(Credentials credentials,String encryptionKey,String refreshKey) throws AuthException{
-        Authenticator authenticator = mAuthMethodFactory.getAuthenticator(credentials.method);
-        AuthenticationResult authenticate = authenticator.authenticate(credentials);
-        if (authenticate == null){
-            throw new AuthException("authenticator did not produce a result");
-        }
-        if (authenticate.isOk()){
-            Instant now = mClock.instant();
 
-            JWTToken token = generateJWTToken(credentials, authenticator, authenticate, now);
-            String refresh = generateRefresh(refreshKey, authenticate, now);
 
-            ObjectNode persistentState = authenticate.persistentState();
 
-            if (persistentState != null){
-                savePersistentState(persistentState, credentials.username, credentials.method);
+
+    public Optional<JWTToken> validateJWTToken(String token,String secret){
+        try {
+            Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
+
+            JWTToken jwt = JWTToken.decode(token, secret);
+            if (AUTH_METHOD.equals(jwt.getMethod())
+                && isInTimeFrame(jwt,now)){
+                    return Optional.of(jwt);
             }
-            token.encode(encryptionKey);
-            return new Tokens(token.encode(encryptionKey),refresh);
+        } catch (AuthException e) {
+            if (Logger.isDebugEnabled())Logger.debug("Invalid token");
         }
+        return Optional.empty();
+    }
+
+    public String loadUserFromRefresh(RefreshToken token){
         return null;
     }
 
+    public Optional<RefreshToken> validateRefreshToken(String token,String rsecret){
+            Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
+            try {
+                RefreshToken refresh = RefreshToken.decode(token,rsecret);
+                if (isInTimeFrame(refresh,now)){
+                    return Optional.of(refresh);
+                }
+            } catch (AuthException e) {
+                if (Logger.isDebugEnabled())Logger.debug("Invalid token");
+            }
+        return Optional.empty();
+    }
 
-    private String generateRefresh(String refreshKey, AuthenticationResult authenticate, Instant now)
-    {
-        String refresh;
-        if (authenticate.hasRefresh()){
-            refresh = RefreshToken.create(now.getEpochSecond()).encode(refreshKey);
-        } else {
-            refresh =null;
+    private boolean isInTimeFrame(RefreshToken token,Instant now){
+        Instant issued = Instant.ofEpochSecond(token.getIssuedAt());
+        if (now.isBefore(issued)){
+            return false;
         }
-        return refresh;
+        if (token.getExpiresAt()==-1){
+            return true;
+        }
+        Instant end = Instant.ofEpochSecond(token.getExpiresAt());
+        return !end.isBefore(now);
     }
 
-    private JWTToken generateJWTToken(Credentials credentials, Authenticator authenticator, AuthenticationResult authenticate, Instant now)
-    {
-        long expiration =authenticate.expiresIn();
-        expiration = expiration == -1?expiration:now.plus(expiration, ChronoUnit.SECONDS).getEpochSecond();
-        long nbf = authenticate.timeBeforeValid();
-        nbf = nbf == -1?nbf:now.plus(nbf,ChronoUnit.SECONDS).getEpochSecond();
 
-        return new JWTToken(issuer,now.getEpochSecond(),
-                expiration,nbf,
-                credentials.username,
-                generateJTI(now),
-                appcode,
-                credentials.clientNonce,
-                authenticator.name(),
-                authenticate.claims());
+    private boolean isInTimeFrame(JWTToken token,Instant now){
+        Instant iat=Instant.ofEpochSecond(token.getIssuedAt());
+        Instant start = token.getNotBefore()==-1?iat:Instant.ofEpochSecond(token.getNotBefore());
+        if (now.isBefore(start)){
+            return false;
+        }
+        if (token.getExpiresAt()==-1){
+            return true;
+        }
+        Instant end = Instant.ofEpochSecond(token.getExpiresAt());
+        return !end.isBefore(now);
     }
 
-    private void savePersistentState(ObjectNode persistentState,String username,String method){
-        //todo save persistent state
-    }
 
-    private String generateJTI(Instant now){
-        String jti = UUID.randomUUID().toString();
-        jti+= Long.toString(now.getEpochSecond());
-        return Encoding.encodeBase64(jti);
-    }
 
-    private boolean isJWTTimeout(JWTToken token) {
+
+    public Tokens generateTokenPair(String user,
+                                    String clientNonce,
+                                    String secret, Duration duration,
+                                    boolean refresh,
+                                    String rsecret){
         Instant now = mClock.instant().truncatedTo(ChronoUnit.SECONDS);
+        Instant expires = duration == null?null:now.plus(duration);
+        String jti = genNonRepetableRandom();
+        JWTToken token = new JWTToken(mIssuer,
+                                      now.getEpochSecond(),
+                                      expires==null?-1L:expires.getEpochSecond(),
+                                      -1,user,
+                                      BBConfiguration.getAPPCODE(),
+                                      clientNonce,
+                                      jti,
+                                      mAuthMethod,
+                                      null);
 
-        Instant issuedAt = Instant.ofEpochSecond(token.getIssuedAt());
-        Instant notBefore = token.getNotBefore() == -1 ? issuedAt : Instant.ofEpochSecond(token.getNotBefore());
-        Instant expiresAt = token.getExpiresAt() == -1 ? null : Instant.ofEpochSecond(token.getExpiresAt());
+        String encodedRefreshToken;
 
-        boolean expired = notBefore.isAfter(now);
-        if (!expired && expiresAt != null){
-            return expiresAt.isBefore(now);
+        if (refresh) {
+            RefreshToken rtoken = RefreshToken.create(now.getEpochSecond(),genNonRepetableRandom());
+            encodedRefreshToken = rtoken.encode(rsecret);
+            TokenDao dao = TokenDao.getInstance();
+            dao.storeToken(encodedRefreshToken,user);
+        } else {
+            encodedRefreshToken = null;
         }
-        return expired;
+
+        return Tokens.create(token.encode(secret),encodedRefreshToken);
     }
 
+    private String genNonRepetableRandom(){
+        UUID uuid = UUID.randomUUID();
+        Instant now = mClock.instant();
+        return Encoding.encodeBase64(uuid.toString()+now.toString());
+    }
 }

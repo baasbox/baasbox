@@ -71,6 +71,9 @@ public class JWTToken
         return amr;
     }
 
+    public String getSubject(){
+        return subject;
+    }
 
     public static JWTToken decode(String token,String secret) throws AuthException{
         int indexFirstDot = token.indexOf('.');

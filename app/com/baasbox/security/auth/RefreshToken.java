@@ -4,6 +4,7 @@ import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.sql.Ref;
 import java.util.UUID;
 
 
@@ -27,6 +28,14 @@ public class RefreshToken {
         String tokenSerial = Encoding.encodeBase64(token);
         String signature = Encoding.signHS256(tokenSerial, secret);
         return tokenSerial+"."+signature;
+    }
+
+    public long getIssuedAt(){
+        return issued;
+    }
+
+    public long getExpiresAt(){
+        return expiration;
     }
 
     private ObjectNode toJson()
@@ -100,8 +109,12 @@ public class RefreshToken {
         return toJson().toString();
     }
 
-    public static RefreshToken create(long epochSecond)
+    public static RefreshToken create(long iat){
+        return new RefreshToken(iat,-1,UUID.randomUUID().toString());
+    }
+
+    public static RefreshToken create(long epochSecond,String unique)
     {
-        return new RefreshToken(epochSecond,-1, UUID.randomUUID().toString());
+        return new RefreshToken(epochSecond,-1, unique);
     }
 }

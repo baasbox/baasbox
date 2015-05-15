@@ -15,4 +15,14 @@ public class Tokens
         this.token = Objects.requireNonNull(token);
         this.refresh = Optional.ofNullable(refresh);
     }
+
+    public static Tokens encoded(JWTToken jwt, String secret, RefreshToken rtoken, String rsecret)
+    {
+        return new Tokens(jwt.encode(secret),rtoken.encode(rsecret));
+    }
+
+    public static Tokens create(String token, String refreshToken)
+    {
+        return new Tokens(token,refreshToken);
+    }
 }

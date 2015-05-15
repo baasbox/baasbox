@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.baasbox.security.auth.AuthenticatorService;
+import com.baasbox.security.auth.Credentials;
+import com.baasbox.security.auth.Tokens;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -193,6 +196,8 @@ public class User extends Controller {
 		JsonNode appUsersAttributes = bodyJson.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 		String username=(String) bodyJson.findValuesAsText("username").get(0);
 		String password=(String)  bodyJson.findValuesAsText("password").get(0);
+		JsonNode nonceJson =bodyJson.path("client_nonce");
+		String nonce = nonceJson.isTextual()?nonceJson.asText():null;
 		String appcode = (String)ctx().args.get("appcode");
 		if (privateAttributes!=null && privateAttributes.has("email")) {
 			//check if email address is valid
@@ -206,8 +211,12 @@ public class User extends Controller {
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			//try to signup new user
 			ODocument profile = null;
+			Tokens tokens = null;
 			try {
-				UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
+				Credentials credentials = new Credentials(username,password,"baasbox",nonce);
+				tokens = AuthenticatorService.getInstance().signup(credentials,nonAppUserAttributes,privateAttributes,friendsAttributes,appUsersAttributes);
+
+				//UserService.signUp(username, password,null, nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes,false);
 				//due to issue 412, we have to reload the profile
 				profile=UserService.getUserProfilebyUsername(username);
 			} catch (InvalidJsonException e){
@@ -225,6 +234,11 @@ public class User extends Controller {
 				else return internalServerError(e.getMessage());
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			ObjectNode profileJson =(ObjectNode) BBJson.mapper().readTreeOrMissing(prepareResponseToJson(profile));
+			profileJson.put(SessionKeys.TOKEN.toString(),tokens.token);
+			tokens.refresh.ifPresent(t ->profileJson.put(SessionKeys.REFRESH.toString(),t));
+
+			/*
 			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
@@ -232,8 +246,8 @@ public class User extends Controller {
 			ObjectMapper mapper = new ObjectMapper();
 			result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
 			JsonNode jn = mapper.readTree(result);
-
-			return created(jn);
+			*/
+			return created(profileJson);
 		}));
 	}
 

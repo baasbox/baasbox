@@ -165,11 +165,13 @@ create property _BB_DBCredentials.dbpassword String;
 alter property _BB_DBCredentials.dbpassword mandatory = true;
 alter property _BB_DBCredentials.dbpassword notnull = true;
 
-create class _BB_Authenticator;
-create property _BB_Authenticator.provider String;
-alter property _BB_Authenticator.provider mandatory = true;
-alter property _BB_Authenticator.provider notnull = true;
-create property _BB_Authenticator.dbuser link;
+create property _BB_DBCredentials.salt String;
+alter property _BB_DBCredentials.salt mandatory = true;
+alter property _BB_DBCredentials.salt notnull = true;
+create property _BB_DBCredentials.pwd String;
+alter property _BB_DBCredentials.pwd mandatory = true;
+alter property _BB_DBCredentials.pwd notnull = true;
 
 
+create index _BB_TokenStore unique_hash_index String;
 -- todo add refresh token store
