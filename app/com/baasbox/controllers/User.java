@@ -83,9 +83,7 @@ import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -123,6 +121,30 @@ public class User extends Controller {
 		}
 	}
 
+	@With({AdminCredentialWrapFilterAsync.class})
+	@BodyParser.Of(BodyParser.Json.class)
+	public static F.Promise<Result> refresh(){
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method start");
+		JsonNode jsonNode = request().body().asJson();
+		JsonNode refresh = jsonNode.path("refresh");
+		JsonNode nonce = jsonNode.path("client_nonce");
+
+		if (refresh.isTextual()){
+			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
+
+				Optional<ObjectNode> res = AuthenticatorService.getInstance()
+						.refresh(refresh.asText(), nonce.isTextual() ? nonce.asText() : null)
+						.map(j -> BBJson.mapper().createObjectNode().put(SessionKeys.TOKEN.toString(), j));
+				if (res.isPresent()){
+					return ok(res.get());
+				} else {
+					return unauthorized("invalid token");
+				}
+			}));
+		}
+
+		return F.Promise.pure(unauthorized("invalid token"));
+	}
 	/*
 	  @Path("/{id}")
 	  @ApiOperation(value = "Get info about current user", notes = "", httpMethod = "GET")

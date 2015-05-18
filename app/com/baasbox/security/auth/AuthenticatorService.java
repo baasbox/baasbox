@@ -53,6 +53,17 @@ public class AuthenticatorService
     }
 
 
+    public Optional<String> refresh(String refreshToken,String nonce) throws AuthException {
+        Optional<RefreshToken> refresh = validateRefreshToken(refreshToken, TEMP_RSECRET);
+
+        return refresh
+                .map(re -> refreshToken)
+                .flatMap(re -> TokenDao.getInstance().getUser(re))
+                .map(user ->
+                        generateJWT(user, nonce, DURATION,TEMP_SECRET));
+    }
+
+
     public Optional<Tokens> login(Credentials credentials) throws SqlInjectionException {
         CredentialsDao cdao = CredentialsDao.getInstance();
         Optional<String> storedCredentials = cdao.getCredentials(credentials.username, credentials.password);
@@ -168,6 +179,21 @@ public class AuthenticatorService
 
 
 
+    public String generateJWT(String user,String nonce,Duration duration,String secret){
+        Instant now = mClock.instant();
+        Instant expires = duration == null?null:now.plus(duration);
+        String jti = genNonRepetableRandom();
+        JWTToken t = new JWTToken(mIssuer,
+                now.getEpochSecond(),
+                expires==null?-1L:expires.getEpochSecond(),
+                -1,user,
+                BBConfiguration.getAPPCODE(),
+                nonce,
+                jti,
+                mAuthMethod,
+                null);
+        return t.encode(secret);
+    }
 
     public Tokens generateTokenPair(String user,
                                     String clientNonce,
@@ -190,7 +216,7 @@ public class AuthenticatorService
         String encodedRefreshToken;
 
         if (refresh) {
-            RefreshToken rtoken = RefreshToken.create(now.getEpochSecond() * 1000 + (now.getNano() / 1000), genNonRepetableRandom());
+            RefreshToken rtoken = RefreshToken.create(now.getEpochSecond(), genNonRepetableRandom());
             encodedRefreshToken = rtoken.encode(rsecret);
         } else {
             encodedRefreshToken = null;
