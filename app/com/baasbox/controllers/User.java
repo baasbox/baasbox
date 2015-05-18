@@ -130,6 +130,7 @@ public class User extends Controller {
 		JsonNode nonce = jsonNode.path("client_nonce");
 
 		if (refresh.isTextual()){
+			if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("refresh");
 			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 
 				Optional<ObjectNode> res = AuthenticatorService.getInstance()

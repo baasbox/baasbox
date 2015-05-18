@@ -3,6 +3,7 @@ package com.baasbox.security.auth;
 import com.baasbox.BBConfiguration;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Strings;
@@ -55,7 +56,6 @@ public class AuthenticatorService
 
     public Optional<String> refresh(String refreshToken,String nonce) throws AuthException {
         Optional<RefreshToken> refresh = validateRefreshToken(refreshToken, TEMP_RSECRET);
-
         return refresh
                 .map(re -> refreshToken)
                 .flatMap(re -> TokenDao.getInstance().getUser(re))
@@ -146,7 +146,7 @@ public class AuthenticatorService
                     return Optional.of(refresh);
                 }
             } catch (AuthException e) {
-                if (Logger.isDebugEnabled())Logger.debug("Invalid token");
+                if (Logger.isDebugEnabled())Logger.debug("Invalid token",e);
             }
         return Optional.empty();
     }

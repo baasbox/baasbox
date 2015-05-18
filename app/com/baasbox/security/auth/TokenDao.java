@@ -2,8 +2,11 @@ package com.baasbox.security.auth;
 
 import com.baasbox.db.DbHelper;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import play.Logger;
 
 import java.nio.charset.Charset;
 import java.util.Optional;
@@ -51,8 +54,12 @@ public class TokenDao
     public Optional<String> getUser(String encodedToken){
         OIndex<?> index = getIndex();
         Object rec =  index.get(encodedToken);
-        if (rec instanceof ORecordBytes){
-            return Optional.ofNullable(decode((ORecordBytes) rec));
+        if (rec instanceof ORecordId) {
+            ORecord<?> record = ((ORecordId) rec).getRecord();
+            if (record instanceof ORecordBytes) {
+                String decode = decode((ORecordBytes)record);
+                return Optional.ofNullable(decode);
+            }
         }
         return Optional.empty();
     }
