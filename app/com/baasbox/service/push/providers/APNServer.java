@@ -349,7 +349,7 @@ public class APNServer  extends PushProviderAbstract {
 			.withProductionDestination()
 			.withDelegate(apnDelegate)
 			.build();
-			pushLogger.addMessage("............ APNS sandbox mode");
+			pushLogger.addMessage("............ APNS production mode");
 		}	
 		else  {
 			service=APNS.newService()
@@ -357,7 +357,7 @@ public class APNServer  extends PushProviderAbstract {
 				.withSandboxDestination()
 				.withDelegate(apnDelegate)
 				.build();
-			pushLogger.addMessage("............ APNS production mode");
+			pushLogger.addMessage("............ APNS  sandbox mode");
 		}
 		return service;
 	}

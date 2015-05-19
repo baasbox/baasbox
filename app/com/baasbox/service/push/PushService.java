@@ -108,7 +108,10 @@ public class PushService {
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
 					);			
 		}
-		PushLogger.getInstance().addMessage("...... configuration: %s " , response);
+		HashMap toLog = new HashMap(response);
+		toLog.put(ConfigurationKeys.ANDROID_API_KEY,"<hidden>");
+		toLog.put(ConfigurationKeys.IOS_CERTIFICATE,"<hidden>");
+		PushLogger.getInstance().addMessage("...... configuration: %s " , toLog);
 		return response;
 	}
 
@@ -169,15 +172,16 @@ public class PushService {
 			pushLogger.addMessage("...... profile %d ...",pushProfile);
 			HashMap<Factory.VendorOS,IPushServer> allVendors= Factory.getAllIstances();
 			
+			ImmutableMap<ConfigurationKeys, String> pushParam = getPushParameters(pushProfile);
 			IPushServer apnServer =  allVendors.get(VendorOS.IOS);
-			apnServer.setConfiguration(getPushParameters(pushProfile));
+			apnServer.setConfiguration(pushParam);
 
 			IPushServer gcmServer =  allVendors.get(VendorOS.ANDROID);
-			gcmServer.setConfiguration(getPushParameters(pushProfile));
+			gcmServer.setConfiguration(pushParam);
 
 			pushLogger.addMessage("......... sending to %d iOS device(s)...",iosToken.size());
 			if(iosToken.size()>0) {
-				for(List<String> thousandUsersApple : Lists.partition(iosToken, 1000)){
+				for(List<String> thousandUsersApple : Lists.partition(iosToken, 2)){
 					withError[i]=apnServer.send(message, thousandUsersApple, bodyJson);
 					if (withError[i]) pushLogger.addMessage("........... WARNING: something went wrong sending this batch (%d) of messages to iOS devices",i);
 				}

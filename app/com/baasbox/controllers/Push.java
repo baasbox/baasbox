@@ -180,7 +180,7 @@ public class Push extends Controller {
 			}else{
 				pushLogger.disable();
 			}
-			if (request().getQueryString("verbose").equalsIgnoreCase("true")) verbose=true;
+			if (request().getQueryString("verbose")!=null && request().getQueryString("verbose").equalsIgnoreCase("true")) verbose=true;
 				
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson(); //{"message":"Text"}
