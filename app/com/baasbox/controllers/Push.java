@@ -18,6 +18,8 @@
 
 package com.baasbox.controllers;
 
+import static play.libs.Json.toJson;
+
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -168,7 +170,9 @@ public class Push extends Controller {
 	}
 
 	public static Result sendUsers() throws Exception {
+		boolean verbose=false;
 		try{
+			
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			PushLogger pushLogger = PushLogger.getInstance().init();
 			if (UserService.isAnAdmin(DbHelper.currentUsername())) {
@@ -176,7 +180,8 @@ public class Push extends Controller {
 			}else{
 				pushLogger.disable();
 			}
-			
+			if (request().getQueryString("verbose")!=null && request().getQueryString("verbose").equalsIgnoreCase("true")) verbose=true;
+				
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson(); //{"message":"Text"}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("send bodyJson: " + bodyJson);
@@ -235,6 +240,7 @@ public class Push extends Controller {
 	
 			boolean[] withError=new boolean[6];
 			PushService ps=new PushService();
+			Result toRet=null;
 			try{
 				boolean isValid=(ps.validate(pushProfiles));
 				pushLogger.addMessage("Profiles validation: %s", isValid);
@@ -316,8 +322,16 @@ public class Push extends Controller {
 			for(int i=0;i<withError.length;i++) {
 				if(withError[i]==true) return status(CustomHttpCode.PUSH_SENT_WITH_ERROR.getBbCode(),CustomHttpCode.PUSH_SENT_WITH_ERROR.getDescription());
 			}
-			return ok("Push Notification(s) has been sent");
+			PushLogger.getInstance().messages();
+			if (UserService.isAnAdmin(DbHelper.currentUsername()) && verbose){
+				return ok (toJson(PushLogger.getInstance().messages()));
+			} else {
+				return ok("Push Notification(s) has been sent");
+			}
 		}finally{
+			if (UserService.isAnAdmin(DbHelper.currentUsername()) && verbose){
+				return ok (toJson(PushLogger.getInstance().messages()));
+			} 
 			BaasBoxLogger.debug("Push execution flow:\n{}", PushLogger.getInstance().toString());
 		}
 	}
