@@ -181,7 +181,7 @@ public class PushService {
 
 			pushLogger.addMessage("......... sending to %d iOS device(s)...",iosToken.size());
 			if(iosToken.size()>0) {
-				for(List<String> thousandUsersApple : Lists.partition(iosToken, 2)){
+				for(List<String> thousandUsersApple : Lists.partition(iosToken, 1)){
 					withError[i]=apnServer.send(message, thousandUsersApple, bodyJson);
 					if (withError[i]) pushLogger.addMessage("........... WARNING: something went wrong sending this batch (%d) of messages to iOS devices",i);
 				}

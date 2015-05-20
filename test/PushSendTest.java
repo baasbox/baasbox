@@ -117,6 +117,42 @@ public class PushSendTest extends AbstractTest {
 					result = routeAndCall(request);
 					assertRoute(result,"testSendPushWithNewApi - ok", 200, null, true);
 					
+					//test verbose for admins
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "Profiles computed:", true);
+					
+					//verbose is not active for reg users
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					//send a message to more than a device (up to 10) at the same time
+					//populate login_info with iOS Token
+					for (int i=0;i<=9;i++){
+						request = new FakeRequest("PUT","/push/enable/ios/"+ UUID.randomUUID());
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
+						result = routeAndCall(request);
+						assertRoute(result,"populate login_info",200,null,true);
+					}
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					
 				}
 			}
 		);
@@ -168,7 +204,6 @@ public class PushSendTest extends AbstractTest {
 	}
 	
 				
-	
 
 	
 	@Override
