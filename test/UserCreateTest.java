@@ -195,7 +195,7 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withJsonBody(node, getMethod());
 					result = routeAndCall(request);
-					assertRoute(result, "emailMustBeUnique: 2", Status.BAD_REQUEST, sFakeUser + ": the email provided is already in use", true);
+					assertRoute(result, "emailMustBeUnique: 2", Status.BAD_REQUEST, "Error signing up", true);
 				
 					sFakeUser = USER_TEST + UUID.randomUUID();
 					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
@@ -272,7 +272,7 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withJsonBody(node, getMethod());
 					result = routeAndCall(request);
 					//it should be fail
-					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, sFakeUser2 + " already exists", true);
+					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, "Error signing up", true);
 					
 				}
 			}
