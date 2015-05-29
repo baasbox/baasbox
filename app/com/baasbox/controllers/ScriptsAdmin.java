@@ -21,6 +21,8 @@ package com.baasbox.controllers;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import play.libs.F;
 import play.libs.HttpExecution;
 import play.mvc.BodyParser;
@@ -48,7 +50,6 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 
 
 /**
@@ -108,19 +109,18 @@ public class ScriptsAdmin extends Controller{
                     result = badRequest(update.message);
                 }
             } catch (ScriptEvalException e) {
-            	BaasBoxLogger.error("Evaluation exception: "+e.getMessage(),e);
-                result = badRequest(e.getMessage());
+            	BaasBoxLogger.error("Evaluation exception: "+ExceptionUtils.getMessage(e),e);
+                result = badRequest(ExceptionUtils.getMessage(e));
             } catch (ScriptException e){
             	BaasBoxLogger.error("Script exception: ",e);
-                result = notFound(e.getMessage());
+                result = notFound(ExceptionUtils.getMessage(e));
             } catch (Throwable e){
             	BaasBoxLogger.error("Internal Scripts engine error",e);
-                result = internalServerError(e.getMessage());
+                result = internalServerError(ExceptionUtils.getMessage(e));
             }
             if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("End Method");
             return result;
         }));
-
     }
 
     @BodyParser.Of(BodyParser.Json.class)
@@ -132,8 +132,9 @@ public class ScriptsAdmin extends Controller{
         try {
             validateBody(body);
         } catch (ScriptException e) {
-            String message = e.getMessage();
+            String message = ExceptionUtils.getMessage(e);
             return F.Promise.pure(badRequest(message==null?"Script error: invalid request body":message));
+
         }
         return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
             Result result;
@@ -147,10 +148,9 @@ public class ScriptsAdmin extends Controller{
                     result = ok(res.message);
                 }
             } catch (ScriptAlreadyExistsException e) {
-                result = badRequest(e.getMessage());
+                result = badRequest(ExceptionUtils.getMessage(e));
             }catch (ScriptException e) {
-                String message = e.getMessage();
-
+                String message = ExceptionUtils.getMessage(e);
                 result = badRequest(message==null?"Script error":message);
             }
 
@@ -202,10 +202,10 @@ public class ScriptsAdmin extends Controller{
                 result = ok(json);
             } catch (SqlInjectionException e) {
             	BaasBoxLogger.error("Sql injection: ",e);
-                result = badRequest(e.getMessage());
+                result = badRequest(ExceptionUtils.getMessage(e));
             } catch (IOException e) {
             	BaasBoxLogger.error("Error formatting response: ",e);
-                result = internalServerError(e.getMessage());
+                result = internalServerError(ExceptionUtils.getMessage(e));
             }
             if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
             return result;
@@ -243,7 +243,7 @@ public class ScriptsAdmin extends Controller{
           .<Result>recover( t -> {
               if (t instanceof ScriptException){
             	  BaasBoxLogger.error("Error while deleting script: "+name,t);
-                  String message = t.getMessage();
+                  String message = ExceptionUtils.getMessage(t);
                   return internalServerError(message==null?"Script error":message);
               } else {
                   throw t;
@@ -264,7 +264,7 @@ public class ScriptsAdmin extends Controller{
                 }
             } catch (ScriptException e) {
             	BaasBoxLogger.error("Error while deleting script: "+name,e);
-                result = internalServerError(e.getMessage());
+                result = internalServerError(ExceptionUtils.getMessage(e));
             }
             if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method end");
             return result;

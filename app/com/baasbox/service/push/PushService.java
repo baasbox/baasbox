@@ -108,7 +108,10 @@ public class PushService {
 					ConfigurationKeys.IOS_SANDBOX,""+Boolean.FALSE.toString()
 					);			
 		}
-		PushLogger.getInstance().addMessage("...... %s " , response);
+		HashMap toLog = new HashMap(response);
+		toLog.put(ConfigurationKeys.ANDROID_API_KEY,"<hidden>");
+		toLog.put(ConfigurationKeys.IOS_CERTIFICATE,"<hidden>");
+		PushLogger.getInstance().addMessage("...... configuration: %s " , toLog);
 		return response;
 	}
 
@@ -123,6 +126,7 @@ public class PushService {
 			UserDao udao = UserDao.getInstance();
 			ODocument user = udao.getByUserName(username);
 			if (user==null) {
+				pushLogger.addMessage("+++ ERROR: User %s does not exist!",username);
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User " + username + " does not exist");
 				throw new UserNotFoundException("User " + username + " does not exist");
 			}
@@ -168,16 +172,18 @@ public class PushService {
 			pushLogger.addMessage("...... profile %d ...",pushProfile);
 			HashMap<Factory.VendorOS,IPushServer> allVendors= Factory.getAllIstances();
 			
+			ImmutableMap<ConfigurationKeys, String> pushParam = getPushParameters(pushProfile);
 			IPushServer apnServer =  allVendors.get(VendorOS.IOS);
-			apnServer.setConfiguration(getPushParameters(pushProfile));
+			apnServer.setConfiguration(pushParam);
 
 			IPushServer gcmServer =  allVendors.get(VendorOS.ANDROID);
-			gcmServer.setConfiguration(getPushParameters(pushProfile));
+			gcmServer.setConfiguration(pushParam);
 
 			pushLogger.addMessage("......... sending to %d iOS device(s)...",iosToken.size());
 			if(iosToken.size()>0) {
-				for(List<String> thousandUsersApple : Lists.partition(iosToken, 1000)){
+				for(List<String> thousandUsersApple : Lists.partition(iosToken, 1)){
 					withError[i]=apnServer.send(message, thousandUsersApple, bodyJson);
+					if (withError[i]) pushLogger.addMessage("........... WARNING: something went wrong sending this batch (%d) of messages to iOS devices",i);
 				}
 				i++;
 			}
@@ -186,10 +192,10 @@ public class PushService {
 			if(androidToken.size()>0) {
 				for(List<String> thousandUsersAndroid: Lists.partition(androidToken,1000)){ //needed for the GCM sending limit
 					withError[i]=gcmServer.send(message, thousandUsersAndroid, bodyJson);
+					if (withError[i]) pushLogger.addMessage("........... WARNING: something went wrong sending this batch (%d) of messages to Android devices",i);
 				}
 				i++;
 			}
-
 		}
 		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
 		return withError;
@@ -199,7 +205,11 @@ public class PushService {
 
 	public boolean validate(List<Integer> pushProfiles) throws IOException, BaasBoxPushException {
 		for(Integer pushProfile : pushProfiles) {
-			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
+			if((pushProfile!=1) && (pushProfile!=2) && (pushProfile!=3)) {
+				PushLogger pushLogger = PushLogger.getInstance();
+				pushLogger.addMessage("+++ ERROR: Error with profiles (accepted values are: 1,2 or 3). Got %d", pushProfile);
+				throw new PushProfileInvalidException("Error with profiles (accepted values are:1,2 or 3)"); 			
+			}
 			if (!isMocked()){
 				if((pushProfile==1) && (!Push.PROFILE1_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 
 				if((pushProfile==2) && (!Push.PROFILE2_PUSH_PROFILE_ENABLE.getValueAsBoolean())) throw new PushProfileDisabledException("Profile not enabled"); 

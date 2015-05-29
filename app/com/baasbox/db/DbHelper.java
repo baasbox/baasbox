@@ -33,6 +33,7 @@ import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import play.Play;
 import play.libs.F;
@@ -497,7 +498,8 @@ public class DbHelper {
 						+ ((Object) db).hashCode());
 		} catch (ODatabaseException e) {
 			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: "
-					+ e.getMessage());
+					+ ExceptionUtils.getMessage(e));
+
 		}
 		return db;
 	}

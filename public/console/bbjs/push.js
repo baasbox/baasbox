@@ -258,7 +258,7 @@ function PushTestController($scope){
 		var url=window.location.origin + BBRoutes.com.baasbox.controllers.Push.sendUsers.url;
 		$.ajax({
 			type:"POST",
-			url:"/push/message",
+			url:"/push/message?verbose=true",
 			data: $scope.payload,
 			contentType: "application/json",
 			processData: false

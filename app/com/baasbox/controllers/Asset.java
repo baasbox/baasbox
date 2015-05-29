@@ -18,7 +18,6 @@ package com.baasbox.controllers;
 
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,15 +26,11 @@ import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
-import com.baasbox.controllers.actions.filters.*;
-import com.baasbox.db.DbHelper;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import play.libs.F;
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -45,20 +40,26 @@ import play.mvc.Result;
 import play.mvc.With;
 
 import com.baasbox.configuration.ImagesConfiguration;
+import com.baasbox.controllers.actions.filters.AnonymousCredentialWrapFilterAsync;
+import com.baasbox.controllers.actions.filters.CheckAdminRoleFilterAsync;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.exception.AssetNotFoundException;
 import com.baasbox.exception.DocumentIsNotAFileException;
 import com.baasbox.exception.DocumentIsNotAnImageException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.OperationDisabledException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.AssetService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.google.common.io.Files;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -317,6 +318,7 @@ public class Asset extends Controller{
 		String[] meta=body.get("meta");
 		String[] name=body.get("name");
 		String assetName = (name!=null && name.length>0) ? name[0] : null;
+
 		if (assetName!=null&&StringUtils.isNotEmpty(assetName.trim())){
 			return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 				String ret="";
@@ -332,7 +334,7 @@ public class Asset extends Controller{
 					}catch (OIndexException e){
 						return badRequest("An asset with the same name already exists");
 					}catch (InvalidJsonException e){
-						return badRequest("the meta field has a problem: " + e.getMessage());
+						return badRequest("the meta field has a problem: " + ExceptionUtils.getMessage(e));
 					}
 
 				return created(ret);
