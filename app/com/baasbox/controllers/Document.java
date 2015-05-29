@@ -23,20 +23,13 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.baasbox.util.ErrorToResult;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-
-
 import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.Json;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
-
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -70,6 +63,7 @@ import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.ErrorToResult;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
@@ -152,7 +146,7 @@ public class Document extends Controller {
                 .when(Exception.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-                            return internalServerError(e.getMessage());
+                            return internalServerError(ExceptionUtils.getMessage(e));
                         }));
 
     }
@@ -184,7 +178,7 @@ public class Document extends Controller {
                 .when(Exception.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-                            return internalServerError(e.getMessage());
+                            return internalServerError(ExceptionUtils.getMessage(e));
                         }));
 
     }
@@ -208,7 +202,7 @@ public class Document extends Controller {
                 } catch (UnsupportedEncodingException e) {
                     return Promise.pure(badRequest("Unable to decode parts"));
                 } catch (PartValidationException e) {
-                    return Promise.pure(badRequest(e.getMessage() == null ? "" : e.getMessage()));
+                    return Promise.pure(badRequest(ExceptionUtils.getMessage(e) == null ? "" : ExceptionUtils.getMessage(e)));
                 }
             }
             final PartsParser partsParser = new PartsParser(queryParts);
@@ -220,7 +214,7 @@ public class Document extends Controller {
                         return doc == null ? notFound() : ok(prepareResponseToJson(doc));
                     })).recover(ErrorToResult
                     .when(IllegalArgumentException.class,
-                            e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+                            e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : ""))
                     .when(InvalidCollectionException.class,
                             e -> notFound(collectionName + " is not a valid collection name"))
                     .when(ODatabaseException.class,
@@ -228,9 +222,9 @@ public class Document extends Controller {
                     .when(DocumentNotFoundException.class,
                             e -> notFound(id + " not found"))
                     .when(RidNotFoundException.class,
-                            e -> notFound(e.getMessage()))
+                            e -> notFound(ExceptionUtils.getMessage(e)))
                     .when(InvalidCriteriaException.class,
-                            e -> badRequest(e.getMessage() != null ? e.getMessage() : "")))
+                            e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : "")))
                     .map(r -> {
                         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
                         return r;
@@ -251,7 +245,7 @@ public class Document extends Controller {
         })).recover(ErrorToResult
 
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+                        e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : ""))
                 .when(InvalidCollectionException.class,
                         e -> notFound(collectionName + " is not a valid collection name"))
                 .when(InvalidModelException.class,
@@ -261,7 +255,7 @@ public class Document extends Controller {
                 .when(DocumentNotFoundException.class,
                         e -> notFound(id + " not found"))
                 .when(RidNotFoundException.class,
-                        e -> notFound(e.getMessage())))
+                        e -> notFound(ExceptionUtils.getMessage(e))))
 
                 .map(r -> {
                     if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -285,7 +279,7 @@ public class Document extends Controller {
                     }
                 })).recover(ErrorToResult
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(ODatabaseException.class,
                         e -> notFound(orid + " unknown")))
                 .map(r -> {
@@ -317,13 +311,13 @@ public class Document extends Controller {
                     BaasBoxLogger.trace("Document created: " + document.getRecord().getIdentity());
                 return ok(prepareResponseToJson(document));
             } catch (InvalidCollectionException e) {
-                return notFound(e.getMessage());
+                return notFound(ExceptionUtils.getMessage(e));
             } catch (InvalidJsonException e) {
                 return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
             } catch (UpdateOldVersionException e) {
                 return badRequest(ExceptionUtils.getMessage(e));
             } catch (InvalidModelException e) {
-                return badRequest("ACL fields are not valid: " + e.getMessage());
+                return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
             } catch (ORecordDuplicatedException e) {
             	return badRequest("Provided ID already exists: " + bodyJson.get(BaasBoxPrivateFields.ID.toString()));
             } catch (Throwable e) {
@@ -368,7 +362,7 @@ public class Document extends Controller {
                         .when(DocumentNotFoundException.class,
                                 e -> notFound("Document " + id + " not found"))
                         .when(AclNotValidException.class,
-                                e -> badRequest("ACL fields are not valid: " + e.getMessage()))
+                                e -> badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e)))
                         .when(UpdateOldVersionException.class,
                                 e -> status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),
                                         "You are attempting to update an older version of the document. Your document version is "
@@ -425,7 +419,7 @@ public class Document extends Controller {
                 String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
                 objParts.add(lexer.parse(p, i + 1));
             } catch (PartValidationException pve) {
-                return Promise.pure(badRequest(pve.getMessage()));
+                return Promise.pure(badRequest(ExceptionUtils.getMessage(pve)));
             } catch (Exception e) {
                 return Promise.pure(badRequest("Unable to parse document parts"));
             }
@@ -442,7 +436,7 @@ public class Document extends Controller {
                     }
                 })).recover(ErrorToResult
                 .when(MissingNodeException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(InvalidCollectionException.class,
                         e -> notFound(collectionName + " is not a valid collection name"))
                 .when(InvalidModelException.class,
@@ -456,7 +450,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden("You have not the right to modify the document " + id))
                 .when(RidNotFoundException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(Throwable.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
@@ -485,9 +479,9 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden("You have not the right to delete " + id))
                 .when(InvalidCollectionException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())))
+                        e -> internalServerError(ExceptionUtils.getMessage(e))))
                 .map(r -> {
                     if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
                     return r;
@@ -561,7 +555,7 @@ public class Document extends Controller {
                 .when(RidNotFoundException.class,
                         e -> notFound("id " + id + " not found"))
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(UserNotFoundException.class,
                         e -> notFound("user " + username + " not found"))
                 .when(InvalidCollectionException.class,
@@ -575,7 +569,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden())
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())));
+                        e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToUser
 
     private static Promise<Result> grantOrRevokeToRole(String collectionName, String id,
@@ -597,7 +591,7 @@ public class Document extends Controller {
                 .when(RidNotFoundException.class,
                         e -> notFound("id " + id + " no found"))
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(RoleNotFoundException.class,
                         e -> notFound("role " + rolename + " not found"))
                 .when(InvalidCollectionException.class,
@@ -611,7 +605,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden())
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())));
+                        e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToRole
 
 
@@ -634,7 +628,7 @@ public class Document extends Controller {
                     }))
                     .recover(ErrorToResult
                             .when(IllegalArgumentException.class,
-                                    e -> badRequest(e.getMessage()))
+                                    e -> badRequest(ExceptionUtils.getMessage(e)))
                             .when(InvalidCollectionException.class,
                                     e -> notFound("collection " + collectionName + " not found"))
                             .when(InvalidModelException.class,
@@ -648,7 +642,7 @@ public class Document extends Controller {
                             .when(Throwable.class,
                                     e -> internalServerError(ExceptionUtils.getFullStackTrace(e))));
         } catch (AclNotValidException e) {
-            return Promise.pure(badRequest("ACL fields are not valid: " + e.getMessage()));
+            return Promise.pure(badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e)));
         }
     }
 

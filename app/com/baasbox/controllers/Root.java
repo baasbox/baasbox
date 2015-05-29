@@ -29,35 +29,37 @@ import java.util.SortedMap;
 import java.util.function.Function;
 import java.util.zip.ZipInputStream;
 
-import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
-import com.baasbox.controllers.actions.filters.RootCredentialWrapFilterAsync;
-import com.baasbox.db.DbHelper;
-import com.baasbox.util.BBJson;
-import com.baasbox.util.ErrorToResult;
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-
 import play.libs.F;
-
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
-import play.mvc.*;
+import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Http.MultipartFormData;
 import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Result;
+import play.mvc.Results;
+import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.RootCredentialWrapFilterAsync;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.service.dbmanager.DbManagerService;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.ErrorToResult;
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableMap;
 
 
 public class Root extends Controller {
@@ -180,7 +182,7 @@ public class Root extends Controller {
 			try {
 				fileName = DbManagerService.exportDb(appcode);
 			} catch (FileNotFoundException e) {
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return status(202, Json.toJson(fileName));
 		}));
@@ -321,7 +323,7 @@ public class Root extends Controller {
 				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0)
 					throw new IllegalArgumentException(BBConfiguration.DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
 			}catch (Throwable e){
-				return F.Promise.pure(badRequest(e.getMessage()));
+				return F.Promise.pure(badRequest(ExceptionUtils.getMessage(e)));
 			}
 
 			if (newDBAlert!=null){
@@ -337,7 +339,7 @@ public class Root extends Controller {
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));
 			} catch (JsonProcessingException e) {
-				return F.Promise.pure(internalServerError(e.getMessage()));
+				return F.Promise.pure(internalServerError(ExceptionUtils.getMessage(e)));
 			}
 		}
 		
@@ -349,7 +351,7 @@ public class Root extends Controller {
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));
 			} catch (JsonProcessingException e) {
-				return F.Promise.pure(internalServerError(e.getMessage()));
+				return F.Promise.pure(internalServerError(ExceptionUtils.getMessage(e)));
 			}
 		}
 		

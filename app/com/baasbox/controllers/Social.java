@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.scribe.model.Token;
 
 import play.libs.F;
@@ -97,9 +98,9 @@ public class Social extends Controller{
 				Token t = sc.requestAccessToken(request(),session());
 				return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
 			}catch (UnsupportedSocialNetworkException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch (java.lang.IllegalArgumentException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}
 		});
 
@@ -170,7 +171,7 @@ public class Social extends Controller{
 			try{
 				existingUser = userDao.getBySocialUserId(result);
 			}catch(SqlInjectionException sie){
-				return internalServerError(sie.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(sie));
 			}
 
 			if(existingUser!=null){
@@ -181,7 +182,7 @@ public class Social extends Controller{
 						throw new InvalidModelException("username for profile is null");
 					}
 				} catch (InvalidModelException e) {
-					internalServerError("unable to login with "+socialNetwork+" : "+e.getMessage());
+					internalServerError("unable to login with "+socialNetwork+" : "+ExceptionUtils.getMessage(e));
 				}
 				String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 
@@ -216,7 +217,7 @@ public class Social extends Controller{
 
 					return ok(on);
 				}catch(Exception uaee){
-					return internalServerError(uaee.getMessage());
+					return internalServerError(ExceptionUtils.getMessage(uaee));
 				}
 			}
 		}));
@@ -250,7 +251,7 @@ public class Social extends Controller{
 					return ok(Json.toJson(result));
 				}
 			}catch(Exception e){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 		}));
 	}
@@ -288,7 +289,7 @@ public class Social extends Controller{
 						UserService.removeSocialLoginTokens(user, socialNetwork);
 						return ok();
 					} catch (Exception e) {
-						return internalServerError(e.getMessage());
+						return internalServerError(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -349,7 +350,7 @@ public class Social extends Controller{
 			}
 			return ok();
 		} catch (SqlInjectionException e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 
 

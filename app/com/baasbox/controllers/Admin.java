@@ -22,9 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-import java.net.MalformedURLException;
-
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,10 +116,9 @@ public class Admin extends Controller {
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 
-
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
 			List<ODocument> users=null;
-			String ret;
+			String ret="{[]}";
 			try{
 				users = UserService.getUsers(criteria);
 			}catch (SqlInjectionException e ){
@@ -178,14 +174,14 @@ public class Admin extends Controller {
 				result = StatisticsService.collectionsDetails(collections);
 			} catch (Exception e){
 				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			response().setContentType("application/json");
 			return ok(toJson(result));
-
 		}));
 	}
+
 
 	public static F.Promise<Result> createCollection(String name) {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
@@ -197,7 +193,7 @@ public class Admin extends Controller {
 			}catch (InvalidCollectionException e) {
 				return badRequest("The collection name " + name + " is invalid");
 			}catch (InvalidModelException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch (Throwable e){
 				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				throw e;
@@ -228,10 +224,10 @@ public class Admin extends Controller {
 
 			} catch (SqlInjectionException e) {
 				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			} catch (InvalidCollectionException e) {
 				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			response().setContentType("application/json");
 			return ok(toJson(response));
@@ -408,7 +404,7 @@ public class Admin extends Controller {
 						", " + UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER+
 						" they must be an object, not a value.");
 			}catch (UserAlreadyExistsException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (EmailAlreadyUsedException e){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 				return badRequest(username + ": the email provided is already in use");
@@ -480,7 +476,7 @@ public class Admin extends Controller {
 			try {
 				user=UserService.updateProfile(username,role,nonAppUserAttributes, privateAttributes, friendsAttributes, appUsersAttributes);
 			}catch(InvalidParameterException e){
-				return badRequest(e.getMessage());  
+				return badRequest(ExceptionUtils.getMessage(e));  
 			}catch (InvalidJsonException e){
 				return badRequest("Body is not a valid JSON: " + e.getMessage() + "\nyou sent:\n" + bodyJson.toString() + 
 						"\nHint: check the fields "+UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER+
@@ -493,7 +489,7 @@ public class Admin extends Controller {
 			}catch (Throwable e){
 				BaasBoxLogger.warn("signUp", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-				else return internalServerError(e.getMessage());
+				else return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok(user.toJSON(Formats.USER.toString()));
@@ -558,7 +554,7 @@ public class Admin extends Controller {
 				return notFound("The Collection " + name + " does not exist");
 			} catch (Exception e) {
 				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			response().setContentType("application/json");
@@ -655,7 +651,7 @@ public class Admin extends Controller {
 						})).recover(t->handleConfError("",t));
 
 					}catch(Exception e){
-						return F.Promise.pure(internalServerError(e.getMessage()));
+						return F.Promise.pure(internalServerError(ExceptionUtils.getMessage(e)));
 					}
 				}
 				return F.Promise.pure(badRequest());
@@ -664,7 +660,6 @@ public class Admin extends Controller {
 				return F.Promise.pure(badRequest(message==null?"":message));
 			}
 		}
-
 	}
 
 	private static Result handleConfError(String value, Throwable t) throws Throwable {
@@ -710,6 +705,7 @@ public class Admin extends Controller {
 	}//getLatestVersion
 
 
+
 	public static F.Promise<Result> dropDb(Long timeout){
 		return Promise.promise(() -> {
 			try {
@@ -720,7 +716,7 @@ public class Admin extends Controller {
 				DbHelper.close(DbHelper.getConnection());
 			}
 		}).recover((e)->{
-			String msg = e.getMessage();
+			String msg = ExceptionUtils.getMessage(e);
 			BaasBoxLogger.error(msg);
 			return internalServerError(msg);
 		}).flatMap((s)->{
@@ -755,7 +751,7 @@ public class Admin extends Controller {
 				fileName = DbManagerService.exportDb(appcode);
 				return status(202, Json.toJson(fileName));
 			} catch (FileNotFoundException e) {
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 		}));
 	}
@@ -850,8 +846,8 @@ public class Admin extends Controller {
 				zipFile.delete();
 				return ok();
 			}catch(org.apache.xmlbeans.impl.piccolo.io.FileFormatException e){
-				BaasBoxLogger.warn(e.getMessage());
-				return badRequest(e.getMessage());
+				BaasBoxLogger.warn(ExceptionUtils.getMessage(e));
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch(Exception e){
 				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				return internalServerError(ExceptionUtils.getStackTrace(e));
@@ -883,7 +879,7 @@ public class Admin extends Controller {
 			try {
 				UserService.disableUser(username);
 			} catch (UserNotFoundException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getFullStackTrace(e));
 			} catch (OpenTransactionException e) {
 				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e);
@@ -906,7 +902,7 @@ public class Admin extends Controller {
 			try {
 				UserService.enableUser(username);
 			} catch (UserNotFoundException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getFullStackTrace(e));
 			} catch (OpenTransactionException e) {
 				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e);
@@ -944,9 +940,8 @@ public class Admin extends Controller {
 					UserService.addUserToRole(follower,friendshipRole);
 					return created();
 				}catch(Exception e){
-					return internalServerError(e.getMessage());
+					return internalServerError(ExceptionUtils.getFullStackTrace(e));
 				}
-
 			}else{
 				StringBuilder errorString = new StringBuilder("The user");
 				if(!firstUserExists && !secondUserExists){
@@ -961,12 +956,8 @@ public class Admin extends Controller {
 				}
 				errorString.append(" does not exists on the db");
 				return notFound(errorString.toString());
-
-
 			}
 		}));
-
-
 	}
 	
 	/**
@@ -992,7 +983,7 @@ public class Admin extends Controller {
 					UserService.removeUserFromRole(follower,friendshipRole);
 					return ok();
 				}catch(Exception e){
-					return internalServerError(e.getMessage());
+					return internalServerError(ExceptionUtils.getMessage(e));
 				}
 
 			}else{
@@ -1037,8 +1028,8 @@ public class Admin extends Controller {
 					followers = UserService.getUserProfilebyUsernames(usernames);
 					return ok(User.prepareResponseToJson(followers));
 				} catch (Exception e) {
-					BaasBoxLogger.error(e.getMessage());
-					return internalServerError(e.getMessage());
+					BaasBoxLogger.error(ExceptionUtils.getMessage(e));
+					return internalServerError(ExceptionUtils.getMessage(e));
 				}
 			}
 		}));
@@ -1057,7 +1048,7 @@ public class Admin extends Controller {
 					res = ok(toJson(tag));
 				}
 			} catch (SqlInjectionException e) {
-				res = badRequest(e.getMessage());
+				res = badRequest(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
@@ -1075,7 +1066,7 @@ public class Admin extends Controller {
 			} catch (InvalidPermissionTagException e) {
 				res = notFound("tag permission "+name+" does not exists");
 			} catch (SqlInjectionException e) {
-				res = badRequest(e.getMessage());
+				res = badRequest(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
@@ -1092,7 +1083,7 @@ public class Admin extends Controller {
 				res = ok(toJson(tags));
 			} catch (Throwable e){
 				BaasBoxLogger.error(e.getMessage());
-				res = internalServerError(e.getMessage());
+				res = internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
 			return res;

@@ -2,4 +2,13 @@
 
 scriptdir=`dirname $0`
 classpath="$scriptdir/lib/*"
+
+# check if the RUNNING_PID file exists. In this case it will be deleted if there is no process with the same PID stored in it
+# RUNNING_PID file is created by BaasBox when it starts. If it quits unexpectedly (kill -9, server crash) the file is not deleted and BaasBox will not restarts
+ 
+if [ -f RUNNING_PID ];
+then
+	ps -p $(cat RUNNING_PID) > /dev/null; test $? -eq 1 && rm RUNNING_PID
+fi
+
 exec java ${1+"$@"} -cp "$classpath"  play.core.server.NettyServer `dirname $0`

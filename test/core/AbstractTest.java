@@ -44,6 +44,7 @@ import java.util.UUID;
 
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
@@ -61,7 +62,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 import play.Configuration;
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.mvc.Http.Status;
 import play.mvc.Result;
@@ -69,6 +69,7 @@ import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
 
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -413,7 +414,7 @@ public abstract class AbstractTest extends FluentTest
         }
         catch(Exception e)
         {
-            Assert.fail("Unable to get HttpConnection "+e.getMessage());
+            Assert.fail("Unable to get HttpConnection "+ExceptionUtils.getMessage(e));
         }
 
         return conn;
