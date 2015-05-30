@@ -37,7 +37,7 @@ var documentDataArray= new Array();
 			               },
 			               {"mData": "id","mRender": function ( data, type, full ) {
 							   var obj=JSON.parse(JSON.stringify(full));
-			            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]) /*+ "&nbsp;" + getActionButton("acl","document",data+obj["@class"])*/;
+			            	   return getActionButton("edit","document",data + DOC_CLASS_SEPARATOR + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data + DOC_CLASS_SEPARATOR + obj["@class"]) /*+ "&nbsp;" + getActionButton("acl","document",data+obj["@class"])*/;
 			            	},bSortable:false,bSearchable:false
 			               }
 			               ],
