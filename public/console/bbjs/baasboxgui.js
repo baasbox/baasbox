@@ -53,6 +53,7 @@ var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
 
+var DOC_CLASS_SEPARATOR = "___@___";
 
 $(document).ready(function(){
 	setup();
@@ -315,8 +316,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 			//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			openDocumentEditForm(id,collection);
 			break;
 		case "asset":
@@ -365,8 +366,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 		//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
 				return;
 			deleteDocument(collection,id);
