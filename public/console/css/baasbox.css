@@ -72,41 +72,10 @@ p.hint{
 	margin-bottom:15px;
 }
 
-.btn-google {
-  color: #ffffff;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-  background-color: #d34332;
-  *background-color: #c53727;
-  background-image: -moz-linear-gradient(top, #dd4b39, #c53727);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dd4b39), to(#c53727));
-  background-image: -webkit-linear-gradient(top, #dd4b39, #c53727);
-  background-image: -o-linear-gradient(top, #dd4b39, #c53727);
-  background-image: linear-gradient(to bottom, #dd4b39, #c53727);
-  background-repeat: repeat-x;
-  border-color: #c53727 #c53727 #85251a;
-  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdd4b39', endColorstr='#ffc53727', GradientType=0);
-  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
-}
 
-.btn-google:hover,
-.btn-google:focus,
-.btn-google:active,
-.btn-google.active,
-.btn-google.disabled,
-.btn-google[disabled] {
-  color: #ffffff;
-  background-color: #c53727;
-  *background-color: #b03123;
-}
 
 span.form-saved{
 	color:red;
-}
-
-.btn-google:active,
-.btn-google.active {
-  background-color: #9a2b1f \9;
 }
 
 

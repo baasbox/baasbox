@@ -2178,7 +2178,6 @@ function callMenu(action){
 
 
 				}
-
 				applySuccessMenu(action,settingSocialData);
 
 
