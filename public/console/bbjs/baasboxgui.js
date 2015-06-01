@@ -337,11 +337,11 @@ $(".btn-action").live("click", function() {
         openFollowersModal(parameters);
             break;
     case "suspend":
-        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to suspend user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(true,parameters);
             break;
     case "activate":
-        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to enable user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(false,parameters);
             break;
 	case "delete":
@@ -380,6 +380,7 @@ $(".btn-action").live("click", function() {
 
 function suspendOrActivateUser(suspend,userName)
 {
+	userName=unescape(userName);
     var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
                         BBRoutes.com.baasbox.controllers.Admin.enable(userName);
     route.ajax(
@@ -454,6 +455,7 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
+	editUserName = unescape(editUserName);
     var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
@@ -479,11 +481,13 @@ function openUserEditForm(editUserName){
 }
 
 function openFollowersModal(user){
+	user = unescape(user);
     $("#followedUser").text(user);
     reloadFollowing(user);
     $("#followersModal").modal('show');
 }
 function openChangePasswordUserForm(changePassword){
+	changePassword=unescape(changePassword);
     resetChangePasswordUserForm()
     var userObject;
     $("#userTitle").text("Change password");
