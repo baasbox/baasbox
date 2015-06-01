@@ -21,6 +21,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
@@ -120,6 +122,18 @@ public class UserDao extends NodeDao  {
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 		return result;
 	}
+	
+	public OUser getOUserByUsername(String username){
+		ODocument user = null;
+		try {
+			user = getByUserName(username);
+			if (user==null) return null;
+		} catch (SqlInjectionException e) {
+			BaasBoxLogger.debug(ExceptionUtils.getMessage(e));
+			throw new RuntimeException(e);
+		}
+		return new OUser((ODocument)user.field("user"));	
+	}
 
     public List<ODocument> getByUsernames(List<String> usernames,QueryParams query) throws SqlInjectionException {
         if (query == null){
@@ -169,7 +183,7 @@ public class UserDao extends NodeDao  {
 
 	public void disableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
-		OUser user = db.getMetadata().getSecurity().getUser(username);
+		OUser user = getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.SUSPENDED);
 		user.save();
@@ -178,7 +192,7 @@ public class UserDao extends NodeDao  {
 	
 	public void enableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
-		OUser user = db.getMetadata().getSecurity().getUser(username);
+		OUser user = getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.ACTIVE);
 		user.save();
