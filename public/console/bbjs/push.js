@@ -178,7 +178,8 @@ function PushConfController($scope){
 			s.error ="File can't be empty"
 			return;
 		}
-		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
+		var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).url;
+    	
 		if (window.location.protocol == "https:"){
 			serverUrl=serverUrl.replace("http:","https:");
 		}
