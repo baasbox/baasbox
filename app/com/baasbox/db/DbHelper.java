@@ -46,6 +46,7 @@ import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
@@ -445,12 +446,11 @@ public class DbHelper {
 	
 	public static void updateDefaultUsers() throws Exception{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
-		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
+		UserDao udao = UserDao.getInstance();
+		OUser user = udao.getOUserByUsername(BBConfiguration.getBaasBoxUsername());
 		user.setPassword(BBConfiguration.getBaasBoxPassword());
 		user.save();
-
-		user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxAdminUsername());
+		user = udao.getOUserByUsername(BBConfiguration.getBaasBoxAdminUsername());
 		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
 		user.save();
 
