@@ -123,10 +123,12 @@ class DBResource extends Resource {
 	        String s = "";
 	        if (listToReturn instanceof List ) s=JSONFormats.prepareResponseToJson((List)listToReturn, JSONFormats.Formats.GENERIC,true);
 	        else if (listToReturn instanceof ODocument) s=JSONFormats.prepareResponseToJson((ODocument)listToReturn, JSONFormats.Formats.GENERIC,true);
+	        else if (listToReturn == null) s=null;
 	        else s=listToReturn.toString();
 	        BaasBoxLogger.debug("Statement result: ");
 	        BaasBoxLogger.debug(s);
-			lst = Json.mapper().readTree(s);
+	        if (s==null) lst=NullNode.getInstance();
+	        else lst = Json.mapper().readTree(s);
 		} catch (IOException e) {
 			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
