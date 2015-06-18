@@ -220,7 +220,7 @@ public enum Push implements IProperties	{
 	@Override
 	public void _setValue(Object newValue) {
 		Object parsedValue=null;
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Type:"+type+" Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Type:"+type+" Setting {} of class: {}", newValue==null?"null":newValue.toString() , newValue==null?"null":newValue.getClass().toString());
 		try{
 			if (newValue != null)
 				if (type == Boolean.class)
