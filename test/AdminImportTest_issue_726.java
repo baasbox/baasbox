@@ -51,7 +51,9 @@ public class AdminImportTest_issue_726 extends AbstractDocumentTest {
 	 * Testing import functionality...while the db is in import mode
 	 * the db shouldn't be accessible
 	 * @throws Exception
+	 * 
 	 */
+	
 	@Test
 	public void testPostImportIssue726_2() throws Exception
 	{
@@ -75,4 +77,34 @@ public class AdminImportTest_issue_726 extends AbstractDocumentTest {
 	        }
 		);
 	}	
+	
+	/**
+	 * Testing import functionality...while the db is in import mode
+	 * the db shouldn't be accessible
+	 * @throws Exception
+	 */
+	@Test
+	public void testPostImportIssue726_1() throws Exception
+	{
+		running
+		(
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					//load a backup we did using v.0.8.2
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setMultipartFormData();
+					setAssetFile("/issue_726_import_1_case.zip", "application/zip");
+					int status = httpRequest("http://localhost:3333"+getRouteAddress(), getMethod(),new HashMap<String,String>());
+					assertTrue(status==200);	
+					
+				}
+	        }
+		);
+	}	
+	
 }
