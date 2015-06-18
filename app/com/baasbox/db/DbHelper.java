@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.Play;
 import play.mvc.Http;
@@ -683,9 +684,9 @@ public class DbHelper {
     /**
      * Executes a sequence of orient sql commands
      */
-    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,boolean stopOnException,String ... commands){
 
-    		BaasBoxLogger.debug("Ready to execute these commands: " + commands);
+    	BaasBoxLogger.debug("Ready to execute these commands: " + Arrays.toString(commands));
         if (commands==null) return;
         for (String command:commands){
             if (command==null){
@@ -695,9 +696,25 @@ public class DbHelper {
             if (log)BaasBoxLogger.debug("sql:> "+command);
             if (!command.startsWith("--")&&!command.trim().isEmpty()){
             	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executing command: " + command);
-                db.command(new OCommandSQL(command.replace(';',' '))).execute();
+            	try {
+            		db.command(new OCommandSQL(command.replace(';',' '))).execute();
+            	}catch(Throwable e){
+            		if (stopOnException){
+            			BaasBoxLogger.error("Exception during the statement execution: {}" ,ExceptionUtils.getFullStackTrace(e));
+            			throw new RuntimeException(e);
+            		}else{
+            			BaasBoxLogger.warn("Exception during the statement execution: {}" ,ExceptionUtils.getMessage(e));
+            		}
+            	}
             }
         }
+    }
+    
+    /**
+     * Executes a sequence of orient sql commands
+     */
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+    	execMultiLineCommands (db, log,true,commands);
     }
     
     public static void filterOUserPasswords(boolean activate){
