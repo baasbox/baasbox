@@ -46,7 +46,7 @@ public class Evolution_0_8_3 implements IEvolution {
 	
 	private void setIndexOnUsername(ODatabaseRecordTx db) {
 		BaasBoxLogger.info("..creating index on _bb_user.user.name..:");
-      		DbHelper.execMultiLineCommands(db,BaasBoxLogger.isDebugEnabled(),
+      		DbHelper.execMultiLineCommands(db,BaasBoxLogger.isDebugEnabled(),false,
       	            "create index _bb_user.user.name unique;"
       	        );
 		BaasBoxLogger.info("...done...");
