@@ -688,20 +688,28 @@ public class Admin extends Controller {
 	}
 
 	public static F.Promise<Result> getLatestVersion() {
-		final String urlToCall="http://www.baasbox.com/version/"+ Internal.INSTALLATION_ID.getValueAsString() + "/";
+		String uuid=null;
+		ODatabaseRecordTx conn = null;
+		try {
+			conn = DbHelper.openFromContext(ctx());
+			uuid=Internal.INSTALLATION_ID.getValueAsString();	
+		}catch (Exception e){
+			BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
+		}finally{
+			DbHelper.close(conn);
+		}
+		final String urlToCall="http://www.baasbox.com/version/"+ uuid + "/";
 		final String errorMessage = "Could not reach BAASBOX site to check for new versions";
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Calling " + urlToCall);
 		return WS.url(urlToCall).get().recover((e)->{
-			BaasBoxLogger.warn(errorMessage);
-			return null;
-		}).map((resp)->{
-			if (resp==null){
-				return status(503,errorMessage);
-			} else {
-				return status(resp.getStatus(),resp.getBody());
-			}
-		});
-
+				BaasBoxLogger.warn(errorMessage);
+				return null;
+			}).map((resp)->{
+				if (resp==null){
+					return status(503,errorMessage);
+				} else {
+					return status(resp.getStatus(),resp.getBody());
+				}
+			});
 	}//getLatestVersion
 
 
