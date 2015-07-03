@@ -639,7 +639,7 @@ public class DbHelper {
 	private static void setupAttributes() {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		DbHelper.execMultiLineCommands(db,BaasBoxLogger.isDebugEnabled(),
-				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ"
+				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ"
 				,"alter database custom useLightweightEdges=false"
 				,"alter database custom useClassForEdgeLabel=false"
 				,"alter database custom useClassForVertexLabel=true"
