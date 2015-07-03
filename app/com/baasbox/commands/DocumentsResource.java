@@ -224,6 +224,7 @@ class DocumentsResource extends BaseRestResource {
 		} catch (AclNotValidException e) {
 			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (Throwable e){
+			BaasBoxLogger.error("error updating document: "+id,e);
 			throw new CommandExecutionException(command," error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		}
     }

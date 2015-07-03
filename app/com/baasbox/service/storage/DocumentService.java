@@ -69,6 +69,7 @@ public class DocumentService {
 		try	{
 			doc = dao.create();
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			//since 0.9.4 clients can choose their own IDs (inside a plugin). So if provided we use them
@@ -121,6 +122,7 @@ public class DocumentService {
 		try{
 			DocumentDao dao = DocumentDao.getInstance(collectionName);
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			DbHelper.commitTransaction();
