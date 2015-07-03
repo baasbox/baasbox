@@ -23,6 +23,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.exception.ScriptException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
@@ -38,6 +39,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.libs.EventSource;
 import play.libs.F;
 import play.mvc.Controller;
@@ -46,6 +48,7 @@ import play.mvc.Result;
 import play.mvc.With;
 import play.data.DynamicForm;
 import play.data.Form;
+import views.html.admin.main_.content_.dbmanager_.dbmanager;
 
 import java.util.Map;
 
@@ -77,6 +80,8 @@ public class ScriptInvoker extends Controller{
             ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
+        	if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed() && DbHelper.isInTransaction())
+        		DbHelper.rollbackTransaction();
             BaasBoxLogger.error("Error evaluating script",e);
             return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
         }
