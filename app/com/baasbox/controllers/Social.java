@@ -18,7 +18,6 @@
 
 package com.baasbox.controllers;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,14 +25,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.scribe.model.Token;
 
-import play.Logger;
-import play.libs.Crypto;
 import play.libs.Json;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
@@ -42,7 +36,6 @@ import play.mvc.Http.Request;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.controllers.actions.filters.AdminCredentialWrapFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
@@ -53,12 +46,15 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
 import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
 import com.baasbox.service.sociallogin.SocialLoginService;
 import com.baasbox.service.sociallogin.UnsupportedSocialNetworkException;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.user.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -95,9 +91,9 @@ public class Social extends Controller{
 			Token t = sc.requestAccessToken(request(),session());
 			return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
 		}catch (UnsupportedSocialNetworkException e){
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		}catch (java.lang.IllegalArgumentException e){
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		}
 	}
 
@@ -106,7 +102,7 @@ public class Social extends Controller{
 		//issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
 		Http.RequestBody body = request().body();
 		JsonNode bodyJson= body.asJson();
-		if (Logger.isDebugEnabled()) Logger.debug("signUp bodyJson: " + bodyJson);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp bodyJson: " + bodyJson);
 
 		String authToken = null;
 		String authSecret = null;
@@ -155,7 +151,7 @@ public class Social extends Controller{
 		}catch (BaasBoxSocialTokenValidationException e2) {
 			return badRequest("Unable to validate provided token");
 		}
-		if (Logger.isDebugEnabled()) Logger.debug("UserInfo received: " + result.toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserInfo received: " + result.toString());
 		result.setFrom(socialNetwork);
 		result.setToken(t.getToken());
 		//Setting token as secret for one-token only social networks
@@ -165,7 +161,7 @@ public class Social extends Controller{
 		try{
 			existingUser = userDao.getBySocialUserId(result);
 		}catch(SqlInjectionException sie){
-			return internalServerError(sie.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(sie));
 		}
 
 		if(existingUser!=null){
@@ -176,7 +172,7 @@ public class Social extends Controller{
 					throw new InvalidModelException("username for profile is null");
 				}
 			} catch (InvalidModelException e) {
-				internalServerError("unable to login with "+socialNetwork+" : "+e.getMessage());
+				internalServerError("unable to login with "+socialNetwork+" : "+ExceptionUtils.getMessage(e));
 			}
 			
 			String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
@@ -190,7 +186,7 @@ public class Social extends Controller{
 			on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 			return ok(on);
 		}else{
-			if (Logger.isDebugEnabled()) Logger.debug("User does not exists with tokens...trying to create");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User does not exists with tokens...trying to create");
 			String username = UUID.randomUUID().toString();
 			Date signupDate = new Date();
 			try{
@@ -212,7 +208,7 @@ public class Social extends Controller{
 
 				return ok(on);
 			}catch(Exception uaee){
-				return internalServerError(uaee.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(uaee));
 			}
 		}
 	}
@@ -243,7 +239,7 @@ public class Social extends Controller{
 				return ok(Json.toJson(result));
 			}
 		}catch(Exception e){
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 	}
 	
@@ -263,7 +259,7 @@ public class Social extends Controller{
 			try{
 				user = UserService.getCurrentUser();
 			}catch(Exception e){
-				internalServerError(e.getMessage());
+				internalServerError(ExceptionUtils.getMessage(e));
 			}
 			Map<String,ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM+"."+UserDao.SOCIAL_LOGIN_INFO);
 			if(logins==null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork)==null){
@@ -277,7 +273,7 @@ public class Social extends Controller{
 						UserService.removeSocialLoginTokens(user,socialNetwork);
 						return ok();
 					}catch(Exception e){
-						return internalServerError(e.getMessage());
+						return internalServerError(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -334,7 +330,7 @@ public class Social extends Controller{
 			}
 			return ok();
 		} catch (SqlInjectionException e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 		
 		

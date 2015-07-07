@@ -23,6 +23,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilter;
 import com.baasbox.dao.exception.ScriptException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
@@ -37,7 +38,8 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.libs.EventSource;
 import play.libs.F;
 import play.mvc.Controller;
@@ -46,6 +48,7 @@ import play.mvc.Result;
 import play.mvc.With;
 import play.data.DynamicForm;
 import play.data.Form;
+import views.html.admin.main_.content_.dbmanager_.dbmanager;
 
 import java.util.Map;
 
@@ -77,7 +80,9 @@ public class ScriptInvoker extends Controller{
             ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
-            Logger.error("Error evaluating script",e);
+        	if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed() && DbHelper.isInTransaction())
+        		DbHelper.rollbackTransaction();
+            BaasBoxLogger.error("Error evaluating script",e);
             return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
         }
 //        catch (IllegalStateException e){
@@ -97,12 +102,12 @@ public class ScriptInvoker extends Controller{
         reqJson.put("path",path);
         reqJson.put("remote",request.remoteAddress());
 
-        //todo this doesn't work with query strings
-        if (!StringUtils.startsWithIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
             String textBody = body == null ? null : body.asText();
-            DynamicForm requestData = Form.form().bindFromRequest();
-            JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
             if (textBody == null) {
+            	//fixes issue 627
+               	Map<String, String> params = BodyHelper.requestData(request);
+                JsonNode jsonBody = Json.mapper().valueToTree(params);
                 reqJson.put("body", jsonBody);
             } else {
                 reqJson.put("body", textBody);
@@ -115,6 +120,8 @@ public class ScriptInvoker extends Controller{
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
+        BaasBoxLogger.debug("Serialized request to pass to the script: ");
+        BaasBoxLogger.debug(reqJson.toString());
         return reqJson;
     }
 }

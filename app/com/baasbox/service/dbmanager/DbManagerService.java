@@ -40,7 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.xmlbeans.impl.piccolo.io.FileFormatException;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Akka;
 import play.libs.Json;
 import play.mvc.Result;
@@ -166,7 +166,7 @@ public class DbManagerService {
 						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
 							throw new FileFormatException(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
 						}else{
-							if (Logger.isDebugEnabled()) Logger.debug("Version : "+version+" is valid");
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Version : "+version+" is valid");
 						}
 					}else{
 						throw new FileFormatException("The manifest file does not contain a version number");
@@ -174,7 +174,7 @@ public class DbManagerService {
 				}else{
 					throw new FileFormatException("Looks like zip file does not contain a manifest file");
 				}
-				if (Logger.isDebugEnabled()) Logger.debug("Importing: "+fileContent);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Importing: ",fileContent);
 				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
 					DbHelper.importData(appcode, fileContent);
 					zis.closeEntry();
@@ -183,10 +183,10 @@ public class DbManagerService {
 					throw new FileFormatException("The import file is empty");
 				}
 			}catch(FileFormatException e){
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 				throw e;
 			}catch(Throwable e){
-				Logger.error(ExceptionUtils.getStackTrace(e));
+				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new Exception("There was an error handling your zip import file.", e);
 			}finally{
 				try {

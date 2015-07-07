@@ -17,7 +17,7 @@
  */
 
 package com.baasbox.service.scripting.js;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,7 +29,7 @@ public class Internal {
 
     public static void log(String message){
         //todo remove
-        Logger.debug(message);
+        BaasBoxLogger.debug(message);
     }
 
     public static void log(Object err,String msg){
@@ -38,9 +38,9 @@ public class Internal {
             Throwable t = (Throwable)err;
             StringWriter w = new StringWriter();
             t.printStackTrace(new PrintWriter(w));
-            Logger.error(w.getBuffer().toString());
+            BaasBoxLogger.error(w.getBuffer().toString());
         }
-        Logger.info(err.getClass().getName());
-        Logger.info(msg);
+        BaasBoxLogger.info(err.getClass().getName());
+        BaasBoxLogger.info(msg);
     }
 }

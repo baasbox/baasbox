@@ -24,7 +24,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Akka;
 import scala.concurrent.duration.FiniteDuration;
 
@@ -37,7 +37,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	protected class SessionCleaner implements Runnable{
         @Override
         public void run() {
-        	Logger.info("Session Cleaner: started");
+        	BaasBoxLogger.info("Session Cleaner: started");
         	Enumeration<String> tokens=getTokens();
         	long totalTokens=0;
         	long removedTokens=0;
@@ -45,8 +45,8 @@ public class SessionTokenProvider implements ISessionTokenProvider {
         		totalTokens++;
         		if (isExpired(tokens.nextElement())) removedTokens++;
         	}
-        	Logger.info("Session cleaner: tokens: " + totalTokens + " - removed: " + removedTokens);
-        	Logger.info("Session cleaner: finished");
+        	BaasBoxLogger.info("Session cleaner: tokens: " + totalTokens + " - removed: " + removedTokens);
+        	BaasBoxLogger.info("Session cleaner: finished");
         }
     }
 
@@ -68,7 +68,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	public static void destroySessionTokenProvider(){
 		if (me!=null && me.sessionCleaner!=null) {
 			me.sessionCleaner.cancel();
-			Logger.info("Session Cleaner: cancelled");
+			BaasBoxLogger.info("Session Cleaner: cancelled");
 		}
 		me=null;
 	}
@@ -80,7 +80,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	
 	public void setTimeout(long timeoutInMilliseconds){
 		this.expiresInMilliseconds=timeoutInMilliseconds;
-		if (Logger.isDebugEnabled()) Logger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
 	}	//setTimeout
 	
 	@Override
@@ -114,7 +114,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 
 	@Override
 	public void removeSession(String token) {
-		if (Logger.isDebugEnabled()) Logger.debug("SessionTokenProvider: " + token + " removed");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProvider: " + token + " removed");
 		sessions.remove(token);
 
 	}

@@ -33,7 +33,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
@@ -233,7 +233,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".value"));
 						PropertiesConfigurationHelper.override(key,value);
 					} catch (Exception e) {
-                        error ("Error overriding the setting " + key + " with the value " + value + ": " +e.getMessage());
+                        error ("Error overriding the setting " + key + " with the value " + value + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
     				//sets the visibility
@@ -243,7 +243,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".visible"));
 						PropertiesConfigurationHelper.setVisible(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+						error ("Error overriding the visible attribute for setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".editable")){ //or maybe we have to 
     				//sets the possibility to edit the value via REST API by the admin
@@ -253,7 +253,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".editable"));
 						PropertiesConfigurationHelper.setEditable(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+						error ("Error overriding the editable attribute setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else { 
     				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
@@ -292,7 +292,7 @@ public class Global extends GlobalSettings {
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
 	
-	private ObjectNode prepareError(RequestHeader request, String error) {
+	public ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
 		ObjectMapper mapper = new ObjectMapper();
 			result.put("result", "error");
@@ -311,7 +311,7 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 400);
 		  SimpleResult resultToReturn =  badRequest(result);
 		  try {
-			if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + result.toString(),"UTF-8");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + result.toString(),"UTF-8");
 		  }finally{
 			  return F.Promise.pure (resultToReturn);
 		  }
@@ -325,7 +325,7 @@ public class Global extends GlobalSettings {
 		  result.put("http_code", 404);
 		  SimpleResult resultToReturn= notFound(result);
 		  try {
-			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
 		  }finally{
 			  return F.Promise.pure (resultToReturn);
 		  }
@@ -335,13 +335,13 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public F.Promise<SimpleResult> onError(RequestHeader request, Throwable throwable) {
 		  error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
-		  ObjectNode result = prepareError(request, throwable.getMessage());
+		  ObjectNode result = prepareError(request, ExceptionUtils.getMessage(throwable));
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
 		  SimpleResult resultToReturn= internalServerError(result);
 		  try {
-			  if (Logger.isDebugEnabled()) Logger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
+			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Global.onBadRequest:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(resultToReturn),"UTF-8"));
 		  } finally{
 			  return F.Promise.pure (resultToReturn);
 		  }

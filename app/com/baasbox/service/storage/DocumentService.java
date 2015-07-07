@@ -38,6 +38,7 @@ import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
@@ -52,7 +53,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import play.Logger;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
 public class DocumentService {
@@ -61,15 +62,22 @@ public class DocumentService {
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
 
-	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
+	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException,ORecordDuplicatedException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
 		ODocument doc = null;
 		try	{
 			doc = dao.create();
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
+			//since 0.9.4 clients can choose their own IDs (inside a plugin). So if provided we use them
+			if (bodyJson.get(BaasBoxPrivateFields.ID.toString())!=null && bodyJson.get(BaasBoxPrivateFields.ID.toString()).isTextual()){
+				String id=bodyJson.get("id").asText();
+				doc.field(BaasBoxPrivateFields.ID.toString(),id);
+				if (GenericDao.getInstance().getRidNodeByUUID(id)!=null) throw new ORecordDuplicatedException("An object with the supplied ID (" + id + ") already exists") ;
+			}
 			dao.save(doc);
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
@@ -79,6 +87,9 @@ public class DocumentService {
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
 		}catch(AclNotValidException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}catch(ORecordDuplicatedException e){
 			DbHelper.rollbackTransaction();
 			throw e;
 		}catch (Exception e){
@@ -111,6 +122,7 @@ public class DocumentService {
 		try{
 			DocumentDao dao = DocumentDao.getInstance(collectionName);
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			DbHelper.commitTransaction();
@@ -286,11 +298,11 @@ public class DocumentService {
     public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
         String rid = null;
         if (isUUID) {
-            if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("id is an UUID, try to get a valid RID");
             ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
             if (orid == null) throw new RidNotFoundException(id);
             rid = orid.toString();
-            if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Retrieved RID: "+ rid);
         } else {
             rid = "#"+id;
         }

@@ -19,7 +19,7 @@ package com.baasbox.controllers.actions.filters;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.QueryParams;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -32,15 +32,15 @@ public class ExtractQueryParameters extends Action.Simple{
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);		
-		if (Logger.isDebugEnabled()) Logger.debug("ExtractQueryParameters for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters for resource " + Http.Context.current().request());
 		
 		QueryParams qryp =QueryParams.getParamsFromQueryString(Http.Context.current().request());
-		if (Logger.isDebugEnabled()) Logger.debug("ExtractQueryParameters " + qryp);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters " + qryp);
 		
 		ctx.args.put(IQueryParametersKeys.QUERY_PARAMETERS, qryp);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return delegate.call(ctx);
 	}
 

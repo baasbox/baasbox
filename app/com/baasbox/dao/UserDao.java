@@ -19,11 +19,11 @@ package com.baasbox.dao;
 import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
-import com.baasbox.dao.exception.InvalidCriteriaException;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import play.Logger;
-
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
@@ -31,6 +31,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.sociallogin.UserInfo;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -86,7 +87,7 @@ public class UserDao extends NodeDao  {
 
 	public ODocument create(String username, String password, String role) throws UserAlreadyExistsException {
 		OrientGraph db = DbHelper.getOrientGraphConnection();
-		if (existsUserName(username)) throw new UserAlreadyExistsException("User " + username + " already exists");
+		if (existsUserName(username)) throw new UserAlreadyExistsException("Error signing up");
 		OUser user=null;
 		if (role==null) user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{DefaultRoles.REGISTERED_USER.toString()});
 		else {
@@ -101,6 +102,9 @@ public class UserDao extends NodeDao  {
 		doc.field(FIELD_CREATION_DATE,new Date());
 
 		doc.field(USER_LINK,user.getDocument().getIdentity());
+		//since 0.9.4 each username has also an id
+		doc.field(BaasBoxPrivateFields.ID.toString(),UUID.randomUUID().toString());
+		
 		doc.save();
 		return doc;
 	}
@@ -117,6 +121,18 @@ public class UserDao extends NodeDao  {
 		List<ODocument> resultList= super.get(criteria);
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 		return result;
+	}
+	
+	public OUser getOUserByUsername(String username){
+		ODocument user = null;
+		try {
+			user = getByUserName(username);
+			if (user==null) return null;
+		} catch (SqlInjectionException e) {
+			BaasBoxLogger.debug(ExceptionUtils.getMessage(e));
+			throw new RuntimeException(e);
+		}
+		return new OUser((ODocument)user.field("user"));	
 	}
 
     public List<ODocument> getByUsernames(List<String> usernames,QueryParams query) throws SqlInjectionException {
@@ -159,7 +175,7 @@ public class UserDao extends NodeDao  {
 		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
-		if (Logger.isDebugEnabled()) Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Found "+resultList.size() +" elements for given tokens");
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 
 		return result;
@@ -167,7 +183,7 @@ public class UserDao extends NodeDao  {
 
 	public void disableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
-		OUser user = db.getMetadata().getSecurity().getUser(username);
+		OUser user = getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.SUSPENDED);
 		user.save();
@@ -176,7 +192,7 @@ public class UserDao extends NodeDao  {
 	
 	public void enableUser(String username) throws UserNotFoundException, OpenTransactionException{
 		db = DbHelper.reconnectAsAdmin();
-		OUser user = db.getMetadata().getSecurity().getUser(username);
+		OUser user = getOUserByUsername(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
 		user.setAccountStatus(STATUSES.ACTIVE);
 		user.save();
@@ -186,6 +202,13 @@ public class UserDao extends NodeDao  {
 		if (existsUserName(currentUsername)){
 			Object command = DbHelper.genericSQLStatementExecute("update ouser set name=? where name=?", new String[]{newUsername,currentUsername});
 		}else throw new UserNotFoundException(currentUsername + " does not exists");
+	}
+
+	public boolean emailIsAlreadyUsed(String email) {
+		String selectStatement="select from _bb_user where visibleByTheUser.email= ?";
+		List<ODocument> ret=(List<ODocument>)DbHelper.genericSQLStatementExecute(selectStatement, new String[]{email});
+		if (ret.size()!=0) return true;
+		return false;
 	}
 
 }

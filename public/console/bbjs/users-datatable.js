@@ -5,7 +5,7 @@
 var  userDataArray= new Array();
 
    function loadUsersData(){
-	    url=BBRoutes.com.baasbox.controllers.Admin.getUsers().absoluteURL();
+	    url = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getUsers().url;
 	    loadTable($('#userTable'),usersDataTableDef,url,userDataArray); //defined in datatable.js
     }
    
@@ -14,9 +14,10 @@ var  userDataArray= new Array();
 			"sPaginationType": "bootstrap",
 			"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 			"aoColumns": [ {"mData": "user.name", "mRender": function(data,type,full){
-					            var html = data;
+					            html = data;
 					            if(data !="admin" && data != "baasbox" && data!="internal_admin"){
-					               html = getActionButton("followers","user",data)+"&nbsp;"+html;
+					               html = full.user.name + (full.id?" <br> " + full.id:"");
+					               html = getActionButton("followers","user",escape(data))+"&nbsp;"+html;
 					            }
 					            return html;
 							}},
@@ -32,8 +33,9 @@ var  userDataArray= new Array();
 			               {"mData": "user", "mRender": function ( data, type, full ) {
 			            	   if(data.name!="admin" && data.name!="baasbox" && data.name!="internal_admin") {
 	                               var _active = data.status == "ACTIVE";
-	                               return getActionButton("edit", "user", data.name) + "&nbsp;" + getActionButton("changePwdUser", "user", data.name) +
-	                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", data.name);
+	                               var escapedName=escape(data.name);
+	                               return getActionButton("edit", "user", escapedName) + "&nbsp;" + getActionButton("changePwdUser", "user", escapedName) +
+	                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", escapedName);
 	                           }
 			            	   return "No action available";
 			               },bSortable:false

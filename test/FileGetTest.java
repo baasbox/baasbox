@@ -144,6 +144,14 @@ public class FileGetTest extends AbstractFileTest{
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					Result result1 = routeAndCall(request);
 					assertRoute(result1, sTestName + " attachedData", Status.OK, "\"name\":\"Margherita\"", true);
+					
+					//get its medatata
+					String metadataToCheck="\"fileName\":\"logo_baasbox_lp.png\",\"contentType\":\"image/png\",\"contentLength\":70673,\"metadata\":{\"@version\":1,\"Chroma_BlackIsZero\":\"true\",\"Chroma_NumChannels\":\"4\",\"Chroma_ColorSpaceType\":\"RGB\",\"Dimension_ImageOrientation\":\"Normal\",\"tiff_ImageWidth\":\"334\",\"IHDR\":\"width=334, height=112, bitDepth=8, colorType=RGBAlpha, compressionMethod=deflate, filterMethod=adaptive, interlaceMethod=none\",\"Compression_NumProgressiveScans\":\"1\",\"Data_SignificantBitsPerSample\":\"8 8 8 8\",\"tiff_ImageLength\":\"112\",\"tiff_BitsPerSample\":\"8 8 8 8\",\"Compression_CompressionTypeName\":\"deflate\",\"Content-Type\":\"image/png\",\"height\":\"112\",\"Transparency_Alpha\":\"nonpremultipled\",\"X-Parsed-By\":[\"org.apache.tika.parser.DefaultParser\",\"org.apache.tika.parser.image.ImageParser\"],\"pHYs\":\"pixelsPerUnitXAxis=19900, pixelsPerUnitYAxis=19900, unitSpecifier=meter\",\"sBIT_sBIT_RGBAlpha\":\"red=8, green=8, blue=8, alpha=8\",\"UnknownChunks_UnknownChunk\":[\"prVW\",\"mkBF\",\"mkTS\",\"mkBS\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\",\"mkBT\"],\"resourceName\":\"logo_baasbox_lp.png\",\"Compression_Lossless\":\"true\",\"Data_PlanarConfiguration\":\"PixelInterleaved\",\"Dimension_VerticalPixelSize\":\"0.050251257\",\"Dimension_HorizontalPixelSize\":\"0.050251257\",\"width\":\"334\",\"Data_BitsPerSample\":\"8 8 8 8\",\"Text_TextEntry\":\"keyword=Software, value=Macromedia Fireworks 8, encoding=ISO-8859-1, compression=none\",\"Dimension_PixelAspectRatio\":\"1.0\",\"Data_SampleFormat\":\"UnsignedIntegral\",\"tEXt_tEXtEntry\":\"keyword=Software, value=Macromedia Fireworks 8\"}";
+					request = new FakeRequest(GET, "/file/details/"+uuid1);
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					result1 = routeAndCall(request);
+					assertRoute(result1, sTestName + " MetaData (details)", Status.OK, metadataToCheck, true);				
 				}
 			}
 		);		

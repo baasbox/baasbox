@@ -166,6 +166,52 @@ public class UserCreateTest extends AbstractUserTest
 		);		
 	}
 
+	//issue 447 - Restrict signup to 1 account per email (User Management)
+	@Test
+	public void emailMustBeUnique()	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sFakeUser = USER_TEST + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					String email = UUID.randomUUID().toString() + "@example.com";
+					((ObjectNode)node.get("visibleByTheUser")).put("email", email);
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 1", Status.CREATED, "email\":\""+email+"\"", true);
+				
+					sFakeUser = USER_TEST + UUID.randomUUID();
+					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					((ObjectNode)node.get("visibleByTheUser")).put("email", email);
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 2", Status.BAD_REQUEST, "Error signing up", true);
+				
+					sFakeUser = USER_TEST + UUID.randomUUID();
+					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					((ObjectNode)node.get("visibleByFriends")).put("email", email);
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 3", Status.CREATED, "email\":\""+email+"\"", true);
+								
+					
+				}
+			}
+		);		
+	}
+	
 	//https://github.com/baasbox/baasbox/issues/401
 	//500 error when visibleBy is null during signup 
 	@Test
@@ -226,7 +272,7 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withJsonBody(node, getMethod());
 					result = routeAndCall(request);
 					//it should be fail
-					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, sFakeUser2 + " already exists", true);
+					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, "Error signing up", true);
 					
 				}
 			}

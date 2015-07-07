@@ -52,12 +52,12 @@ object ApplicationBuild extends Build {
           "org.scribe" % "scribe" % "1.3.2",
 				  "com.eaio.uuid" % "uuid" % "3.4",
           "org.apache.httpcomponents" % "httpclient" % "4.3.6",
-				  "org.apache.tika" % "tika-core" % "1.4",
-				  "org.apache.tika" % "tika-parsers" % "1.4",
+				  "org.apache.tika" % "tika-core" % "1.7",
+				  "org.apache.tika" % "tika-parsers" % "1.7",
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
           "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
-          "com.notnoop.apns" % "apns" % "1.0.0.Beta4"
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta6"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
@@ -70,6 +70,7 @@ object ApplicationBuild extends Build {
        sources in doc in Compile := List(),
 
       resolvers := Seq(
+      	  "typesafe" at "https://repo.typesafe.com/typesafe/releases/",
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
 		      "eaio" at "http://eaio.com/maven2"

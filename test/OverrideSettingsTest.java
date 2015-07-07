@@ -22,6 +22,7 @@ import static play.test.Helpers.GET;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -102,7 +103,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 						String hiddenValue=(String)Application.APPLICATION_NAME.getValue();
 						Assert.assertTrue("application.name: expected 'blablabla', it is " + hiddenValue, hiddenValue.equals("blablabla"));
 					}catch (Exception e){
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}finally{
 						DbHelper.close(DbHelper.getConnection());
 					}
@@ -114,7 +115,7 @@ public class OverrideSettingsTest extends AbstractAdminTest
 						Assert.assertTrue("application.name: expected 'BaasBox', it is " + hiddenValue, hiddenValue.equals("BaasBox"));
 						
 					}catch (Exception e){
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}finally{
 						DbHelper.close(DbHelper.getConnection());
 					}

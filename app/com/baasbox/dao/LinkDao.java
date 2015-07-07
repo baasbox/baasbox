@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;

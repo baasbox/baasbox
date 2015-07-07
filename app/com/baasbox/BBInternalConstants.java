@@ -18,8 +18,6 @@
 
 package com.baasbox;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 public class BBInternalConstants {
 	public static final String FIELD_AUDIT = "_audit";

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tika.metadata.Metadata;
@@ -37,7 +38,9 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.json.simple.JSONObject;
 
-import play.Logger;
+import com.baasbox.BBConfiguration;
+import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -195,31 +198,38 @@ public class File extends Controller {
 			        Metadata metadata = new Metadata();
 			        metadata.set(Metadata.RESOURCE_NAME_KEY, fileName);
 			        Parser parser = new AutoDetectParser();
-			        parser.parse(is, contenthandler, metadata,new ParseContext());			        
+			        try{
+			        	parser.parse(is, contenthandler, metadata,new ParseContext());
+			        }catch (Exception e){
+			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
+			        	metadata.add("_bb_parser_error", ExceptionUtils.getMessage(e));
+			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
+			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
+			        }
 			        String contentType =  metadata.get(Metadata.CONTENT_TYPE);
 			       	if (StringUtils.isEmpty(contentType)) contentType="application/octet-stream";
 			       	
 			        HashMap<String,Object> extractedMetaData = new HashMap<String,Object>();
 			        for (String key:metadata.names()){
 			        	try{
-			        	if (metadata.isMultiValued(key)){
-			        		if (Logger.isDebugEnabled()) Logger.debug(key + ": ");
-			        		for (String value: metadata.getValues(key)){
-			        			if (Logger.isDebugEnabled()) Logger.debug("   " + value);
-			        		}
-			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), Arrays.asList(metadata.getValues(key)));
-			        	}else{
-			        		if (Logger.isDebugEnabled()) Logger.debug(key + ": " + metadata.get(key));
-			        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), metadata.get(key));
-			        	}
+				        	if (metadata.isMultiValued(key)){
+				        		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(key + ": ");
+				        		for (String value: metadata.getValues(key)){
+				        			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("   " + value);
+				        		}
+				        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), Arrays.asList(metadata.getValues(key)));
+				        	}else{
+				        		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(key + ": " + metadata.get(key));
+				        		extractedMetaData.put(key.replace(":", "_").replace(" ", "_").trim(), metadata.get(key));
+				        	}
 			        	}catch(Throwable e){
-			        		Logger.warn("Unable to extract metadata for file " + fileName + ", key " + key);
+			        		BaasBoxLogger.warn("Unable to extract metadata for file " + fileName + ", key " + key);
 			        	}
 			        }
 			      
 
-			        if (Logger.isDebugEnabled()) Logger.debug(".................................");
-			        if (Logger.isDebugEnabled()) Logger.debug(new JSONObject(extractedMetaData).toString());
+			        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(".................................");
+			        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(new JSONObject(extractedMetaData).toString());
 			    	
 			        is.close();
 			    	is=new FileInputStream(fileContent);
@@ -236,7 +246,7 @@ public class File extends Controller {
 		    	}catch ( JsonProcessingException e) {
 		    		throw new Exception ("Error parsing acl field. HINTS: is it a valid JSON string?", e);
 				}catch (Throwable e){
-					Logger.error("Error parsing uploaded file",e);
+					BaasBoxLogger.error("Error parsing uploaded file",e);
 		    		throw new Exception ("Error parsing uploaded file", e);
 		    	} finally{
 		    		if (is != null) is.close();
@@ -281,7 +291,7 @@ public class File extends Controller {
 		try {
 			listOfFiles = FileService.getFiles(criteria);
 		} catch (InvalidCriteriaException e) {
-			return badRequest(e.getMessage()!=null?e.getMessage():"");
+			return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 		} catch (SqlInjectionException e) {
 			return badRequest("the supplied criteria appear invalid (Sql Injection Attack detected)");
 		}
@@ -359,7 +369,7 @@ public class File extends Controller {
 			} catch (SqlInjectionException e) {
 				return badRequest("the supplied id appears invalid (Sql Injection Attack detected)");
 			} catch (IOException e) {
-				Logger.error("error retrieving file content " + id, e);
+				BaasBoxLogger.error("error retrieving file content " + id, e);
 				throw e;
 			} catch (DocumentIsNotAnImageException e){
 				return badRequest("The id "+id+"is not an image and cannot be resize");
@@ -385,7 +395,7 @@ public class File extends Controller {
 				if (grant) FileService.grantPermissionToRole(id, permission, rolename);
 				else       FileService.revokePermissionToRole(id, permission, rolename);
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("role " + rolename + " not found");
 			} catch (OSecurityAccessException e ){
@@ -393,7 +403,7 @@ public class File extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToRole
@@ -405,7 +415,7 @@ public class File extends Controller {
 				if (grant) FileService.grantPermissionToUser(id, permission, username);
 				else       FileService.revokePermissionToUser(id, permission, username);
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("user " + username + " not found");
 			} catch (OSecurityAccessException e ){
@@ -413,7 +423,7 @@ public class File extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToUser

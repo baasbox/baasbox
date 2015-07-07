@@ -25,7 +25,6 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -52,11 +51,13 @@ import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsLexer.Part;
 import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
+import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
@@ -68,6 +69,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
 public class Document extends Controller {
@@ -125,31 +127,31 @@ public class Document extends Controller {
 	 */
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getCount(String collectionName){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
 
 		long count;
 		try {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 			count = DocumentService.getCount(collectionName,criteria);
-			if (Logger.isTraceEnabled()) Logger.trace("count: " + count);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("count: " + count);
 		} catch (InvalidCollectionException e) {
-			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
-			Logger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
+			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		response().setContentType("application/json");
 		return ok("{\"count\": "+ count +" }");
 	}
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 	public static Result getDocuments(String collectionName){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
 
 		List<ODocument> result;
 		String ret="{[]}";
@@ -157,13 +159,13 @@ public class Document extends Controller {
 			Context ctx=Http.Context.current.get();
 			QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 			result = DocumentService.getDocuments(collectionName,criteria);
-			if (Logger.isTraceEnabled()) Logger.trace("count: " + result.size());
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("count: " + result.size());
 		} catch (InvalidCollectionException e) {
-			if (Logger.isDebugEnabled()) Logger.debug (collectionName + " is not a valid collection name");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug (collectionName + " is not a valid collection name");
 			return notFound(collectionName + " is not a valid collection name");
 		} catch (Exception e){
-			Logger.error(ExceptionUtils.getFullStackTrace(e));
-			return internalServerError(e.getMessage());
+			BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 
 		try{
@@ -172,7 +174,7 @@ public class Document extends Controller {
 			return internalServerError(ExceptionUtils.getFullStackTrace(e));
 		}
 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return ok(ret);
 	}
 
@@ -181,9 +183,9 @@ public class Document extends Controller {
 		if(parts==null || StringUtils.isEmpty(parts)){
 			return getDocument(collectionName, id, isUUID);
 		} else{
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("rid: " + id);
 			ODocument doc;
 			try {
 				
@@ -201,7 +203,7 @@ public class Document extends Controller {
 					}
 				}
 				}catch(PartValidationException pve){
-					return badRequest(pve.getMessage());
+					return badRequest(ExceptionUtils.getMessage(pve));
 				}
 				PartsParser pl = new PartsParser(queryParts);
 				String rid = DocumentService.getRidByString(id, isUUID);
@@ -209,7 +211,7 @@ public class Document extends Controller {
 				
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			} catch (InvalidCollectionException e) {
 				return notFound(collectionName + " is not a valid collection name");
 			} catch (InvalidModelException e) {
@@ -219,11 +221,11 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound(id + " not found"); 
 			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			} catch (InvalidCriteriaException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 			return ok(prepareResponseToObjectJson(doc));
 		}
@@ -231,16 +233,16 @@ public class Document extends Controller {
 
 	@With ({UserOrAnonymousCredentialsFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocument(String collectionName, String id, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("rid: " + id);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("rid: " + id);
 			ODocument doc;
 			try {
 				String rid = DocumentService.getRidByString(id, isUUID);
 				doc=DocumentService.get(collectionName, rid);
 				if (doc==null) return notFound();
 			}catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage()!=null?e.getMessage():"");
+				return badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"");
 			} catch (InvalidCollectionException e) {
 				return notFound(collectionName + " is not a valid collection name");
 			} catch (InvalidModelException e) {
@@ -250,28 +252,28 @@ public class Document extends Controller {
 			} catch (DocumentNotFoundException e) {
 				return notFound(id + " not found"); 
 			} catch (RidNotFoundException e) {
-				return notFound(e.getMessage()); 
+				return notFound(ExceptionUtils.getMessage(e)); 
 			} 
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 			return ok(prepareResponseToJson(doc));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result getDocumentByRid(String rid){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			rid="#"+rid;
-			if (Logger.isTraceEnabled()) Logger.trace("rid: " + rid);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("rid: " + rid);
 			ODocument doc;
 			try {
 				doc=DocumentService.get(rid);
 				if (doc==null) return notFound();
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch (ODatabaseException e){
 				return notFound(rid + " unknown");  
 			} 
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
 			return ok(prepareResponseToJson(doc));
 		}
@@ -279,38 +281,41 @@ public class Document extends Controller {
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result createDocument(String collection){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			ODocument document=null;
+			JsonNode bodyJson = null;
 			try{
-				JsonNode bodyJson= body.asJson();
+				bodyJson= body.asJson();
 				if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be a JSON object");
-				if (Logger.isTraceEnabled()) Logger.trace("creating document in collection: " + collection);
-				if (Logger.isTraceEnabled()) Logger.trace("bodyJson: " + bodyJson);
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("creating document in collection: " + collection);
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("bodyJson: " + bodyJson);
 				document=DocumentService.create(collection, (ObjectNode)bodyJson); 
-				if (Logger.isTraceEnabled()) Logger.trace("Document created: " + document.getRecord().getIdentity());
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Document created: " + document.getRecord().getIdentity());
 			}catch (InvalidCollectionException e){
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			}catch (InvalidJsonException e){
 				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
 			}catch (UpdateOldVersionException e){
 				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (InvalidModelException e) {
-				return badRequest("ACL fields are not valid: " + e.getMessage());
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
+			} catch (ORecordDuplicatedException e) {
+				return badRequest("Provided ID already exists: " + bodyJson.get(BaasBoxPrivateFields.ID.toString()));
 			}catch (Throwable e){
-					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 					return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
 			
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocument(String collectionName, String id, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
 			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
@@ -318,14 +323,14 @@ public class Document extends Controller {
 			ODocument document=null;
 			try{
 				if (!bodyJson.isObject()) throw new InvalidJsonException("The body must be an JSON object");
-				if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
-				if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateDocument collectionName: " + collectionName);
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateDocument id: " + id);
 				String rid= DocumentService.getRidByString(id, isUUID);
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson);
 			} catch (DocumentNotFoundException e) {
 				return notFound("Document " + id + " not found");
 			}catch (AclNotValidException e){
-				return badRequest("ACL fields are not valid: " + e.getMessage());		
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));		
 			}catch (UpdateOldVersionException e){
 				return status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),"You are attempting to update an older version of the document. Your document version is " + e.getVersion1() + ", the stored document has version " + e.getVersion2());	
 			}catch (RidNotFoundException e){
@@ -345,22 +350,22 @@ public class Document extends Controller {
 			}catch (InvalidJsonException e){
 				return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");				
 			}catch (Throwable e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
 			if (document==null) return notFound("Document " + id + " was not found in the collection " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		@BodyParser.Of(BodyParser.Json.class)
 		public static Result updateDocumentWithParts(String collectionName, String id, boolean isUUID,String parts){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
-			if (Logger.isTraceEnabled()) Logger.trace("updateDocument collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("updateDocument id: " + id);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateDocument collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("updateDocument id: " + id);
 			if (!bodyJson.isObject()) return badRequest("The body must be an JSON object");
 			if (bodyJson==null) return badRequest(JSON_BODY_NULL);
 			if (bodyJson.get("data")==null) return badRequest("The body payload must have a data field. Hint: modify your content to have a \"data\" field");
@@ -375,7 +380,7 @@ public class Document extends Controller {
 						String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
 						objParts.add(lexer.parse(p, i+1));
 					}catch(PartValidationException pve){
-						return badRequest(pve.getMessage());
+						return badRequest(ExceptionUtils.getMessage(pve));
 					}catch(Exception e){
 						return badRequest("Unable to parse document parts");
 					}
@@ -383,7 +388,7 @@ public class Document extends Controller {
 				PartsParser pp = new PartsParser(objParts);
 				document=com.baasbox.service.storage.DocumentService.update(collectionName, rid, (ObjectNode)bodyJson,pp);   
 			}catch (MissingNodeException e){
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			}catch (InvalidCollectionException e){
 				return notFound(collectionName + " is not a valid collection name");
 			}catch (InvalidModelException e){
@@ -397,21 +402,21 @@ public class Document extends Controller {
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to modify the document " + id);
 			}catch (RidNotFoundException rnfe){
-					return notFound(rnfe.getMessage());	
+					return notFound(ExceptionUtils.getMessage(rnfe));	
 			}catch (Throwable e){
-				Logger.error(ExceptionUtils.getFullStackTrace(e));
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
 			}
 			if (document==null) return notFound("Document " + id + " was not found in the collection " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok(prepareResponseToJson(document));
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result deleteDocument(String collectionName, String id, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("deleteDocument rid: " + id);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("deleteDocument collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("deleteDocument rid: " + id);
 			try {
 				String rid= DocumentService.getRidByString(id, isUUID);
 				DocumentService.delete(collectionName,rid);
@@ -420,59 +425,59 @@ public class Document extends Controller {
 			}catch (OSecurityException e){
 				return forbidden("You have not the right to delete " + id);  
 			} catch (InvalidCollectionException e) {
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			} catch (Throwable e ){
-				internalServerError(e.getMessage());
+				internalServerError(ExceptionUtils.getMessage(e));
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return ok("");
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToUser(String collectionName, String rid, String username, String action, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
-			if (Logger.isTraceEnabled()) Logger.trace("grant username: " + username);
-			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rid: " + rid);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant username: " + username);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant action: " + action);
 			Result res=grantOrRevokeToUser(collectionName,rid,username,action,true, isUUID);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToUser(String collectionName, String rid, String username, String action, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
-			if (Logger.isTraceEnabled()) Logger.trace("grant username: " + username);
-			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);	  
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rid: " + rid);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant username: " + username);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant action: " + action);	  
 			Result res=grantOrRevokeToUser(collectionName,rid,username,action,false, isUUID);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result grantToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rolename: " + rolename);
-			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rid: " + rid);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rolename: " + rolename);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant action: " + action);
 			Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,true, isUUID);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
 		}
 
 	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class,ExtractQueryParameters.class})
 		public static Result revokeToRole(String collectionName, String rid, String rolename, String action, boolean isUUID){
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			if (Logger.isTraceEnabled()) Logger.trace("grant collectionName: " + collectionName);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rid: " + rid);
-			if (Logger.isTraceEnabled()) Logger.trace("grant rolename: " + rolename);
-			if (Logger.isTraceEnabled()) Logger.trace("grant action: " + action);	  
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant collectionName: " + collectionName);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rid: " + rid);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant rolename: " + rolename);
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("grant action: " + action);	  
 			Result res=grantOrRevokeToRole(collectionName,rid,rolename,action,false, isUUID);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return res;
 		}
 
@@ -488,7 +493,7 @@ public class Document extends Controller {
 			} catch (RidNotFoundException e) {
 				return notFound("id " + id + " not found");
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (UserNotFoundException e) {
 				return notFound("user " + username + " not found");
 			} catch (InvalidCollectionException e) {
@@ -502,7 +507,7 @@ public class Document extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToUser
@@ -519,7 +524,7 @@ public class Document extends Controller {
 			} catch (RidNotFoundException e) {
 				return notFound("id " + id + " no found");
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (RoleNotFoundException e) {
 				return notFound("role " + rolename + " not found");
 			} catch (InvalidCollectionException e) {
@@ -533,7 +538,7 @@ public class Document extends Controller {
 			} catch (OSecurityException e ){
 				return Results.forbidden();				
 			} catch (Throwable e ){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			return ok();
 		}//grantOrRevokeToRole
@@ -551,9 +556,9 @@ public class Document extends Controller {
 				acl = new PermissionJsonWrapper(bodyJson, true);
 				doc=DocumentService.setAcl(collectionName, uuid, acl);
 			} catch (AclNotValidException e) {
-				return badRequest("ACL fields are not valid: " + e.getMessage());
+				return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
 			} catch (IllegalArgumentException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (InvalidCollectionException e) {
 				return notFound("collection " + collectionName + " not found");
 			} catch (InvalidModelException e) {

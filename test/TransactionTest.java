@@ -59,7 +59,7 @@ public class TransactionTest {
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
 						Assert.assertTrue("Collection should be empty. Found " + collCount + " records", collCount==0);
 					}catch (Throwable e){
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}finally{
 						DbHelper.close(DbHelper.getConnection());
 					}
@@ -82,7 +82,7 @@ public class TransactionTest {
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
 						Assert.assertTrue("Collection should contain 1 record. Found " + collCount + " records", collCount==1);
 					}catch (Throwable e){
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}finally{
 						DbHelper.close(DbHelper.getConnection());
 					}
