@@ -57,7 +57,8 @@ object ApplicationBuild extends Build {
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
           "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
-          "com.notnoop.apns" % "apns" % "1.0.0.Beta6"
+          "com.notnoop.apns" % "apns" % "1.0.0.Beta6",
+          "com.typesafe" %% "play-plugins-redis" % "2.2.1"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",
     		//	"com.wordnik" %% "swagger-play2-utils" % "1.2.1-SNAPSHOT",
@@ -73,7 +74,8 @@ object ApplicationBuild extends Build {
       	  "typesafe" at "https://repo.typesafe.com/typesafe/releases/",
           "sonatype-releases" at "https://oss.sonatype.org/content/repositories/releases",
           "sonatype-snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-		      "eaio" at "http://eaio.com/maven2"
+		      "eaio" at "http://eaio.com/maven2",
+          "Sedis Repo" at "http://pk11-scratch.googlecode.com/svn/trunk"
 	      )
        ,baas := {
           val distributionName = name.value.toLowerCase + "-" + version.value
