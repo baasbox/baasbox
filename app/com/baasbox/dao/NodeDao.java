@@ -32,6 +32,7 @@ import com.baasbox.enumerations.Permissions;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -77,6 +78,18 @@ public abstract class NodeDao  {
 	}
 
 	
+	public static ODocument removeClassAndRid(ODocument document){
+		document.removeField("@class");
+		document.removeField("@rid");
+		return document;
+	}
+	public ObjectNode removeClassAndRid(ObjectNode document) {
+		document.remove("@class");
+		document.remove("@rid");
+		return document;
+	}
+	
+	
 	protected static HashMap<String,Object> backupBaasBoxFields(ODocument document){
 		HashMap<String,Object> map = new HashMap<String,Object>();
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
@@ -84,6 +97,7 @@ public abstract class NodeDao  {
 		}
 		return map;
 	}
+	
 	
 	protected static ODocument restoreBaasBoxFields(ODocument document, HashMap<String,Object> map){
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
@@ -163,6 +177,8 @@ public abstract class NodeDao  {
 		if (documentToMerge.getVersion()!=0 && documentToMerge.getVersion()!=originalDocument.getVersion()) throw new UpdateOldVersionException("The document to merge is older than the stored one v" +documentToMerge.getVersion() + " vs v"+documentToMerge.getVersion(),documentToMerge.getVersion(), originalDocument.getVersion());
 		//backup the baasbox's fields 
 		HashMap<String,Object> map = backupBaasBoxFields(originalDocument);
+		//remove backupBaasBoxFields from data that will be merged
+		documentToMerge=removeClassAndRid(documentToMerge);
 		//update the document
 		originalDocument.merge(documentToMerge, false, false);
 		//restore the baasbox's fields
