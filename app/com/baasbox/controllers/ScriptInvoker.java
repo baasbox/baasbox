@@ -18,13 +18,13 @@
 
 package com.baasbox.controllers;
 
+
 import java.util.Map;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
 import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -80,7 +80,9 @@ public class ScriptInvoker extends Controller{
                 ScriptResult result = ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
                 return status(result.status(), result.content());
             } catch (ScriptEvalException e) {
-                Logger.error("Error evaluating script", e);
+            	if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed() && DbHelper.isInTransaction())
+            		DbHelper.rollbackTransaction();
+            	BaasBoxLogger.error("Error evaluating script", e);
                 return internalServerError("script failure " + ExceptionUtils.getFullStackTrace(e));
             }
         }));
