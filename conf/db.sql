@@ -111,10 +111,10 @@ update orole set isrole=true
 --indices
 
 alter property ouser.name collate ci;
-create index _BB_Collection.name unique;
+create index _BB_Collection.name UNIQUE_HASH_INDEX;
 create index _BB_asset.name unique;
-create index _BB_Node.id unique;
-create index _BB_Permissions.tag unique;
+create index _BB_Node.id UNIQUE_HASH_INDEX;
+create index _BB_Permissions.tag UNIQUE_HASH_INDEX;
 ---bug on OrientDB index? (our issue #412) We have to define a "new" index to avoid class scan when looking for a username:
 create index _bb_user.user.name unique
 create index _bb_node._author notunique;
@@ -130,7 +130,7 @@ create index _BB_Index.key unique;
 --LINKS
 create property E.id String;
 alter property E.id notnull=true;
-create index E.id unique;
+create index E.id UNIQUE_HASH_INDEX;
 
 --Scripts
 create class _BB_Script;

@@ -4,7 +4,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptLanguage;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -45,7 +45,7 @@ public class ScriptTestHelpers {
     public static JsonNode loadScript(String name,String source){
         try(InputStream in = Play.application().resourceAsStream(source)){
             String code = IOUtils.toString(in, Charset.defaultCharset());
-            ObjectNode script = Json.mapper().createObjectNode();
+            ObjectNode script = BBJson.mapper().createObjectNode();
             script.put(ScriptsDao.NAME,name);
             script.put(ScriptsDao.CODE,code);
             script.put(ScriptsDao.ACTIVE,true);

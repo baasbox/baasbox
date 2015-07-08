@@ -1,28 +1,26 @@
-import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
-import com.baasbox.service.storage.CollectionService;
-import com.baasbox.service.user.UserService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import core.TestConfig;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.fest.assertions.Assert;
-import org.fest.assertions.Assertions;
-import org.hamcrest.CoreMatchers;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import play.mvc.Result;
-import play.test.FakeRequest;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static play.test.Helpers.GET;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.route;
+import static play.test.Helpers.running;
 
 import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.junit.Assert.*;
-import static play.test.Helpers.*;
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.running;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import play.mvc.Result;
+import play.test.FakeRequest;
+
+import com.baasbox.db.DbHelper;
+import com.baasbox.service.user.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import core.TestConfig;
 
 /**
  * https://github.com/baasbox/baasbox/issues/740

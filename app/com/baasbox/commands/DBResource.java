@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -16,7 +15,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.SwitchUserContextException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -25,7 +24,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -95,7 +93,7 @@ class DBResource extends Resource {
 	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC+depth,true);
 	        BaasBoxLogger.debug("Query result: ");
 	        BaasBoxLogger.debug(s);
-			lst = (ArrayNode)Json.mapper().readTree(s);
+			lst = (ArrayNode)BBJson.mapper().readTree(s);
 		} catch (IOException e) {
 			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
@@ -128,7 +126,8 @@ class DBResource extends Resource {
 	        BaasBoxLogger.debug("Statement result: ");
 	        BaasBoxLogger.debug(s);
 	        if (s==null) lst=NullNode.getInstance();
-	        else lst = Json.mapper().readTree(s);
+	        else lst = BBJson.mapper().readTree(s);
+
 		} catch (IOException e) {
 			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
@@ -210,7 +209,7 @@ class DBResource extends Resource {
     	}catch (CommandParsingException e){
     		return BooleanNode.valueOf(false);
     	}
-    	ORID ret=GenericDao.getInstance().getRidNodeByUUID(id);
+    	String ret=GenericDao.getInstance().getRidNodeByUUID(id);
         return BooleanNode.valueOf(!(ret==null));
     }
     

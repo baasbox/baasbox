@@ -211,5 +211,71 @@ public class WrapResponse {
 	}//wrap
 
 
+	public F.Promise<SimpleResult> wrapAsync(Context ctx, F.Promise<SimpleResult> simpleResult) throws Throwable {
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+		
+		return simpleResult.map((result)->{
+			
+			ctx.response().setHeader("Access-Control-Allow-Origin", "*");
+			ctx.response().setHeader("Access-Control-Allow-Headers", "X-Requested-With");
+			//this is an hack because scala can't access to the http context, and we need this information for the access log
+			String username=(String) ctx.args.get("username");
+			if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
+			
+		    byte[] resultContent=null;
+			if (BBConfiguration.getWrapResponse()){
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
+				final int statusCode = result.getWrappedSimpleResult().header().status();
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+				if (ctx.response().getHeaders().get("Content-Type")!=null 
+			    		&& 
+			    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
+			    	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response is a file, no wrap will be applied");
+			    	return result;
+			    }
+			    
+			    if(result.getWrappedResult() instanceof ChunkedResult<?>){
+			    	return result;
+			    }
+			    	
+				final byte[] body = JavaResultExtractor.getBody(result);
+				String stringBody = new String(body, "UTF-8");
+			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
+				if (statusCode>399){	//an error has occured
+				      switch (statusCode) {
+				      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
+				      				break;
+				      	case 401: 	result =onUnauthorized(ctx.request(),stringBody);
+				      				break;
+				      	case 403: 	result =onForbidden(ctx.request(),stringBody);
+				      				break;
+				      	case 404: 	result =onResourceNotFound(ctx.request(),stringBody);
+				      				break;
+				      	default:  	
+				      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
+				      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
+				      		}else result =onDefaultError(statusCode,ctx.request(),stringBody);
+				      	break;
+				      }
+			    }else{ //status is not an error
+			    	result=onOk(statusCode,ctx.request(),stringBody);
+			    } //if (statusCode>399)
+				if (statusCode==204) result = Results.noContent();
+				try {
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+				}catch (Throwable e){}
+			}else{ //if (BBConfiguration.getWrapResponse())
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response will not be wrapped due configuration parameter");
+				try {
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+				}catch (Throwable e){}
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+			}
+			ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+			return result;
+		}); //map
+	}//wrapAsync
 
 }
