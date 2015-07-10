@@ -46,7 +46,7 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
 import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
@@ -186,7 +186,7 @@ public class Social extends Controller{
 				}
 				String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password);
+				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode,username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 				ObjectNode on = Json.newObject();
 				if(existingUser!=null){
@@ -207,7 +207,7 @@ public class Social extends Controller{
 					UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
 					ODocument profile=UserService.getUserProfilebyUsername(username);
 					UserService.addSocialLoginTokens(profile,result);
-					ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+					ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
 					response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 					ObjectNode on = Json.newObject();
 					if(profile!=null){

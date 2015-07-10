@@ -17,27 +17,20 @@
 
 // @author: Marco Tibuzzi
 
-import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
+import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.GET;
 import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import java.util.UUID;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +44,9 @@ import play.test.TestBrowser;
 
 import com.baasbox.dao.UserDao;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -160,7 +155,7 @@ public class UserCreateTest extends AbstractUserTest
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 					Assert.assertNotNull(token);
-					Assert.assertFalse(SessionTokenProvider.getSessionTokenProvider().getSession(token).isEmpty());
+					Assert.assertFalse(SessionTokenProviderFactory.getSessionTokenProvider().getSession(token).isEmpty());
 				}
 			}
 		);		

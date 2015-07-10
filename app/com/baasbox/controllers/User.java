@@ -69,6 +69,7 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.UserService;
@@ -225,7 +226,7 @@ public class User extends Controller {
 				else return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
 			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
 			String result=prepareResponseToJson(profile);
@@ -641,7 +642,7 @@ public class User extends Controller {
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			if (!StringUtils.isEmpty(token)) {
 				UserService.logout(pushToken);
-				SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+				SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token);
 			}
 			return ok("pushToken: " + pushToken + " logged out");
 		})).recover((t)->{
@@ -659,7 +660,7 @@ public class User extends Controller {
 
 		String token=(String) Http.Context.current().args.get("token");
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
-			if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+			if (!StringUtils.isEmpty(token)) SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token);
 			return ok("user logged out");
 		})).recover((t)->{
 			if (t instanceof SqlInjectionException){
@@ -777,7 +778,7 @@ public class User extends Controller {
 					}
 					UserService.registerDevice(data);
 				}
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
+				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
 
 				ObjectMapper mapper = BBJson.mapper();

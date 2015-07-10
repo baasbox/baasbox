@@ -1,0 +1,177 @@
+/*
+ * Copyright (c) 2014.
+ *
+ * BaasBox - info-at-baasbox.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.baasbox.security;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.BBJson.ObjectMapperExt;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.ImmutableMap;
+import com.typesafe.plugin.RedisPlugin;
+
+public class SessionTokenProviderRedis implements ISessionTokenProvider {
+	
+
+	protected int expiresInSeconds=0; //default expiration of session tokens
+	
+	private static SessionTokenProviderRedis me; 
+	
+	private static ISessionTokenProvider initialize(){
+		BaasBoxLogger.debug("Initializing SessionTokenProviderRedis...");
+		if (me==null) me=new SessionTokenProviderRedis();
+		BaasBoxLogger.debug("...done");
+		return me;
+	}
+	public static ISessionTokenProvider getSessionTokenProvider(){
+		return initialize();
+	}
+	
+	public static void destroySessionTokenProvider(){
+		me=null;
+	}
+	
+	//constructor
+	public SessionTokenProviderRedis(){
+		setTimeout(expiresInSeconds);
+	};	
+	
+	public void setTimeout(long timeoutInMilliseconds){
+		this.expiresInSeconds=(int)(timeoutInMilliseconds / 1000);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New session timeout: " + timeoutInMilliseconds + " ms");
+	}	//setTimeout
+	
+	@Override
+	public ImmutableMap<SessionKeys, ? extends Object> setSession(String AppCode, String username,	String password) {
+		UUID token = UUID.randomUUID();
+		ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
+				(SessionKeys.APP_CODE, AppCode, 
+						SessionKeys.TOKEN, token.toString(),
+						SessionKeys.USERNAME, username,
+						SessionKeys.PASSWORD,password,
+						SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInSeconds);
+		ObjectMapperExt mapper = BBJson.mapper();
+		Jedis j=null;
+		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
+		try {
+			String mapAsJson = mapper.writeValueAsString(info);
+			j = p.getResource();
+			if (expiresInSeconds!=0) {
+				j.set(token.toString(), mapAsJson);
+				j.expire(token.toString(),expiresInSeconds);
+			} else {
+				j.set(token.toString(), mapAsJson);
+			}
+		} catch (Exception e) {
+			BaasBoxLogger.error("Error inserting new token in Redis", e);
+			throw new RuntimeException("Redis problem",e);
+		} finally {
+			if (j!=null) p.returnResource(j);
+		}
+		return info;
+	}
+
+	@Override
+	public ImmutableMap<SessionKeys, ? extends Object> getSession(String token) {
+		if (isExpired(token)){
+			return null;
+		}
+		Jedis j=null;
+		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
+		try {
+			j = p.getResource();
+			String mapAsJsonString = j.get(token);
+			ObjectMapperExt mapper = BBJson.mapper();
+			ObjectNode mapAsJson = (ObjectNode) mapper.readTree(mapAsJsonString);
+			ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
+					(SessionKeys.APP_CODE, mapAsJson.get(SessionKeys.APP_CODE.toString()).asText(), 
+							SessionKeys.TOKEN, token.toString(),
+							SessionKeys.USERNAME, mapAsJson.get(SessionKeys.USERNAME.toString()).asText(),
+							SessionKeys.PASSWORD,mapAsJson.get(SessionKeys.PASSWORD.toString()).asText(),
+							SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInSeconds);
+			if (expiresInSeconds!=0) {
+				j.set(token.toString(),  mapper.writeValueAsString(info));
+				j.expire(token.toString(),expiresInSeconds);
+			} else {
+				j.set(token.toString(),  mapper.writeValueAsString(info));
+			}
+			return info;
+		} catch (IOException e) {
+			BaasBoxLogger.error("Error retrieving token from Redis", e);
+			throw new RuntimeException("Redis problem",e);
+		} finally {
+			if (j!=null) p.returnResource(j);
+		}
+	}
+
+	@Override
+	public void removeSession(String token) {
+		Jedis j=null;
+		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
+		try {
+			j = p.getResource();
+			j.del(token);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProviderRedis: " + token + " removed");
+		} catch (Exception e) {
+			BaasBoxLogger.error("Error deleting token from Redis", e);
+			throw new RuntimeException("Redis problem",e);
+		} finally {
+			if (j!=null) p.returnResource(j);
+		}
+	}
+
+	@Override
+	public Enumeration<String> getTokens() {
+		Jedis j=null;
+		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
+		try {
+			j = p.getResource();
+			Set<String> ret = j.keys("*");
+			return new Vector<String>(ret).elements();
+		} catch (Exception e) {
+			BaasBoxLogger.error("Error retrieving tokens from Redis", e);
+			throw new RuntimeException("Redis problem",e);
+		} finally {
+			if (j!=null) p.returnResource(j);
+		}
+	}
+	
+	private boolean isExpired(String token){
+		Jedis j=null;
+		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
+		try {
+			j = p.getResource();
+			return !j.exists(token);
+		} catch (Exception e) {
+			BaasBoxLogger.error("Error checking token existance using Redis", e);
+			throw new RuntimeException("Redis problem",e);
+		} finally {
+			if (j!=null) p.returnResource(j);
+		}
+	}
+}

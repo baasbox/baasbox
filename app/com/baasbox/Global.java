@@ -33,7 +33,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
@@ -51,6 +50,8 @@ import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.ScriptingSandboxSecurityManager;
 import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -146,9 +147,6 @@ public class Global extends GlobalSettings {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
 		    		DbHelper.setupDb();
-			    	info("Initializing session manager");
-			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
-			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
 		    	}catch (Throwable e){
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
@@ -168,7 +166,10 @@ public class Global extends GlobalSettings {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
     		DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
-			
+			info("Initializing session manager");
+	    	ISessionTokenProvider stp = SessionTokenProviderFactory.getSessionTokenProvider();
+	    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*60*1000); //minutes * 60 seconds * 1000 milliseconds
+	    	
 			String bbid=Internal.INSTALLATION_ID.getValueAsString();
 			if (bbid==null) throw new Exception ("Unique id not found! Hint: could the DB be corrupted?");
 			info ("BaasBox unique id is " + bbid);

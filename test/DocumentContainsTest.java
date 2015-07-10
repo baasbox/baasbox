@@ -4,10 +4,12 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -66,7 +68,7 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 				"],"+
 				"\"status\": \"open\","+
 				"\"player_turn\": 0,"+
-				"\"id\": \"ff342a9b-79cd-4494-983e-6ec4a1a47c8a\","+
+				"\"id\": \""+UUID.randomUUID().toString()+"\","+
 				"\"creationdate\": \"2014-02-15T13:49:51.051+0100\","+
 				"\"_author\": \"admin\""
 				+ "}");
