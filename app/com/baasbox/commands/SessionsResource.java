@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandNotSupportedException;
@@ -30,7 +31,6 @@ public class SessionsResource extends BaseRestResource {
 	 private static final String RESOURCE_NAME = "sessions";
 	 public static final String TOKEN = "token";
 	 public static final String PASSWORD = "password";
-	 
 	 public static final String USERNAME = "username";
 	 
 	 @Override
@@ -125,7 +125,7 @@ public class SessionsResource extends BaseRestResource {
 	private String getPasswordFromParam(JsonNode command) throws CommandParsingException {
 		 JsonNode passwordNode = super.getParamField(command, PASSWORD);
 	        if (passwordNode == null || !passwordNode.isTextual()){
-	            throw new CommandParsingException(command,"invalid PASSWORD param: "+(passwordNode==null?"null":passwordNode.toString()));
+	            throw new CommandParsingException(command,"invalid \"password\" param: "+(passwordNode==null?"null":passwordNode.toString()));
 	        }
 	        return passwordNode.asText();
 	}
@@ -172,7 +172,7 @@ public class SessionsResource extends BaseRestResource {
     private String getTokenFromParam(JsonNode command) throws CommandParsingException {
         JsonNode tokenNode = super.getParamField(command, TOKEN);
         if (tokenNode == null || !tokenNode.isTextual()){
-            throw new CommandParsingException(command,"invalid TOKEN param: "+(tokenNode==null?"null":tokenNode.toString()));
+            throw new CommandParsingException(command,"invalid \"token\" param: "+(tokenNode==null?"null":tokenNode.toString()));
         }
         return tokenNode.asText();
     }
@@ -180,7 +180,13 @@ public class SessionsResource extends BaseRestResource {
     private String getUsernameFromParam(JsonNode command) throws CommandParsingException {
         JsonNode usernameNode = super.getParamField(command, USERNAME);
         if (usernameNode == null || !usernameNode.isTextual()){
-            throw new CommandParsingException(command,"invalid TOKEN param: "+(usernameNode==null?"null":usernameNode.toString()));
+            throw new CommandParsingException(command,"invalid \"username\" param: "+(usernameNode==null?"null":usernameNode.toString()));
+        }
+        String username=usernameNode.asText();
+        if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+        		||
+        	username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())){
+        	throw new CommandParsingException(command,"invalid \"username\" param: "+username+" it is reserved");
         }
         return usernameNode.asText();
     }
