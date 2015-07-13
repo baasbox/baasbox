@@ -423,6 +423,97 @@ Users.changeUsername = function(username,newUsername){
 };
 //-------- END Users --------
 
+//-------- Sessions ---------
+var Sessions = {};
+Sessions.find = function(){
+	var username=null;
+	switch (arguments.length){
+	 case 1:
+		 username=arguments[0];
+		 break;
+	}
+	if (username==null){
+		throw new TypeError("you must specify a username");
+	}
+	if(!(typeof username === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (username!==context.userName && !isAdmin()){
+		throw new TypeError("only administrators can read the sessions of other users");
+	}
+	return _command({resource: 'sessions',
+        name: 'list',
+        params:{
+            username: username
+        }});
+};
+
+Sessions.revokeAll = function(){
+	var username=null;
+	switch (arguments.length){
+	 case 1:
+		 username=arguments[0];
+		 break;
+	}
+	if (username==null){
+		throw new TypeError("you must specify a username");
+	}
+	if(!(typeof username === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (username!==context.userName && !isAdmin()){
+		throw new TypeError("only administrators can revoke the sessions of other users");
+	}
+	return _command({resource: 'sessions',
+        name: 'revokeAllTokensOfAGivenUser',
+        params:{
+            username: username
+        }});	
+};
+
+Sessions.revoke = function(){
+	var token=null;
+	switch (arguments.length){
+	 case 1:
+		 token=arguments[0];
+		 break;
+	}
+	if (token==null){
+		throw new TypeError("you must specify a token to revoke");
+	}
+	if(!(typeof token === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (!isAdmin()){
+		throw new TypeError("only administrators can revoke a session");
+	}
+	return _command({resource: 'sessions',
+        name: 'delete',
+        params:{
+            token: token
+        }});	
+};
+
+Sessions.getCurrent = function (){
+	return _command({resource: 'sessions',
+        name: 'getCurrent'
+	});
+}
+
+Sessions.create = function(username,password){
+	if(!(typeof username === 'string')){
+        throw new TypeError("the username parameter must be a string");
+    }
+	if(!(typeof password === 'string')){
+        throw new TypeError("the password parameter must be a string");
+    }
+	return _command({resource: 'sessions',
+        name: 'post',
+        params:{
+            username: username,
+            password:password
+        }});	
+} 
 
 //--------   Documents --------
 var Documents = {};
@@ -696,6 +787,8 @@ exports.Push = Push;
 exports.WS= WS;
 exports.log = log;
 exports.Links = Links;
+exports.Sessions = Sessions;
+
 
 exports.runAsAdmin=runAsAdmin;
 

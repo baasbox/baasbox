@@ -20,16 +20,19 @@ package com.baasbox.security;
 
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Akka;
+import play.mvc.Http;
 import scala.concurrent.duration.FiniteDuration;
-
 import akka.actor.Cancellable;
 
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.google.common.collect.ImmutableMap;
 
 public class SessionTokenProvider implements ISessionTokenProvider {
@@ -140,5 +143,22 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 			    new FiniteDuration(timeoutInMilliseconds, TimeUnit.MILLISECONDS), 
 			    new SessionCleaner() , 
 			    Akka.system().dispatcher()); 
+	}
+	
+	@Override
+	public List<ImmutableMap<SessionKeys, ? extends Object>> getSessions(String username) {
+		Stream<ImmutableMap<SessionKeys, ? extends Object>> 
+			values = sessions
+						.values()
+						.stream()
+						.filter(x->x.get(SessionKeys.USERNAME).equals(username));
+		List<ImmutableMap<SessionKeys, ? extends Object>> toRet = values.collect(Collectors.toList());
+		return toRet;
+	}
+	@Override
+	public ImmutableMap<SessionKeys, ? extends Object> getCurrent() {
+		String token = (String) Http.Context.current().args.get("token");
+		if (token != null) return sessions.get(token);
+		else return null;
 	}
 }
