@@ -108,7 +108,7 @@ public abstract class BaseRestResource extends Resource {
 			    }
 			}
 	
-	protected JsonNode getParamField(JsonNode command,String field) throws CommandException{
+	protected JsonNode getParamField(JsonNode command,String field) {
 	        JsonNode params = command.get(ScriptCommand.PARAMS);
 	        JsonNode id = params.get(field);
 	        return id;
