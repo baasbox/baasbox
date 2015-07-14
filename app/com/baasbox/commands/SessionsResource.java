@@ -77,6 +77,9 @@ public class SessionsResource extends BaseRestResource {
 		} 
 	}
 
+	/***
+	 * Remove a session value by its token
+	 */
 	@Override
 	protected JsonNode delete(JsonNode command) throws CommandException {
 		try {
@@ -97,6 +100,9 @@ public class SessionsResource extends BaseRestResource {
 		throw new CommandNotSupportedException(command, "It is not possible to update a Session");
 	}
 
+	/**
+	 * Creates a new session
+	 */
 	@Override
 	protected JsonNode post(JsonNode command) throws CommandException {
 		try {
@@ -130,6 +136,9 @@ public class SessionsResource extends BaseRestResource {
 	        return passwordNode.asText();
 	}
 
+	/**
+	 * Returns an Array of session related to a given user
+	 */
 	@Override
 	protected JsonNode list(JsonNode command) throws CommandException {
 		try {
