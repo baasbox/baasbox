@@ -120,7 +120,11 @@ public class DbHelper {
 		return BigInteger.valueOf(new File(BBConfiguration.getDBDir()).getFreeSpace());
 	}
 	
-		
+	
+	public static String getCurrentAppCode(){
+		return appcode.get();
+	}
+	
 	public static String currentUsername(){
 		return username.get();
 	}
