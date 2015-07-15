@@ -170,7 +170,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
 		try {
 			j = p.getResource();
-			Set<String> ret = j.keys("*");
+			Set<String> ret = j.keys(Http.Context.current().args.get("appcode")+":session:*");
 			ret=ret.stream().map(x->baasboxizeTheToken(x)).collect(Collectors.toSet());
 			return new Vector<String>(ret).elements();
 		} catch (Exception e) {
