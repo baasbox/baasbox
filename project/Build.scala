@@ -60,7 +60,8 @@ object ApplicationBuild extends Build {
           "com.notnoop.apns" % "apns" % "1.0.0.Beta6",
           "ch.qos.logback" % "logback-classic" % "1.1.2",
           "org.slf4j" % "slf4j-api" % "1.7.6",
-          "com.typesafe" %% "play-plugins-redis" % "2.2.1"
+          "com.typesafe" %% "play-plugins-redis" % "2.2.1",
+           "org.mockito" % "mockito-core" % "1.10.19" % Test
           //,"redis.clients" % "jedis" % "2.7.2"
           //,"commons-pool" % "commons-pool" % "1.6"
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",

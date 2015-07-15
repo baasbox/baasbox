@@ -18,6 +18,8 @@
 
 package com.baasbox.commands;
 
+import java.util.Map;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.commands.exceptions.ResourceNotFoundException;
@@ -25,8 +27,6 @@ import com.baasbox.service.scripting.base.JsonCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
-
-import java.util.Map;
 
 /**
  * Created by Andrea Tortorella on 30/06/14.
@@ -48,6 +48,7 @@ public class CommandRegistry {
                         .put(CollectionsResource.INSTANCE.name(),   CollectionsResource.INSTANCE)
                         .put(PushResource.INSTANCE.name(), 			PushResource.INSTANCE)
                         .put(DBResource.INSTANCE.name(),			DBResource.INSTANCE)
+                        .put(SessionsResource.INSTANCE.name(),		SessionsResource.INSTANCE)
                         .build();
 
 

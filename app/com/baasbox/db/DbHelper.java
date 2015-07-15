@@ -133,7 +133,13 @@ public class DbHelper {
 				.getFreeSpace());
 	}
 
-	public static String currentUsername() {
+	
+	
+	public static String getCurrentAppCode(){
+		return appcode.get();
+	}
+	
+	public static String currentUsername(){
 		return username.get();
 	}
 

@@ -19,9 +19,12 @@ public class SessionTokenProviderFactory {
 	}
 	
 	public static ISessionTokenProvider getSessionTokenProvider(){
+		return getSessionTokenProvider ("SessionTokenProviderRedis");
+		/*
 		if (BBConfiguration.configuration.getString("redisplugin").equals("enabled"))
 			return getSessionTokenProvider ("SessionTokenProviderRedis");
 		else
 			return getSessionTokenProvider ("SessionTokenProvider");
+			*/
 	}
 }

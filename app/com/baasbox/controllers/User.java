@@ -756,6 +756,10 @@ public class User extends Controller {
 
 		return F.Promise.promise(()->{
 			String user;
+			//the filter does not inject the appcode. Actually the login endpoint is the only one that does not enforce a check on the appcode presence. 
+			//This is not correct, BTW, for the moment we just patch it
+
+			Http.Context.current().args.put("appcode", appcode);
 			try (ODatabaseRecordTx db = DbHelper.open(appcode,username,password)){
 				user = prepareResponseToJson(UserService.getCurrentUser());
 				if (loginData != null) {
