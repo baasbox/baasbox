@@ -1,12 +1,7 @@
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.UUID;
 
@@ -16,7 +11,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.mvc.Http;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
@@ -93,19 +87,6 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 			});
     }
 
-    public void setUpContext() throws Exception {
-    	Http.Request mockRequest = mock(Http.Request.class);
-        when(mockRequest.remoteAddress()).thenReturn("127.0.0.1");
-        when(mockRequest.getHeader("User-Agent")).thenReturn("mocked user-agent");
-        
-        Map<String, String> flashData = Collections.emptyMap();
-        Map<String, Object> argData = new HashMap();
-        argData.put("appcode", "1234567890");
-        Long id = 2L;
-        play.api.mvc.RequestHeader header = mock(play.api.mvc.RequestHeader.class);
-        Http.Context context = new Http.Context(id, header, mockRequest, flashData, flashData, argData);
-        Http.Context.current.set(context);
-    }
     
     @Test
     public void test(){

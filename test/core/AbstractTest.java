@@ -20,6 +20,8 @@
 
 package core;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
@@ -36,6 +38,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -64,6 +67,7 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import play.Configuration;
 import play.Play;
 import play.mvc.Http.Status;
+import play.mvc.Http;
 import play.mvc.Result;
 import play.test.FakeApplication;
 import play.test.FakeRequest;
@@ -109,6 +113,19 @@ public abstract class AbstractTest extends FluentTest
 		return sFakeUser;
 	}
 	
+    public void setUpContext() throws Exception {
+    	Http.Request mockRequest = mock(Http.Request.class);
+        when(mockRequest.remoteAddress()).thenReturn("127.0.0.1");
+        when(mockRequest.getHeader("User-Agent")).thenReturn("mocked user-agent");
+        
+        Map<String, String> flashData = Collections.emptyMap();
+        Map<String, Object> argData = new HashMap();
+        argData.put("appcode", "1234567890");
+        Long id = 2L;
+        play.api.mvc.RequestHeader header = mock(play.api.mvc.RequestHeader.class);
+        Http.Context context = new Http.Context(id, header, mockRequest, flashData, flashData, argData);
+        Http.Context.current.set(context);
+    }
 	protected static void resetHeaders(){
 		mHeaders.clear();
 	}
