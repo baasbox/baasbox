@@ -134,7 +134,6 @@ public class DbHelper {
 	}
 
 	
-	
 	public static String getCurrentAppCode(){
 		return appcode.get();
 	}

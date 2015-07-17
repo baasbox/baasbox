@@ -147,7 +147,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected  static Configuration additionalConfigurations=null;
 	static{
-	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf"));
+	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
 	    additionalConfigurations = new Configuration(additionalConfig);
 	}
 
