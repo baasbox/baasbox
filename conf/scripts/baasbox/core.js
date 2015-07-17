@@ -26,13 +26,13 @@
  * Baasbox server version
  * @type {string}
  */
-exports.version = '0.9.4';
+exports.version = __getBaasBoxVersion(); //defined in _baasbox_prelude.js
 
 
 //-------- WS (Remote API calls) --------
 
 var WS = {};
-var wsRequest = function(method,url,body,params,headers){
+var wsRequest = function(method,url,body,params,headers,timeout){
     return _command({resource: 'script',
                      name: 'ws',
                      params: {
@@ -40,29 +40,30 @@ var wsRequest = function(method,url,body,params,headers){
                          method: method,
                          params: params,
                          headers: headers,
-                         body: body
+                         body: body,
+                         timeout:timeout
                      }});
 };
 
 WS.post = function(url,body,opts){
     opts =opts||{};
-    return wsRequest('post',url,body,opts.params,opts.headers);
+    return wsRequest('post',url,body,opts.params,opts.headers,opts.timeout);
 };
 
 WS.get = function(url,opts){
     opts=opts||{};
-    return wsRequest('get',url,null,opts.params,opts.headers);
+    return wsRequest('get',url,null,opts.params,opts.headers,opts.timeout);
 };
 
 WS.put = function(url,body,opts){
     opts = opts||{};
-    return wsRequest('put',url,body,opts.params,opts.headers);
+    return wsRequest('put',url,body,opts.params,opts.headers,opts.timeout);
 };
 
 
 WS.delete = function(url,opts){
     opts = opts||{};
-    return wsRequest('delete',url,null,opts.params,opts.headers);
+    return wsRequest('delete',url,null,opts.params,opts.headers,opts.timeout);
 };
 //-------- END WS --------
 
@@ -423,6 +424,97 @@ Users.changeUsername = function(username,newUsername){
 };
 //-------- END Users --------
 
+//-------- Sessions ---------
+var Sessions = {};
+Sessions.find = function(){
+	var username=null;
+	switch (arguments.length){
+	 case 1:
+		 username=arguments[0];
+		 break;
+	}
+	if (username==null){
+		throw new TypeError("you must specify a username");
+	}
+	if(!(typeof username === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (username!==context.userName && !isAdmin()){
+		throw new TypeError("only administrators can read the sessions of other users");
+	}
+	return _command({resource: 'sessions',
+        name: 'list',
+        params:{
+            username: username
+        }});
+};
+
+Sessions.revokeAll = function(){
+	var username=null;
+	switch (arguments.length){
+	 case 1:
+		 username=arguments[0];
+		 break;
+	}
+	if (username==null){
+		throw new TypeError("you must specify a username");
+	}
+	if(!(typeof username === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (username!==context.userName && !isAdmin()){
+		throw new TypeError("only administrators can revoke the sessions of other users");
+	}
+	return _command({resource: 'sessions',
+        name: 'revokeAllTokensOfAGivenUser',
+        params:{
+            username: username
+        }});	
+};
+
+Sessions.revoke = function(){
+	var token=null;
+	switch (arguments.length){
+	 case 1:
+		 token=arguments[0];
+		 break;
+	}
+	if (token==null){
+		throw new TypeError("you must specify a token to revoke");
+	}
+	if(!(typeof token === 'string')){
+        throw new TypeError("the parameter must be a string");
+    }
+	if (!isAdmin()){
+		throw new TypeError("only administrators can revoke a session");
+	}
+	return _command({resource: 'sessions',
+        name: 'delete',
+        params:{
+            token: token
+        }});	
+};
+
+Sessions.getCurrent = function (){
+	return _command({resource: 'sessions',
+        name: 'getCurrent'
+	});
+}
+
+Sessions.create = function(username,password){
+	if(!(typeof username === 'string')){
+        throw new TypeError("the username parameter must be a string");
+    }
+	if(!(typeof password === 'string')){
+        throw new TypeError("the password parameter must be a string");
+    }
+	return _command({resource: 'sessions',
+        name: 'post',
+        params:{
+            username: username,
+            password:password
+        }});	
+} 
 
 //--------   Documents --------
 var Documents = {};
@@ -696,6 +788,8 @@ exports.Push = Push;
 exports.WS= WS;
 exports.log = log;
 exports.Links = Links;
+exports.Sessions = Sessions;
+
 
 exports.runAsAdmin=runAsAdmin;
 

@@ -25,6 +25,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 
 	@Test
 	public void testRouteNotValid() {
+		if (getMethod()==null) return;
 		running
 		(
 			getFakeApplication(), 
@@ -66,6 +67,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 
 	@Test
 	public void testServerNotValid() {
+		if (getMethod()==null) return;
 		running
 		(
 			getTestServer(), 
