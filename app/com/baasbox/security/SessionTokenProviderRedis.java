@@ -20,19 +20,18 @@ package com.baasbox.security;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
 
+import play.cache.Cache;
 import play.mvc.Http;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -85,7 +84,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 						.append(":")
 						.append(UUID.randomUUID().toString())
 						.toString();
-		String baasboxToken=baasboxizeTheToken(redisToken);
+		String baasboxToken=getBaasBoxTokenFromRedisKey(redisToken);
 		ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
 				(SessionKeys.APP_CODE, AppCode, 
 						SessionKeys.TOKEN, baasboxToken,
@@ -93,22 +92,16 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 						SessionKeys.PASSWORD,password,
 						SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInSeconds);
 		ObjectMapperExt mapper = BBJson.mapper();
-		Jedis j=null;
-		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
 		try {
-			String mapAsJson = mapper.writeValueAsString(info);
-			j = p.getResource();
+			String mapAsJson = cryptSession(mapper.writeValueAsString(info));
 			if (expiresInSeconds!=0) {
-				j.set(redisToken, mapAsJson);
-				j.expire(redisToken,expiresInSeconds);
+				Cache.set(redisToken, mapAsJson,expiresInSeconds);
 			} else {
-				j.set(redisToken, mapAsJson);
+				Cache.set(redisToken, mapAsJson);
 			}
 		} catch (Exception e) {
 			BaasBoxLogger.error("Error inserting new token in Redis", e);
 			throw new RuntimeException("Redis problem",e);
-		} finally {
-			if (j!=null) p.returnResource(j);
 		}
 		return info;
 	}
@@ -118,50 +111,36 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 		if (isExpired(baasboxToken)){
 			return null;
 		}
-		Jedis j=null;
-		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
-		String redisToken = redisizeTheToken(baasboxToken);
+		String redisToken = getRedisKeyFromBaasBoxToken(baasboxToken);
 		try {
-			j = p.getResource();
-			String mapAsJsonString = j.get(redisToken);
+			String mapAsJsonString = (String)Cache.get(redisToken);
 			ObjectMapperExt mapper = BBJson.mapper();
-			ObjectNode mapAsJson = (ObjectNode) mapper.readTree(mapAsJsonString);
+			ObjectNode mapAsJson = (ObjectNode) mapper.readTree(decryptSession(mapAsJsonString));
 			ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
 					(SessionKeys.APP_CODE, mapAsJson.get(SessionKeys.APP_CODE.toString()).asText(), 
 							SessionKeys.TOKEN, mapAsJson.get(SessionKeys.TOKEN.toString()).asText(),
 							SessionKeys.USERNAME, mapAsJson.get(SessionKeys.USERNAME.toString()).asText(),
 							SessionKeys.PASSWORD,mapAsJson.get(SessionKeys.PASSWORD.toString()).asText(),
 							SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInSeconds);
+			
+			//refresh the token on REDIS
 			if (expiresInSeconds!=0) {
-				j.set(redisToken.toString(),  mapper.writeValueAsString(info));
-				j.expire(redisToken.toString(),expiresInSeconds);
+				Cache.set(redisToken.toString(),  mapper.writeValueAsString(info),expiresInSeconds);
 			} else {
-				j.set(redisToken.toString(),  mapper.writeValueAsString(info));
+				Cache.set(redisToken.toString(),  mapper.writeValueAsString(info));
 			}
 			return info;
 		} catch (IOException e) {
 			BaasBoxLogger.error("Error retrieving token from Redis", e);
 			throw new RuntimeException("Redis problem",e);
-		} finally {
-			if (j!=null) p.returnResource(j);
-		}
+		} 
 	}
 
 	@Override
 	public void removeSession(String baasboxToken) {
-		String redisToken=redisizeTheToken(baasboxToken);
-		Jedis j=null;
-		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
-		try {
-			j = p.getResource();
-			j.del(redisToken);
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProviderRedis: " + baasboxToken + " removed");
-		} catch (Exception e) {
-			BaasBoxLogger.error("Error deleting token from Redis", e);
-			throw new RuntimeException("Redis problem",e);
-		} finally {
-			if (j!=null) p.returnResource(j);
-		}
+		String redisToken=getRedisKeyFromBaasBoxToken(baasboxToken);
+		Cache.remove(redisToken);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProviderRedis: " + baasboxToken + " removed");
 	}
 
 	@Override
@@ -171,7 +150,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 		try {
 			j = p.getResource();
 			Set<String> ret = j.keys(Http.Context.current().args.get("appcode")+":session:*");
-			ret=ret.stream().map(x->baasboxizeTheToken(x)).collect(Collectors.toSet());
+			ret=ret.stream().map(x->getBaasBoxTokenFromRedisKey(x)).collect(Collectors.toSet());
 			return new Vector<String>(ret).elements();
 		} catch (Exception e) {
 			BaasBoxLogger.error("Error retrieving tokens from Redis", e);
@@ -182,7 +161,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 	}
 	
 	private boolean isExpired(String baasboxToken){
-		String redisToken = redisizeTheToken(baasboxToken);
+		String redisToken = getRedisKeyFromBaasBoxToken(baasboxToken);
 		Jedis j=null;
 		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
 		try {
@@ -218,7 +197,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 			Stream<ImmutableMap<SessionKeys, ? extends Object>> toRet = keys.stream().map(x->{
 				ImmutableMap<SessionKeys, ? extends Object> info = null;
 				try {
-					JsonNode mapAsJson = mapper.readTree(j.get(x));
+					JsonNode mapAsJson = mapper.readTree(decryptSession((String)Cache.get(x)));
 					info = ImmutableMap.of
 							(SessionKeys.APP_CODE, mapAsJson.get(SessionKeys.APP_CODE.toString()).asText(), 
 									SessionKeys.TOKEN, mapAsJson.get(SessionKeys.TOKEN.toString()).asText(),
@@ -239,8 +218,9 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 		}
 	}
 	
-	private String redisizeTheToken(String baasboxToken){
+	private String getRedisKeyFromBaasBoxToken(String baasboxToken){
 		try {
+			//we could use an encryption algorithm. How much will it be slower ?
 			return new String(Base64.decodeBase64(baasboxToken), "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			// is not UTF-8 supported??? REALLY??
@@ -249,7 +229,16 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 		}
 	}
 	
-	private String baasboxizeTheToken(String redisToken){
+	private String getBaasBoxTokenFromRedisKey(String redisToken){
 		return new String(Base64.encodeBase64(redisToken.toString().getBytes()));
+	}
+	
+	//TODO: to provide a way to encrypt data on REDIS at rest
+	private String decryptSession(String redisPayload){
+		return redisPayload;
+	}
+	
+	private String cryptSession(String sessionInfoPayload){
+		return sessionInfoPayload;
 	}
 }
