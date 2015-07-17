@@ -223,6 +223,10 @@ var GLOBAL=this;
 
     Module.prototype.BaasBoxError=BaasBoxError;
 
+    Module.prototype.__getBaasBoxVersion = function (){
+    	return Api.getBaasBoxVersion();
+    }
+    Object.defineProperty(Module.prototype,"__getBaasBoxVersion",{configurable: false,enumerable: false});
 
     /**
      * The require function
