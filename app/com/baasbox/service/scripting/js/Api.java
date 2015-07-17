@@ -25,6 +25,7 @@ import jdk.nashorn.internal.runtime.ECMAException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.db.DbHelper;
@@ -71,6 +72,11 @@ public class Api {
     }
 
 
+    public static String getBaasBoxVersion(){
+        return BBConfiguration.getApiVersion();
+    }
+
+    
     public static String currentUserName(){
         String currentUser = DbHelper.getCurrentHTTPUsername();
         return currentUser;
