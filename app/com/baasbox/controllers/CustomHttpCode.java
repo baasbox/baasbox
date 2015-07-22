@@ -45,6 +45,7 @@ public enum CustomHttpCode {
 			PUSH_CONTENT_AVAILABLE_FORMAT_INVALID(40031,400,"Content-available MUST be an Integer (1 for silent notification)","error"),
 			PUSH_CATEGORY_FORMAT_INVALID(40032,400,"Category MUST be a String","error"),
 			SESSION_TOKEN_EXPIRED (40101,401,"Authentication info not valid or not provided. HINT: is your session expired?","error"),
+			PLUGIN_INTERNAL_ERROR (50001,500,"The script failed due an internal error","error"),
 			PUSH_CONFIG_INVALID (50301,503,"Push settings are not properly configured. HINT: go to administration console and check the settings","error"),
 			PUSH_HOST_UNREACHABLE(50302,503,"The server cannot resolve the host name. HINT: check your internet connection.","error"),
 			PUSH_INVALID_REQUEST(50303,503,"Could not send push notifications. HINT: Check your API Key(Google), it's possible that push service aren't enabled in Google Play Developer Console","error"),
