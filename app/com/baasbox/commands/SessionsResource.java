@@ -16,8 +16,8 @@ import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
-import com.baasbox.service.scripting.js.Json.ObjectMapperExt;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.BBJson.ObjectMapperExt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -47,7 +47,7 @@ public class SessionsResource extends BaseRestResource {
 		try {
 			ImmutableMap<SessionKeys, ? extends Object> st = SessionTokenProvider.getSessionTokenProvider().getCurrent();
 			if (st==null) return NullNode.getInstance();
-			ObjectMapperExt mapper = Json.mapper();
+			ObjectMapperExt mapper = BBJson.mapper();
 			String s;
 			s = mapper.writeValueAsString(st);
 			ObjectNode stToRet = (ObjectNode) mapper.readTree(s);
@@ -110,7 +110,7 @@ public class SessionsResource extends BaseRestResource {
 			String username=getUsernameFromParam(command);
 			String password=getPasswordFromParam(command);
 			ImmutableMap<SessionKeys, ? extends Object> st = SessionTokenProvider.getSessionTokenProvider().setSession(DbHelper.getCurrentAppCode(), username, password);
-			ObjectMapperExt mapper = Json.mapper();
+			ObjectMapperExt mapper = BBJson.mapper();
 			String s=mapper.writeValueAsString(st);
 			ObjectNode stToRet = (ObjectNode) mapper.readTree(s);
 			stToRet.remove(SessionKeys.PASSWORD.toString());
@@ -149,7 +149,7 @@ public class SessionsResource extends BaseRestResource {
 					SessionTokenProvider
 						.getSessionTokenProvider()
 						.getSessions(username);
-			ObjectMapperExt mapper = Json.mapper();
+			ObjectMapperExt mapper = BBJson.mapper();
 			String s=mapper.writeValueAsString(sessions);
 			
 			ArrayNode lst = (ArrayNode) mapper.readTree(s);

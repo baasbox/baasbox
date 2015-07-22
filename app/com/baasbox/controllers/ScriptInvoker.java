@@ -83,7 +83,7 @@ public class ScriptInvoker extends Controller{
             	if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed() && DbHelper.isInTransaction())
             		DbHelper.rollbackTransaction();
             	BaasBoxLogger.error("Error evaluating script", e);
-                return internalServerError("script failure " + ExceptionUtils.getFullStackTrace(e));
+            	return status(CustomHttpCode.PLUGIN_INTERNAL_ERROR.getBbCode(),ExceptionUtils.getFullStackTrace(e));
             }
         }));
     }

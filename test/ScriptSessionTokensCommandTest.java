@@ -11,14 +11,14 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.Logger;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
 
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.BBJson.ObjectMapperExt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
@@ -33,7 +33,7 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 
     private static TreeSet<String>  sRandUsers;
     private static String sTestUser;
-    private static final Json.ObjectMapperExt mapper = Json.mapper();
+    private static final ObjectMapperExt mapper = BBJson.mapper();
     private static final String USER_PREFIX = "script-sessions-test-";
     private static String key;
     private String user1=null;

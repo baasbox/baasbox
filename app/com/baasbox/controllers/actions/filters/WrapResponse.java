@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -36,23 +40,81 @@ import play.mvc.SimpleResult;
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class WrapResponse {
+	/***
+	 * Pattern should be thread safe: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+	 * "Instances of this class are immutable and are safe for use by multiple concurrent threads. Instances of the Matcher class are not safe for such use."
+	 * This pattern matches "at package.class.method(source_code:123)" 
+	 * Note that "source_code" can be a java, scala or js file! 
+	 */
+	private static Pattern tracePattern = Pattern
+            .compile("\\s*at\\s+([\\w\\.$_]+)\\.([\\w$_]+)(\\(.*\\..*)?:(\\d+)\\)(\\n|\\r\\n)");
+	
+	// This pattern matches " package.class.exception : optional message'" 
+	private static Pattern headLinePattern = Pattern.compile("([\\w\\.]+)(:.*)?");
+	
+	/* inspired by https://stackoverflow.com/questions/10013713/reading-and-parsing-java-exceptions */ 
+	private List<String> tryToExtractTheStackTrace(String error){
+        Matcher traceMatcher = tracePattern.matcher(error);
+        List<String> stackTrace = new ArrayList<String>();
+        while (traceMatcher.find()) {
+            String className = traceMatcher.group(1);
+            String methodName = traceMatcher.group(2);
+            String sourceFile = traceMatcher.group(3);
+            int lineNum = Integer.parseInt(traceMatcher.group(4));
+            stackTrace.add(new StringBuilder()
+            					.append(className) 
+            					.append(".") 
+            					.append(methodName)
+            					.append("(")
+            					.append(sourceFile)
+            					.append(":")
+            					.append(lineNum)
+            					.append(")")
+            					.toString());
+        }
+        return stackTrace;
+	}
 	
 	private ObjectNode prepareError(RequestHeader request, String error) {
-		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+		//List<StackTraceElement> st = this.tryToExtractTheStackTrace(error);
+		List<String> st = this.tryToExtractTheStackTrace(error);
+		
+		com.fasterxml.jackson.databind.ObjectMapper mapper = BBJson.mapper();
 		ObjectNode result = Json.newObject();
 		result.put("result", "error");
-		result.put("message", error);
+		
+		//the error is an exception or a plain message?
+		if (st.size()==0){
+			result.put("message", error);
+		} else {
+	        Matcher headLineMatcher = headLinePattern.matcher(error);
+	        StringBuilder message = new StringBuilder();
+	        if (headLineMatcher.find()) {
+	        	message.append(headLineMatcher.group(1));
+	        	if (headLineMatcher.group(2) != null) {
+	                message.append(" ").append(headLineMatcher.group(2));
+	            }
+	        }
+			result.put("message", message.toString());
+			ArrayNode ston = result.putArray("stacktrace");
+			st.forEach(x->{
+				ston.add(x);
+			});
+			result.put("full_stacktrace",error);
+		}
 		result.put("resource", request.path());
 		result.put("method", request.method());
 		result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
-		setCallIdOnResult(request, result);
+		this.setCallIdOnResult(request, result);
 		return result;
 	} 
 
