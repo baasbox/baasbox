@@ -13,7 +13,6 @@ function ScriptsController($scope,prompt){
 	$scope.editorAlreadyLoaded=false;
 	// private helpers
 	var VALID_NAME = /^([a-z_][a-z_0-9]*)(\.[a-z_][a-z_0-9]*)+$/i;
-	var EXTRACT_ERROR = /ScriptError: '([^]*?)at jdk\.nashorn/m;
 
 	var wasInEditMode = null;
 
@@ -78,12 +77,7 @@ function ScriptsController($scope,prompt){
 	};
 
 	var parseError = function(text){
-		var x =EXTRACT_ERROR.exec(text);
-		if(x && x[1]){
-			//console.log(x[1]);
-			return x[1];
-		}
-		return "Unknown error";
+		return (!text || text.trim().length==0)? "Unknown error" : text;
 	};
 
 	var publishError = function(data){
