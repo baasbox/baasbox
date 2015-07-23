@@ -205,7 +205,8 @@ public class Admin extends Controller {
 			response = ImmutableMap.<String,Object>builder().
 					put("installation", (Object)ImmutableMap.of(
 							"bb_id",bbId
-							,"bb_version", Internal.DB_VERSION.getValueAsString()
+							,"bb_version", BBConfiguration.getApiVersion()
+							,"db_version", Internal.DB_VERSION.getValueAsString()
 							))
 							.put("db", StatisticsService.db())
 							.put("data",StatisticsService.data())

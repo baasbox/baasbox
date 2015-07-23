@@ -480,7 +480,7 @@ public class DbHelper {
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
-		Internal.DB_VERSION._setValue(BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+		Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
 		String uniqueId="";
 		try{
 			UUID u = new UUID();
@@ -660,17 +660,17 @@ public class DbHelper {
 		 BaasBoxLogger.info("...looking for evolutions...");
 		 String fromVersion="";
 		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
-			 BaasBoxLogger.info("...db is < 0.7 ....");
+			 BaasBoxLogger.warn("...DB is < 0.7 ....");
 			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
 			 ODocument od = db.load(o);
 			 fromVersion=od.field("value");
 		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
 		 BaasBoxLogger.info("...db version is: " + fromVersion);
-		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())){
+		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getDBVersion())){
 			 BaasBoxLogger.info("...imported DB needs evolutions!...");
 			 Evolutions.performEvolutions(db, fromVersion);
-			 Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
-			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getApiVersion());
+			 Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getDBVersion());
 		 }//end of evolutions
 	}
 	
