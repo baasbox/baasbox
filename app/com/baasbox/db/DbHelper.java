@@ -668,7 +668,7 @@ public class DbHelper {
 		 BaasBoxLogger.info("...db version is: " + fromVersion);
 		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getDBVersion())){
 			 BaasBoxLogger.info("...imported DB needs evolutions!...");
-			 Evolutions.performEvolutions(db, BBConfiguration.getDBVersion());
+			 Evolutions.performEvolutions(db, fromVersion);
 			 Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
 			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getDBVersion());
 		 }//end of evolutions
