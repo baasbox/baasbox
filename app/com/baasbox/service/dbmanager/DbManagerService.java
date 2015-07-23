@@ -129,7 +129,7 @@ public class DbManagerService {
 	
 	
 	public static void importDb(String appcode,ZipInputStream zis) throws FileFormatException,Exception{
-		String fileContent = null;
+		File newFile = null;
 			try{
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
@@ -138,14 +138,12 @@ public class DbManagerService {
 					ze = zis.getNextEntry();
 				}
 				if(ze!=null){
-					File newFile = File.createTempFile("export",".json");
+					newFile = File.createTempFile("export",".json");
 					FileOutputStream fout = new FileOutputStream(newFile);
 					for (int c = zis.read(); c != -1; c = zis.read()) {
 						fout.write(c);
 					}
 					fout.close();
-					fileContent = FileUtils.readFileToString(newFile);
-					newFile.delete();
 				}else{
 					throw new FileFormatException("Looks like the uploaded file is not a valid export.");
 				}
@@ -174,9 +172,8 @@ public class DbManagerService {
 				}else{
 					throw new FileFormatException("Looks like zip file does not contain a manifest file");
 				}
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Importing: ",fileContent);
-				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
-					DbHelper.importData(appcode, fileContent);
+				if(newFile!=null){
+					DbHelper.importData(appcode, newFile);
 					zis.closeEntry();
 					zis.close();
 				}else{
