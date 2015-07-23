@@ -90,9 +90,8 @@ public class DbHelper {
 	private static final String SCRIPT_FILE_NAME="db.sql";
 	private static final String CONFIGURATION_FILE_NAME="configuration.conf";
 
-	private static ThreadLocal<Boolean> dbFreeze = new ThreadLocal<Boolean>() {
-		protected Boolean initialValue() {return Boolean.FALSE;};
-	};
+	private static volatile boolean dbFreeze = false;
+	
 	private static ThreadLocal<Integer> tranCount = new ThreadLocal<Integer>() {
 		protected Integer initialValue() {return 0;};
 	};
@@ -302,8 +301,8 @@ public class DbHelper {
 			db = getConnection();
 
 			synchronized(DbHelper.class)  {
-				if(!dbFreeze.get()){
-					dbFreeze.set(true);
+				if(!dbFreeze){
+					dbFreeze = true;
 				}
 				db.drop();
 				db.close();
@@ -324,9 +323,7 @@ public class DbHelper {
 			throw new RuntimeException(e);
 		}finally{
 			synchronized(DbHelper.class)  {
-
-				dbFreeze.set(false);
-
+				dbFreeze=false;
 			}
 		}
 
@@ -351,14 +348,14 @@ public class DbHelper {
 		
 		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
-		if(dbFreeze.get()){
+		if(dbFreeze){
 			throw new ShuttingDownDBException();
 		}
 		String databaseName=BBConfiguration.getDBDir();
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("opening connection on db: " + databaseName + " for " + username);
 		
-		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir());
-		conn.open(username,password);
+		new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir())
+				.open(username,password);
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);
@@ -558,11 +555,6 @@ public class DbHelper {
 					BaasBoxLogger.info(m);
 				}
 			});
-			synchronized(DbHelper.class)  {
-				if(!dbFreeze.get()){
-					dbFreeze.set(true);
-				}
-			}
 			oe.setUseLineFeedForRecords(true);
 			oe.setIncludeManualIndexes(true);
 			oe.exportDatabase();
@@ -573,25 +565,22 @@ public class DbHelper {
 			if(db!=null && ! db.isClosed()){
 				db.close();
 			}
-			dbFreeze.set(false);
 		}
 	}
 	
-	public static void importData(String appcode,String importData) throws UnableToImportDbException{
+	public static void importData(String appcode,File newFile) throws UnableToImportDbException{
+		if (newFile==null) throw new UnableToImportDbException("Cannot import file. The reference is null");
 		ODatabaseRecordTx db = null;
-		java.io.File f = null;
 		try{
 			BaasBoxLogger.info("Initializing restore operation..:");
 			BaasBoxLogger.info("...dropping the old db..:");
-			DbHelper.shutdownDB(false);
-			f = java.io.File.createTempFile("import", ".json");
-			FileUtils.writeStringToFile(f, importData);
 			synchronized(DbHelper.class)  {
-				if(!dbFreeze.get()){
-					dbFreeze.set(true);
+				if(!dbFreeze){
+					dbFreeze=true;
 				}
 			}
-
+			DbHelper.shutdownDB(false);
+			
 			db=getConnection(); 
 			BaasBoxLogger.info("...unregistering hooks...");
 			HooksManager.unregisteredAll(db);
@@ -600,7 +589,7 @@ public class DbHelper {
 			 db.getMetadata().getSchema().dropClass("OSchedule");
 			 db.getMetadata().getSchema().dropClass("ORIDs");
 			   ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
-			ODatabaseImport oi = new ODatabaseImport(dbd, f.getAbsolutePath(), new OCommandOutputListener() {
+			ODatabaseImport oi = new ODatabaseImport(dbd, newFile.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
 					BaasBoxLogger.info("Restore db: " + m);
@@ -632,9 +621,9 @@ public class DbHelper {
 				db.close();
 			}
 			BaasBoxLogger.info("...releasing the db...");
-			dbFreeze.set(false);
-			if(f!=null && f.exists()){
-				f.delete();
+			dbFreeze=false;
+			if(newFile!=null && newFile.exists()){
+				newFile.delete();
 			}
 			BaasBoxLogger.info("...restore terminated");
 		}

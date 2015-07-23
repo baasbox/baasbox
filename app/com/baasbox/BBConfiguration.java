@@ -118,6 +118,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(ROOT_PASSWORD);
 	}
 
+	public static int getImportExportBufferSize(){
+		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
+	}
 	
 	//metrics
 	public static boolean getComputeMetrics() {
