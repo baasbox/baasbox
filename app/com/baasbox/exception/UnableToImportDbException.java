@@ -22,7 +22,11 @@ public class UnableToImportDbException extends BaasBoxException {
 	
 	
 	private static final long serialVersionUID = 5409549692932520619L;
-
+	
+	public UnableToImportDbException(String message){
+		super(message);
+	}
+	
 	public UnableToImportDbException(Throwable parent){
 		super("Unable to import db exception",parent);
 	}
