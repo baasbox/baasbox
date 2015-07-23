@@ -49,7 +49,9 @@ public class ExportJob implements Runnable{
 		FileOutputStream tempJsonOS = null;
 		FileInputStream in = null;
 		try{
-			File f = new File(this.fileName);
+			//File f = new File(this.fileName);
+			File f = File.createTempFile("export",".temp");
+			
 			dest = new FileOutputStream(f);
 			zip = new ZipOutputStream(dest);
 			
@@ -62,7 +64,7 @@ public class ExportJob implements Runnable{
 			ZipEntry entry = new ZipEntry("export.json");
 			zip.putNextEntry(entry);
 				in = new FileInputStream(tmpJson);
-				final int BUFFER = BBConfiguration.getExportBufferSize(); 
+				final int BUFFER = BBConfiguration.getImportExportBufferSize(); 
 		        byte buffer[] = new byte[BUFFER];
 		        
 				int length;
@@ -82,7 +84,10 @@ public class ExportJob implements Runnable{
     		
     		tmpJson.delete();
     		manifest.delete();
-
+    		
+    		File finaldestination=new File(this.fileName);
+    		FileUtils.moveFile(f, finaldestination);
+    		
 		}catch(Exception e){
 			BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 		}finally{

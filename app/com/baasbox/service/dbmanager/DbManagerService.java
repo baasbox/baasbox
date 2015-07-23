@@ -19,7 +19,6 @@
 package com.baasbox.service.dbmanager;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -34,26 +33,21 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.xmlbeans.impl.piccolo.io.FileFormatException;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Akka;
-import play.libs.Json;
-import play.mvc.Result;
-import play.mvc.Http.MultipartFormData;
-import play.mvc.Http.MultipartFormData.FilePart;
 import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
-import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.FileSystemPathUtil;
 
 public class DbManagerService {
@@ -130,6 +124,7 @@ public class DbManagerService {
 	
 	public static void importDb(String appcode,ZipInputStream zis) throws FileFormatException,Exception{
 		File newFile = null;
+		FileOutputStream fout = null;
 			try{
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
@@ -139,10 +134,8 @@ public class DbManagerService {
 				}
 				if(ze!=null){
 					newFile = File.createTempFile("export",".json");
-					FileOutputStream fout = new FileOutputStream(newFile);
-					for (int c = zis.read(); c != -1; c = zis.read()) {
-						fout.write(c);
-					}
+					fout = new FileOutputStream(newFile);
+					IOUtils.copy(zis, fout,BBConfiguration.getImportExportBufferSize());
 					fout.close();
 				}else{
 					throw new FileFormatException("Looks like the uploaded file is not a valid export.");
@@ -150,7 +143,7 @@ public class DbManagerService {
 				ZipEntry manifest = zis.getNextEntry();
 				if(manifest!=null){
 					File manifestFile = File.createTempFile("manifest",".txt");
-					FileOutputStream fout = new FileOutputStream(manifestFile);
+					fout = new FileOutputStream(manifestFile);
 					for (int c = zis.read(); c != -1; c = zis.read()) {
 						fout.write(c);
 					}
@@ -189,6 +182,9 @@ public class DbManagerService {
 				try {
 					if(zis!=null){
 						zis.close();
+					}
+					if (fout!=null){
+						fout.close();
 					}
 				} catch (IOException e) {
 					// Nothing to do here
