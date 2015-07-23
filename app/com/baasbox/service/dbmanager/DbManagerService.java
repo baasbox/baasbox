@@ -81,7 +81,7 @@ public class DbManagerService {
 		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),FileSystemPathUtil.escapeName(appcode));
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
-				Duration.create(2, TimeUnit.SECONDS),
+				Duration.create(1, TimeUnit.SECONDS),
 				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
 				Akka.system().dispatcher()
 				); 
