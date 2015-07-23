@@ -25,7 +25,7 @@ import com.baasbox.dao.exception.PermissionTagAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,7 +46,7 @@ public class PermissionTagDao  {
     private static final String INDEX = MODEL_NAME+'.'+TAG;
 
 
-    private final ODatabaseRecordTx db;
+    private final ODatabaseDocumentTx db;
     public static PermissionTagDao getInstance(){
         return new PermissionTagDao();
     }

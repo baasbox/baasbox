@@ -19,8 +19,7 @@
 package com.baasbox.db;
 
 import com.baasbox.service.logging.BaasBoxLogger;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
@@ -40,7 +39,7 @@ public class Evolution_0_8_0 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
+	public void evolve(ODatabaseDocumentTx db) {
 		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			setGraphDefaultValues(db);
@@ -53,7 +52,7 @@ public class Evolution_0_8_0 implements IEvolution {
 		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
-	private void setGraphDefaultValues(ODatabaseRecordTx db) {
+	private void setGraphDefaultValues(ODatabaseDocumentTx db) {
 		BaasBoxLogger.info("..updating graph custom attributes..:");
 //		String[] script=new String[]{
 //				"alter database custom useLightweightEdges=true;",
@@ -74,7 +73,7 @@ public class Evolution_0_8_0 implements IEvolution {
 		BaasBoxLogger.info("...done...");
 	}
 
-    private void addPermissionsClass(ODatabaseRecordTx db) {
+    private void addPermissionsClass(ODatabaseDocumentTx db) {
         BaasBoxLogger.info("..creating database permissions class...:");
         DbHelper.execMultiLineCommands(db,true,
             "create class _BB_Permissions;",
@@ -92,7 +91,7 @@ public class Evolution_0_8_0 implements IEvolution {
     }
     
     
-    private void idOnEdgeClass(ODatabaseRecordTx db) {
+    private void idOnEdgeClass(ODatabaseDocumentTx db) {
         BaasBoxLogger.info("..creating id property on E class...:");
         DbHelper.execMultiLineCommands(db,true,
         		"create property E.id String;",

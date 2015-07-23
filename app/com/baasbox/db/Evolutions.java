@@ -24,8 +24,8 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public class Evolutions {
 	private  TreeMap<String,IEvolution> me = new TreeMap<String,IEvolution>();
@@ -34,7 +34,7 @@ public class Evolutions {
 	 * Executes db evolutions from the given version (excluded) that is supposed to be the current one
 	 * @param fromVersion
 	 */
-	public static void performEvolutions(ODatabaseRecordTx db,String fromVersion){
+	public static void performEvolutions(ODatabaseDocumentTx db,String fromVersion){
 		preEvolutionTasks(db);
 		Evolutions evs=new Evolutions();
 		Collection<IEvolution> evolutions = evs.getEvolutionsFromVersion(fromVersion);
@@ -48,13 +48,13 @@ public class Evolutions {
 		postEvolutionTasks(db);
 	}
 	
-	private static void  preEvolutionTasks(ODatabaseRecordTx db){
+	private static void  preEvolutionTasks(ODatabaseDocumentTx db){
 		BaasBoxLogger.info("Performing pre-evolutions tasks....");
 		//nothing todo at the moment
 		BaasBoxLogger.info("...end");
 	}
 	
-	private static void  postEvolutionTasks(ODatabaseRecordTx db){
+	private static void  postEvolutionTasks(ODatabaseDocumentTx db){
 		BaasBoxLogger.info("Performing post-evolutions tasks....");
 		//nothing todo here at the moment
 		BaasBoxLogger.info("...end");

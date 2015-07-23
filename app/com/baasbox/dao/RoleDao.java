@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.baasbox.db.DbHelper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class RoleDao {
 		/**
@@ -45,12 +47,12 @@ public class RoleDao {
 		public static final String  ADMIN_BASE_ROLE = "admin";
 		
 		public static ORole getRole(String name){
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
             return db.getMetadata().getSecurity().getRole(name);
         }
 
 		public static ORole createRole(String name,String inheritedRoleName){
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			ORole inheritedRole = db.getMetadata().getSecurity().getRole(inheritedRoleName);
 			final ORole role =  db.getMetadata().getSecurity().createRole(name,inheritedRole.getMode());
 			role.getDocument().field(FIELD_INHERITED,inheritedRole.getDocument().getRecord());
@@ -60,7 +62,7 @@ public class RoleDao {
 		}
 		
 		public static ORole createRole(String name,ORole.ALLOW_MODES mode,Map rules){
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			final ORole role =  db.getMetadata().getSecurity().createRole(name,mode);
 			role.getDocument().field("rules",rules);
 			role.getDocument().field("isrole",true);
@@ -75,12 +77,12 @@ public class RoleDao {
 			return FRIENDS_OF_ROLE + username;
 		}
 		
-		public static String getFriendRoleName(OUser user){
+		public static String getFriendRoleName(OSecurityUser user){
 			return getFriendRoleName(user.getName());
 		}
 		
 		public static String getFriendRoleName(){
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			return getFriendRoleName(db.getUser());
 		}
 		

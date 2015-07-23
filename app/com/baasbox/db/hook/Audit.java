@@ -39,7 +39,7 @@ public class Audit extends BaasBoxHook {
 	}
 	
 	@Override
-	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord<?> iRecord){
+	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord iRecord){
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
@@ -67,7 +67,7 @@ public class Audit extends BaasBoxHook {
 	 }//onRecordBeforeCreate
 
 	@Override
-	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeUpdate (ORecord<?> iRecord){
+	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeUpdate (ORecord iRecord){
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;

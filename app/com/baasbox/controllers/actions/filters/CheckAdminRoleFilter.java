@@ -17,6 +17,8 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.util.Set;
+import java.util.List;
+import java.util.Arrays;
 
 import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
@@ -27,8 +29,13 @@ import play.mvc.Result;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.service.user.UserService;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import play.mvc.SimpleResult;
 import play.libs.F;
 
@@ -42,10 +49,10 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole for resource " + Http.Context.current().request());
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole user: " + ctx.args.get("username"));
-		
-		OUser user=DbHelper.getConnection().getUser();
-		Set<ORole> roles=user.getRoles();
-		
+
+		OSecurityUser user= UserService.getCurrentOSecurityUser();
+		Set<?> roles=user.getRoles();
+
 		F.Promise<SimpleResult> result=null;
 		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
 			result = delegate.call(ctx);

@@ -35,7 +35,7 @@ import com.baasbox.enumerations.Permissions;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -66,7 +66,7 @@ public abstract class NodeDao  {
 	public static final String EDGE_CLASS_CREATED = "Created";
 	
 
-	protected ODatabaseRecordTx db;
+	protected ODatabaseDocumentTx db;
 
 	public static void updateAuthor(String oldAuthor,String newAuthor){
 		Object command = DbHelper.genericSQLStatementExecute(

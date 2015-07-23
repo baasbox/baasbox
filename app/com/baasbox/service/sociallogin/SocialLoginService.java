@@ -43,13 +43,13 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
 import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+
 
 public abstract class SocialLoginService {
 
@@ -149,7 +149,7 @@ public abstract class SocialLoginService {
 	public  Tokens getTokens() throws UnsupportedSocialNetworkException{
 		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
 		if (BBConfiguration.getSocialMock())  return new Tokens("fake_token","fake_secret");
-		ODatabaseRecordTx db=null;
+		ODatabaseDocumentTx db=null;
 		try {
 			db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());		
 			String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";

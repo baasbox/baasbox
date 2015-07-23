@@ -32,7 +32,7 @@ import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.service.permissions.RouteTagger;
 import com.baasbox.service.permissions.Tags;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 
@@ -57,7 +57,7 @@ public class ConnectToDBFilter extends Action.Simple {
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
-		ODatabaseRecordTx database = null;
+		ODatabaseDocumentTx database = null;
 		F.Promise<SimpleResult> result=null;
 		try{
 			//close an eventually  'ghost'  connection left open in this thread

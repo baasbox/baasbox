@@ -33,7 +33,7 @@ public class HidePassword extends BaasBoxHook {
 	}
 	
 	@Override
-	 public  void onRecordAfterRead(ORecord<?> doc){
+	 public  void onRecordAfterRead(ORecord doc){
 		if (!enable) return;
 		if (doc instanceof ODocument){
 			if ("OUser".equalsIgnoreCase(((ODocument)doc).getClassName())) {

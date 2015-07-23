@@ -29,8 +29,8 @@ import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.codec.binary.Base64;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -84,7 +84,7 @@ public class ScriptsDao {
     private static final Pattern VALID_NAME_PATTERN = Pattern.compile("([a-zA-Z_][a-zA-Z_0-9]*)(\\.([a-zA-Z][a-zA-Z_0-9]*))+");
     private static final String INDEX =MODEL_NAME+"."+NAME;
 
-    private final ODatabaseRecordTx db;
+    private final ODatabaseDocumentTx db;
 
     protected ScriptsDao(){
         db = DbHelper.getConnection();

@@ -2,7 +2,7 @@ package com.baasbox.db;
 
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.baasbox.service.logging.BaasBoxLogger;
 
 /**
@@ -17,7 +17,7 @@ public class Evolution_0_9_4 implements IEvolution {
     }
 
     @Override
-    public void evolve(ODatabaseRecordTx db) {
+    public void evolve(ODatabaseDocumentTx db) {
         BaasBoxLogger.info("Applying evolutions to evolve to the " + version + " level");
         try{
             createDescriptionsForEndpointSwitches(db);
@@ -30,7 +30,7 @@ public class Evolution_0_9_4 implements IEvolution {
     }
 
 
-    private void createIndexOnEmail(ODatabaseRecordTx db) {
+    private void createIndexOnEmail(ODatabaseDocumentTx db) {
        	BaasBoxLogger.info("Creating index on email attribute...");
        	DbHelper.execMultiLineCommands(db,true,
        			"create property _bb_userattributes.email string;",
@@ -39,7 +39,7 @@ public class Evolution_0_9_4 implements IEvolution {
        	BaasBoxLogger.info("...done");
     }
 
-	private void createDescriptionsForEndpointSwitches(ODatabaseRecordTx db) {
+	private void createDescriptionsForEndpointSwitches(ODatabaseDocumentTx db) {
     	BaasBoxLogger.info("Creating descriptions for endpoint switches...");
     	 DbHelper.execMultiLineCommands(db,true,
                  "update _BB_permissions set description='Access to APIs for reading and for asset downloading.' where tag='baasbox.assets';",

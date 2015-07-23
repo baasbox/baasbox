@@ -39,14 +39,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 
 public class PermissionsHelper {
@@ -182,7 +182,7 @@ public class PermissionsHelper {
 			BaasBoxLogger.warn("role is null! Grant command skipped");
 			return document;
 		}
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), role.getDocument().getIdentity());
 		document.save(); 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -192,7 +192,7 @@ public class PermissionsHelper {
 	public static ODocument grant(ODocument document, Permissions permission,
 			OUser user) {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().allowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 		document.save(); 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -202,7 +202,7 @@ public class PermissionsHelper {
 	public static ODocument revoke(ODocument document, Permissions permission,
 			ORole role) {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), role.getDocument().getIdentity());
 		document.save();
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -212,7 +212,7 @@ public class PermissionsHelper {
 	public static ODocument revoke(ODocument document, Permissions permission,
 			OUser user) {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		db.getMetadata().getSecurity().disallowIdentity(document, permission.toString(), user.getDocument().getIdentity());
 		document.save(); 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");

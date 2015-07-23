@@ -81,13 +81,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -683,7 +684,7 @@ public class User extends Controller {
 		}
 		/* other useful parameter to receive and to store...*/		  	  
 		//validate user credentials
-		ODatabaseRecordTx db=null;
+		ODatabaseDocumentTx db=null;
 		String user = null;
 		try{
 			db = DbHelper.open(appcode,username, password);

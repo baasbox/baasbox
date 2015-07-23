@@ -33,8 +33,8 @@ import com.baasbox.service.user.RoleService;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -65,7 +65,7 @@ public class Evolution_0_7_3 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
+	public void evolve(ODatabaseDocumentTx db) {
 		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			changeDefaultDateTimeFormat(db);
@@ -78,7 +78,7 @@ public class Evolution_0_7_3 implements IEvolution {
 	}
 	
 
-	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
+	private void changeDefaultDateTimeFormat(ODatabaseDocumentTx db) {
 		BaasBoxLogger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
 			"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ;"};
@@ -91,7 +91,7 @@ public class Evolution_0_7_3 implements IEvolution {
 		BaasBoxLogger.info("...done...");
 	}
 
-	private void fileClassCreation(ODatabaseRecordTx db) {
+	private void fileClassCreation(ODatabaseDocumentTx db) {
 		BaasBoxLogger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
 		"create class _BB_File extends _BB_Node;",

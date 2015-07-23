@@ -59,8 +59,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 
 public class Global extends GlobalSettings {
 	static {
@@ -96,25 +97,51 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.setValue(Boolean.TRUE);
 			  //Deprecated due to OrientDB 1.6
 			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
-			  
-			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+
+
+			  //Deprecated due to OrientDB 2.0
+			  //OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
+			  //OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
 			  
 			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
 			  OGlobalConfiguration.FILE_LOCK.setValue(false);
-			  
-			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
+
+			  //Deprecated due to OrientDB 2.0
+			  //OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
 			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
+
 			  try{
-				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
-				if (!db.exists()) {
+
+
+				  boolean dbExists = false;
+				  if(config.getString(BBConfiguration.DB_TYPE).equals("remote")) {
+					  info("Checking if a remote db exists...");
+					  dbExists = new OServerAdmin("remote:" + config.getString(BBConfiguration.DB_PATH)).connect("root", "test").existsDatabase();
+				  } else {
+					  info("Checking if a local db exists...");
+					  dbExists = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH)).exists();
+				  }
+
+				if (!dbExists) {
 					info("DB does not exist, BaasBox will create a new one");
-					db.create();
+
+					if(config.getString(BBConfiguration.DB_TYPE).equals("remote"))	{
+						info("Creating a new remote db...");
+						new OServerAdmin("remote:" + config.getString(BBConfiguration.DB_REMOTE))
+								.connect("root", "test")
+								.createDatabase("baasbox","graph","plocal").close();
+					} else {
+						info("Creating a new local db...");
+						db = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH));
+						db.create();
+					}
+
+
 					justCreated  = true;
 				}
 			  } catch (Throwable e) {
@@ -129,7 +156,7 @@ public class Global extends GlobalSettings {
 		    	error("!! Error initializing BaasBox!", e);
 		    	error("Abnormal BaasBox termination.");
 		    	System.exit(-1);
-		    }
+		  }
 		  debug("Global.onLoadConfig() ended");
 		  return config;
 	  }
@@ -138,8 +165,7 @@ public class Global extends GlobalSettings {
 	  public void onStart(Application app) {
 		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
-
-	    ODatabaseRecordTx db =null;
+		  ODatabaseDocumentTx db =null;
 	    try{
 	    	if (justCreated){
 		    	try {
