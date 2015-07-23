@@ -574,11 +574,11 @@ public class DbHelper {
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
-		}
-		Internal.DB_VERSION._setValue(BBConfiguration.configuration
-				.getString(IBBConfigurationKeys.API_VERSION));
-		String uniqueId = "";
-		try {
+		} 
+		
+		Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+		String uniqueId="";
+		try{
 			UUID u = new UUID();
 			uniqueId = new String(Base64.encodeBase64(u.toString().getBytes()));
 		} catch (Exception e) {
@@ -764,25 +764,22 @@ public class DbHelper {
 	 * @param db
 	 */
 	public static void evolveDB(ODatabaseRecordTx db) {
-		// check for evolutions
-		BaasBoxLogger.info("...looking for evolutions...");
-		String fromVersion = "";
-		if (db.getMetadata().getIndexManager().getIndex("_bb_internal") != null) {
-			BaasBoxLogger.info("...db is < 0.7 ....");
-			ORID o = (ORID) db.getMetadata().getIndexManager()
-					.getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
-			ODocument od = db.load(o);
-			fromVersion = od.field("value");
-		} else
-			fromVersion = Internal.DB_VERSION.getValueAsString();
-		
-		BaasBoxLogger.info("...db version is: " + fromVersion);
-		if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())) {
-			BaasBoxLogger.info("...imported DB needs evolutions!...");
-			Evolutions.performEvolutions(db, fromVersion);
-			Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
-			BaasBoxLogger.info("DB version is now " + BBConfiguration.getApiVersion());
-		}// end of evolutions
+		//check for evolutions
+		 BaasBoxLogger.info("...looking for evolutions...");
+		 String fromVersion="";
+		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+			 BaasBoxLogger.warn("...DB is < 0.7 ....");
+			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
+			 ODocument od = db.load(o);
+			 fromVersion=od.field("value");
+		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
+		 BaasBoxLogger.info("...db version is: " + fromVersion);
+		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getDBVersion())){
+			 BaasBoxLogger.info("...imported DB needs evolutions!...");
+			 Evolutions.performEvolutions(db, fromVersion);
+			 Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getDBVersion());
+		 }//end of evolutions
 	}
 
 	public static OrientGraph getOrientGraphConnection() {

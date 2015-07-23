@@ -2,14 +2,12 @@ package com.baasbox.db;
 
 import java.util.List;
 
+import play.Logger;
+
 import com.baasbox.dao.exception.SqlInjectionException;
-import com.baasbox.service.permissions.PermissionTagService;
-import com.baasbox.service.permissions.Tags;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import play.Logger;
 
 /**
  * Created by eto on 10/23/14.
