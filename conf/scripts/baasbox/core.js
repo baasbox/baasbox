@@ -70,16 +70,18 @@ WS.delete = function(url,opts){
 
 
 var log = function(){
-    if (arguments.length < 1){
-        return;
-    }
-
-    var message = arguments[0];
-    var args = Array.prototype.slice.call(arguments,1);
-
-    _command({resource: 'script',
-              name: 'log',
-              params: {message: message,args:args}});
+	if (isLoggingActive()) {
+	    if (arguments.length < 1){
+	        return;
+	    }
+	
+	    var message = arguments[0];
+	    var args = Array.prototype.slice.call(arguments,1);
+	
+	    _command({resource: 'script',
+	              name: 'log',
+	              params: {message: message,args:args}});
+	}
 
 };
 

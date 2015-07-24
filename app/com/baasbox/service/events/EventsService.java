@@ -2,13 +2,9 @@ package com.baasbox.service.events;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
-import play.libs.Akka;
-import play.libs.F;
-
-import com.baasbox.service.events.EventsService.StatType;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -29,13 +25,16 @@ public class EventsService {
     private final static ConcurrentMap<StatType,ConcurrentMap<EventSource,EventSource>> STATS_CHANNELS =
             new ConcurrentHashMap<>();
 
+    public static final AtomicInteger howManyScriptLoggerListener = new AtomicInteger(0);
+    
     public static void addListener(StatType channel,EventSource src){
     	STATS_CHANNELS.compute(channel,(c,listeners)->{
             if (listeners == null){
                 listeners = new ConcurrentHashMap<EventSource, EventSource>();
             }
 
-            listeners.putIfAbsent(src,src);
+            listeners.put(src,src);
+            if (channel==StatType.SCRIPT) howManyScriptLoggerListener.getAndIncrement();
             return listeners;
         });
     }
