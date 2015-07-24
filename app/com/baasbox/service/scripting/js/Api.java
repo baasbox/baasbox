@@ -29,6 +29,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.service.events.EventsService;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
@@ -76,6 +77,9 @@ public class Api {
         return BBConfiguration.getApiVersion();
     }
 
+    public static boolean isScriptLoggingActive(){
+    	return (EventsService.howManyScriptLoggerListener.get() > 0);
+    }
     
     public static String currentUserName(){
         String currentUser = DbHelper.getCurrentHTTPUsername();
