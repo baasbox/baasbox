@@ -126,6 +126,7 @@ public class DbHelper {
 	
 	public static boolean isInTransaction(){
 		 ODatabaseDocumentTx db = getConnection();
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Transaction is active: " + db.getTransaction());
 		 return db.getTransaction().isActive();
 	}
 
@@ -133,7 +134,7 @@ public class DbHelper {
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Request Transaction: transaction count -before-: " + tranCount.get());
 		ODatabaseDocumentTx db = getConnection();
 		if (!isInTransaction()){
-			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Begin transaction");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Begin Transaction");
 			db.begin();
 		}
 		tranCount.set(tranCount.get().intValue()+1);

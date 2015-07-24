@@ -16,6 +16,8 @@
  */
 package com.baasbox.dao;
 
+import java.util.HashMap;
+
 import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
@@ -93,8 +95,11 @@ public class CollectionDao extends NodeDao {
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}
-		ODocument doc = super.create();
-		doc.field("name",collectionName);
+
+		HashMap<String, String> fields = new HashMap<String, String>();
+		fields.put("name", collectionName);
+
+		ODocument doc = super.create(fields);
 
 		save(doc);
 		
@@ -137,36 +142,21 @@ public class CollectionDao extends NodeDao {
 		
 		//get the helper class
 		GenericDao gdao = GenericDao.getInstance();
-		
-		//begin transaction
-		DbHelper.requestTransaction();
-		
+
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Transaction is still active:  " + DbHelper.isInTransaction());
+
 		try {
 			//delete all vertices linked to objects in this class
 			String deleteVertices = 
-					"delete vertex _bb_nodevertex where _node.@class=?";
+					"delete vertex _bb_nodevertex where _node.@class=?\n " +
+							"delete vertex _bb_nodevertex where _node.@class='_bb_collection' and _node.name=?\n " +
+							"delete from _bb_collection where name =?\n " +
+							"delete from " + name + "\n " +
+							"alter class "+name+" superclass null\n" ;
+
 			Object[] params={name};
 			gdao.executeCommand(deleteVertices, params);
-			
-			//delete vertices linked to the collection entry in the _bb_collection class
-			//note: the params are equals to the previous one (just the collection name)
-			String deleteVertices2="delete vertex _bb_nodevertex where _node.@class='_bb_collection' and _node.name=?";
-			gdao.executeCommand(deleteVertices2, params);
-			
-			
-			//delete this collection from the list of declared collections
-			//note: the params are equals to the previous one (just the collection name)
-			String deleteFromCollections= "delete from _bb_collection where name =?";
-			gdao.executeCommand(deleteFromCollections, params);
-			
-			//delete all records belonging to the dropping collection....
-			//it could be done dropping the class, but in this case we not should be able to perform a rollback
-			String deleteAllRecords= "delete from " + name;
-			gdao.executeCommand(deleteAllRecords, new Object[] {});
-			
-			//commit
-			DbHelper.commitTransaction();
-			
+
 			//drop the collection class outside collection
 			String dropCollection= "drop class " + name;
 			gdao.executeCommand(dropCollection, new Object[] {});

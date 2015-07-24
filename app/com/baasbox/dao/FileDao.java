@@ -62,12 +62,14 @@ public class FileDao extends NodeDao  {
 	}
 	
 	public ODocument create(String fileName, String contentType, byte[] content) throws Throwable{
-		ODocument file=super.create();
 		ORecordBytes record = new ORecordBytes(content);
-		file.field(BINARY_FIELD_NAME,record);
-		file.field(FILENAME_FIELD_NAME,fileName);
-		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
-		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(content.length));
+		HashMap fields = new HashMap();
+		fields.put(BINARY_FIELD_NAME, record);
+		fields.put(FILENAME_FIELD_NAME, fileName);
+		fields.put(CONTENT_TYPE_FIELD_NAME, contentType);
+		fields.put(CONTENT_LENGTH_FIELD_NAME,new Long(content.length));
+		ODocument file=super.create(fields);
+
 		return file;
 	}
 
@@ -78,21 +80,28 @@ public class FileDao extends NodeDao  {
 	public ODocument create(String fileName, String contentType,
 			long contentLength, InputStream is, HashMap<String, ?> metadata,
 			String contentString) throws Throwable {
-		ODocument file=super.create();
+
 		ORecordBytes record = new ORecordBytes();
 		record.fromInputStream(is, (int) contentLength);
-		file.field(BINARY_FIELD_NAME,record);
-		file.field(FILENAME_FIELD_NAME,fileName);
-		file.field(CONTENT_TYPE_FIELD_NAME,contentType);
-		file.field(CONTENT_LENGTH_FIELD_NAME,new Long(contentLength));
+
+		HashMap fields = new HashMap();
+		fields.put(BINARY_FIELD_NAME, record);
+		fields.put(FILENAME_FIELD_NAME, fileName);
+		fields.put(CONTENT_TYPE_FIELD_NAME, contentType);
+		fields.put(CONTENT_LENGTH_FIELD_NAME, new Long(contentLength));
 		if (metadata!=null){
-            ODocument doc = new ODocument();
-            doc = doc.fromJSON(new JSONObject(metadata).toString());
-			file.field(METADATA_FIELD_NAME,doc);
+			ODocument doc = new ODocument();
+			doc = doc.fromJSON(new JSONObject(metadata).toString());
+			fields.put(METADATA_FIELD_NAME, doc);
 		}
 		if (!StringUtils.isEmpty(contentString)){
-			file.field(FILE_CONTENT_FIELD_NAME,(new ODocument(FILE_CONTENT_CLASS)).field("content",contentString));
+			fields.put(FILE_CONTENT_FIELD_NAME,(new ODocument(FILE_CONTENT_CLASS)).field("content",contentString));
 		}
+
+
+		ODocument file=super.create(fields);
+
+
 		return file;
 	}
 	

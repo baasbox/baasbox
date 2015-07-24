@@ -26,6 +26,7 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -112,7 +113,7 @@ public class GenericDao {
 	 */
 	public void executeCommand(String commandString, Object[] params) {
 		ODatabaseDocumentTx db =  DbHelper.getConnection();
-		OCommandRequest command=db.command(new OCommandSQL(commandString));
+		OCommandRequest command=db.command(new OCommandScript("sql",commandString));
 		//Logger.debug("########## is in transaction??  : " + db.getTransaction().isActive());
 		command.execute(params);
 	}

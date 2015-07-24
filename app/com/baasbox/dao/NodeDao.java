@@ -18,6 +18,7 @@ package com.baasbox.dao;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 
@@ -72,7 +73,7 @@ public abstract class NodeDao  {
 		Object command = DbHelper.genericSQLStatementExecute(
 				"update _bb_node set _author=? where _author=?", new String[]{newAuthor,oldAuthor});
 	}
-	 
+
 	public NodeDao(String modelName) {
 		super();
 		this.MODEL_NAME=modelName;
@@ -90,7 +91,7 @@ public abstract class NodeDao  {
 	
 	protected static ODocument restoreBaasBoxFields(ODocument document, HashMap<String,Object> map){
 		for (BaasBoxPrivateFields r : BaasBoxPrivateFields.values()){
-			document.fields(r.toString(),map.get(r.toString()));
+			document.fields(r.toString(), map.get(r.toString()));
 		}
 		return document;
 	}
@@ -121,8 +122,8 @@ public abstract class NodeDao  {
 		List<ODocument> list=null;
 		try{
 			list = DbHelper.commandExecute(new OSQLSynchQuery<ODocument>(
-				query
-				), null);
+					query
+			), null);
 		}catch (OQueryParsingException e ){
 			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
 		}catch (OCommandSQLParsingException e){
@@ -132,18 +133,31 @@ public abstract class NodeDao  {
 	}
 
 	public ODocument create() throws Throwable {
+		HashMap<String, String> fields = new HashMap<String, String>();
+		return create(fields);
+	}
+
+	public ODocument create(HashMap<String,?> fields) throws Throwable {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OrientGraph db = DbHelper.getOrientGraphConnection();
 		try{
-				ODocument doc = new ODocument(this.MODEL_NAME);
-				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
-				doc.field(FIELD_LINK_TO_VERTEX,vertex);
-				doc.field(FIELD_CREATION_DATE,new Date());
-				UUID token = UUID.randomUUID();
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
-				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
-				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
-			    return doc;
+			ODocument doc = new ODocument(this.MODEL_NAME);
+
+			for(HashMap.Entry<String, ?> fieldEntry : fields.entrySet()){
+				System.out.println(fieldEntry.getKey() +" :: "+ fieldEntry.getValue());
+				doc.field(fieldEntry.getKey(), fieldEntry.getValue());
+			}
+
+			UUID token = UUID.randomUUID();
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
+			doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
+			doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
+			doc.field(FIELD_CREATION_DATE,new Date());
+
+			ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
+			doc.field(FIELD_LINK_TO_VERTEX,vertex);
+
+			return doc;
 		}catch (Throwable e){
 			throw e;
 		}finally{

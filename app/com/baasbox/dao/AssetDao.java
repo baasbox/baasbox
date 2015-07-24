@@ -24,6 +24,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashMap;
 
 public class AssetDao extends NodeDao {
 	protected final static String MODEL_NAME="_BB_asset";
@@ -43,8 +44,10 @@ public class AssetDao extends NodeDao {
 	}
 	
 	public ODocument create(String name) throws Throwable{
-		ODocument asset=super.create();
-		asset.field("name",name);
+
+		HashMap<String, String> fields = new HashMap<String, String>();
+		fields.put("name", name);
+		ODocument asset=super.create(fields);
 		super.grantPermission(asset, Permissions.ALLOW_READ,DefaultRoles.getORoles());
 		return asset;
 	}
