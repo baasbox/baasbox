@@ -95,8 +95,11 @@ public class StatisticsService {
 					numberOfRecords=docDao.getCount();
 					OClass myClass = db.getMetadata().getSchema().getClass(collectionName);
 					long size=0;
-					for (int clusterId : myClass.getClusterIds()) {
-					  size += db.getClusterRecordSizeById(clusterId);
+
+					if(!"remote".equals(BBConfiguration.configuration.getString(BBConfiguration.DB_TYPE))) {
+						for (int clusterId : myClass.getClusterIds()) {
+							size += db.getClusterRecordSizeById(clusterId);
+						}
 					}
 					collMap.add(ImmutableMap.of(
 							"name",collectionName,
