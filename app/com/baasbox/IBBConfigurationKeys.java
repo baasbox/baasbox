@@ -28,6 +28,8 @@ public interface IBBConfigurationKeys {
 	public static final String DB_BACKUP_PATH = "orient.baasbox.backup.path";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";
+	public static final String DB_VERSION = "baasbox.db.version";
+	
 	public static final String EDITION = "baasbox.edition";
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
@@ -45,6 +47,8 @@ public interface IBBConfigurationKeys {
 	
 	public static final String DB_SIZE_THRESHOLD = "baasbox.db.size";
 	public static final String DB_ALERT_THRESHOLD = "baasbox.db.alert";
+	public static final String DB_IMPORT_EXPORT_BUFFER_SIZE = "baasbox.db.import_export.buffer_size";
+	
 	
 	public static final String SOCIAL_MOCK = "baasbox.social.mock";
 	public static final String PUSH_MOCK = "baasbox.push.mock";

@@ -35,12 +35,14 @@ public class ImportJob implements Runnable{
 
 	@Override
 	public void run() {
+		/*
 		try{    
 			DbHelper.importData(appcode,content);
 		}catch(Exception e){
 			BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 			throw new RuntimeException(e);
 		}
+		*/
 
 	}
 

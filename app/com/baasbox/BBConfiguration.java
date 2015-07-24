@@ -80,6 +80,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
+	
+	public static String getDBVersion(){
+		return configuration.getString(DB_VERSION);
+	}
+	
 	public static String getDBDir(){
 		return configuration.getString(DB_PATH);
 	}
@@ -113,6 +118,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(ROOT_PASSWORD);
 	}
 
+	public static int getImportExportBufferSize(){
+		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
+	}
 	
 	//metrics
 	public static boolean getComputeMetrics() {
