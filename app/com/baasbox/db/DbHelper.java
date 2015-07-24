@@ -469,10 +469,12 @@ public class DbHelper {
 		if (db != null && !db.isClosed()) {
 			// HooksManager.unregisteredAll(db);
 			try {
-				if (tranCount.get() != 0)
+				if (tranCount.get() != 0){
+					rollbackTransaction();
 					throw new TransactionIsStillOpenException(
 							"Closing a connection with an active transaction: "
-									+ tranCount.get());
+									+ tranCount.get() + ". Transaction will be rolled back");
+				}
 			} finally {
 				db.close();
 				tranCount.set(0);
@@ -816,7 +818,10 @@ public class DbHelper {
 			try{
 				DbHelper.openFromContext(ctx);
 				return work.apply();
-			}finally {
+			}catch (Throwable e){
+                if (DbHelper.getConnection()!=null && ! DbHelper.getConnection().isClosed() && isInTransaction()) DbHelper.rollbackTransaction();
+                throw e;
+            }finally {
 				DbHelper.close(DbHelper.getConnection());
 			}
 		};
