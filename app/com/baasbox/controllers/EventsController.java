@@ -54,12 +54,15 @@ public class EventsController {
         return ok(EventSource.source((eventSource) -> {
         	
             eventSource.onDisconnected(() -> {
-            		BaasBoxLogger.debug("Help! I'm loosing the connection....."+eventSource.id);;
+            		BaasBoxLogger.debug("Help! I'm loosing the connection..... (id: {})", eventSource.id);;
             		boolean noMore=EventsService.removeListener(typeOfLog,eventSource);
             		if (typeOfLog==StatType.SYSTEM_LOGGER){
 	            		if (noMore){
 	                       BaasBoxLogger.stopEventSourceLogging();
 	            		}
+            		}else if (typeOfLog==StatType.SCRIPT) {
+            			BaasBoxLogger.debug("Number of listeners for Script logger: {}" , EventsService.howManyScriptLoggerListener.getAndDecrement() -1);
+            			
             		}
             	});
             EventsService.addListener(typeOfLog,eventSource);

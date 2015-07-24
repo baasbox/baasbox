@@ -258,6 +258,11 @@ var GLOBAL=this;
     	return Api.atob(stringToConvert);
     }
 
+    Module.prototype.isLoggingActive = function (){
+    	return Api.isScriptLoggingActive();
+    }
+
+    
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
