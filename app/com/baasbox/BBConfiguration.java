@@ -38,6 +38,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	//the db size Threshold in bytes
 	private static BigInteger dbSizeThreshold=BigInteger.ZERO;
 	private static boolean isDBSizeThresholdOverridden=false; 
+	private static final boolean _isRedisActive = BBConfiguration.configuration.getString("redisplugin").equals("enabled");
 	
 	
 	@Deprecated
@@ -75,6 +76,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 
 	public static Boolean getWriteAccessLog(){
 		return configuration.getBoolean(WRITE_ACCESS_LOG);
+	}
+	
+	public static boolean isRedisActive(){
+		return _isRedisActive;
 	}
 	
 	public static String getApiVersion(){
