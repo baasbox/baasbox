@@ -18,11 +18,11 @@ package com.baasbox.controllers.actions.filters;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Http.Context;
 
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.google.common.collect.ImmutableMap;
 
 
@@ -37,7 +37,7 @@ public class SessionTokenAccess implements IAccessMethod  {
 		
 		if (token!=null) {
 			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Received session token " + token);
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
 			  if (sessionData!=null){
 				  	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Token identified: ");
 					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));

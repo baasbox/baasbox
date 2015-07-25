@@ -25,3 +25,4 @@ server.pid
 /script
 /bin
 conf/generated.keystore
+dump.rdb
