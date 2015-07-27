@@ -124,11 +124,14 @@ public class GCMServer extends PushProviderAbstract {
 	
 			MulticastResult result = sender.send(msg, deviceid , 1);
 			
-			pushLogger.addMessage("............... %d message(s) sent", result.getTotal());
+			pushLogger.addMessage("............ %d message(s) sent", result.getTotal());
+			pushLogger.addMessage("................. success: %s", result.getSuccess());
+			pushLogger.addMessage("................. failure: %s", result.getFailure());
+			
 			for (Result r:result.getResults()){
-				pushLogger.addMessage(".................. MessageId %s",r.getMessageId());
-				pushLogger.addMessage(".................. Message Canonincal Registration Id %s",r.getCanonicalRegistrationId());
-				pushLogger.addMessage(".................. Message Error Code name",r.getErrorCodeName());	
+				pushLogger.addMessage("............ MessageId (null == error): %s",r.getMessageId());
+				pushLogger.addMessage("............... Error Code Name: %s",r.getErrorCodeName());	
+				pushLogger.addMessage("............... Canonincal Registration Id: %s",r.getCanonicalRegistrationId());
 			}
 			// icallbackPush.onError(ExceptionUtils.getMessage(e));
 	
