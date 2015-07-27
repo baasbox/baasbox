@@ -18,9 +18,8 @@
 
 package com.baasbox.db;
 
-import play.Logger;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
@@ -40,21 +39,21 @@ public class Evolution_0_8_0 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+	public void evolve(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			setGraphDefaultValues(db);
             addPermissionsClass(db);
             idOnEdgeClass(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
-	private void setGraphDefaultValues(ODatabaseRecordTx db) {
-		Logger.info("..updating graph custom attributes..:");
+	private void setGraphDefaultValues(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info("..updating graph custom attributes..:");
 //		String[] script=new String[]{
 //				"alter database custom useLightweightEdges=true;",
 //				"alter database custom useClassForEdgeLabel=true",
@@ -71,11 +70,11 @@ public class Evolution_0_8_0 implements IEvolution {
                 "alter database custom useClassForEdgeLabel=false",
                 "alter database custom useClassForVertexLabel=true",
                 "alter database custom useVertexFieldsForEdgeLabels=true");
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
-    private void addPermissionsClass(ODatabaseRecordTx db) {
-        Logger.info("..creating database permissions class...:");
+    private void addPermissionsClass(ODatabaseDocumentTx db) {
+        BaasBoxLogger.info("..creating database permissions class...:");
         DbHelper.execMultiLineCommands(db,true,
             "create class _BB_Permissions;",
             "create property _BB_Permissions.tag String;",
@@ -88,18 +87,18 @@ public class Evolution_0_8_0 implements IEvolution {
             "create index _BB_Permissions.tag unique;"
         );
         DbHelper.createDefaultPermissionTags();
-        Logger.info("...done...");
+        BaasBoxLogger.info("...done...");
     }
     
     
-    private void idOnEdgeClass(ODatabaseRecordTx db) {
-        Logger.info("..creating id property on E class...:");
+    private void idOnEdgeClass(ODatabaseDocumentTx db) {
+        BaasBoxLogger.info("..creating id property on E class...:");
         DbHelper.execMultiLineCommands(db,true,
         		"create property E.id String;",
         		"alter property E.id notnull=true;",
         		"create index E.id unique;"
         );
-        Logger.info("...done...");
+        BaasBoxLogger.info("...done...");
     }
    
     

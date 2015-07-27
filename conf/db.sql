@@ -11,7 +11,7 @@ alter database custom useVertexFieldsForEdgeLabels=true
 --Node
 create class _BB_NodeVertex extends V;
 
---Node class should be abstract but we cannot declare it as abstrat due the index on the id field
+--Node class should be abstract but we cannot declare it as abstract due the index on the id field
 create class _BB_Node  extends ORestricted;
 create property _BB_NodeVertex._node link _BB_Node;
 create property _BB_Node._creation_date datetime;
@@ -28,6 +28,10 @@ create property _BB_User.visibleByFriend link _BB_UserAttributes;
 create property _BB_User.visibleByTheUser link _BB_UserAttributes;
 create property _BB_User._audit embedded;
 create property _BB_User.user link ouser;
+-- issue 447 - Restrict signup to 1 account per email
+create property _bb_userattributes.email string;
+--the enforcement of the uniqueness of registration email is performed by the code due the fact that there could be email fields in other profile sections
+create index _bb_userattributes.email notunique;
 
 
 --admin user
@@ -44,7 +48,7 @@ alter property _BB_Node._creation_date mandatory=true;
 alter property _BB_Node._creation_date notnull=true;
 alter property _BB_User.user mandatory=true;
 alter property _BB_User.user notnull=true;
-alter property _BB_Node._links mandatory=true;
+alter property _BB_Node._links mandatory=false;
 alter property _BB_Node._links notnull=true;
 
 --object storage

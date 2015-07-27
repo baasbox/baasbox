@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
@@ -39,13 +39,13 @@ public class TestGrantInTransaction {
                             node.put("ciao","ciao");
                             DbHelper.requestTransaction();
                             ODocument doc = DocumentService.create(COLL, node);
-                            Logger.debug("**************************************************: "+doc.toJSON("fetchPlan:_links:0"));
+                            BaasBoxLogger.debug("**************************************************: "+doc.toJSON("fetchPlan:_links:0"));
                             String rid = DocumentService.getRidByString(doc.field("id"), true);
                             DocumentService.grantPermissionToRole(COLL, rid, Permissions.ALLOW_READ, DefaultRoles.ANONYMOUS_USER.toString());
                             DbHelper.commitTransaction();
-                           Logger.debug("**************************************************A:  "+doc.toJSON("fetchPlan:_links:0"));
+                           BaasBoxLogger.debug("**************************************************A:  "+doc.toJSON("fetchPlan:_links:0"));
                         } catch (Throwable e) {
-                            Logger.debug(ExceptionUtils.getFullStackTrace(e));
+                            BaasBoxLogger.debug(ExceptionUtils.getFullStackTrace(e));
                             fail(ExceptionUtils.getFullStackTrace(e));
                             DbHelper.rollbackTransaction();
                         } finally {

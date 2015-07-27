@@ -5,7 +5,7 @@
 var  userDataArray= new Array();
 
    function loadUsersData(){
-	    url=BBRoutes.com.baasbox.controllers.Admin.getUsers().absoluteURL();
+	    url = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getUsers().url;
 	    loadTable($('#userTable'),usersDataTableDef,url,userDataArray); //defined in datatable.js
     }
    

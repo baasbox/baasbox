@@ -27,7 +27,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.dao.AssetDao;
@@ -42,7 +42,7 @@ import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -53,12 +53,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class StatisticsService {
 
 		public static ImmutableMap data() throws SqlInjectionException, InvalidCollectionException{
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
 			FileDao fileDao = FileDao.getInstance();
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			
 			long usersCount =userDao.getCount();
 			long assetsCount = assetDao.getCount();
@@ -74,8 +74,8 @@ public class StatisticsService {
 					"assets",assetsCount,
 					"files",filesCount
 					);
-			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(response.toString());
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 
@@ -85,7 +85,7 @@ public class StatisticsService {
 		 * @throws InvalidCollectionException
 		 */
 		public static ArrayList<ImmutableMap> collectionsDetails(List<ODocument> collections)	throws InvalidCollectionException {
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			ArrayList<ImmutableMap> collMap = new ArrayList<ImmutableMap>();
 			for(ODocument doc:collections){
 				String collectionName = doc.field(CollectionDao.NAME);
@@ -95,8 +95,11 @@ public class StatisticsService {
 					numberOfRecords=docDao.getCount();
 					OClass myClass = db.getMetadata().getSchema().getClass(collectionName);
 					long size=0;
-					for (int clusterId : myClass.getClusterIds()) {
-					  size += db.getClusterRecordSizeById(clusterId);
+
+					if(!"remote".equals(BBConfiguration.configuration.getString(BBConfiguration.DB_TYPE))) {
+						for (int clusterId : myClass.getClusterIds()) {
+							size += db.getClusterRecordSizeById(clusterId);
+						}
 					}
 					collMap.add(ImmutableMap.of(
 							"name",collectionName,
@@ -104,14 +107,14 @@ public class StatisticsService {
 							"size",size
 							));
 				}catch (Throwable e){
-					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				}
 			}
 			return collMap;
 		}
 		
 		public static String dbConfiguration() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
 			OGlobalConfiguration.dumpConfiguration(ps);
@@ -121,18 +124,18 @@ public class StatisticsService {
 			} catch (UnsupportedEncodingException e) {
 				content=baos.toString();
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return content;
 		}
 		
 		public static ImmutableMap db() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
-			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
-			else dbProp.put("path", "N/A");
+			//if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+			dbProp.put("path", "N/A");
 			dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
 			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
 			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
@@ -148,12 +151,12 @@ public class StatisticsService {
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
 
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap os() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
 			if (BBConfiguration.getStatisticsSystemOS()){
 				response = ImmutableMap.of(
@@ -170,24 +173,24 @@ public class StatisticsService {
 						"processors",  0
 						);				
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap java() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response = ImmutableMap.of(
 					"java_class_version", System.getProperty("java.class.version"),
 					"java_vendor",  System.getProperty("java.vendor"),
 					"java_vendor_url",  System.getProperty("java.vendor.url"),
 					"java_version",  System.getProperty("java.version")
 					);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}	
 		
 		public static ImmutableMap memory() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
 
 			if (BBConfiguration.getStatisticsSystemMemory()){
@@ -210,7 +213,7 @@ public class StatisticsService {
 						);
 			}
 			
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}	
 		

@@ -61,7 +61,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 import play.Configuration;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.mvc.Http.Status;
 import play.mvc.Result;
@@ -237,7 +237,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	private int httpRequest(String sUrl, String sMethod, JsonNode payload, Map<String, String> mParameters)
 	{
-		Logger.info("\n\nREQUEST:\n"+sMethod+ " " + sUrl+"\nHEADERS: " + mHeaders+"\nParameters: " +mParameters + "\nPayload: " + payload+"\n");
+		BaasBoxLogger.info("\n\nREQUEST:\n"+sMethod+ " " + sUrl+"\nHEADERS: " + mHeaders+"\nParameters: " +mParameters + "\nPayload: " + payload+"\n");
 		HttpURLConnection conn = null;
         BufferedReader br = null;
 	    int nRet = 0;
@@ -367,7 +367,7 @@ public abstract class AbstractTest extends FluentTest
 		        }
 		        setResponse(sb.toString().trim());
 	    	}
-	    	Logger.info("\nRESPONSE\nHTTP code: "+nRet+"\nContent: " + sResponse + "\n");
+	    	BaasBoxLogger.info("\nRESPONSE\nHTTP code: "+nRet+"\nContent: " + sResponse + "\n");
 	    } 
 	    catch (Exception ex) 
 	    {

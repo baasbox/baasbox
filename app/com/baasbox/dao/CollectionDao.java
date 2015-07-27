@@ -16,7 +16,9 @@
  */
 package com.baasbox.dao;
 
-import play.Logger;
+import java.util.HashMap;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -37,6 +39,7 @@ public class CollectionDao extends NodeDao {
 	private final static String MODEL_NAME="_BB_Collection";
 	public final static String NAME="name";
 	private static final String COLLECTION_NAME_INDEX = "_BB_Collection.name";
+	public static final String COLLECTION_NAME_REGEX="(?i)^[A-Z-][A-Z0-9_-]*$";
 	
 	public static CollectionDao getInstance(){
 		return new CollectionDao();
@@ -61,20 +64,43 @@ public class CollectionDao extends NodeDao {
 	 */
 	public ODocument create(String collectionName) throws OpenTransactionException, CollectionAlreadyExistsException, InvalidCollectionException, InvalidModelException, Throwable {
 		if (DbHelper.isInTransaction()) throw new OpenTransactionException("Cannot create a collection within an open transaction");
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
+
+		if (Character.isDigit(collectionName.charAt(0))){
+			throw new InvalidCollectionException("Collection names cannot start by a digit");
+		}
+		if (collectionName.contains(";")){
+			throw new InvalidCollectionException("Collection cannot contain ;");
+		}
+		if (collectionName.contains(":")){
+			throw new InvalidCollectionException("Collection cannot contain :");
+		}
+		if (collectionName.contains(".")){
+			throw new InvalidCollectionException("Collection cannot contain .");
+		}		
+		if (collectionName.contains("@")){
+			throw new InvalidCollectionException("Collection cannot contain @");
+		}
+		if (collectionName.startsWith("_")){
+			throw new InvalidCollectionException("Collection cannot start with _");
+		}		
+		if (!collectionName.matches(COLLECTION_NAME_REGEX)){
+			throw new InvalidCollectionException("Collection name must be complaint with the regular expression: " + COLLECTION_NAME_REGEX);
+		}
+		if(collectionName.toUpperCase().startsWith("_BB_")){
+			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
+		}
 		try {
 			if (existsCollection(collectionName)) throw new CollectionAlreadyExistsException("Collection " + collectionName + " already exists");
 		}catch (SqlInjectionException e){
 			throw new InvalidCollectionException(e);
 		}
-		if (Character.isDigit(collectionName.charAt(0))){
-			throw new InvalidCollectionException("Collection names cannot start by a digit");
-		}
-		ODocument doc = super.create();
-		doc.field("name",collectionName);
-		if(collectionName.toUpperCase().startsWith("_BB_")){
-			throw new InvalidCollectionException("Collection name is not valid: it can't be prefixed with _BB_");
-		}
+
+		HashMap<String, String> fields = new HashMap<String, String>();
+		fields.put("name", collectionName);
+
+		ODocument doc = super.create(fields);
+
 		save(doc);
 		
 		//create new class
@@ -90,20 +116,20 @@ public class CollectionDao extends NodeDao {
 		anonymousRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + collectionName, ORole.PERMISSION_READ);
 		PermissionsHelper.grantRead(doc, registeredRole);
 		PermissionsHelper.grantRead(doc, anonymousRole);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return doc;
 	}//getNewModelInstance(String collectionName)
 	
 	public boolean existsCollection(String collectionName) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return (record!=null) ;
 	}
 	
 	public ODocument getByName(String collectionName) throws SqlInjectionException{
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
 		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
 		if (record==null) return null;
@@ -116,36 +142,21 @@ public class CollectionDao extends NodeDao {
 		
 		//get the helper class
 		GenericDao gdao = GenericDao.getInstance();
-		
-		//begin transaction
-		DbHelper.requestTransaction();
-		
+
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("Transaction is still active:  " + DbHelper.isInTransaction());
+
 		try {
 			//delete all vertices linked to objects in this class
 			String deleteVertices = 
-					"delete vertex _bb_nodevertex where _node.@class=?";
+					"delete vertex _bb_nodevertex where _node.@class=?\n " +
+							"delete vertex _bb_nodevertex where _node.@class='_bb_collection' and _node.name=?\n " +
+							"delete from _bb_collection where name =?\n " +
+							"delete from " + name + "\n " +
+							"alter class "+name+" superclass null\n" ;
+
 			Object[] params={name};
 			gdao.executeCommand(deleteVertices, params);
-			
-			//delete vertices linked to the collection entry in the _bb_collection class
-			//note: the params are equals to the previous one (just the collection name)
-			String deleteVertices2="delete vertex _bb_nodevertex where _node.@class='_bb_collection' and _node.name=?";
-			gdao.executeCommand(deleteVertices2, params);
-			
-			
-			//delete this collection from the list of declared collections
-			//note: the params are equals to the previous one (just the collection name)
-			String deleteFromCollections= "delete from _bb_collection where name =?";
-			gdao.executeCommand(deleteFromCollections, params);
-			
-			//delete all records belonging to the dropping collection....
-			//it could be done dropping the class, but in this case we not should be able to perform a rollback
-			String deleteAllRecords= "delete from " + name;
-			gdao.executeCommand(deleteAllRecords, new Object[] {});
-			
-			//commit
-			DbHelper.commitTransaction();
-			
+
 			//drop the collection class outside collection
 			String dropCollection= "drop class " + name;
 			gdao.executeCommand(dropCollection, new Object[] {});
@@ -153,7 +164,7 @@ public class CollectionDao extends NodeDao {
 		} catch (Exception e) {
 			//rollback in case of error
 			DbHelper.rollbackTransaction();
-			if (Logger.isDebugEnabled()) Logger.debug ("An error occured deleting the collection " + name, e);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug ("An error occured deleting the collection " + name, e);
 			throw e;
 		}
 	}//delete

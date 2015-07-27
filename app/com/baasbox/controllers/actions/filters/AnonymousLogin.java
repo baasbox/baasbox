@@ -16,7 +16,7 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -31,10 +31,10 @@ public class AnonymousLogin extends Action.Simple {
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
 		
 		String user=BBConfiguration.getBaasBoxUsername();
@@ -43,7 +43,7 @@ public class AnonymousLogin extends Action.Simple {
 		ctx.args.put("username", user);
 		ctx.args.put("password", password);
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return delegate.call(ctx);
 	}
 

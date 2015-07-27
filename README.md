@@ -8,7 +8,9 @@ Further information can be found at [www.baasbox.com](http://www.baasbox.com/ "B
 Build BaasBox
 -------------
 ### Prerequisites
-To build and run BaasBox you need a JDK (not JRE!) (version 8) ([download here](http://www.oracle.com/technetwork/java/javase/downloads/index.html)) and the Play! Framework 2.2.4 ([download here](http://www.playframework.org/download))
+To build and run BaasBox you need a JDK (not JRE!) (version 8) ([download here](http://www.oracle.com/technetwork/java/javase/downloads/index.html)) and the Play! Framework 2.2.4 ([download here](http://www.playframework.org/download)).
+
+*Important*: You must have Play! Framework 2.2.4 installed! BaasBox will not build with other versions.
 
 Once you have installed the above software following, you will be able to build BaasBox.
 

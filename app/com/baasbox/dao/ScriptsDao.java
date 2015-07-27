@@ -25,10 +25,12 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.codec.binary.Base64;
 import com.orientechnologies.orient.core.command.OCommand;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,21 +41,39 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
+
 /**
  * Created by Andrea Tortorella on 10/06/14.
  */
 public class ScriptsDao {
+	
+	public enum ENCODED_TYPE{
+		BASE64;
+		
+		public String decode(String toDecode){
+			String toReturn="";
+			switch (this){
+			case BASE64:
+				byte[] decoded = Base64.decodeBase64(toDecode);
+				toReturn= StringUtils.newStringUtf8(decoded);
+			}
+			BaasBoxLogger.debug("Decode new script sent in {}. Input: {} Output: {}", BASE64,toDecode,toReturn);
+			return toReturn;
+		}
+	}
+	
     public static final String MODEL_NAME = "_BB_Script";
     public static final String NAME= "name";
     public static final String CODE= "code";
     public static final String LANG= "lang";
+    public static final String ENCODED= "encoded";
     public static final String LIB= "library";
     public static final String LOCAL_STORAGE= "_storage";
     public static final String INVALID = "_invalid";
@@ -64,7 +84,7 @@ public class ScriptsDao {
     private static final Pattern VALID_NAME_PATTERN = Pattern.compile("([a-zA-Z_][a-zA-Z_0-9]*)(\\.([a-zA-Z][a-zA-Z_0-9]*))+");
     private static final String INDEX =MODEL_NAME+"."+NAME;
 
-    private final ODatabaseRecordTx db;
+    private final ODatabaseDocumentTx db;
 
     protected ScriptsDao(){
         db = DbHelper.getConnection();
@@ -97,15 +117,24 @@ public class ScriptsDao {
 
 
     public ODocument create(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore) throws ScriptException{
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+    	return create( name, language, code, isLibrary, active, initialStore, null);
+    }
+    
+    public ODocument create(String name, String language, String code,
+			boolean isLibrary, boolean active, JsonNode initialStorage,String encodedValue) throws ScriptException {
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         checkValidName(name);
         if (exists(name)){
             throw new ScriptAlreadyExistsException("Script "+name+" already exists");
         }
-        ODocument doc = createPrivileged(name,language,code,isLibrary,active,initialStore);
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (encodedValue!=null){
+        	code=ENCODED_TYPE.valueOf(encodedValue.toUpperCase()).decode(code);
+        }
+        ODocument doc = createPrivileged(name,language,code,isLibrary,active,initialStorage);
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return doc;
-    }
+	}
+    
 
     private ODocument createPrivileged(String name,String language,String code,boolean isLibrary,boolean active,JsonNode initialStore){
         ODocument doc = makeScript(name, language, code, isLibrary, active, initialStore);
@@ -151,13 +180,13 @@ public class ScriptsDao {
     }
 
     public List<ODocument> getAll(QueryParams params) throws SqlInjectionException{
-        if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         List<ODocument> docs= null;
         params = params==null?QueryParams.getInstance():params;
         OCommandRequest command = DbHelper.selectCommandBuilder(MODEL_NAME,params.justCountTheRecords(),params);
         docs = DbHelper.commandExecute(command,params.getParams());
 
-        if (Logger.isTraceEnabled()) Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return docs;
     }
 
@@ -183,18 +212,18 @@ public class ScriptsDao {
     }
 
     public boolean exists(String name){
-        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
         boolean exists = findByName(name)!= null;
-        if (Logger.isDebugEnabled()) Logger.debug("Exists "+exists);
-        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Exists "+exists);
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
         return exists;
     }
 
     public ODocument getByName(String name){
-        if (Logger.isTraceEnabled())Logger.trace("Method Start");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method Start");
         OIdentifiable id = findByName(name);
         ODocument doc  = id == null?null:(ODocument)db.load(id.getIdentity());
-        if (Logger.isTraceEnabled())Logger.trace("Method End");
+        if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method End");
         return doc;
     }
 
@@ -225,4 +254,6 @@ public class ScriptsDao {
         script.save();
         return current!=activate;
     }
+
+	
 }

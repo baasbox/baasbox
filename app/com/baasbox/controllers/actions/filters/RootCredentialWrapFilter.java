@@ -19,7 +19,7 @@ package com.baasbox.controllers.actions.filters;
 
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -57,8 +57,8 @@ public class RootCredentialWrapFilter extends Action.Simple {
 			else   
 				tempResult=F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
 		}else if (!StringUtils.isEmpty(authHeader) && StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
-			if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
-			if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("There is basic auth header, but the appcode is missing");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 		} 
 		
@@ -102,7 +102,7 @@ public class RootCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result=wr.wrap(ctx, tempResult);
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	    return F.Promise.<SimpleResult>pure(result);	
 	}
 

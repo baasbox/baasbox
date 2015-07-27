@@ -24,11 +24,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandNotImplementedException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.UserDao;
+import com.baasbox.dao.exception.EmailAlreadyUsedException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
@@ -76,7 +79,9 @@ class UsersResource extends BaseRestResource {
             }
         }).put("follow", this::friendshipUpdate)
           .put("followers",getFriends(false))
-          .put("following",getFriends(true));
+          .put("following",getFriends(true))
+          .put("changeUsername", this::changeUsername)
+          .put("changePassword", this::changePassword);
     }
 
     private ScriptCommand getFriends(boolean following){
@@ -180,7 +185,35 @@ class UsersResource extends BaseRestResource {
         }
         return BooleanNode.getTrue();
     }
+    
+    protected JsonNode changeUsername(JsonNode command,JsonCallback unused) throws CommandException {
+    	String username = getUsername(command);
+    	JsonNode newUsernameJson = getParamField(command, "newUsername");
+    	if (newUsernameJson==null || !newUsernameJson.isTextual()) throw new CommandExecutionException(command,"invalid new username: "+newUsernameJson);
+    	String newUsername=newUsernameJson.asText();
+    	try {
+			UserService.changeUsername(username, newUsername);
+		} catch (UserNotFoundException | OpenTransactionException
+				| SqlInjectionException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+    	return NullNode.getInstance();
+    }
 
+    protected JsonNode changePassword(JsonNode command,JsonCallback unused) throws CommandException {
+    	String username = getUsername(command);
+    	JsonNode newPasswordJson = getParamField(command, "newPassword");
+    	if (newPasswordJson==null || !newPasswordJson.isTextual()) throw new CommandExecutionException(command,"invalid new password: "+newPasswordJson);
+    	String newPassword=newPasswordJson.asText();
+    	try {
+			UserService.changePassword(username, newPassword);
+		} catch (UserNotFoundException | OpenTransactionException
+				| SqlInjectionException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+    	return NullNode.getInstance();
+    }
+    
     private String getUsername(JsonNode command) throws CommandException {
         JsonNode params = command.get(ScriptCommand.PARAMS);
         JsonNode id = params.get("username");
@@ -220,7 +253,7 @@ class UsersResource extends BaseRestResource {
     protected JsonNode put(JsonNode command) throws CommandException {
         String username = getUsername(command);
         JsonNode params = command.get(ScriptCommand.PARAMS);
-        String role = params.get("role")==null?params.get("role").asText():null;
+        String role = params.get("role")!=null?params.get("role").asText():null;
         JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
         JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
         JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
@@ -254,7 +287,7 @@ class UsersResource extends BaseRestResource {
             if (!RoleService.exists(role)){
                 throw new CommandExecutionException(command,"required role does not exists: "+role);
             }
-            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
             JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
             JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
             JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
@@ -266,7 +299,7 @@ class UsersResource extends BaseRestResource {
             return Json.mapper().readTree(userNode);
         } catch (InvalidJsonException | IOException e) {
             throw new CommandExecutionException(command,"invalid json",e);
-        } catch (UserAlreadyExistsException e) {
+        } catch (UserAlreadyExistsException | EmailAlreadyUsedException e) {
             return NullNode.getInstance();
         }
     }

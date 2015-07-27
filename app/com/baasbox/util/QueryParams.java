@@ -22,11 +22,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baasbox.BBConfiguration;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 
 public class QueryParams implements IQueryParametersKeys{
@@ -47,21 +49,21 @@ public class QueryParams implements IQueryParametersKeys{
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String[] params) {
 		super();
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
 		if (orderBy!=null) this.orderBy = orderBy;
 		if (depth!=null) this.depth = depth;
 		if (params!=null) this.params=params;
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 
 	
 	protected QueryParams(String where, Integer page, Integer recordPerPage,
 			String orderBy, Integer depth, String param) {
 		super();
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (where!=null) this.where = where;
 		if (page!=null) this.page = page;
 		if (recordPerPage!=null) this.recordPerPage = recordPerPage;
@@ -71,7 +73,7 @@ public class QueryParams implements IQueryParametersKeys{
 			String[] params = {param};
 			this.params= params ;
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 	
 	public QueryParams(String fields, String where, Integer page,
@@ -260,8 +262,8 @@ public class QueryParams implements IQueryParametersKeys{
                 String[] ary = new String[val.size()];
                 int idx = 0;
                 for (JsonNode n: val){
-                    String s = n==null?null:n.toString();
-                    ary[idx] = s;
+                    String s = n==null?null:n.asText();
+                    ary[idx++] = s;
                 }
                 query.put(k,ary);
             } else {
@@ -269,7 +271,6 @@ public class QueryParams implements IQueryParametersKeys{
                 query.put(k,o);
             }
         }
-
         return getParamsFromQueryString(query);
     }
 
@@ -300,7 +301,7 @@ public class QueryParams implements IQueryParametersKeys{
 		String countFromQS=null;
 		String skipFromQS=null;
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 //		Map <String,String[]> queryString = header.queryString();
 		if (queryString.get(IQueryParametersKeys.FIELDS)!=null)
 			fieldsFromQS=queryString.get(IQueryParametersKeys.FIELDS)[0];
@@ -356,7 +357,8 @@ public class QueryParams implements IQueryParametersKeys{
 		}	
 		QueryParams qryp = new QueryParams(fields,groupBy,where, page, recordPerPage, orderBy, depth,params,count,skip);
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+		
 		return qryp;
 		
 	}

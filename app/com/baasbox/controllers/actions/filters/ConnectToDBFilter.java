@@ -19,7 +19,7 @@ package com.baasbox.controllers.actions.filters;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -32,7 +32,7 @@ import com.baasbox.exception.ShuttingDownDBException;
 import com.baasbox.exception.TransactionIsStillOpenException;
 import com.baasbox.service.permissions.RouteTagger;
 import com.baasbox.service.permissions.Tags;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
 
@@ -45,7 +45,7 @@ public class ConnectToDBFilter extends Action.Simple {
  
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		//set the current Context in the local thread to be used in the views: https://groups.google.com/d/msg/play-framework/QD3czEomKIs/LKLX24dOFKMJ
         Http.Context.current.set(ctx);
 
@@ -53,11 +53,11 @@ public class ConnectToDBFilter extends Action.Simple {
         RouteTagger.attachAnnotations(ctx);
 
 
-        if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB for resource " + Http.Context.current().request());
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ConnectToDB for resource " + Http.Context.current().request());
 		String username=(String) Http.Context.current().args.get("username");
 		String password=(String)Http.Context.current().args.get("password");
 		String appcode=(String)Http.Context.current().args.get("appcode");
-		ODatabaseRecordTx database = null;
+		ODatabaseDocumentTx database = null;
 		F.Promise<SimpleResult> result=null;
 		try{
 			//close an eventually  'ghost'  connection left open in this thread
@@ -70,11 +70,11 @@ public class ConnectToDBFilter extends Action.Simple {
                     return  F.Promise.<SimpleResult>pure(forbidden("Endpoint has been disabled"));
                 }
 	        }catch (OSecurityAccessException e){
-	        	if (Logger.isDebugEnabled()) Logger.debug(e.getMessage());
+	        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(e.getMessage());
 	        	return F.Promise.<SimpleResult>pure(unauthorized("User " + Http.Context.current().args.get("username") + " is not authorized to access"));
 	        }catch(ShuttingDownDBException sde){
 	        	String message = sde.getMessage();
-	        	Logger.info(message);
+	        	BaasBoxLogger.info(message);
 	        	return F.Promise.<SimpleResult>pure(status(503,message));
 	        }
 			
@@ -83,20 +83,20 @@ public class ConnectToDBFilter extends Action.Simple {
 			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) throw new TransactionIsStillOpenException("Controller left an open transaction. Database will be rollbacked"); 
 			
 		}catch (OSecurityAccessException e){
-			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ConnectToDB: user authenticated but a security exception against the resource has been detected: " + e.getMessage());
 			result = F.Promise.<SimpleResult>pure(forbidden(e.getMessage()));
 		}catch (InvalidAppCodeException e){
-			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ConnectToDB: Invalid App Code " + e.getMessage());
 			result = F.Promise.<SimpleResult>pure(unauthorized(e.getMessage()));	
 		}catch (Throwable e){
-			if (Logger.isDebugEnabled()) Logger.debug("ConnectToDB: an expected error has been detected: "+ ExceptionUtils.getFullStackTrace(e));
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ConnectToDB: an expected error has been detected: "+ ExceptionUtils.getFullStackTrace(e));
 			result = F.Promise.<SimpleResult>pure(internalServerError(ExceptionUtils.getFullStackTrace(e)));	
 		}finally{
 			Http.Context.current.set(ctx); 
 			if (DbHelper.getConnection()!=null && DbHelper.isInTransaction()) DbHelper.rollbackTransaction();
 			DbHelper.close(database);
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
 	}
 

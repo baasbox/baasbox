@@ -51,11 +51,12 @@ object ApplicationBuild extends Build {
           "com.github.tony19" % "named-regexp" % "0.2.3",
           "org.scribe" % "scribe" % "1.3.2",
 				  "com.eaio.uuid" % "uuid" % "3.4",
-				  "org.apache.tika" % "tika-core" % "1.4",
-				  "org.apache.tika" % "tika-parsers" % "1.4",
+          "org.apache.httpcomponents" % "httpclient" % "4.3.6",
+				  "org.apache.tika" % "tika-core" % "1.7",
+				  "org.apache.tika" % "tika-parsers" % "1.7",
           "com.codahale.metrics" % "metrics-json" % "3.0.1",
           "com.codahale.metrics" % "metrics-annotation" % "3.0.1",
-          "com.orientechnologies" % "orientdb-graphdb" % "1.7.10",
+          "com.orientechnologies" % "orientdb-graphdb" % "2.0.12",
           "com.notnoop.apns" % "apns" % "1.0.0.Beta4"
 
     		//	,"com.wordnik" %% "swagger-play2" % "1.2.1-SNAPSHOT",

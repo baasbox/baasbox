@@ -84,6 +84,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(DB_PATH);
 	}
 	
+
+	public static String getDBType(){ return configuration.getString(DB_TYPE); }
+
+	public static String getRemote(){ return configuration.getString(DB_REMOTE); }
+
 	public static Boolean getWrapResponse(){
 		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
 	}

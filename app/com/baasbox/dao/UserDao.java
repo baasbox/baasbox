@@ -20,9 +20,7 @@ import java.security.InvalidParameterException;
 import java.util.Date;
 import java.util.List;
 
-import com.baasbox.dao.exception.InvalidCriteriaException;
-
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
@@ -36,7 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -159,7 +157,7 @@ public class UserDao extends NodeDao  {
 		where.append(UserDao.SOCIAL_LOGIN_INFO).append("[").append(ui.getFrom()).append("]").append(".id").append(" = ?");
 		QueryParams criteria = QueryParams.getInstance().where(where.toString()).params(new String [] {ui.getId()});
 		List<ODocument> resultList= super.get(criteria);
-		if (Logger.isDebugEnabled()) Logger.debug("Found "+resultList.size() +" elements for given tokens");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Found "+resultList.size() +" elements for given tokens");
 		if (resultList!=null && resultList.size()>0) result = resultList.get(0);
 
 		return result;
@@ -186,6 +184,13 @@ public class UserDao extends NodeDao  {
 		if (existsUserName(currentUsername)){
 			Object command = DbHelper.genericSQLStatementExecute("update ouser set name=? where name=?", new String[]{newUsername,currentUsername});
 		}else throw new UserNotFoundException(currentUsername + " does not exists");
+	}
+
+	public boolean emailIsAlreadyUsed(String email) {
+		String selectStatement="select from _bb_user where visibleByTheUser.email= ?";
+		List<ODocument> ret=(List<ODocument>)DbHelper.genericSQLStatementExecute(selectStatement, new String[]{email});
+		if (ret.size()!=0) return true;
+		return false;
 	}
 
 }

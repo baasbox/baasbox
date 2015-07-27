@@ -17,8 +17,10 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.util.Set;
+import java.util.List;
+import java.util.Arrays;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -27,8 +29,13 @@ import play.mvc.Result;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
+import com.baasbox.service.user.UserService;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import play.mvc.SimpleResult;
 import play.libs.F;
 
@@ -37,20 +44,20 @@ public class CheckAdminRoleFilter extends Action.Simple{
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
-		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
-		
-		OUser user=DbHelper.getConnection().getUser();
-		Set<ORole> roles=user.getRoles();
-		
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole user: " + ctx.args.get("username"));
+
+		OSecurityUser user= UserService.getCurrentOSecurityUser();
+		Set<?> roles=user.getRoles();
+
 		F.Promise<SimpleResult> result=null;
 		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
 			result = delegate.call(ctx);
 		}else result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
 	}
 

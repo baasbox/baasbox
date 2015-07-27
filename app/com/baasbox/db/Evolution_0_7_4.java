@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.dao.IndexDao;
@@ -38,8 +38,8 @@ import com.baasbox.util.QueryParams;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -70,20 +70,20 @@ public class Evolution_0_7_4 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+	public void evolve(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			changePushTokenFieldName(db);
 			addProfileSections(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
-	private void changePushTokenFieldName(ODatabaseRecordTx db)  {
-		Logger.info("..changing 'deviceId' to 'pushToken' field name..:");
+	private void changePushTokenFieldName(ODatabaseDocumentTx db)  {
+		BaasBoxLogger.info("..changing 'deviceId' to 'pushToken' field name..:");
 		UserDao dao = UserDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance();
 		try {
@@ -104,16 +104,16 @@ public class Evolution_0_7_4 implements IEvolution {
 		} catch (SqlInjectionException e) {
 			throw new RuntimeException(e);
 		}
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 		
-	private void addProfileSections(ODatabaseRecordTx db) {
-		Logger.info("...adding missing profile section..:");
+	private void addProfileSections(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info("...adding missing profile section..:");
 		UserDao dao = UserDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance();
 		try {
 			List<ODocument> users = UserService.getUsers(criteria);
-			Logger.info(" found " + users.size() + " users");
+			BaasBoxLogger.info(" found " + users.size() + " users");
 			for (ODocument user:users){
 			    ORID userRid = ((ODocument)user.field("user")).getIdentity();
 				ODocument anonymousSection = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
@@ -160,7 +160,7 @@ public class Evolution_0_7_4 implements IEvolution {
 		}catch (SqlInjectionException e) {
 			throw new RuntimeException(e);
 		}
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
 

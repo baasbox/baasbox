@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.db.DbHelper;
 import com.fasterxml.jackson.databind.JsonNode;

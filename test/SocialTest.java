@@ -3,12 +3,13 @@ import static play.test.Helpers.PUT;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import java.io.IOException;
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
 import play.libs.Json;
 import play.mvc.Http.Status;
@@ -17,7 +18,9 @@ import play.test.FakeRequest;
 import play.test.TestBrowser;
 
 import com.baasbox.security.SessionKeys;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractTest;
@@ -55,7 +58,7 @@ public class SocialTest extends AbstractTest {
 						
 						//there is the signupdate in system object?
 							String url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
@@ -75,7 +78,7 @@ public class SocialTest extends AbstractTest {
 							assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUser+"\"", true);
 
 							url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-							Logger.debug("URL to check signupdate in system: " + url);
+							BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 							request = new FakeRequest("GET",url);
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUser, "passw1"));
@@ -127,7 +130,75 @@ public class SocialTest extends AbstractTest {
 			);		
 		}
 
+		@Test
+		public void testSocialChangeUsername(){
+			running	(
+					getTestServer(), 
+					HTMLUNIT, 
+					new Callback<TestBrowser>() 
+			        {
+						public void invoke(TestBrowser browser) throws JsonProcessingException, IOException 
+						{
+							// Prepare test user
+							String o_token=UUID.randomUUID().toString();
+							JsonNode node = updatePayloadFieldValue("/socialSignup.json", "oauth_token", o_token);
 	
+							// Create user
+							FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request = request.withJsonBody(node, getMethod());
+							Result result = routeAndCall(request);						
+							assertRoute(result, "testSocialChangeUsername - create user", 200, "\"user\":{\"name\":", true);
+							
+							String body = play.test.Helpers.contentAsString(result);
+							JsonNode jsonRes = Json.parse(body);
+							String sessionToken = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
+							String username = jsonRes.get("data").get("user").get("name").textValue();
+							
+							//now let's change the username
+							
+							request = new FakeRequest("PUT", "/me/username");
+							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
+							ObjectMapper om = new ObjectMapper();
+							String newUsername="socialUserRenamed_" + username;
+							JsonNode nodeChangeUsername = om.readTree("{\"username\":\"" + newUsername + "\"}");
+							request = request.withJsonBody(nodeChangeUsername, PUT);
+							result = routeAndCall(request);
+							assertRoute(result, "testSocialChangeUsername - change username", 200, "", false);
+							
+							
+							//perform a social login again
+							FakeRequest request2 = new FakeRequest(getMethod(), getRouteAddress());
+							request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request2 = request2.withJsonBody(node, getMethod());
+							Result result2 = routeAndCall(request2);						
+							assertRoute(result2, "testSocialChangeUsername - login again", 200, "\"user\":{\"name\":", true);
+							String body2 = play.test.Helpers.contentAsString(result2);
+							JsonNode jsonRes2 = Json.parse(body2);
+							String sessionToken2 = jsonRes2.get("data").get(SessionKeys.TOKEN.toString()).textValue();
+							String username2 = jsonRes2.get("data").get("user").get("name").textValue();
+							
+							Assert.assertTrue("Username is not valid. It has not been changed. Original: " + username + ", 2nd call: " + username2, !username2.equals(username));
+							Assert.assertTrue("Username is not valid. It has not been changed. Received: " + username2 + ", I want: " + newUsername, username2.equals(newUsername));
+						
+							//old token is not valid
+							request = new FakeRequest("POST", "/logout");
+							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);	
+							result = routeAndCall(request);
+							assertRoute(result, "testSocialChangeUsername - logout", 401, username, true);
+							
+							//now let's try the new token. Performing a logout....
+							request = new FakeRequest("POST", "/logout");
+							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken2);	
+							result = routeAndCall(request);
+							assertRoute(result, "testSocialChangeUsername - logout", 200, "", false);
+							
+						}
+			        });
+			}
 
 		@Override
 		public String getRouteAddress() {

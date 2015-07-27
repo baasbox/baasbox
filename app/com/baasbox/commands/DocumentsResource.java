@@ -45,7 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.IOException;
 import java.util.List;
@@ -130,7 +130,7 @@ class DocumentsResource extends BaseRestResource {
                 alterGrants(command, coll, rid, true, grant);
                 alterGrants(command, coll, rid, false, grant);
             } catch (Exception e){
-                Logger.error("error",e);
+                BaasBoxLogger.error("error",e);
                 throw  e;
             }
         } catch (UserNotFoundException e) {
@@ -323,10 +323,21 @@ class DocumentsResource extends BaseRestResource {
             if (read!=null){
                 alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
             }
+            
+            //DEPRECATED
             JsonNode write = node.get("write");
             if (write!=null){
                 alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
             }
+            
+            //issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
+            //we now have to maintain both due retro-compatibility 
+            JsonNode update = node.get("update");
+            if (update!=null){
+                alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+            }
+            //------
+            
             JsonNode delete = node.get("delete");
             if (delete!=null){
                 alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);

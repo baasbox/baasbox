@@ -18,9 +18,8 @@
 
 package com.baasbox.db;
 
-import play.Logger;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class Evolution_0_8_1 implements IEvolution {
@@ -34,25 +33,25 @@ public class Evolution_0_8_1 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+	public void evolve(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			setUsernameCaseInsensitive(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
-	private void setUsernameCaseInsensitive(ODatabaseRecordTx db) {
-		Logger.info("..updating ouser.name collate CI..:");
-      		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
+	private void setUsernameCaseInsensitive(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info("..updating ouser.name collate CI..:");
+      		DbHelper.execMultiLineCommands(db,BaasBoxLogger.isDebugEnabled(),
       	            "drop index ouser.name;",
       	            "alter property ouser.name collate ci;",
       	            "create index ouser.name unique;"
       	        );
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
     

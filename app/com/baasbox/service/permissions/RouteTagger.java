@@ -22,7 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.api.Routes;
 import play.mvc.Http;
 import scala.Option;
@@ -51,7 +51,7 @@ public final class RouteTagger {
                         .build(new CacheLoader<String, Map<String, Set<String>>>() {
                             @Override
                             public Map<String, Set<String>> load(String comment) throws Exception {
-                                if (Logger.isDebugEnabled()) Logger.debug("New route annotations to parse ");
+                                if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New route annotations to parse ");
                                 return parseComments(comment);
                             }
                         });
@@ -72,14 +72,14 @@ public final class RouteTagger {
     @VisibleForTesting
     public static Map<String,Set<String>> parse(final String comment){
         try {
-            if (Logger.isDebugEnabled()) Logger.debug("Parsing tags for current route with comment: "+comment);
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Parsing tags for current route with comment: "+comment);
             if (comment==null||comment.length()==0){
                 return Collections.emptyMap();
             }
-            if (Logger.isDebugEnabled()) Logger.debug("Matched routes");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Matched routes");
             return PARSER_CACHE.get(comment);
         } catch (ExecutionException e){
-            if (Logger.isErrorEnabled())Logger.error("Error reading tags for current route with comment: "+comment);
+            if (BaasBoxLogger.isErrorEnabled())BaasBoxLogger.error("Error reading tags for current route with comment: "+comment);
             return Collections.emptyMap();
         }
     }
@@ -90,9 +90,9 @@ public final class RouteTagger {
         while (m.find()){
             int groups = m.groupCount();
             if (CHECK_PARSING) {
-                Logger.info("Comment: " + comment);
+                BaasBoxLogger.info("Comment: " + comment);
                 for (int i = 0; i < groups; i++) {
-                    Logger.info("group(" + i + "): " + m.group(i));
+                    BaasBoxLogger.info("group(" + i + "): " + m.group(i));
                 }
             }
             String name = m.group(1);

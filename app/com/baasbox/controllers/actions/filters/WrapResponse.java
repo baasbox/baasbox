@@ -17,31 +17,31 @@
 package com.baasbox.controllers.actions.filters;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.commons.lang.StringUtils;
 
+import play.api.mvc.ChunkedResult;
+import play.core.j.JavaResultExtractor;
+import play.libs.F;
+import play.libs.Json;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Http.RequestHeader;
+import play.mvc.Results;
+import play.mvc.SimpleResult;
+
+import com.baasbox.BBConfiguration;
+import com.baasbox.controllers.CustomHttpCode;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import play.Logger;
-import play.api.mvc.ChunkedResult;
-import play.core.j.JavaResultExtractor;
-import play.libs.Json;
-import play.mvc.Http.Context;
-import play.mvc.Http.RequestHeader;
-import play.mvc.Result;
-import play.mvc.Results;
-
-import com.baasbox.BBConfiguration;
-import com.baasbox.controllers.CustomHttpCode;
-
-import play.mvc.SimpleResult;
-import play.libs.F;
-
 public class WrapResponse {
-
 	
 	private ObjectNode prepareError(RequestHeader request, String error) {
 		com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -129,7 +129,13 @@ public class WrapResponse {
 		String callId = request.getQueryString("call_id");
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
-    
+
+	private void setServerTime(Http.Response response) {
+		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
+		String httpDate = DateTimeFormatter.RFC_1123_DATE_TIME.format(date);
+		response.setHeader("Date",httpDate);
+	}
+
 	private SimpleResult onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
 		ObjectNode result = prepareOK(statusCode, request, stringBody);
 		result.put("http_code", statusCode);
@@ -137,7 +143,7 @@ public class WrapResponse {
 	}
 
 	public SimpleResult wrap(Context ctx, F.Promise<SimpleResult> simpleResult) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		
 		SimpleResult result=simpleResult.get(10000);
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
@@ -148,14 +154,14 @@ public class WrapResponse {
 		
 	    byte[] resultContent=null;
 		if (BBConfiguration.getWrapResponse()){
-			if (Logger.isDebugEnabled()) Logger.debug("Wrapping the response");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 			final int statusCode = result.getWrappedSimpleResult().header().status();
-			if (Logger.isDebugEnabled()) Logger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
-			if (Logger.isDebugEnabled()) Logger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
 			if (ctx.response().getHeaders().get("Content-Type")!=null 
 		    		&& 
 		    	!ctx.response().getHeaders().get("Content-Type").contains("json")){
-		    	if (Logger.isDebugEnabled()) Logger.debug("The response is a file, no wrap will be applied");
+		    	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response is a file, no wrap will be applied");
 		    	return result;
 		    }
 		    
@@ -165,7 +171,7 @@ public class WrapResponse {
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
 			String stringBody = new String(body, "UTF-8");
-		    if (Logger.isTraceEnabled()) if (Logger.isTraceEnabled()) Logger.trace ("stringBody: " +stringBody);
+		    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
 			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
@@ -179,7 +185,9 @@ public class WrapResponse {
 			      	default:  	
 			      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
 			      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
-			      		}else result =onDefaultError(statusCode,ctx.request(),stringBody);
+			      		}else {
+							result =onDefaultError(statusCode,ctx.request(),stringBody);
+						}
 			      	break;
 			      }
 		    }else{ //status is not an error
@@ -187,21 +195,20 @@ public class WrapResponse {
 		    } //if (statusCode>399)
 			if (statusCode==204) result = Results.noContent();
 			try {
-				if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 			}catch (Throwable e){}
 		}else{ //if (BBConfiguration.getWrapResponse())
-			if (Logger.isDebugEnabled()) Logger.debug("The response will not be wrapped due configuration parameter");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response will not be wrapped due configuration parameter");
 			try {
-				if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 			}catch (Throwable e){}
-			if (Logger.isDebugEnabled()) Logger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		}
+		setServerTime(ctx.response());
 		ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
 	}//wrap
-
-
 
 
 

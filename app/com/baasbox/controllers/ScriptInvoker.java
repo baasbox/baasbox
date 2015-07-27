@@ -37,7 +37,7 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.EventSource;
 import play.libs.F;
 import play.mvc.Controller;
@@ -77,7 +77,7 @@ public class ScriptInvoker extends Controller{
             ScriptResult result =ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
             return status(result.status(),result.content());
         } catch (ScriptEvalException e) {
-            Logger.error("Error evaluating script",e);
+            BaasBoxLogger.error("Error evaluating script",e);
             return internalServerError("script failure "+ ExceptionUtils.getFullStackTrace(e));
         }
 //        catch (IllegalStateException e){
@@ -95,23 +95,28 @@ public class ScriptInvoker extends Controller{
         ObjectNode reqJson = Json.mapper().createObjectNode();
         reqJson.put("method",method);
         reqJson.put("path",path);
+        reqJson.put("remote",request.remoteAddress());
 
-        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE),"application/json")){
-	        String textBody = body==null?null:body.asText();
-	        DynamicForm requestData = Form.form().bindFromRequest();
-	        JsonNode jsonBody = Json.mapper().valueToTree(requestData.data());
-	        if(textBody == null)
-	            reqJson.put("body",jsonBody);
-	        else
-	            reqJson.put("body",textBody);
-        }else{
-        	reqJson.put("body",body.asJson());
+        if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
+            String textBody = body == null ? null : body.asText();
+            if (textBody == null) {
+            	//fixes issue 627
+               	Map<String, String> params = BodyHelper.requestData(request);
+                JsonNode jsonBody = Json.mapper().valueToTree(params);
+                reqJson.put("body", jsonBody);
+            } else {
+                reqJson.put("body", textBody);
+            }
+        } else {
+            reqJson.put("body", body.asJson());
         }
-        
+
         JsonNode queryJson = Json.mapper().valueToTree(query);
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = Json.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
+        BaasBoxLogger.debug("Serialized request to pass to the script: ");
+        BaasBoxLogger.debug(reqJson.toString());
         return reqJson;
     }
 }

@@ -19,14 +19,15 @@ package com.baasbox.dao;
 import java.util.List;
 import java.util.UUID;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -34,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public class GenericDao {
 	public static GenericDao getInstance(){
@@ -57,10 +58,10 @@ public class GenericDao {
 	}
 	
 	public ODocument get(ORID rid) {
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		ODatabaseDocumentTx db =DbHelper.getConnection();
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODocument doc=db.load(rid);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return doc;
 	}
 	
@@ -79,7 +80,7 @@ public class GenericDao {
 	 * @return
 	 */
 	public ORID getRidNodeByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
+		ODatabaseDocumentTx db =DbHelper.getConnection();
 		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
 		ORID rid = (ORID) index.get(id);  
 		return rid;
@@ -111,8 +112,8 @@ public class GenericDao {
 	 * @param params
 	 */
 	public void executeCommand(String commandString, Object[] params) {
-		ODatabaseRecordTx db =  DbHelper.getConnection();
-		OCommandRequest command=db.command(new OCommandSQL(commandString));
+		ODatabaseDocumentTx db =  DbHelper.getConnection();
+		OCommandRequest command=db.command(new OCommandScript("sql",commandString));
 		//Logger.debug("########## is in transaction??  : " + db.getTransaction().isActive());
 		command.execute(params);
 	}

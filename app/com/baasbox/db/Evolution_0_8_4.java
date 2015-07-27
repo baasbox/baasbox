@@ -24,8 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import play.Logger;
-
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.configuration.Push;
 import com.baasbox.configuration.index.IndexPushConfiguration;
 import com.baasbox.dao.PermissionsHelper;
@@ -39,8 +38,8 @@ import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -55,8 +54,8 @@ public class Evolution_0_8_4 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+	public void evolve(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
 			updateDefaultTimeFormat(db);
@@ -65,18 +64,18 @@ public class Evolution_0_8_4 implements IEvolution {
 			multiPushProfileSettings(db);
 			exposeSocialId(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 
 
 
 	
 	//issue #195 Registered users should have access to anonymous resources
-		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
-			Logger.info("...updating registered role");
+		private void registeredRoleInheritsFromAnonymousRole(ODatabaseDocumentTx db) {
+			BaasBoxLogger.info("...updating registered role");
 			
 			RoleDao.getRole(DefaultRoles.ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("admin").getDocument().getRecord() ).save();
 			RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("writer").getDocument().getRecord() ).save();
@@ -89,10 +88,10 @@ public class Evolution_0_8_4 implements IEvolution {
 			RoleDao.getRole(DefaultRoles.BASE_ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, (ODocument) null ).save();
 			
 			db.getMetadata().reload();
-			Logger.info("...done");
+			BaasBoxLogger.info("...done");
 		}
 	
-	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
+	private void updateDefaultTimeFormat(ODatabaseDocumentTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	}
 	
@@ -100,7 +99,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	 * creates new records for new push settings and migrates the old ones into the profile n.1
 	 * @param db
 	 */
-	private void multiPushProfileSettings(ODatabaseRecordTx db) {
+	private void multiPushProfileSettings(ODatabaseDocumentTx db) {
 		IndexPushConfiguration idx;
 		try {
 			idx = new IndexPushConfiguration();
@@ -200,7 +199,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	 * @throws DocumentNotFoundException 
 	 * @throws InvalidModelException 
 	 */
-	private void exposeSocialId(ODatabaseRecordTx db) throws InvalidModelException, DocumentNotFoundException {
+	private void exposeSocialId(ODatabaseDocumentTx db) throws InvalidModelException, DocumentNotFoundException {
 		//take all users and expose their generated flag
 		//remove permission for registered users to system attributes
 		//put the signupdate in user system info
@@ -212,7 +211,7 @@ public class Evolution_0_8_4 implements IEvolution {
 					"update _bb_user set system.signUpDate=signUpDate;"
 				} 
 		);
-		Logger.info("...moving social ids. This can take several minutes....");
+		BaasBoxLogger.info("...moving social ids. This can take several minutes....");
 		Object listOfUser=DbHelper.genericSQLStatementExecute("select @rid,system.sso_tokens as social_network from _bb_user where system.sso_tokens is not null", new String[]{""});
 		for (Object doc: (List)listOfUser){
 			ODocument odoc = (ODocument)doc;

@@ -16,7 +16,7 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -32,10 +32,10 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
 		String user=BBConfiguration.getBaasBoxUsername();
 		String password = BBConfiguration.getBaasBoxPassword();
@@ -47,10 +47,10 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		ctx.args.put("password", password);
 		ctx.args.put("appcode", appCode);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("username (defined in conf file): " + user);
-		if (Logger.isDebugEnabled()) Logger.debug("password (defined in conf file): " + password);
-		if (Logger.isDebugEnabled()) Logger.debug("appcode (from header or querystring): " + appCode);
-		if (Logger.isDebugEnabled()) Logger.debug("token: N/A");
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("username (defined in conf file): " + user);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("password (defined in conf file): " + password);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("appcode (from header or querystring): " + appCode);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("token: N/A");
 		
 		//executes the request
 		F.Promise<SimpleResult>  tempResult = delegate.call(ctx);
@@ -58,7 +58,7 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result=wr.wrap(ctx, tempResult);
 				
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	    return F.Promise.<SimpleResult>pure(result);
 	}
 

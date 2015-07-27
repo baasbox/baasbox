@@ -49,13 +49,17 @@ public class FileAssetDao extends NodeDao {
 	}
 	
 	public ODocument create(String name, String fileName, String contentType, byte[] content) throws Throwable{
-		ODocument asset=super.create();
+
 		ORecordBytes record = new ORecordBytes(content);
-		asset.field(BINARY_FIELD_NAME,record);
-		asset.field("name",name);
-		asset.field("fileName",fileName);
-		asset.field("contentType",contentType);
-		asset.field("contentLength",content.length);
+		HashMap fields = new HashMap();
+		fields.put(BINARY_FIELD_NAME,record);
+		fields.put("name", name);
+		fields.put("fileName", fileName);
+		fields.put("contentType", contentType);
+		fields.put("contentLength", content.length);
+
+		ODocument asset=super.create(fields);
+
 		super.grantPermission(asset, Permissions.ALLOW_READ,DefaultRoles.getORoles());
 		super.grantPermission(asset, Permissions.ALLOW_UPDATE,DefaultRoles.getORoles()); //this is necessary due the resize API
 		return asset;

@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.configuration.Internal;
 import com.baasbox.dao.IndexDao;
@@ -33,8 +33,8 @@ import com.baasbox.service.user.RoleService;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -65,34 +65,34 @@ public class Evolution_0_7_3 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
-		Logger.info ("Applying evolutions to evolve to the " + version + " level");
+	public void evolve(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			changeDefaultDateTimeFormat(db);
 			fileClassCreation(db);
 		}catch (Throwable e){
-			Logger.error("Error applying evolution to " + version + " level!!" ,e);
+			BaasBoxLogger.error("Error applying evolution to " + version + " level!!" ,e);
 			throw new RuntimeException(e);
 		}
-		Logger.info ("DB now is on " + version + " level");
+		BaasBoxLogger.info ("DB now is on " + version + " level");
 	}
 	
 
-	private void changeDefaultDateTimeFormat(ODatabaseRecordTx db) {
-		Logger.info("..creating _BB_File class..:");
+	private void changeDefaultDateTimeFormat(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
 			"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ;"};
 		for (String line:script){
-			if (Logger.isDebugEnabled()) Logger.debug(line);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
-	private void fileClassCreation(ODatabaseRecordTx db) {
-		Logger.info("..creating _BB_File class..:");
+	private void fileClassCreation(ODatabaseDocumentTx db) {
+		BaasBoxLogger.info("..creating _BB_File class..:");
 		String[] script=new String[]{
 		"create class _BB_File extends _BB_Node;",
 		"create property _BB_File.fileName String;",
@@ -111,12 +111,12 @@ public class Evolution_0_7_3 implements IEvolution {
 		"create property _BB_File_Content.content String;",
 		"create index _BB_File_Content.content.key FULLTEXT_HASH_INDEX;"};
 		for (String line:script){
-			if (Logger.isDebugEnabled()) Logger.debug(line);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(line);
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
 		} 
-		Logger.info("...done...");
+		BaasBoxLogger.info("...done...");
 	}
 
 

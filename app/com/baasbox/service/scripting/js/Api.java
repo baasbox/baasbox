@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jdk.nashorn.internal.runtime.ECMAErrors;
 import jdk.nashorn.internal.runtime.ECMAException;
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import java.io.IOException;
 
@@ -45,7 +45,7 @@ public class Api {
         try {
             JsonNode node = Json.mapper().readTree(commandStr);
             if (!node.isObject()){
-                Logger.error("Command is not an object");
+                BaasBoxLogger.error("Command is not an object");
                 throw ECMAErrors.typeError("Invalid command");
             }
             ObjectNode o = (ObjectNode)node;
@@ -55,13 +55,13 @@ public class Api {
             }
             JsonNode exec = CommandRegistry.execute(node,callback);
             String res = exec== null?null:exec.toString();
-            Logger.debug("Command result: "+res);
+            BaasBoxLogger.debug("Command result: "+res);
             return res;
         } catch (IOException e) {
-            Logger.error("IoError "+e.getMessage(),e);
+            BaasBoxLogger.error("IoError "+e.getMessage(),e);
             throw ECMAErrors.typeError(e,"Invalid command definition");
         } catch (CommandException e){
-            Logger.error("CommandError: "+e.getMessage(),e);
+            BaasBoxLogger.error("CommandError: "+e.getMessage(),e);
             throw new ECMAException(e.getMessage(),e);
         }
     }
