@@ -45,6 +45,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -66,6 +67,8 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.security.SessionTokenProvider;
 import com.baasbox.util.QueryParams;
+
+
 
 import core.AbstractUserTest;
 import core.TestConfig;

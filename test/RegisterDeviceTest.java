@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import core.AbstractTest;
 import core.TestConfig;
