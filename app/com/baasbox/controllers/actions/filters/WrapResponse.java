@@ -114,6 +114,7 @@ public class WrapResponse {
 		result.put("method", request.method());
 		result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
 		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
+		result.put("db_schema_version", BBConfiguration.getDBVersion());
 		this.setCallIdOnResult(request, result);
 		return result;
 	} 
