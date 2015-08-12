@@ -20,7 +20,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -74,7 +74,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (BBJson.mapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.rollbackTransaction();
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
@@ -97,7 +97,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (BBJson.mapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.commitTransaction();
 						long collCount = DocumentService.getCount(COLLECTION_NAME,QueryParams.getInstance());
@@ -120,7 +120,7 @@ public class TransactionTest {
 					try{
 						DbHelper.open("1234567890", "admin", "admin");
 						DbHelper.requestTransaction();
-						ObjectNode payload = (ObjectNode) (new ObjectMapper()).readTree("{\"k\":\"v\"}");
+						ObjectNode payload = (ObjectNode) (BBJson.mapper()).readTree("{\"k\":\"v\"}");
 						ODocument doc = DocumentService.create(COLLECTION_NAME, payload);
 						DbHelper.close(DbHelper.getConnection());
 						Assert.fail("Closing a connection within a transaction should be raise an exception");

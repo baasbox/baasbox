@@ -20,7 +20,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.service.push.providers.APNServer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractTest;
 import core.TestConfig;
@@ -183,7 +183,7 @@ public class PushSendTest extends AbstractTest {
 					
 					try{
 						DbHelper.open("1234567890", sFakeUserNotAccess, sPwd);
-						ObjectMapper om = new ObjectMapper();
+						ObjectMapper om = BBJson.mapper();
 						JsonNode payload = om.readTree("{"+
 								"\"custom\" :     {"+
 								"		\"QBKey\" : \"12a535fb-5732-44e0-8a97-0a4688ba75ba\","+

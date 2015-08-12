@@ -36,7 +36,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
@@ -101,7 +101,7 @@ public class UserChangePasswordTest extends AbstractUserTest
                     request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                     request1 = request1.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
                     
-                    ObjectMapper mapper = new ObjectMapper();
+                    ObjectMapper mapper = BBJson.mapper();
                     JsonNode actualObj=null;
 					try {
 						actualObj = mapper.readTree("{\"visibleByTheUser\":{\"email\":\"john@example.com\"}}");

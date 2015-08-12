@@ -35,7 +35,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.IndexNotFoundException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.ConfigurationFileContainer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.id.ORID;
@@ -176,7 +176,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	private ConfigurationFileContainer getValueAsFileContainer(Object v) {
 		ConfigurationFileContainer result = null;
 		if(v!=null){
-			ObjectMapper om = new ObjectMapper();
+			ObjectMapper om = BBJson.mapper();
 			try {
 				result = om.readValue(v.toString(), ConfigurationFileContainer.class);
 			} catch (Exception e) {

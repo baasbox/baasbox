@@ -17,55 +17,29 @@
 
 // @author: Marco Tibuzzi
 
-import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.BAD_REQUEST;
-import static play.mvc.Http.Status.UNAUTHORIZED;
-import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.POST;
 import static play.test.Helpers.GET;
-import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import ch.qos.logback.classic.db.DBHelper;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.libs.F.Callback;
-import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
-import play.test.TestBrowser;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.PasswordRecovery;
-import com.baasbox.dao.GenericDao;
-import com.baasbox.dao.NodeDao;
-import com.baasbox.dao.ResetPwdDao;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import core.AbstractUserTest;
 import core.TestConfig;

@@ -75,7 +75,7 @@ import play.test.TestServer;
 
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
@@ -447,7 +447,7 @@ public abstract class AbstractTest extends FluentTest
 			try
 			{
 				is = Play.application().resourceAsStream(sName);
-				ObjectMapper om = new ObjectMapper();
+				ObjectMapper om = BBJson.mapper();
 				node = om.readTree(is);
 			}
 			catch (Exception ex)
@@ -488,7 +488,7 @@ public abstract class AbstractTest extends FluentTest
 	protected JsonNode updatePayloadFieldValue(String sPayload, String sFieldName, String[] values)
 	{
 		JsonNode node = getPayload(sPayload);
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		ArrayNode array = mapper.valueToTree(Arrays.asList(values));
 		((ObjectNode)node).putArray(sFieldName).addAll(array);
 		return node;

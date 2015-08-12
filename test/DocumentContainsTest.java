@@ -8,7 +8,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -46,7 +46,7 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 	
 	@Before
 	public void setDocument() throws JsonProcessingException, IOException{
-		document1 = new ObjectMapper().readTree(
+		document1 = BBJson.mapper().readTree(
 				"{\"players\": ["+
 					"{"+
 						"\"username\": \"XXXX@XXXX.COM\","+

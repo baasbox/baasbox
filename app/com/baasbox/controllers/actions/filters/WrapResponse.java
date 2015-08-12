@@ -43,7 +43,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -168,7 +168,7 @@ public class WrapResponse {
 	}
 
     private ObjectNode prepareOK(int statusCode,RequestHeader request, String stringBody) throws IOException{
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		ObjectNode result = Json.newObject();
 		setCallIdOnResult(request, result);
 		result.put("result", "ok");

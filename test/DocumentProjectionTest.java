@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,10 +52,10 @@ public class DocumentProjectionTest extends AbstractDocumentTest {
 	
 	@Before
 	public void createCollection() throws JsonProcessingException, IOException{
-		document1 = new ObjectMapper().readTree("{\"total\":2,\"city\":\"rome\"}");
-		document2 = new ObjectMapper().readTree("{\"total\":3,\"city\":\"rome\"}");
-		document3 = new ObjectMapper().readTree("{\"total\":4,\"city\":\"milan\"}");
-		document4 = new ObjectMapper().readTree("{\"total\":\"5\",\"city\":\"milan\"}");
+		document1 = BBJson.mapper().readTree("{\"total\":2,\"city\":\"rome\"}");
+		document2 = BBJson.mapper().readTree("{\"total\":3,\"city\":\"rome\"}");
+		document3 = BBJson.mapper().readTree("{\"total\":4,\"city\":\"milan\"}");
+		document4 = BBJson.mapper().readTree("{\"total\":\"5\",\"city\":\"milan\"}");
 	}
 	
 	@Test

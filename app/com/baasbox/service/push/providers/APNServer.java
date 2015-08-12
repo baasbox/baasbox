@@ -38,7 +38,7 @@ import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.google.common.collect.ImmutableMap;
 import com.notnoop.apns.APNS;
 import com.notnoop.apns.ApnsDelegate;
@@ -366,7 +366,7 @@ public class APNServer  extends PushProviderAbstract {
 	public void setConfiguration(ImmutableMap<ConfigurationKeys, String> configuration) {
 		String json = configuration.get(ConfigurationKeys.IOS_CERTIFICATE);
 		String name = null;
-		ObjectMapper mp = new ObjectMapper();
+		ObjectMapper mp = BBJson.mapper();
 		try{
 			ConfigurationFileContainer cfc = mp.readValue(json, ConfigurationFileContainer.class);
 			if (cfc==null){
