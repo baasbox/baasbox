@@ -19,7 +19,7 @@ import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 public class JsonQueryTest {
@@ -35,7 +35,7 @@ public class JsonQueryTest {
 
 		PartsParser pp = new PartsParser(parts);
 
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode root = JsonTree.read(json, pp);
 		if(root.isMissingNode()){
@@ -56,7 +56,7 @@ public class JsonQueryTest {
 
 		PartsParser pp = new PartsParser(parts);
 
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode root = JsonTree.read(json, pp);
 		if(root.isMissingNode()){
@@ -77,7 +77,7 @@ public class JsonQueryTest {
 
 		PartsParser pp = new PartsParser(parts);
 
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode root = JsonTree.read(json, pp);
 		if(root.isMissingNode()){
@@ -99,7 +99,7 @@ public class JsonQueryTest {
 
 		PartsParser pp = new PartsParser(parts);
 
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode root = JsonTree.read(json, pp);
 		if(root.isMissingNode()){
@@ -119,7 +119,7 @@ public class JsonQueryTest {
 
 		PartsParser pp = new PartsParser(parts);
 
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		JsonTree.write(json, pp, jsonData.get("data"));
@@ -136,7 +136,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".title2", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		JsonTree.write(json, pp, jsonData.get("data"));
@@ -152,7 +152,7 @@ public class JsonQueryTest {
 		parts.add(pl.parse(".title2", 1));
 		parts.add(pl.parse(".firstLetter", 2));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -171,7 +171,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".coll[3]", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -190,7 +190,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".coll[0]", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -218,7 +218,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".coll[3]", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -247,7 +247,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".tags[0]", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -275,7 +275,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".tags[3]", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -304,7 +304,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".author", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -325,7 +325,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".author", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -348,7 +348,7 @@ public class JsonQueryTest {
 		PartsLexer pl = new PartsLexer();
 		parts.add(pl.parse(".author", 1));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -372,7 +372,7 @@ public class JsonQueryTest {
 		parts.add(pl.parse(".author", 1));
 		parts.add(pl.parse(".roles[2]", 2));
 		PartsParser pp = new PartsParser(parts);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode json = om.readTree(content);
 		JsonNode jsonData = om.readTree(data);
 		try{
@@ -403,7 +403,7 @@ public class JsonQueryTest {
          
          long start = System.nanoTime();
          
-         ObjectMapper om = new ObjectMapper();
+         ObjectMapper om = BBJson.mapper();
          JsonNode jn = om.readTree(content.toString());
          
          List<PartsLexer.Part> parts = new ArrayList<PartsLexer.Part>();
@@ -439,7 +439,7 @@ public class JsonQueryTest {
          
          String data = "{\"data\":\"http://baasbox.com\"}";
          long start = System.nanoTime();
-         ObjectMapper om = new ObjectMapper();
+         ObjectMapper om = BBJson.mapper();
          JsonNode jn = om.readTree(content.toString());
          JsonNode jsonData = om.readTree(data);
          List<PartsLexer.Part> parts = new ArrayList<PartsLexer.Part>();

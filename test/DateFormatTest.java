@@ -12,7 +12,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.db.DbHelper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
@@ -37,7 +37,7 @@ public class DateFormatTest extends AbstractTest {
 					OResultSet result1=(OResultSet)DbHelper.genericSQLStatementExecute("select sysdate()",new String[]{});
 					ODocument res1 = (ODocument)result1.get(0);
 					String jsonString1= res1.toJSON();
-					ObjectMapper om = new ObjectMapper();
+					ObjectMapper om = BBJson.mapper();
 					JsonNode json1 = om.readTree(jsonString1);
 					String dateString1 = json1.get("sysdate").asText();
 					String seconds1=dateString1.substring(17,19);

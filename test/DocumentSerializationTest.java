@@ -35,7 +35,7 @@ import play.test.FakeRequest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractDocumentTest;
 import core.TestConfig;
@@ -171,7 +171,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":null}");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -181,7 +181,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("[1,2]");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -191,7 +191,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("2");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -201,7 +201,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("\"element\"");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -211,7 +211,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":2}");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -222,7 +222,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 		FakeRequest request = new FakeRequest(PUT, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":12}");
 		request = request.withJsonBody(node,PUT);
 		return routeAndCall(request);

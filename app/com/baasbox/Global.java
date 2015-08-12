@@ -54,7 +54,7 @@ import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -295,7 +295,7 @@ public class Global extends GlobalSettings {
 	
 	public ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 			result.put("result", "error");
 			result.put("message", error);
 			result.put("resource", request.path());

@@ -23,7 +23,7 @@ import play.test.TestBrowser;
 
 import com.baasbox.security.SessionKeys;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractTest;
 import core.TestConfig;
@@ -116,7 +116,7 @@ public class UserLoginTest extends AbstractTest
 				{
 					
 					// Test login user
-					ObjectMapper om = new ObjectMapper();
+					ObjectMapper om = BBJson.mapper();
 					JsonNode payload;
 					try {
 						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");
@@ -171,7 +171,7 @@ public class UserLoginTest extends AbstractTest
 				public void invoke(TestBrowser browser) 
 				{
 					
-					ObjectMapper om = new ObjectMapper();
+					ObjectMapper om = BBJson.mapper();
 					JsonNode payload;
 					try {
 						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");

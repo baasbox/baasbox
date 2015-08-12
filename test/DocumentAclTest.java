@@ -31,7 +31,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractDocumentTest;
@@ -112,7 +112,7 @@ public class DocumentAclTest extends AbstractDocumentTest
 						CollectionService.create(collection);
 						
 						//
-						ObjectMapper obm=new ObjectMapper();
+						ObjectMapper obm=BBJson.mapper();
 						ObjectNode docJson = (ObjectNode)getPayload("/documentCreatePayload.json");
 						//ArrayNode allows=obm.readTree("[\"\"]");
 						//docJson.put(Permissions.ALLOW_READ, )

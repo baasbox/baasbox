@@ -30,7 +30,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.baasbox.configuration.ImagesConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.dao.FileDao;
@@ -94,7 +94,7 @@ public class FileService {
 			ODocument doc = createFile(fileName, dataJson, contentType, length, is, extractedMetaData,
 					extractedContent);
 			//sets the permissions
-			ObjectMapper mapper = new ObjectMapper();
+			ObjectMapper mapper = BBJson.mapper();
 			JsonNode aclJson=null;
 			try{
 				aclJson = mapper.readTree(aclJsonString);

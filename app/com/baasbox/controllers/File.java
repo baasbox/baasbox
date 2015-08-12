@@ -79,7 +79,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -154,7 +154,7 @@ public class File extends Controller {
             String aclJsonString;
             if (acl != null && datas.length > 0) {
                 aclJsonString = acl[0];
-                ObjectMapper mapper = new ObjectMapper();
+                ObjectMapper mapper = BBJson.mapper();
                 JsonNode aclJson = null;
                 try {
                     aclJson = mapper.readTree(aclJsonString);

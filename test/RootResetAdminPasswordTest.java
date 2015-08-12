@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import org.junit.After;
 import org.junit.Test;
 
@@ -53,7 +53,7 @@ public class RootResetAdminPasswordTest extends AbstractRootTest{
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ROOT_ENC);
 					try {
-						request = request.withJsonBody(new ObjectMapper().readTree("{\"password\":\"123\"}"));
+						request = request.withJsonBody(BBJson.mapper().readTree("{\"password\":\"123\"}"));
 					} catch (JsonProcessingException e) {
 						throw new RuntimeException(e);
 					} catch (IOException e) {
@@ -81,7 +81,7 @@ public class RootResetAdminPasswordTest extends AbstractRootTest{
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ROOT_ENC);
 					try {
-						request = request.withJsonBody(new ObjectMapper().readTree("{\"password\":\""+TestConfig.AUTH_ADMIN_PASS+"\"}"));
+						request = request.withJsonBody(BBJson.mapper().readTree("{\"password\":\""+TestConfig.AUTH_ADMIN_PASS+"\"}"));
 					} catch (JsonProcessingException e) {
 						throw new RuntimeException(e);
 					} catch (IOException e) {

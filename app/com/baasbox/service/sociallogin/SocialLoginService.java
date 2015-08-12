@@ -48,7 +48,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
@@ -234,7 +234,7 @@ public abstract class SocialLoginService {
 			if(StringUtils.isEmpty(body)){
 				return false;
 			}else{
-				ObjectMapper mapper = new ObjectMapper();
+				ObjectMapper mapper = BBJson.mapper();
 				JsonFactory factory = mapper.getJsonFactory(); // since 2.1 use mapper.getFactory() instead
 				JsonParser jp = factory.createJsonParser(body);
 				JsonNode jn = mapper.readTree(jp);

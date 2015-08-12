@@ -31,7 +31,7 @@ import static play.test.Helpers.running;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import org.junit.Test;
 
 import play.mvc.Http.Status;
@@ -98,7 +98,7 @@ public class RoleFunctionalTest extends AbstractTest{
                                         requestCreation = new FakeRequest(POST, sFakeCreateUser);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                        ObjectMapper mapper = new ObjectMapper();
+                                        ObjectMapper mapper = BBJson.mapper();
                                         JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
                                         		+ "\"password\":\"test\","	
                                         		+ "\"role\":\""+ roleName +"\"}");
@@ -144,7 +144,7 @@ public class RoleFunctionalTest extends AbstractTest{
                                         requestCreation = new FakeRequest(POST, sFakeRole);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                        mapper = new ObjectMapper();
+                                        mapper = BBJson.mapper();
                                         actualObj = mapper.readTree("{\"description\":\"this is a test\"}");	
                                         requestCreation = requestCreation.withJsonBody(actualObj);
                                         requestCreation = requestCreation.withHeader("Content-Type", "application/json");
@@ -163,7 +163,7 @@ public class RoleFunctionalTest extends AbstractTest{
                                 		 requestCreation = new FakeRequest(PUT, sFakeRole);
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                         mapper = new ObjectMapper();
+                                         mapper = BBJson.mapper();
                                          actualObj = mapper.readTree("{\"description\":\"this is new test\"}");	
                                          requestCreation = requestCreation.withJsonBody(actualObj,PUT);
                                          result = route(requestCreation);
