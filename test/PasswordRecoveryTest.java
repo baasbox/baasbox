@@ -182,7 +182,7 @@ public class PasswordRecoveryTest extends AbstractUserTest
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						result=routeAndCall(request);
-						assertRoute(result, "testTokenPasswordRecovery.loginWithOlderPassword", Status.UNAUTHORIZED, "{\"result\":\"error\",\"message\":\"User "+sFakeUser+" is not authorized to access\",\"resource\":\"/me\",\"method\":\"GET\",\"request_header\":{\"AUTHORIZATION\":[\""+sAuthEnc+"\"],\"X-BAASBOX-APPCODE\":[\""+TestConfig.VALUE_APPCODE+"\"]},\"API_version\":\""+BBConfiguration.getApiVersion()+"\",\"http_code\":"+Status.UNAUTHORIZED+"}", true);	
+						assertRoute(result, "testTokenPasswordRecovery.loginWithOlderPassword", Status.UNAUTHORIZED, "{\"result\":\"error\",\"message\":\"User "+sFakeUser+" is not authorized to access\",\"resource\":\"/me\",\"method\":\"GET\",\"request_header\":{\"AUTHORIZATION\":[\""+sAuthEnc+"\"],\"X-BAASBOX-APPCODE\":[\""+TestConfig.VALUE_APPCODE+"\"]},\"API_version\":\""+BBConfiguration.getApiVersion()+"\",\"db_schema_version\":\"" + BBConfiguration.getDBVersion() + "\",\"http_code\":"+Status.UNAUTHORIZED+"}", true);	
 
 						//try to authenticate with newer password
 						sAuthEnc=TestConfig.encodeAuth(sFakeUser,newPassword);
