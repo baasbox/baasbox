@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
@@ -120,17 +122,25 @@ public class WrapResponse {
 	} 
 
 	
-	private SimpleResult onCustomCode(int statusCode, RequestHeader request, String data) throws IOException {
+	private SimpleResult onCustomCode(int statusCode, RequestHeader request, String data) throws Exception {
 		CustomHttpCode customCode = CustomHttpCode.getFromBbCode(statusCode);
-		ObjectNode result=null;
 		if (customCode.getType().equals("error")){
+			ObjectNode result=null;
 			result = prepareError(request, data);
+			result.put("http_code", customCode.getHttpCode());
+			result.put("bb_code", String.valueOf(customCode.getBbCode()));
+			return Results.status(customCode.getHttpCode(), result);	
 		}else{
-			result= prepareOK(statusCode, request, data);
+			StringBuilder toReturn = new StringBuilder("{\"http_code\":")
+						   .append(customCode.getHttpCode())
+						   .append(",\"bb_code\":")
+						   .append(String.valueOf(customCode.getBbCode()))
+						   .append(",")
+						   .append(prepareOK(request, data))
+						   .append("}");
+			return Results.status(customCode.getHttpCode(), toReturn.toString());
 		}
-		result.put("http_code", customCode.getHttpCode());
-		result.put("bb_code", String.valueOf(customCode.getBbCode()));
-		return Results.status(customCode.getHttpCode(), result);	
+
 	}
 	
 	
@@ -167,20 +177,32 @@ public class WrapResponse {
 		  return  Results.status(statusCode,result);
 	}
 
-    private ObjectNode prepareOK(int statusCode,RequestHeader request, String stringBody) throws IOException{
-		ObjectMapper mapper = BBJson.mapper();
-		ObjectNode result = Json.newObject();
-		setCallIdOnResult(request, result);
-		result.put("result", "ok");
-		try {
-			result.put("data", mapper.readTree(stringBody));
-		} catch (JsonProcessingException e) {
-			result.put("data", stringBody);
-		} catch (IOException e) {
-			if (stringBody.isEmpty()) result.put("data", "");
-			else throw new IOException("Error parsing stringBody: " + stringBody,e);
+    private String prepareOK(RequestHeader request, String stringBody) throws Exception{
+		StringBuilder toReturn = new StringBuilder(stringBody == null? 100 : stringBody.length() + 100);
+		try{
+			toReturn.append("\"result\":\"ok\",")
+					.append(setCallIdOnResult(request))
+					.append("\"data\":");
+					if (stringBody == null){
+						toReturn.append("null");
+					}else if (StringUtils.equals(stringBody,"null")) { //the body contains null (as a string with a n-u-l-l characters sequence, and this must be no wrapped into " like a normal string content
+						toReturn.append("null");
+					}else if (StringUtils.startsWithAny(stringBody, new String[]{"{","["})) { //the body to return is a JSON and must be appended as-is
+						toReturn.append(stringBody);
+					}else if (stringBody.startsWith("\"") && stringBody.endsWith("\"")){ 
+						//the body to return is a simple String already wrapped. Only quotes must be escaped (?)
+						toReturn.append(stringBody/*.replace("\"","\\\"")*/);
+					} else if (NumberUtils.isNumber(stringBody)){ 
+						toReturn.append(stringBody);
+					}else if ("true".equals(stringBody) || "false".equals(stringBody)){ 
+						toReturn.append(stringBody);
+					} else {//the body is a just a simple string and must be wrapped
+							toReturn.append("\"").append(stringBody/*.replace("\"","\\\"")*/).append("\"");
+					}
+		} catch (Throwable e) {
+			throw new Exception("Error parsing stringBody: " + StringUtils.abbreviate(stringBody, 100),e);
 		}    
-		return result;
+		return toReturn.toString();
     }
 
 
@@ -192,6 +214,12 @@ public class WrapResponse {
 		String callId = request.getQueryString("call_id");
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
+	
+	private String setCallIdOnResult(RequestHeader request) {
+		String callId = request.getQueryString("call_id");
+		if (!StringUtils.isEmpty(callId)) return new StringBuilder("\"call_id\":\"").append(callId.replace("\"","\\\"") + "\",").toString();
+		else return "";
+	}
 
 	private void setServerTime(Http.Response response) {
 		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
@@ -199,10 +227,13 @@ public class WrapResponse {
 		response.setHeader("Date",httpDate);
 	}
 
-	private SimpleResult onOk(int statusCode,RequestHeader request, String stringBody) throws IOException  {
-		ObjectNode result = prepareOK(statusCode, request, stringBody);
-		result.put("http_code", statusCode);
-		return Results.status(statusCode,result); 
+	private SimpleResult onOk(int statusCode,RequestHeader request, String stringBody) throws Exception  {
+		StringBuilder toReturn = new StringBuilder("{")
+										.append(prepareOK(request, stringBody))
+										.append(",\"http_code\":")
+										.append(statusCode)
+										.append("}");
+		return Results.status(statusCode,toReturn.toString()); 
 	}
 
 	public SimpleResult wrap(Context ctx, F.Promise<SimpleResult> simpleResult) throws Throwable {
@@ -265,9 +296,9 @@ public class WrapResponse {
 			try {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 			}catch (Throwable e){}
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 		}
 		setServerTime(ctx.response());
+		ctx.response().setContentType("application/json; charset=utf-8");
 		ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
@@ -301,7 +332,7 @@ public class WrapResponse {
 			    if(result.getWrappedResult() instanceof ChunkedResult<?>){
 			    	return result;
 			    }
-			    	
+			    
 				final byte[] body = JavaResultExtractor.getBody(result);
 				String stringBody = new String(body, "UTF-8");
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
@@ -333,9 +364,10 @@ public class WrapResponse {
 				try {
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 				}catch (Throwable e){}
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 			}
+			setServerTime(ctx.response());
 			ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
+			ctx.response().setContentType("application/json; charset=utf-8");
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return result;
 		}); //map
