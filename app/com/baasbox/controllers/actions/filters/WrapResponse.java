@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
@@ -193,6 +194,8 @@ public class WrapResponse {
 						toReturn.append(stringBody/*.replace("\"","\\\"")*/);
 					} else if (NumberUtils.isNumber(stringBody)){ 
 						toReturn.append(stringBody);
+					}else if ("true".equals(stringBody) || "false".equals(stringBody)){ 
+						toReturn.append(stringBody);
 					} else {//the body is a just a simple string and must be wrapped
 							toReturn.append("\"").append(stringBody/*.replace("\"","\\\"")*/).append("\"");
 					}
@@ -295,7 +298,7 @@ public class WrapResponse {
 			}catch (Throwable e){}
 		}
 		setServerTime(ctx.response());
-		ctx.response().setContentType("application/json");
+		ctx.response().setContentType("application/json; charset=utf-8");
 		ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return result;
@@ -364,7 +367,7 @@ public class WrapResponse {
 			}
 			setServerTime(ctx.response());
 			ctx.response().setHeader("Content-Length", Long.toString(JavaResultExtractor.getBody(result).length));
-			ctx.response().setContentType("application/json");
+			ctx.response().setContentType("application/json; charset=utf-8");
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return result;
 		}); //map
