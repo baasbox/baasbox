@@ -35,6 +35,7 @@ import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http;
 import play.mvc.Http.Context;
+import play.mvc.Http.Request;
 import play.mvc.Http.RequestHeader;
 import play.mvc.Results;
 import play.mvc.SimpleResult;
@@ -122,7 +123,8 @@ public class WrapResponse {
 	} 
 
 	
-	private SimpleResult onCustomCode(int statusCode, RequestHeader request, String data) throws Exception {
+	private SimpleResult onCustomCode(int statusCode, Context ctx, String data) throws Exception {
+		Request request = ctx.request();
 		CustomHttpCode customCode = CustomHttpCode.getFromBbCode(statusCode);
 		if (customCode.getType().equals("error")){
 			ObjectNode result=null;
@@ -136,7 +138,7 @@ public class WrapResponse {
 						   .append(",\"bb_code\":")
 						   .append(String.valueOf(customCode.getBbCode()))
 						   .append(",")
-						   .append(prepareOK(request, data))
+						   .append(prepareOK(ctx, data))
 						   .append("}");
 			return Results.status(customCode.getHttpCode(), toReturn.toString());
 		}
@@ -144,44 +146,48 @@ public class WrapResponse {
 	}
 	
 	
-	private SimpleResult onUnauthorized(RequestHeader request, String error) {
-		  ObjectNode result = prepareError(request, error);
-		  result.put("http_code", 401);
-		   return Results.unauthorized(result);
-		  
+	private SimpleResult onUnauthorized(Context ctx, String error) {
+		Request request = ctx.request();
+		ObjectNode result = prepareError(request, error);
+		result.put("http_code", 401);
+		return Results.unauthorized(result);  
 	}  
 	  
-	private SimpleResult onForbidden(RequestHeader request, String error) {
-		  ObjectNode result = prepareError(request, error);
-		  result.put("http_code", 403);
-		  return Results.forbidden(result);
+	private SimpleResult onForbidden(Context ctx, String error) {
+		Request request = ctx.request();
+		ObjectNode result = prepareError(request, error);
+		result.put("http_code", 403);
+		return Results.forbidden(result);
 	}
 	  
-	private SimpleResult onBadRequest(RequestHeader request, String error) {
-		  ObjectNode result = prepareError(request, error);
-		  return  Results.badRequest(result);
-		  
+	private SimpleResult onBadRequest(Context ctx, String error) {
+		Request request = ctx.request();
+		ObjectNode result = prepareError(request, error);
+		return  Results.badRequest(result);  
 	} 
 	
   
-    private SimpleResult onResourceNotFound(RequestHeader request,String error) {
-		  ObjectNode result = prepareError(request, error);
-		  result.put("http_code", 404);
-		  return Results.notFound(result);
-		  
+    private SimpleResult onResourceNotFound(Context ctx,String error) {
+		Request request = ctx.request();
+		ObjectNode result = prepareError(request, error);
+		result.put("http_code", 404);
+		return Results.notFound(result);  
     }
     
-    private SimpleResult onDefaultError(int statusCode,RequestHeader request,String error) {
-		  ObjectNode result = prepareError(request, error);
-		  result.put("http_code", statusCode);
-		  return  Results.status(statusCode,result);
+    private SimpleResult onDefaultError(int statusCode,Context ctx,String error) {
+		Request request = ctx.request();
+		ObjectNode result = prepareError(request, error);
+		result.put("http_code", statusCode);
+		return  Results.status(statusCode,result);
 	}
 
-    private String prepareOK(RequestHeader request, String stringBody) throws Exception{
+    private String prepareOK(Context ctx, String stringBody) throws Exception{
+		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder(stringBody == null? 100 : stringBody.length() + 100);
 		try{
 			toReturn.append("\"result\":\"ok\",")
 					.append(setCallIdOnResult(request))
+					.append(setMoreField(ctx))
 					.append("\"data\":");
 					if (stringBody == null){
 						toReturn.append("null");
@@ -206,6 +212,15 @@ public class WrapResponse {
     }
 
 
+	private String setMoreField(Context ctx) {
+		String more = ctx.response().getHeaders().get("X-BB-MORE");
+		String toRet = "";
+		if (!StringUtils.isEmpty(more)) {
+			toRet = new StringBuilder("\"more\":").append(more).append(",").toString();
+		}
+		return toRet;
+	}
+
 	/**
 	 * @param request
 	 * @param result
@@ -227,9 +242,10 @@ public class WrapResponse {
 		response.setHeader("Date",httpDate);
 	}
 
-	private SimpleResult onOk(int statusCode,RequestHeader request, String stringBody) throws Exception  {
+	private SimpleResult onOk(int statusCode,Context ctx, String stringBody) throws Exception  {
+		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder("{")
-										.append(prepareOK(request, stringBody))
+										.append(prepareOK(ctx, stringBody))
 										.append(",\"http_code\":")
 										.append(statusCode)
 										.append("}");
@@ -268,24 +284,24 @@ public class WrapResponse {
 		    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
 			      switch (statusCode) {
-			      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
+			      	case 400: 	result =onBadRequest(ctx,stringBody);
 			      				break;
-			      	case 401: 	result =onUnauthorized(ctx.request(),stringBody);
+			      	case 401: 	result =onUnauthorized(ctx,stringBody);
 			      				break;
-			      	case 403: 	result =onForbidden(ctx.request(),stringBody);
+			      	case 403: 	result =onForbidden(ctx,stringBody);
 			      				break;
-			      	case 404: 	result =onResourceNotFound(ctx.request(),stringBody);
+			      	case 404: 	result =onResourceNotFound(ctx,stringBody);
 			      				break;
 			      	default:  	
 			      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
-			      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
+			      	        result = onCustomCode(statusCode,ctx,stringBody);		
 			      		}else {
-							result =onDefaultError(statusCode,ctx.request(),stringBody);
+							result =onDefaultError(statusCode,ctx,stringBody);
 						}
 			      	break;
 			      }
 		    }else{ //status is not an error
-		    	result=onOk(statusCode,ctx.request(),stringBody);
+		    	result=onOk(statusCode,ctx,stringBody);
 		    } //if (statusCode>399)
 			if (statusCode==204) result = Results.noContent();
 			try {
@@ -338,22 +354,22 @@ public class WrapResponse {
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 				if (statusCode>399){	//an error has occured
 				      switch (statusCode) {
-				      	case 400: 	result =onBadRequest(ctx.request(),stringBody);
+				      	case 400: 	result =onBadRequest(ctx,stringBody);
 				      				break;
-				      	case 401: 	result =onUnauthorized(ctx.request(),stringBody);
+				      	case 401: 	result =onUnauthorized(ctx,stringBody);
 				      				break;
-				      	case 403: 	result =onForbidden(ctx.request(),stringBody);
+				      	case 403: 	result =onForbidden(ctx,stringBody);
 				      				break;
-				      	case 404: 	result =onResourceNotFound(ctx.request(),stringBody);
+				      	case 404: 	result =onResourceNotFound(ctx,stringBody);
 				      				break;
 				      	default:  	
 				      		if (CustomHttpCode.getFromBbCode(statusCode)!=null){
-				      	        result = onCustomCode(statusCode,ctx.request(),stringBody);		
-				      		}else result =onDefaultError(statusCode,ctx.request(),stringBody);
+				      	        result = onCustomCode(statusCode,ctx,stringBody);		
+				      		}else result =onDefaultError(statusCode,ctx,stringBody);
 				      	break;
 				      }
 			    }else{ //status is not an error
-			    	result=onOk(statusCode,ctx.request(),stringBody);
+			    	result=onOk(statusCode,ctx,stringBody);
 			    } //if (statusCode>399)
 				if (statusCode==204) result = Results.noContent();
 				try {
