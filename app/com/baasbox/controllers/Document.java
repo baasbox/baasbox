@@ -162,7 +162,16 @@ public class Document extends Controller {
         return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
             List<ODocument> result;
             String ret = "{[]}";
+            if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
             result = DocumentService.getDocuments(collectionName, criteria);
+            if (criteria.isPaginationEnabled()){
+            	if (result.size() > criteria.getRecordPerPage().intValue()){
+            		response().setHeader("X-BB-MORE", "true");
+            		result = result.subList(0, criteria.getRecordPerPage());
+            	} else {
+            		response().setHeader("X-BB-MORE", "false");
+            	}
+            }
             if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("count: " + result.size());
             ret = prepareResponseToJson(result);
             return ok(ret);

@@ -237,7 +237,7 @@ public class DbHelper {
 		}
 
 		if (!count && criteria.getPage() != null && criteria.getPage() != -1) {
-			ret += " limit " + criteria.getRecordPerPage();
+			ret += " limit " + (criteria.getRecordPerPage() + (criteria.isMoreEnabled() ? 1:0));
 		}
 		if (BaasBoxLogger.isDebugEnabled())
 			BaasBoxLogger.debug("queryBuilder: " + ret);

@@ -42,6 +42,7 @@ public class QueryParams implements IQueryParametersKeys{
 	private String orderBy="";
 	private Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
 	private Object[] params={};
+	private boolean more = false;
 
 
 	protected QueryParams(){};
@@ -365,5 +366,21 @@ public class QueryParams implements IQueryParametersKeys{
 
 	public String getFields() {
 		return fields;
+	}
+
+	public void enablePaginationMore(){
+		this.more = true;
+	}
+
+	public void disablePaginationMore(){
+		this.more = false;
+	}
+	
+	public boolean isMoreEnabled() {
+		return more;
+	}
+
+	public boolean isPaginationEnabled() {
+		return (this.page != null && this.page > -1);
 	}
 }
