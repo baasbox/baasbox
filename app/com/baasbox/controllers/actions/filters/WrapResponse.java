@@ -243,12 +243,12 @@ public class WrapResponse {
 	}
 
 	private SimpleResult onOk(int statusCode,Context ctx, String stringBody) throws Exception  {
-		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder("{")
-										.append(prepareOK(ctx, stringBody))
-										.append(",\"http_code\":")
-										.append(statusCode)
-										.append("}");
+										.append(prepareOK(ctx, stringBody));
+		stringBody = null;
+		toReturn.append(",\"http_code\":")
+				.append(statusCode)
+				.append("}");
 		return Results.status(statusCode,toReturn.toString()); 
 	}
 
@@ -280,6 +280,7 @@ public class WrapResponse {
 		    }
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
+			BaasBoxLogger.debug("++++body:",body.toString());
 			String stringBody = new String(body, "UTF-8");
 		    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
@@ -332,7 +333,6 @@ public class WrapResponse {
 			String username=(String) ctx.args.get("username");
 			if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
 			
-		    byte[] resultContent=null;
 			if (BBConfiguration.getWrapResponse()){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 				final int statusCode = result.getWrappedSimpleResult().header().status();
@@ -344,12 +344,14 @@ public class WrapResponse {
 			    	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response is a file, no wrap will be applied");
 			    	return result;
 			    }
-			    
-			    if(result.getWrappedResult() instanceof ChunkedResult<?>){
+
+			    if(ctx.response().getHeaders().get("X-BB-NOWRAP") !=null && 
+			    		ctx.response().getHeaders().get("X-BB-NOWRAP").equals("true")){
 			    	return result;
 			    }
-			    
-				final byte[] body = JavaResultExtractor.getBody(result);
+
+				byte[] body = JavaResultExtractor.getBody(result);  //here the promise will be resolved
+				BaasBoxLogger.debug("****body:",body.toString());
 				String stringBody = new String(body, "UTF-8");
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 				if (statusCode>399){	//an error has occured
