@@ -12,7 +12,7 @@ import play.mvc.Results.Chunks;
 import play.mvc.Results.StringChunks;
 import scala.concurrent.duration.FiniteDuration;
 
-import com.baasbox.controllers.actions.filters.WrapResponseHelper;
+import com.baasbox.BBConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.IQueryParametersKeys;
@@ -23,6 +23,32 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 public abstract class  AbstractOrientChunker extends StringChunks {
+	
+		private class MyBuffer{
+		    private StringBuilder internalBuffer;
+		    private Out<String> out;
+
+		    public MyBuffer(Out<String> out, int bufferSize) {
+		        this.out = out;
+		        this.internalBuffer = new StringBuilder(bufferSize);
+		    }
+
+		    public void write(String data) {
+		        if ((internalBuffer.length() + data.length()) > internalBuffer.capacity()) {
+		        	out.write(internalBuffer.toString());
+		        	internalBuffer.setLength(0);
+		        }
+		        internalBuffer.append(data);
+		    }
+
+		    public void close() {
+		        if (internalBuffer.length() > 0){
+		            out.write(internalBuffer.toString());
+		        }
+		        out.close();
+		        out.write("STOP!"); //force the disconnection
+		    }
+		}
     	
 		private String appcode;
 		private String username;
@@ -46,7 +72,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
     	
 		@Override //StringChunks
 		public void onReady(play.mvc.Results.Chunks.Out<String> out) {
-			BaasBoxLogger.debug("***onReady start!");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Start to stream chunked response");
 			this.go(out);
 		}
 		
@@ -55,7 +81,8 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 		private void go(Chunks.Out<String> out){
 			final AbstractOrientChunker that = this;
 			out.onDisconnected(()->{
-    			this.isDisconnected.getAndSet(true);
+    			that.isDisconnected.getAndSet(true);
+    			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Aborting chunked response due client disconnection");
     		});
     		Akka.system().scheduler().scheduleOnce(
     			    new FiniteDuration(0, TimeUnit.MILLISECONDS), //runs as soon as possible
@@ -64,41 +91,42 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 						public void run() {
 							try {
 								//that.request.headers();
-								out.write(WrapResponseHelper.preludeOk(that.ctx));
-								out.write("[");
+								out.write("{" + WrapResponseHelper.preludeOk(that.ctx) + "[");
 								DbHelper.open(that.appcode,that.username,password);
 								OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(that.query);
 								qry.setResultListener(new OCommandResultListener() {
+									MyBuffer buffer = new MyBuffer(out, BBConfiguration.getChunkSize());
 									boolean firstRecord=true;
 									boolean more = false;
 									AtomicInteger numOfRecords = new AtomicInteger(0);
 									@Override
 									public boolean result(Object iRecord) {
 										numOfRecords.incrementAndGet();
-										if (that.criteria.isPaginationEnabled()){ //"more" field!
+										if (that.criteria.isPaginationEnabled()){ //"more" field is required (set by the controller)!
 							            	if (numOfRecords.get() > criteria.getRecordPerPage().intValue()){
+							            		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Stop streaming chunked response due pagination");
 							            		this.more=true;
 							            		return false;
 							            	} 
 							            }
 										String str= prepareDocToJson((ODocument) iRecord);
-										BaasBoxLogger.debug("***Scrivo... " + str.length() + "bytes");
 										if (!firstRecord){
-											out.write(",");
+											buffer.write(",");
 										}else{
+											if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: First record written into the buffer");
 											firstRecord=false;
 										}
-										out.write(str);
+										buffer.write(str);
 										return !that.isDisconnected.get();
 									}
 									
 									@Override
 									public void end() {
-										BaasBoxLogger.debug("***Chiudo... ");
-										out.write("]");
-										out.write(",\"more\":" + more);
-										out.write(WrapResponseHelper.endOk(that.ctx,200));
-										out.close();
+										buffer.write("]");
+										if (that.criteria.isPaginationEnabled()) buffer.write(",\"more\":" + more);
+										buffer.write(WrapResponseHelper.endOk(that.ctx,200) + "}");
+										buffer.close();
+										if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Finished to stream chunked response ({} records sent)",numOfRecords.get());
 									}
 								});
 								OCommandRequest command = DbHelper.getConnection().command(qry);

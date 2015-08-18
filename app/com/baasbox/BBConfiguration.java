@@ -127,6 +127,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
 	}
 	
+	public static Boolean isChunkedEnabled(){
+		return configuration.getBoolean(CHUNKED_RESPONSE);
+	}
+	
+	public static int getChunkSize(){
+		return configuration.getInt(CHUNK_SIZE);
+	}
+	
 	//metrics
 	public static boolean getComputeMetrics() {
 		if (computeMetrics==null) 

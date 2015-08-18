@@ -44,6 +44,8 @@ import play.mvc.SimpleResult;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
+import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.controllers.helpers.WrapResponseHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -231,6 +233,7 @@ public class WrapResponse {
 										.append(prepareOK(ctx, stringBody));
 		stringBody = null;
 		toReturn.append(WrapResponseHelper.endOk(ctx, statusCode));
+		toReturn.append("}");
 		return Results.status(statusCode,toReturn.toString()); 
 	}
 
@@ -257,12 +260,12 @@ public class WrapResponse {
 		    	return result;
 		    }
 		    
-		    if(result.getWrappedResult() instanceof ChunkedResult<?>){
+			String transferEncoding = JavaResultExtractor.getHeaders(result).get(HttpConstants.Headers.TRANSFER_ENCODING);
+			if(transferEncoding!=null && transferEncoding.equals(HttpConstants.HttpProtocol.CHUNKED)){
 		    	return result;
 		    }
 		    	
 			final byte[] body = JavaResultExtractor.getBody(result);
-			BaasBoxLogger.debug("++++body:",body.toString());
 			String stringBody = new String(body, "UTF-8");
 		    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 			if (statusCode>399){	//an error has occured
@@ -327,13 +330,12 @@ public class WrapResponse {
 			    	return result;
 			    }
 
-				String transferEncoding = JavaResultExtractor.getHeaders(result).get("Transfer-Encoding");
-
-				if(transferEncoding!=null && transferEncoding.equals("chunked")){
+				String transferEncoding = JavaResultExtractor.getHeaders(result).get(HttpConstants.Headers.TRANSFER_ENCODING);
+				if(transferEncoding!=null && transferEncoding.equals(HttpConstants.HttpProtocol.CHUNKED)){
 			    	return result;
 			    }
+				
 			    byte[] body = JavaResultExtractor.getBody(result);  //here the promise will be resolved
-				BaasBoxLogger.debug("****body:",body.toString());
 				String stringBody = new String(body, "UTF-8");
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 				if (statusCode>399){	//an error has occured

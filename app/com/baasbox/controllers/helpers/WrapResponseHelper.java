@@ -1,4 +1,4 @@
-package com.baasbox.controllers.actions.filters;
+package com.baasbox.controllers.helpers;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -11,7 +11,7 @@ public class WrapResponseHelper {
 	public static String preludeOk(Context ctx) {
 		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder();
-		return toReturn.append("{\"result\":\"ok\",")
+		return toReturn.append("\"result\":\"ok\",")
 		.append(setCallIdOnResult(request))
 		.append(setMoreField(ctx))
 		.append("\"data\":").toString();
@@ -20,8 +20,7 @@ public class WrapResponseHelper {
 	public static String endOk(Context ctx,int statusCode) {
 		StringBuilder toReturn = new StringBuilder();
 		return toReturn.append(",\"http_code\":")
-		.append(statusCode)
-		.append("}").toString();
+		.append(statusCode).toString();
 	}
 	
 	public static String setCallIdOnResult(RequestHeader request) {

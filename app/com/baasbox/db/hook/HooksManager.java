@@ -86,7 +86,7 @@ public class HooksManager {
 		while (it.hasNext()){
 			ORecordHook h = it.next();
 			if (h instanceof HidePassword) {
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Enable: "+ enable+ " " + ((BaasBoxHook) h).getHookName() + " hook");
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Enable: "+ enable+ " " + ((BaasBoxHook) h).getHookName() + " hook");
 				((HidePassword) h).enable(enable);
 				break;
 			}

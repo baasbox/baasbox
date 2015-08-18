@@ -40,12 +40,14 @@ import play.mvc.Result;
 import play.mvc.With;
 import scala.concurrent.duration.FiniteDuration;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.controllers.helpers.DocumentOrientChunker;
+import com.baasbox.controllers.helpers.HttpConstants;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -162,10 +164,15 @@ public class Document extends Controller {
     }
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-    public static Promise<Result> getDocuments(String collectionName) {
+    public static Promise<Result> getDocuments(String collectionName) throws InvalidAppCodeException {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
 
+        if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
+        	return F.Promise.pure(getDocumentsChunked(collectionName));
+        }
+        		
         Context ctx = Http.Context.current.get();
         QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 
@@ -201,11 +208,9 @@ public class Document extends Controller {
                         }));
 
     }
-    
-
-    
-    @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-    public static Result getDocumentsAsync(String collectionName) throws InvalidAppCodeException {
+        
+    //this method is called by getDocuments()
+    private static Result getDocumentsChunked(String collectionName) throws InvalidAppCodeException {
     	final Context ctx = Http.Context.current.get();
     	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     	

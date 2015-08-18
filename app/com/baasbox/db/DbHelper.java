@@ -488,8 +488,8 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 		try {
 			db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.get();
-			if (BaasBoxLogger.isDebugEnabled())
-				BaasBoxLogger.debug("Connection id: " + db + " "
+			if (BaasBoxLogger.isTraceEnabled())
+				BaasBoxLogger.trace("Connection id: " + db + " "
 						+ ((Object) db).hashCode());
 		} catch (ODatabaseException e) {
 			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: "
