@@ -430,6 +430,7 @@ public class DbHelper {
 	}
 
 	public static boolean isConnectedAsAdmin(boolean excludeInternal) {
+		if (getConnection()==null) return false;
 		OUser user = getConnection().getUser();
 		Set<ORole> roles = user.getRoles();
 		boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN

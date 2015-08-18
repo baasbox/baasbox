@@ -351,7 +351,6 @@ public class Global extends GlobalSettings {
 
 	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
-		
 		return new Class[]{GzipFilter.class,com.baasbox.filters.LoggingFilter.class};
 	}
 

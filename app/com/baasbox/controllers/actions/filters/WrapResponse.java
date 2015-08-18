@@ -22,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
+import play.api.libs.iteratee.Enumerator;
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.F;
@@ -345,12 +347,12 @@ public class WrapResponse {
 			    	return result;
 			    }
 
-			    if(ctx.response().getHeaders().get("X-BB-NOWRAP") !=null && 
-			    		ctx.response().getHeaders().get("X-BB-NOWRAP").equals("true")){
+				String transferEncoding = JavaResultExtractor.getHeaders(result).get("Transfer-Encoding");
+
+				if(transferEncoding!=null && transferEncoding.equals("chunked")){
 			    	return result;
 			    }
-
-				byte[] body = JavaResultExtractor.getBody(result);  //here the promise will be resolved
+			    byte[] body = JavaResultExtractor.getBody(result);  //here the promise will be resolved
 				BaasBoxLogger.debug("****body:",body.toString());
 				String stringBody = new String(body, "UTF-8");
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);

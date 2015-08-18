@@ -22,17 +22,13 @@ import java.net.URLDecoder;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 
+import play.libs.Akka;
 import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -42,14 +38,14 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
-import views.html.admin.main_.content_.assets_.newAsset;
+import scala.concurrent.duration.FiniteDuration;
 
-import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
+import com.baasbox.controllers.helpers.OrientChunker;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -79,13 +75,10 @@ import com.baasbox.util.JSONFormats.Formats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
@@ -209,82 +202,51 @@ public class Document extends Controller {
 
     }
     
-    static class OrientChunker extends StringChunks implements OCommandResultListener{
-    	private final static Object END_MARKER = new Object();
-    	private final static Object START_MARKER = new Object();
-    	BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
-    	
-    	public OrientChunker(){
-    		queue.offer(START_MARKER);
+    
+    public static class registerOutChannelSomewhere{
+    	public void go(Chunks.Out<String> out){
+    		Akka.system().scheduler().scheduleOnce(
+    			    new FiniteDuration(0, TimeUnit.MILLISECONDS), 
+    			    new Runnable () {
+						@Override
+						public void run() {
+							try {
+								String lorem = "0123456789";
+								String finale=lorem;
+								for (int i=0;i<100;i++ ) finale=finale+lorem;
+	    			    		for (int i=0;i<10;i++){
+	    			    				out.write(i+": "+finale +"<br><br><br>");
+	    			    				BaasBoxLogger.debug("+++++: " + i + " size:" + finale.length());
+	    			    				Thread.sleep(2000);
+	    			    		}
+	    			    	} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+	    			        out.close();
+						}
+					}, Akka.system().dispatcher());
     	}
-    	
-		@Override //StringChunks
-		public void onReady(play.mvc.Results.Chunks.Out<String> out) {
-			BaasBoxLogger.debug("***onReady start!");
-			while (true){
-				Object o;
-				try {
-					o = queue.take();
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					return;
-				}
-				if(o == END_MARKER){
-					out.write("]");
-					out.close();
-					BaasBoxLogger.debug("***onReady end!");
-					return;
-				}else if (o == START_MARKER){
-					out.write("[");
-				}else {
-					out.write (o.toString());
-				}
-				BaasBoxLogger.debug("***onReady loop!");
-			}
-			
-		}
-
-		@Override //OCommandResultListener
-		public boolean result(Object iRecord) {
-			BaasBoxLogger.debug("***result!");
-			queue.offer(((ODocument)iRecord).toJSON());
-			return true;	
-		}
-
-		@Override //OCommandResultListener
-		public void end() {
-			BaasBoxLogger.debug("***end!");
-			// TODO Auto-generated method stub
-			queue.offer(END_MARKER);
-		}
-    }//OrientChunker
+    }
     
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Result getDocumentsAsync(String collectionName) throws InvalidAppCodeException {
     	final Context ctx = Http.Context.current.get();
     	ctx.response().setHeader("X-BB-NOWRAP","true");
-       
     	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     	OrientChunker chunks = new OrientChunker();
     	
-    	F.Promise.promise(DbHelper.withDbFromContext(ctx, () ->  {
-    		final String appcode= DbHelper.getCurrentAppCode();
-    		final String user= DbHelper.getCurrentHTTPUsername();
-    		final String pass= DbHelper.getCurrentHTTPPassword();
-    		
-    		OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
-    		
-    		DbHelper.open(appcode,user,pass);
-    		qry.setResultListener(chunks);
-    		OCommandRequest command = DbHelper.getConnection().command(qry);
-			BaasBoxLogger.debug("***** esecuzione query");
-			command.execute();
-    		DbHelper.close(DbHelper.getConnection());
-    		return null;
-    	}));
-    	
+		final String appcode= DbHelper.getCurrentAppCode();
+		final String user= DbHelper.getCurrentHTTPUsername();
+		final String pass= DbHelper.getCurrentHTTPPassword();    		
+		
+		chunks.setAppCode(appcode);
+		chunks.setUsername(user);
+		chunks.setPassword(pass);
+		chunks.setQuery(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
+		chunks.setRequestHeader(request());
     	return ok(chunks).as("application/json");
-    	
+
     }
         
 
