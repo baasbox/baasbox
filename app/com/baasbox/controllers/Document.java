@@ -45,7 +45,7 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
-import com.baasbox.controllers.helpers.OrientChunker;
+import com.baasbox.controllers.helpers.DocumentOrientChunker;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
@@ -202,51 +202,26 @@ public class Document extends Controller {
 
     }
     
-    
-    public static class registerOutChannelSomewhere{
-    	public void go(Chunks.Out<String> out){
-    		Akka.system().scheduler().scheduleOnce(
-    			    new FiniteDuration(0, TimeUnit.MILLISECONDS), 
-    			    new Runnable () {
-						@Override
-						public void run() {
-							try {
-								String lorem = "0123456789";
-								String finale=lorem;
-								for (int i=0;i<100;i++ ) finale=finale+lorem;
-	    			    		for (int i=0;i<10;i++){
-	    			    				out.write(i+": "+finale +"<br><br><br>");
-	    			    				BaasBoxLogger.debug("+++++: " + i + " size:" + finale.length());
-	    			    				Thread.sleep(2000);
-	    			    		}
-	    			    	} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-	    			        out.close();
-						}
-					}, Akka.system().dispatcher());
-    	}
-    }
+
     
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Result getDocumentsAsync(String collectionName) throws InvalidAppCodeException {
     	final Context ctx = Http.Context.current.get();
-    	ctx.response().setHeader("X-BB-NOWRAP","true");
     	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-    	OrientChunker chunks = new OrientChunker();
     	
 		final String appcode= DbHelper.getCurrentAppCode();
 		final String user= DbHelper.getCurrentHTTPUsername();
 		final String pass= DbHelper.getCurrentHTTPPassword();    		
 		
-		chunks.setAppCode(appcode);
-		chunks.setUsername(user);
-		chunks.setPassword(pass);
+		DocumentOrientChunker chunks = new DocumentOrientChunker(
+				appcode
+				,user
+				,pass
+				,ctx);
+		if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
 		chunks.setQuery(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
-		chunks.setRequestHeader(request());
-    	return ok(chunks).as("application/json");
-
+    	
+		return ok(chunks).as("application/json");
     }
         
 

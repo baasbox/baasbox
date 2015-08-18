@@ -1,32 +1,48 @@
 package com.baasbox.controllers.helpers;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.libs.Akka;
+import play.mvc.Http.Context;
 import play.mvc.Http.Request;
 import play.mvc.Results.Chunks;
 import play.mvc.Results.StringChunks;
 import scala.concurrent.duration.FiniteDuration;
 
+import com.baasbox.controllers.actions.filters.WrapResponseHelper;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
-public class OrientChunker extends StringChunks {
+public abstract class  AbstractOrientChunker extends StringChunks {
     	
 		private String appcode;
 		private String username;
 		private String password;
-		private String query;
+		private String query = "";
 		private AtomicBoolean isDisconnected = new AtomicBoolean(false);
-		private Request request;
+		private Context ctx;
+		private QueryParams criteria;
     	
-    	public OrientChunker(){	super();	}
+    	protected AbstractOrientChunker(){	super();	}
+    	
+    	public AbstractOrientChunker(String appcode, String username, String password,
+    			Context ctx) {
+    		super();
+    		this.appcode = appcode;
+    		this.username = username;
+    		this.password = password;
+    		this .ctx=ctx;
+    		this.criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    	}
     	
 		@Override //StringChunks
 		public void onReady(play.mvc.Results.Chunks.Out<String> out) {
@@ -34,9 +50,10 @@ public class OrientChunker extends StringChunks {
 			this.go(out);
 		}
 		
+		protected abstract String prepareDocToJson(ODocument doc);
 
 		private void go(Chunks.Out<String> out){
-			final OrientChunker that = this;
+			final AbstractOrientChunker that = this;
 			out.onDisconnected(()->{
     			this.isDisconnected.getAndSet(true);
     		});
@@ -47,14 +64,24 @@ public class OrientChunker extends StringChunks {
 						public void run() {
 							try {
 								//that.request.headers();
+								out.write(WrapResponseHelper.preludeOk(that.ctx));
 								out.write("[");
 								DbHelper.open(that.appcode,that.username,password);
 								OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(that.query);
 								qry.setResultListener(new OCommandResultListener() {
 									boolean firstRecord=true;
+									boolean more = false;
+									AtomicInteger numOfRecords = new AtomicInteger(0);
 									@Override
 									public boolean result(Object iRecord) {
-										String str=((ODocument)iRecord).toJSON(); //TODO: prepareDocToJson()
+										numOfRecords.incrementAndGet();
+										if (that.criteria.isPaginationEnabled()){ //"more" field!
+							            	if (numOfRecords.get() > criteria.getRecordPerPage().intValue()){
+							            		this.more=true;
+							            		return false;
+							            	} 
+							            }
+										String str= prepareDocToJson((ODocument) iRecord);
 										BaasBoxLogger.debug("***Scrivo... " + str.length() + "bytes");
 										if (!firstRecord){
 											out.write(",");
@@ -69,6 +96,8 @@ public class OrientChunker extends StringChunks {
 									public void end() {
 										BaasBoxLogger.debug("***Chiudo... ");
 										out.write("]");
+										out.write(",\"more\":" + more);
+										out.write(WrapResponseHelper.endOk(that.ctx,200));
 										out.close();
 									}
 								});
@@ -100,7 +129,12 @@ public class OrientChunker extends StringChunks {
 			this.query = query;
 		}
 
-		public void setRequestHeader(Request request) {
-			this.request=request;
+		public Context getHttpContext() {
+			return this.ctx;
+		}
+		
+		public void setHttpContext(Context ctx) {
+			this.ctx=ctx;
+			this.criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 		}
     }//OrientChunker

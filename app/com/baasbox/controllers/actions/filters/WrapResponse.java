@@ -184,13 +184,9 @@ public class WrapResponse {
 	}
 
     private String prepareOK(Context ctx, String stringBody) throws Exception{
-		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder(stringBody == null? 100 : stringBody.length() + 100);
 		try{
-			toReturn.append("\"result\":\"ok\",")
-					.append(setCallIdOnResult(request))
-					.append(setMoreField(ctx))
-					.append("\"data\":");
+			toReturn.append(WrapResponseHelper.preludeOk(ctx));
 					if (stringBody == null){
 						toReturn.append("null");
 					}else if (StringUtils.equals(stringBody,"null")) { //the body contains null (as a string with a n-u-l-l characters sequence, and this must be no wrapped into " like a normal string content
@@ -214,15 +210,6 @@ public class WrapResponse {
     }
 
 
-	private String setMoreField(Context ctx) {
-		String more = ctx.response().getHeaders().get("X-BB-MORE");
-		String toRet = "";
-		if (!StringUtils.isEmpty(more)) {
-			toRet = new StringBuilder("\"more\":").append(more).append(",").toString();
-		}
-		return toRet;
-	}
-
 	/**
 	 * @param request
 	 * @param result
@@ -232,11 +219,6 @@ public class WrapResponse {
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
 	
-	private String setCallIdOnResult(RequestHeader request) {
-		String callId = request.getQueryString("call_id");
-		if (!StringUtils.isEmpty(callId)) return new StringBuilder("\"call_id\":\"").append(callId.replace("\"","\\\"") + "\",").toString();
-		else return "";
-	}
 
 	private void setServerTime(Http.Response response) {
 		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
@@ -248,9 +230,7 @@ public class WrapResponse {
 		StringBuilder toReturn = new StringBuilder("{")
 										.append(prepareOK(ctx, stringBody));
 		stringBody = null;
-		toReturn.append(",\"http_code\":")
-				.append(statusCode)
-				.append("}");
+		toReturn.append(WrapResponseHelper.endOk(ctx, statusCode));
 		return Results.status(statusCode,toReturn.toString()); 
 	}
 
