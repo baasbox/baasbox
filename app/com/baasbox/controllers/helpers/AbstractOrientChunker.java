@@ -1,5 +1,5 @@
 package com.baasbox.controllers.helpers;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -7,16 +7,20 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.libs.Akka;
 import play.mvc.Http.Context;
-import play.mvc.Http.Request;
 import play.mvc.Results.Chunks;
 import play.mvc.Results.StringChunks;
-import scala.concurrent.duration.FiniteDuration;
+import scala.concurrent.duration.Duration;
+import akka.actor.ActorRef;
+import akka.actor.Cancellable;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.QueryParams;
+import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -49,14 +53,100 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 		        out.write("STOP!"); //force the disconnection
 		    }
 		}
+		
+		private class DoTheDirtyJob extends UntypedActor {
+		  private boolean _continue = true;
+			
+		  @Override
+		  public void onReceive(Object message) {
+			  HashMap<String,Object> params = (HashMap<String,Object>) message;
+			  final Chunks.Out<String> out=(Chunks.Out<String>) params.get("out");
+			  out.onDisconnected(()->{		    			
+	    			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: The client is disconnected");
+	    			this._continue = false; //stop the data pumping....
+			  });
+			  try {
+			    DoTheDirtyJob thisActor = this;
+			    final String appcode = (String) params.get("appcode");
+			    final String username = (String) params.get("username");
+			    final String password = (String) params.get("password");
+			    
+			    final ImmutableMap<String,String[]> requestHeaders = (ImmutableMap<String,String[]>) params.get("requestHeaders");
+			    final ImmutableMap<String,String> responseHeaders = (ImmutableMap<String,String>) params.get("responseHeaders");
+			    final ImmutableMap<String,String[]> queryStrings = (ImmutableMap<String,String[]>) params.get("queryStrings");
+			    
+			    final QueryParams criteria =  (QueryParams) params.get("criteria");
+			    final String query = (String) params.get("query");
+			    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: ready to execute query: {}", query);
+			    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: opening connection");
+			    
+			  	DbHelper.open(appcode,username,password);
+				out.write("{" + WrapResponseHelper.preludeOk(
+						requestHeaders,responseHeaders,queryStrings
+						) + "["); //sends ASAP (bypassing the buffer) the prelude so to reply almost immediately to the client to avoid timeouts
+				
+				final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(query);
+				qry.setResultListener(new OCommandResultListener() {
+					MyBuffer buffer = new MyBuffer(out, BBConfiguration.getChunkSize());
+					boolean firstRecord=true;
+					boolean more = false;
+					AtomicInteger numOfRecords = new AtomicInteger(0);
+					@Override
+					public boolean result(Object iRecord) {
+						numOfRecords.incrementAndGet();
+						if (criteria.isPaginationEnabled()){ //"more" field is required (set by the controller)!
+			            	if (numOfRecords.get() > criteria.getRecordPerPage().intValue()){
+			            		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Stop streaming chunked response due pagination");
+			            		this.more=true;
+			            		return false;
+			            	} 
+			            }
+						String str= prepareDocToJson((ODocument) iRecord);
+						if (!firstRecord){
+							buffer.write(",");
+						}else{
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: First record written into the buffer");
+							firstRecord=false;
+						}
+						buffer.write(str);
+						return thisActor._continue;
+					}
+					
+					@Override
+					public void end() {
+						buffer.write("]");
+						if (criteria.isPaginationEnabled()) buffer.write(",\"more\":" + more);
+						buffer.write(WrapResponseHelper.endOk(200) + "}");
+						buffer.close();
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Finished to stream chunked response ({} records sent)",numOfRecords.get());
+					}
+				}); //setResultListener
+				OCommandRequest command = DbHelper.getConnection().command(qry);
+				command.execute();
+	    	}catch (Exception e) {
+	    		String exceptionMessage = ExceptionUtils.getFullStackTrace(e);
+	    		BaasBoxLogger.error(exceptionMessage);
+	    		if (out!=null){	
+	    			out.write("\nSorry, an error has occured!\n");
+	    			out.write(exceptionMessage);
+					out.close();
+	    		}
+			}finally{
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: closing connection");
+				DbHelper.close(DbHelper.getConnection());
+			}
+		  }//onReceive
+		} //actor DoTheDirtyJob
     	
 		private String appcode;
 		private String username;
 		private String password;
 		private String query = "";
-		private AtomicBoolean isDisconnected = new AtomicBoolean(false);
-		private Context ctx;
 		private QueryParams criteria;
+		ImmutableMap requestHeaders;
+		ImmutableMap responseHeaders;
+		ImmutableMap queryStrings;
+		
     	
     	protected AbstractOrientChunker(){	super();	}
     	
@@ -66,7 +156,9 @@ public abstract class  AbstractOrientChunker extends StringChunks {
     		this.appcode = appcode;
     		this.username = username;
     		this.password = password;
-    		this .ctx=ctx;
+    		this.requestHeaders = ImmutableMap.copyOf(ctx.request().headers());
+    		this.responseHeaders = ImmutableMap.copyOf(ctx.response().getHeaders());
+    		this.queryStrings = ImmutableMap.copyOf(ctx.request().queryString());
     		this.criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     	}
     	
@@ -76,69 +168,31 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			this.go(out);
 		}
 		
-		protected abstract String prepareDocToJson(ODocument doc);
-
 		private void go(Chunks.Out<String> out){
-			final AbstractOrientChunker that = this;
-			out.onDisconnected(()->{
-    			that.isDisconnected.getAndSet(true);
-    			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Aborting chunked response due client disconnection");
-    		});
-    		Akka.system().scheduler().scheduleOnce(
-    			    new FiniteDuration(0, TimeUnit.MILLISECONDS), //runs as soon as possible
-    			    new Runnable () {
-						@Override
-						public void run() {
-							try {
-								//that.request.headers();
-								out.write("{" + WrapResponseHelper.preludeOk(that.ctx) + "[");
-								DbHelper.open(that.appcode,that.username,password);
-								OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(that.query);
-								qry.setResultListener(new OCommandResultListener() {
-									MyBuffer buffer = new MyBuffer(out, BBConfiguration.getChunkSize());
-									boolean firstRecord=true;
-									boolean more = false;
-									AtomicInteger numOfRecords = new AtomicInteger(0);
-									@Override
-									public boolean result(Object iRecord) {
-										numOfRecords.incrementAndGet();
-										if (that.criteria.isPaginationEnabled()){ //"more" field is required (set by the controller)!
-							            	if (numOfRecords.get() > criteria.getRecordPerPage().intValue()){
-							            		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Stop streaming chunked response due pagination");
-							            		this.more=true;
-							            		return false;
-							            	} 
-							            }
-										String str= prepareDocToJson((ODocument) iRecord);
-										if (!firstRecord){
-											buffer.write(",");
-										}else{
-											if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: First record written into the buffer");
-											firstRecord=false;
-										}
-										buffer.write(str);
-										return !that.isDisconnected.get();
-									}
-									
-									@Override
-									public void end() {
-										buffer.write("]");
-										if (that.criteria.isPaginationEnabled()) buffer.write(",\"more\":" + more);
-										buffer.write(WrapResponseHelper.endOk(that.ctx,200) + "}");
-										buffer.close();
-										if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: Finished to stream chunked response ({} records sent)",numOfRecords.get());
-									}
-								});
-								OCommandRequest command = DbHelper.getConnection().command(qry);
-								command.execute();
-	    			    	} catch (Exception e) {
-	    			    		BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-								throw new RuntimeException(e);
-							}finally{
-								DbHelper.close(DbHelper.getConnection());
-							}
-						}
-					}, Akka.system().dispatcher());
+    		//prepare parameters to pass to the worker
+			HashMap<String,Object> params = new HashMap<String, Object>();
+			{
+				params.put("appcode", this.appcode);
+				params.put("username", this.username);
+				params.put("password", this.password);
+	
+				params.put("requestHeaders", this.requestHeaders);
+				params.put("responseHeaders", this.responseHeaders);
+				params.put("queryStrings", this.queryStrings);
+				
+				params.put("criteria", this.criteria);
+				params.put("query", this.query);
+				
+				params.put("out", out);
+			}
+			
+			ActorRef actorRef = Akka.system().actorOf(Props.create(DoTheDirtyJob.class, this));
+			Akka.system().scheduler().scheduleOnce(
+    				Duration.Zero(), //runs as soon as possible
+    				actorRef,
+    			    params, 
+    			    Akka.system().dispatcher(),null
+    			    );
     	}
 		
 		public void setAppCode(String appcode) {
@@ -157,12 +211,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			this.query = query;
 		}
 
-		public Context getHttpContext() {
-			return this.ctx;
-		}
 		
-		public void setHttpContext(Context ctx) {
-			this.ctx=ctx;
-			this.criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		}
+		protected abstract String prepareDocToJson(ODocument doc);
+
     }//OrientChunker

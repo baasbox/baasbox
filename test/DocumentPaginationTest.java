@@ -1,19 +1,25 @@
 import static play.test.Helpers.GET;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
 import java.io.IOException;
 
+import javax.ws.rs.core.MediaType;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.http.HttpHeaders;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import play.libs.F.Callback;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
+import play.test.TestBrowser;
 
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -58,24 +64,28 @@ public class DocumentPaginationTest extends AbstractDocumentTest {
 				}
 			});
 	}
-	
+
 	@Test 
-	public void testPagination()
+	public void testPaginationWithChunks()
 	{
 		running
 		(
-			getFakeApplication(), 
-			new Runnable() 
-			{
-				public void run() 
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
 				{
+					continueOnFail(false);
 					//get the total number of records
-					FakeRequest request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "/count");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					Result result = routeAndCall(request);
-					assertRoute(result, "count", Status.OK, null, true);
-					String resultAsString = contentAsString(result);
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					httpRequest(getURLAddress(sFakeCollection) + "/count","GET");
+					assertServer("count", Status.OK, null, true);	
+					
+					String resultAsString = getResponse();
+					
 					int numRecords=0;
 					try {
 						numRecords=BBJson.mapper().readTree(resultAsString).get("data").get("count").asInt();
@@ -83,13 +93,11 @@ public class DocumentPaginationTest extends AbstractDocumentTest {
 						Assert.fail(ExceptionUtils.getFullStackTrace(e));
 					} 
 					Assert.assertTrue("Records must be "+recordsToLoad, numRecords==recordsToLoad);
+					
 					//ask for first 10 records
-					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "?page=0&recordsPerPage=10");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "first 10 records", Status.OK, null, true);
-					resultAsString = contentAsString(result);
+					httpRequest(getURLAddress(sFakeCollection) + "?page=0&recordsPerPage=10","GET");
+					assertServer("first 10 records", Status.OK, null, true);
+					resultAsString = getResponse();
 					try {
 						ArrayNode records = (ArrayNode) BBJson.mapper().readTree(resultAsString).get("data");
 						Assert.assertTrue(records.size() == 10 );
@@ -97,18 +105,16 @@ public class DocumentPaginationTest extends AbstractDocumentTest {
 						BooleanNode more =  (BooleanNode) BBJson.mapper().readTree(resultAsString).get("more");
 						Assert.assertTrue(more!=null && !more.isNull());
 						Assert.assertTrue(more.asBoolean());
-						Assert.assertTrue("true".equals(Helpers.header("X-BB-MORE", result)));
+						//Assert.assertTrue("true".equals(getResponseHeaders().get("X-BB-MORE")));
 					} catch (IOException e) {
 						Assert.fail(ExceptionUtils.getFullStackTrace(e));
 					} 
 					
 					//ask for the last 10 records
-					request = new FakeRequest(GET, getRouteAddress(sFakeCollection) + "?page="+((recordsToLoad/10)-1)+"&recordsPerPage=10");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "last 10 records", Status.OK, null, true);
-					resultAsString = contentAsString(result);
+					httpRequest(getURLAddress(sFakeCollection) + "?page="+((recordsToLoad/10)-1)+"&recordsPerPage=10","GET");
+					assertServer("last 10 records", Status.OK, null, true);
+					resultAsString = getResponse();
+					
 					try {
 						ArrayNode records = (ArrayNode) BBJson.mapper().readTree(resultAsString).get("data");
 						Assert.assertTrue(records.size() == 10 );
@@ -116,12 +122,12 @@ public class DocumentPaginationTest extends AbstractDocumentTest {
 						BooleanNode more =  (BooleanNode) BBJson.mapper().readTree(resultAsString).get("more");
 						Assert.assertTrue(more!=null && !more.isNull());
 						Assert.assertFalse(more.asBoolean());
-						Assert.assertTrue("false".equals(Helpers.header("X-BB-MORE", result)));
+						//Assert.assertTrue("false".equals(getResponseHeaders().get("X-BB-MORE")));
 					} catch (IOException e) {
 						Assert.fail(ExceptionUtils.getFullStackTrace(e));
 					} 
 				}
 			});
 	}
-
+	
 }

@@ -232,7 +232,7 @@ public class WrapResponse {
 		StringBuilder toReturn = new StringBuilder("{")
 										.append(prepareOK(ctx, stringBody));
 		stringBody = null;
-		toReturn.append(WrapResponseHelper.endOk(ctx, statusCode));
+		toReturn.append(WrapResponseHelper.endOk(statusCode));
 		toReturn.append("}");
 		return Results.status(statusCode,toReturn.toString()); 
 	}

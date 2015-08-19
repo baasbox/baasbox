@@ -11,20 +11,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class DocumentOrientChunker extends AbstractOrientChunker {
 
-
+	boolean withAcl = false;
 	public DocumentOrientChunker(String appcode, String user, String pass,
 			Context ctx) {
+		//DO NOT store any ref to ctx!
 		super (appcode,user,pass,ctx);
+		if (ctx!=null) withAcl=BooleanUtils.toBoolean(ctx.request().getQueryString("withAcl"));
 	}
 
 	@Override
 	protected String prepareDocToJson(ODocument doc) {
 	        Formats format;
-	        boolean withAcl = true;
-	        if (super.getHttpContext()!=null) withAcl=BooleanUtils.toBoolean(super.getHttpContext().request().getQueryString("withAcl"));
 	        try {
 	            DbHelper.filterOUserPasswords(true);
-	            if (withAcl) {
+	            if (this.withAcl) {
 	                format = JSONFormats.Formats.DOCUMENT_WITH_ACL;
 	                return JSONFormats.prepareResponseToJson(doc, format, true);
 	            } else {

@@ -48,12 +48,14 @@ import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
 import com.baasbox.controllers.helpers.DocumentOrientChunker;
 import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
@@ -164,10 +166,10 @@ public class Document extends Controller {
     }
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-    public static Promise<Result> getDocuments(String collectionName) throws InvalidAppCodeException {
+    public static Promise<Result> getDocuments(String collectionName) throws InvalidAppCodeException, SqlInjectionException {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
-
+        
         if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
         	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
         	return F.Promise.pure(getDocumentsChunked(collectionName));
@@ -175,11 +177,11 @@ public class Document extends Controller {
         		
         Context ctx = Http.Context.current.get();
         QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+        if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
 
         return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
             List<ODocument> result;
             String ret = "{[]}";
-            if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
             result = DocumentService.getDocuments(collectionName, criteria);
             if (criteria.isPaginationEnabled()){
             	if (result.size() > criteria.getRecordPerPage().intValue()){
@@ -214,6 +216,17 @@ public class Document extends Controller {
     	final Context ctx = Http.Context.current.get();
     	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     	
+    	try{
+	    	DbHelper.openFromContext(ctx);
+	        if (!(CollectionDao.getInstance().existsCollection(collectionName))){
+	        	return notFound(collectionName + " is not a valid collection name");
+	        }
+    	}catch (SqlInjectionException  e){
+    		return notFound(collectionName + " is not a valid collection name");
+    	}finally{
+    		DbHelper.close(DbHelper.getConnection());
+    	}
+
 		final String appcode= DbHelper.getCurrentAppCode();
 		final String user= DbHelper.getCurrentHTTPUsername();
 		final String pass= DbHelper.getCurrentHTTPPassword();    		
