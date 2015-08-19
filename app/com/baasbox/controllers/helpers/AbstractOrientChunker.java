@@ -3,6 +3,7 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
 import play.libs.Akka;
@@ -71,9 +72,9 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			    final String username = (String) params.get("username");
 			    final String password = (String) params.get("password");
 			    
-			    final ImmutableMap<String,String[]> requestHeaders = (ImmutableMap<String,String[]>) params.get("requestHeaders");
-			    final ImmutableMap<String,String> responseHeaders = (ImmutableMap<String,String>) params.get("responseHeaders");
-			    final ImmutableMap<String,String[]> queryStrings = (ImmutableMap<String,String[]>) params.get("queryStrings");
+			    final String callId = (String) params.get("callId"); 
+			    final Boolean setMoreField = (Boolean) params.get("setMoreField"); 
+			    final String moreFieldValue = (String) params.get("moreFieldValue"); 
 			    
 			    final QueryParams criteria =  (QueryParams) params.get("criteria");
 			    final String query = (String) params.get("query");
@@ -81,9 +82,13 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CHUNKED: opening connection");
 			    
 			  	DbHelper.open(appcode,username,password);
-				out.write("{" + WrapResponseHelper.preludeOk(
-						requestHeaders,responseHeaders,queryStrings
-						) + "["); //sends ASAP (bypassing the buffer) the prelude so to reply almost immediately to the client to avoid timeouts
+			  	
+			  	String prelude = WrapResponseHelper.preludeOk (
+			  			callId,
+			  			setMoreField,
+			  			moreFieldValue);
+			  	
+				out.write("{" + prelude + "["); //send ASAP (bypassing the buffer) the prelude so to reply almost immediately to the client to avoid timeouts
 				
 				final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(query);
 				qry.setResultListener(new OCommandResultListener() {
@@ -143,10 +148,9 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 		private String password;
 		private String query = "";
 		private QueryParams criteria;
-		ImmutableMap requestHeaders;
-		ImmutableMap responseHeaders;
-		ImmutableMap queryStrings;
-		
+		private String moreFieldValue;
+		private boolean setMoreField;
+		private String[] callId;
     	
     	protected AbstractOrientChunker(){	super();	}
     	
@@ -156,9 +160,10 @@ public abstract class  AbstractOrientChunker extends StringChunks {
     		this.appcode = appcode;
     		this.username = username;
     		this.password = password;
-    		this.requestHeaders = ImmutableMap.copyOf(ctx.request().headers());
-    		this.responseHeaders = ImmutableMap.copyOf(ctx.response().getHeaders());
-    		this.queryStrings = ImmutableMap.copyOf(ctx.request().queryString());
+    		this.callId = ctx.request().queryString().get("call_id");
+    		this.setMoreField = !StringUtils.isEmpty(ctx.response().getHeaders().get("X-BB-MORE"));
+    		this.moreFieldValue = ctx.response().getHeaders().get("X-BB-MORE");
+    		
     		this.criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     	}
     	
@@ -176,9 +181,9 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 				params.put("username", this.username);
 				params.put("password", this.password);
 	
-				params.put("requestHeaders", this.requestHeaders);
-				params.put("responseHeaders", this.responseHeaders);
-				params.put("queryStrings", this.queryStrings);
+				params.put("callId", this.callId);
+				params.put("setMoreField", this.setMoreField);
+				params.put("moreFieldValue", this.moreFieldValue);
 				
 				params.put("criteria", this.criteria);
 				params.put("query", this.query);
