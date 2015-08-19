@@ -430,6 +430,7 @@ public class DbHelper {
 	}
 
 	public static boolean isConnectedAsAdmin(boolean excludeInternal) {
+		if (getConnection()==null) return false;
 		OUser user = getConnection().getUser();
 		Set<ORole> roles = user.getRoles();
 		boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN
@@ -487,8 +488,8 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 		try {
 			db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.get();
-			if (BaasBoxLogger.isDebugEnabled())
-				BaasBoxLogger.debug("Connection id: " + db + " "
+			if (BaasBoxLogger.isTraceEnabled())
+				BaasBoxLogger.trace("Connection id: " + db + " "
 						+ ((Object) db).hashCode());
 		} catch (ODatabaseException e) {
 			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: "

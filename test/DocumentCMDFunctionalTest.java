@@ -84,7 +84,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -141,7 +141,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -307,7 +307,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServer(), 
+			getTestServerWithChunkResponse(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -416,7 +416,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	public void testEmptyBody(){
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 	{
 				public void run() {
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();		
@@ -434,7 +434,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServer(), 
+			getTestServerWithChunkResponse(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

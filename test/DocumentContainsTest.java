@@ -1,23 +1,26 @@
 import static play.test.Helpers.GET;
-import static play.test.Helpers.POST;
-import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.running;
 
 import java.io.IOException;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import javax.ws.rs.core.MediaType;
 
-import org.json.JSONObject;
+import org.apache.http.HttpHeaders;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import play.libs.F.Callback;
 import play.mvc.Http.Status;
-import play.mvc.Result;
-import play.test.FakeRequest;
+import play.test.TestBrowser;
+
+import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import core.AbstractDocumentTest;
 import core.TestConfig;
 
@@ -40,8 +43,6 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 
 	@Override
 	protected void assertContent(String s) {
-		json = toJSON(s);
-		assertJSON(json, "@version");
 	}
 	
 	@Before
@@ -78,35 +79,32 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 	public void testContains(){
 		running
 		(
-			getFakeApplication(), 
-			new Runnable() 		{
-				public void run() {
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
 			 		continueOnFail(false);
-					sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+					sFakeCollection = new AdminCollectionFunctionalTest().serverCreateCollection();
+				
 					//create  document
-					FakeRequest request = new FakeRequest(POST, getRouteAddress(sFakeCollection));
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					request = request.withJsonBody(document1,POST);
-					Result result = routeAndCall(request); 
-					assertRoute(result, "testContains CREATE 1", 200, null, true);
+					serverCreateDocument(sFakeCollection,document1);
 					String id1=getUuid();
-	
 					
 					//read the doc
-					request = new FakeRequest(GET, "/document/" + sFakeCollection + "/" + id1);
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "testContains load document 1", Status.OK, "\"name\":\"john doe\"", true);
-					
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					httpRequest(getURLAddress(sFakeCollection) + "/" + id1, "GET");
+					assertServer("testContains load document 1", Status.OK, "\"name\":\"john doe\"", true);	
 					
 					//select it using the `contains`function
-					request = new FakeRequest("GET", "/document/" + sFakeCollection +  "?where=players%20contains%20(username%3D%27XXXX%40XXXX.COM%27)");
-					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-					result = routeAndCall(request);
-					assertRoute(result, "testContains load document 1 using contains", 200, "\"name\":\"john doe\"", true);					
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					httpRequest(getURLAddress(sFakeCollection) + "?where=players%20contains%20(username%3D%27XXXX%40XXXX.COM%27)", "GET");
+					assertServer("testContains load document 1 using contains. Collection Name: " + sFakeCollection, 200, "\"name\":\"john doe\"", true);					
 				}
 			}
 		);			
@@ -116,8 +114,8 @@ public class DocumentContainsTest extends AbstractDocumentTest {
 		String sUuid = null;
 
 		try	{
-			JSONObject jo = (JSONObject)json;
-			sUuid = jo.getJSONObject("data").getString("id");
+			JsonNode jo = BBJson.mapper().readTree(getResponse());
+			sUuid = ((ObjectNode)jo.get("data")).get("id").asText();
 		}
 		catch (Exception ex)	{
 			Assert.fail("Cannot get UUID (id) value: " + ex.getMessage() + "\n The json object is: \n" + json);

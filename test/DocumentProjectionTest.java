@@ -62,7 +62,7 @@ public class DocumentProjectionTest extends AbstractDocumentTest {
 	public void testOnlyFields(){
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 		{
 				public void run() {
 			 		continueOnFail(false);

@@ -22,11 +22,13 @@ import java.net.URLDecoder;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import play.libs.Akka;
 import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.Json;
@@ -36,22 +38,29 @@ import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
+import scala.concurrent.duration.FiniteDuration;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
+import com.baasbox.controllers.helpers.DocumentOrientChunker;
+import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -85,10 +94,14 @@ public class Document extends Controller {
 
     private static String prepareResponseToJson(ODocument doc) {
         response().setContentType("application/json");
+        return formatODocToJson( doc, BooleanUtils.toBoolean(request().getQueryString("withAcl"))) ;
+    }
+    
+    private static String formatODocToJson(ODocument doc, boolean withAcl) {
         Formats format;
         try {
             DbHelper.filterOUserPasswords(true);
-            if (BooleanUtils.toBoolean(Http.Context.current().request().getQueryString("withAcl"))) {
+            if (withAcl) {
                 format = JSONFormats.Formats.DOCUMENT_WITH_ACL;
                 return JSONFormats.prepareResponseToJson(doc, format, true);
             } else {
@@ -100,6 +113,7 @@ public class Document extends Controller {
         }
     }
 
+    
     private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException {
         response().setContentType("application/json");
         Formats format;
@@ -152,17 +166,22 @@ public class Document extends Controller {
     }
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-    public static Promise<Result> getDocuments(String collectionName) {
+    public static Promise<Result> getDocuments(String collectionName) throws InvalidAppCodeException, SqlInjectionException {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
-
+        
+        if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
+        	return F.Promise.pure(getDocumentsChunked(collectionName));
+        }
+        		
         Context ctx = Http.Context.current.get();
         QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+        if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
 
         return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
             List<ODocument> result;
             String ret = "{[]}";
-            if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
             result = DocumentService.getDocuments(collectionName, criteria);
             if (criteria.isPaginationEnabled()){
             	if (result.size() > criteria.getRecordPerPage().intValue()){
@@ -191,6 +210,38 @@ public class Document extends Controller {
                         }));
 
     }
+        
+    //this method is called by getDocuments()
+    private static Result getDocumentsChunked(String collectionName) throws InvalidAppCodeException {
+    	final Context ctx = Http.Context.current.get();
+    	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    	
+    	try{
+	    	DbHelper.openFromContext(ctx);
+	        if (!(CollectionDao.getInstance().existsCollection(collectionName))){
+	        	return notFound(collectionName + " is not a valid collection name");
+	        }
+    	}catch (SqlInjectionException  e){
+    		return notFound(collectionName + " is not a valid collection name");
+    	}finally{
+    		DbHelper.close(DbHelper.getConnection());
+    	}
+
+		final String appcode= DbHelper.getCurrentAppCode();
+		final String user= DbHelper.getCurrentHTTPUsername();
+		final String pass= DbHelper.getCurrentHTTPPassword();    		
+		
+		DocumentOrientChunker chunks = new DocumentOrientChunker(
+				appcode
+				,user
+				,pass
+				,ctx);
+		if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
+		chunks.setQuery(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
+    	
+		return ok(chunks).as("application/json");
+    }
+        
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Promise<Result> queryDocument(String collectionName, String id, boolean isUUID, String parts) {

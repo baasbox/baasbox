@@ -19,8 +19,10 @@
 
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.route;
+import static play.test.Helpers.fakeApplication;
+import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
+import static play.test.Helpers.testServer;
 
 import javax.ws.rs.core.MediaType;
 
@@ -28,16 +30,15 @@ import org.apache.http.HttpHeaders;
 import org.junit.Test;
 
 import play.libs.F.Callback;
-import play.mvc.Http.Status;
 import play.mvc.Result;
-import play.mvc.SimpleResult;
+import play.mvc.Http.Status;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 import core.AbstractDocumentTest;
 import core.TestConfig;
 
 
-public class DocumentListFunctionalTest extends AbstractDocumentTest
+public class DocumentListFunctionalTestNoChunk extends AbstractDocumentTest
 {
 	@Override
 	public String getRouteAddress()
@@ -58,14 +59,47 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 		assertJSON(json, "@rid");
 	}
 
-
-
+	@Test 
+	public void testRouteListDocuments()
+	{
+		running
+		(
+				getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
+				
+					// Test list documents in empty collection
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					Result result = routeAndCall(request);
+					assertRoute(result, "testRouteListDocuments empty collection", Status.OK, null, false);
+					
+					result = routeCreateDocument(getRouteAddress(sFakeCollection));
+					assertRoute(result, "testRouteListDocuments CREATE document in fake collection", Status.OK, null, true);
+					
+					// Test list documents in empty collection
+					request = new FakeRequest(getMethod(), getRouteAddress(sFakeCollection));
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+					result = routeAndCall(request);
+					assertRoute(result, "testRouteListDocuments not empty collection", Status.OK, null, true);
+				}
+			}
+		);
+	}
+	
 	@Test
 	public void testRouteListDocumentsBadCollection()
 	{
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -74,7 +108,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 					request = request.withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-					Result result = route(request);
+					Result result = routeAndCall(request);
 					assertRoute(result, "testRouteListDocumentsBadCollection", Status.NOT_FOUND, TestConfig.MSG_INVALID_COLLECTION, true);
 				}
 			}
@@ -86,7 +120,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServerWithChunkResponse(), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -120,7 +154,7 @@ public class DocumentListFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServerWithChunkResponse(), 
+			getTestServer(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

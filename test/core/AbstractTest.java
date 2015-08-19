@@ -23,7 +23,6 @@ package core;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.status;
@@ -34,6 +33,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -66,16 +67,19 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 import play.Configuration;
 import play.Play;
-import play.mvc.Http.Status;
 import play.mvc.Http;
+import play.mvc.Http.Status;
 import play.mvc.Result;
+import play.mvc.SimpleResult;
 import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
 
+import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
@@ -97,7 +101,21 @@ public abstract class AbstractTest extends FluentTest
 	private String sResponse = null;
 	private int nStatusCode = -1;
 	private boolean fUseCollector = false;
+	private Map<String, List<String>> responseHeaders;
 
+	public byte[] myContentAsBytes(SimpleResult result){
+		return BaasBoxHelpers.contentAsBytes(result.getWrappedResult());
+	}
+	
+	public String myContentAsString(SimpleResult result){
+		try {
+			return new String(myContentAsBytes(result),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			Assert.fail(ExceptionUtils.getFullStackTrace(e));
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public String createNewUser(String username) {
 		String sFakeUser = username + UUID.randomUUID();
 		// Prepare test user
@@ -133,6 +151,10 @@ public abstract class AbstractTest extends FluentTest
 		return fakeApplication(additionalConfigurations.asMap());
 	}
 	
+	private static FakeApplication getFakeApplicationChunkResponse(){
+		return fakeApplication(additionalConfigurationsChunk.asMap());
+	}
+	
 	protected static FakeApplication getFakeApplicationWithDefaultConf(){
 		return fakeApplication();
 	}
@@ -145,12 +167,21 @@ public abstract class AbstractTest extends FluentTest
 		return testServer(TestConfig.SERVER_PORT,getFakeApplicationWithDefaultConf());
 	}
 	
+	protected static TestServer getTestServerWithChunkResponse(){
+		return testServer(TestConfig.SERVER_PORT,getFakeApplicationChunkResponse());
+	}
+	
 	protected  static Configuration additionalConfigurations=null;
 	static{
 	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
 	    additionalConfigurations = new Configuration(additionalConfig);
 	}
 
+	protected  static Configuration additionalConfigurationsChunk=null;
+	static{
+	    Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
+	    additionalConfigurationsChunk = new Configuration(additionalConfigNoChunk);
+	}
 
 	// Abstract methods
 	public abstract String getRouteAddress();
@@ -359,6 +390,7 @@ public abstract class AbstractTest extends FluentTest
 	    	}
 	    
 	    	nRet = conn.getResponseCode();
+	    	setResponseHeaders(conn.getHeaderFields());
 	    	setStatusCode(nRet);
 	    	if (nRet / 100 != 2)
 	    	{
@@ -410,6 +442,14 @@ public abstract class AbstractTest extends FluentTest
 	    return nRet;
 	}
 
+	private void setResponseHeaders(Map<String, List<String>> headerFields) {
+		this.responseHeaders = headerFields;
+	}
+
+	public Map<String, List<String>> getResponseHeaders(){
+		return this.responseHeaders;
+	}
+	
 	private HttpURLConnection getHttpConnection(String sUrl, String sMethod)
 	{
         URL uri = null;
@@ -560,18 +600,18 @@ public abstract class AbstractTest extends FluentTest
 			}
 			else if (status(result) !=  nExptedStatus)
 			{
-				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result) + " Response <" + contentAsString(result) + ">"));
+				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result) + " Response <" + myContentAsString((SimpleResult)result) + ">"));
 			}
 		}
 		else
 		{
 			Assert.assertNotNull(sTestName + ". Cannot route to specified address.", result);
-			Assert.assertEquals(sTestName + ". Http status code. Response <" + contentAsString(result) + ">", nExptedStatus, status(result));
+			Assert.assertEquals(sTestName + ". Http status code. Response <" + myContentAsString((SimpleResult)result) + ">", nExptedStatus, status(result));
 		}
 
 		if (fCheckContent && result != null)
 		{
-			String sContent = contentAsString(result);
+			String sContent = myContentAsString((SimpleResult)result);
 			if (sExpctedContent != null)
 			{
 				if (fUseCollector)
@@ -635,7 +675,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected String getUuid(Result result)
 	{
-		return getUuid(contentAsString(result));
+		return getUuid(myContentAsString((SimpleResult)result));
 	}
 	
 	protected String getUuid(String content)

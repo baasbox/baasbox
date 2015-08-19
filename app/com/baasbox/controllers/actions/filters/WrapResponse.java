@@ -22,6 +22,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
+import play.api.libs.iteratee.Enumerator;
 import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.F;
@@ -42,6 +44,8 @@ import play.mvc.SimpleResult;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
+import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.controllers.helpers.WrapResponseHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -182,13 +186,9 @@ public class WrapResponse {
 	}
 
     private String prepareOK(Context ctx, String stringBody) throws Exception{
-		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder(stringBody == null? 100 : stringBody.length() + 100);
 		try{
-			toReturn.append("\"result\":\"ok\",")
-					.append(setCallIdOnResult(request))
-					.append(setMoreField(ctx))
-					.append("\"data\":");
+			toReturn.append(WrapResponseHelper.preludeOk(ctx));
 					if (stringBody == null){
 						toReturn.append("null");
 					}else if (StringUtils.equals(stringBody,"null")) { //the body contains null (as a string with a n-u-l-l characters sequence, and this must be no wrapped into " like a normal string content
@@ -212,15 +212,6 @@ public class WrapResponse {
     }
 
 
-	private String setMoreField(Context ctx) {
-		String more = ctx.response().getHeaders().get("X-BB-MORE");
-		String toRet = "";
-		if (!StringUtils.isEmpty(more)) {
-			toRet = new StringBuilder("\"more\":").append(more).append(",").toString();
-		}
-		return toRet;
-	}
-
 	/**
 	 * @param request
 	 * @param result
@@ -230,11 +221,6 @@ public class WrapResponse {
 		if (!StringUtils.isEmpty(callId)) result.put("call_id",callId);
 	}
 	
-	private String setCallIdOnResult(RequestHeader request) {
-		String callId = request.getQueryString("call_id");
-		if (!StringUtils.isEmpty(callId)) return new StringBuilder("\"call_id\":\"").append(callId.replace("\"","\\\"") + "\",").toString();
-		else return "";
-	}
 
 	private void setServerTime(Http.Response response) {
 		ZonedDateTime date = ZonedDateTime.now(ZoneId.of("GMT"));
@@ -243,12 +229,11 @@ public class WrapResponse {
 	}
 
 	private SimpleResult onOk(int statusCode,Context ctx, String stringBody) throws Exception  {
-		Request request = ctx.request();
 		StringBuilder toReturn = new StringBuilder("{")
-										.append(prepareOK(ctx, stringBody))
-										.append(",\"http_code\":")
-										.append(statusCode)
-										.append("}");
+										.append(prepareOK(ctx, stringBody));
+		stringBody = null;
+		toReturn.append(WrapResponseHelper.endOk(statusCode));
+		toReturn.append("}");
 		return Results.status(statusCode,toReturn.toString()); 
 	}
 
@@ -275,7 +260,8 @@ public class WrapResponse {
 		    	return result;
 		    }
 		    
-		    if(result.getWrappedResult() instanceof ChunkedResult<?>){
+			String transferEncoding = JavaResultExtractor.getHeaders(result).get(HttpConstants.Headers.TRANSFER_ENCODING);
+			if(transferEncoding!=null && transferEncoding.equals(HttpConstants.HttpProtocol.CHUNKED)){
 		    	return result;
 		    }
 		    	
@@ -332,7 +318,6 @@ public class WrapResponse {
 			String username=(String) ctx.args.get("username");
 			if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
 			
-		    byte[] resultContent=null;
 			if (BBConfiguration.getWrapResponse()){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 				final int statusCode = result.getWrappedSimpleResult().header().status();
@@ -344,12 +329,13 @@ public class WrapResponse {
 			    	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response is a file, no wrap will be applied");
 			    	return result;
 			    }
-			    
-			    if(result.getWrappedResult() instanceof ChunkedResult<?>){
+
+				String transferEncoding = JavaResultExtractor.getHeaders(result).get(HttpConstants.Headers.TRANSFER_ENCODING);
+				if(transferEncoding!=null && transferEncoding.equals(HttpConstants.HttpProtocol.CHUNKED)){
 			    	return result;
 			    }
-			    
-				final byte[] body = JavaResultExtractor.getBody(result);
+				
+			    byte[] body = JavaResultExtractor.getBody(result);  //here the promise will be resolved
 				String stringBody = new String(body, "UTF-8");
 			    if (BaasBoxLogger.isTraceEnabled()) if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace ("stringBody: " +stringBody);
 				if (statusCode>399){	//an error has occured
