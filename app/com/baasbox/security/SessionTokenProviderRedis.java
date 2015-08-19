@@ -183,6 +183,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 	
 	@Override
 	public List<ImmutableMap<SessionKeys, ? extends Object>> getSessions(String username) {
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProviderRedis - getSessions method started for user {}",username);
 		JedisPool p = play.Play.application().plugin(RedisPlugin.class).jedisPool();
 		final Jedis j=p.getResource();
 		try { 
@@ -193,6 +194,7 @@ public class SessionTokenProviderRedis implements ISessionTokenProvider {
 					.append(":*")
 					.toString()
 					);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Session keys retrieved for user {}: {}",new Object[]{username,keys.size()});
 			ObjectMapperExt mapper = BBJson.mapper();
 			Stream<ImmutableMap<SessionKeys, ? extends Object>> toRet = keys.stream().map(x->{
 				ImmutableMap<SessionKeys, ? extends Object> info = null;

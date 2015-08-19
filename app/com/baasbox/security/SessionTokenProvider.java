@@ -147,6 +147,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	
 	@Override
 	public List<ImmutableMap<SessionKeys, ? extends Object>> getSessions(String username) {
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProvider (in memory) - getSessions method started for user {}",username);
 		Stream<ImmutableMap<SessionKeys, ? extends Object>> 
 			values = sessions
 						.values()
