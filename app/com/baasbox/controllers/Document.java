@@ -170,16 +170,18 @@ public class Document extends Controller {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
         
-        if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
-        	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
-        	return F.Promise.pure(getDocumentsChunked(collectionName));
-        }
-        		
         Context ctx = Http.Context.current.get();
-        QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-        if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
-
         return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
+        	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+            if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
+        	
+			 if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+			 	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
+			 	DocumentService.checkSyntax(collectionName,criteria);
+			 	return getDocumentsChunked(collectionName);
+			 }
+        	 
+        	 //no chunked response
             List<ODocument> result;
             String ret = "{[]}";
             result = DocumentService.getDocuments(collectionName, criteria);
@@ -200,8 +202,14 @@ public class Document extends Controller {
                     if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(collectionName + " is not a valid collection name");
                     return notFound(collectionName + " is not a valid collection name");
                 })
+                .when(InvalidCriteriaException.class,
+                        e -> badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"Invalid querystring. Please check your request")
+                )
                 .when(IOException.class,
-                        e -> internalServerError(ExceptionUtils.getFullStackTrace(e))
+                        e -> {
+                    		BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+                        	return internalServerError(ExceptionUtils.getFullStackTrace(e));
+                        }
                 )
                 .when(Exception.class,
                         e -> {

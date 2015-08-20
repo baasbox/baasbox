@@ -309,4 +309,14 @@ public class DocumentService {
         return rid;
     }
 
+	public static boolean checkSyntax(String collectionName, QueryParams criteria) throws InvalidCollectionException, SqlInjectionException {
+		QueryParams checkCriteria = criteria.clone();
+		checkCriteria.page(0);
+		checkCriteria.recordPerPage(1);
+		checkCriteria.disablePaginationMore();
+		DocumentDao dao = DocumentDao.getInstance(collectionName);
+		dao.explainQuery(checkCriteria); //this is a trick to force the parser to evaluate the query
+		return true;
+	}
+
 }

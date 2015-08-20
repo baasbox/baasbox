@@ -27,7 +27,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.baasbox.BBConfiguration;
-
 import com.baasbox.service.logging.BaasBoxLogger;
 
 
@@ -44,6 +43,36 @@ public class QueryParams implements IQueryParametersKeys{
 	private Object[] params={};
 	private boolean more = false;
 
+
+	@Override
+	public QueryParams clone(){
+		QueryParams cloned = QueryParams.getInstance();
+		cloned.justCountTheRecords(this.justCount);
+		cloned.fields(this.fields);
+		cloned.where(this.where);
+		cloned.page(this.page);
+		cloned.skip(this.skip);
+		cloned.recordPerPage(this.recordPerPage);
+		cloned.groupBy(this.groupBy);
+		cloned.orderBy(this.orderBy);
+		cloned.depth(this.depth);
+		cloned.params(this.params);
+		if (this.more) cloned.enablePaginationMore();
+		else cloned.disablePaginationMore();
+		return cloned;
+	}
+	
+	public void recordPerPage(Integer recordPerPage) {
+		this.recordPerPage=recordPerPage;
+	}
+	
+	public void depth(Integer depth) {
+		this.depth=depth;
+	}
+
+	public void page(Integer page) {
+		this.page = page;
+	}
 
 	protected QueryParams(){};
 	
