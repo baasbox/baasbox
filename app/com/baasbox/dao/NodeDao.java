@@ -33,6 +33,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -187,7 +188,24 @@ public abstract class NodeDao  {
 	}
 	
 
-
+	public Object explainQuery(QueryParams criteria) throws SqlInjectionException{
+		try{
+			OCommandRequest command = DbHelper.genericSQLStatementCommandBuilder("explain " + DbHelper.selectQueryBuilder(MODEL_NAME, false, criteria));
+			Object toRet = DbHelper.genericSQLCommandExecute(command, criteria.getParams());
+			return toRet;
+		}catch (OCommandExecutionException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException(e);
+		}catch (StringIndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
+		}catch (IndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
+		}
+	}
+	
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		List<ODocument> result = null;
