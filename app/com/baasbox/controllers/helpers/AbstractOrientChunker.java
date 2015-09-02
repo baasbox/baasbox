@@ -72,7 +72,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			    final String username = (String) params.get("username");
 			    final String password = (String) params.get("password");
 			    
-			    final String callId = (String) params.get("callId"); 
+			    final String[] callId = (String[]) params.get("callId"); 
 			    final Boolean setMoreField = (Boolean) params.get("setMoreField"); 
 			    final String moreFieldValue = (String) params.get("moreFieldValue"); 
 			    
@@ -84,7 +84,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			  	DbHelper.open(appcode,username,password);
 			  	
 			  	String prelude = WrapResponseHelper.preludeOk (
-			  			callId,
+			  			callId.length==0?null:callId[0],
 			  			setMoreField,
 			  			moreFieldValue);
 			  	
