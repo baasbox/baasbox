@@ -84,7 +84,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			  	DbHelper.open(appcode,username,password);
 			  	
 			  	String prelude = WrapResponseHelper.preludeOk (
-			  			callId.length==0?null:callId[0],
+			  			(callId==null || callId.length==0)?null:callId[0],
 			  			setMoreField,
 			  			moreFieldValue);
 			  	
