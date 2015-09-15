@@ -198,6 +198,20 @@ public class Global extends GlobalSettings {
     	//activate metrics
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
+    	
+    	//print out Redis info
+    	if (BBConfiguration.isRedisActive()){
+    		info("BaasBox will use REDIS as external cache");
+    		String redisHost=BBConfiguration.configuration.getString("redis.host");
+    		String redisPort=BBConfiguration.configuration.getString("redis.port");
+    		String redisURI=BBConfiguration.configuration.getString("redis.uri");
+    		String redisDatabase=BBConfiguration.configuration.getString("redis.database");
+    		if (StringUtils.isBlank(redisHost)) redisHost="localhost";
+    		if (StringUtils.isBlank(redisPort)) redisPort="6379";
+    		if (StringUtils.isBlank(redisDatabase)) redisDatabase="0";
+    		info("REDIS server: " + (StringUtils.isBlank(redisURI)?redisHost + ":" + redisPort:redisURI));
+    		info("REDIS database: " + redisDatabase);
+    	}
     	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
