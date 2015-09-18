@@ -135,6 +135,19 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getInt(CHUNK_SIZE);
 	}
 	
+	//sessions
+	public static Boolean isSessionEncryptionEnabled(){
+		return configuration.getBoolean(SESSION_ENCRYPT);
+	}
+	
+	public static String getApplicationSecret(){
+		return configuration.getString(APPLICATION_SECRET);
+	}
+	
+	public static String getSecretDefault(){
+		return "CHANGE_ME";
+	}
+	
 	//metrics
 	public static boolean getComputeMetrics() {
 		if (computeMetrics==null) 

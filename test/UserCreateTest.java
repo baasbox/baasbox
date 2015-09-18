@@ -155,7 +155,7 @@ public class UserCreateTest extends AbstractUserTest
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 					Assert.assertNotNull(token);
-					Assert.assertFalse(SessionTokenProviderFactory.getSessionTokenProvider().getSession(token).isEmpty());
+					Assert.assertFalse(SessionTokenProviderFactory.getSessionTokenProvider().getSession(token)==null);
 				}
 			}
 		);		

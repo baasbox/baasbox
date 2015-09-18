@@ -15,13 +15,12 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
 
-import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionObject;
 import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.util.BBJson;
 import com.baasbox.util.BBJson.ObjectMapperExt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -99,15 +98,15 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 				{
 					try{
 						setUpContext();
-						List<ImmutableMap<SessionKeys, ? extends Object>> sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);
+						List<SessionObject> sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);
 						Assert.assertEquals(1, sessions.size());
-						Assert.assertEquals(true,sessions.get(0).get(SessionKeys.USERNAME).equals(user1));
-						Assert.assertEquals("token1: " + token1 + ", received: " + sessions.get(0).get(SessionKeys.TOKEN),true,sessions.get(0).get(SessionKeys.TOKEN).equals(token1));
+						Assert.assertEquals(true,sessions.get(0).getUsername().equals(user1));
+						Assert.assertEquals("token1: " + token1 + ", received: " + sessions.get(0).getToken(),true,sessions.get(0).getToken().equals(token1));
 						  
-						List<ImmutableMap<SessionKeys, ? extends Object>> sessionsUser2 = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user2);
+						List<SessionObject> sessionsUser2 = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user2);
 						Assert.assertEquals(1, sessionsUser2.size());
-						Assert.assertEquals(true,sessionsUser2.get(0).get(SessionKeys.USERNAME).equals(user2));
-						Assert.assertEquals(true,sessionsUser2.get(0).get(SessionKeys.TOKEN).equals(token2));
+						Assert.assertEquals(true,sessionsUser2.get(0).getUsername().equals(user2));
+						Assert.assertEquals(true,sessionsUser2.get(0).getToken().equals(token2));
 						  
 						SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token1);
 						sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);

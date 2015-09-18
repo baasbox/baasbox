@@ -55,6 +55,9 @@ public interface IBBConfigurationKeys {
 	public static final String SOCIAL_MOCK = "baasbox.social.mock";
 	public static final String PUSH_MOCK = "baasbox.push.mock";
 	
+	public static final String SESSION_ENCRYPT = "baasbox.sessions.encrypt";
+	public static final String APPLICATION_SECRET = "application.secret";
+	
 	
 	@Deprecated
 	public static final String REALM = "authorization.basic.realm";
