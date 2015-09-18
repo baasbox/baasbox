@@ -10,7 +10,7 @@ public class SessionTokenProviderFactory {
 		
 		switch(className) {
 			case "SessionTokenProvider":
-				return SessionTokenProvider.getSessionTokenProvider();
+				return SessionTokenProviderMemory.getSessionTokenProvider();
 		    case "SessionTokenProviderRedis":		      
 		    	return SessionTokenProviderRedis.getSessionTokenProvider();
 		    default:

@@ -46,6 +46,7 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionObject;
 import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
@@ -186,13 +187,13 @@ public class Social extends Controller{
 				}
 				String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode,username, password);
-				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode,username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				ObjectNode on = Json.newObject();
 				if(existingUser!=null){
 					on = (ObjectNode)Json.parse( User.prepareResponseToJson(existingUser));
 				}
-				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				return ok(on);
 			}else{
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User does not exists with tokens...trying to create");
@@ -207,13 +208,13 @@ public class Social extends Controller{
 					UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
 					ODocument profile=UserService.getUserProfilebyUsername(username);
 					UserService.addSocialLoginTokens(profile,result);
-					ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
-					response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+					SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
+					response().setHeader(SessionKeys.TOKEN.toString(),sessionObject.getToken());
 					ObjectNode on = Json.newObject();
 					if(profile!=null){
 						on = (ObjectNode)Json.parse( User.prepareResponseToJson(profile));
 					}
-					on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+					on.put(SessionKeys.TOKEN.toString(),sessionObject.getToken());
 
 					return ok(on);
 				}catch(Exception uaee){

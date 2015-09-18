@@ -13,7 +13,7 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionObject;
 import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
@@ -46,7 +46,7 @@ public class SessionsResource extends BaseRestResource {
 
 	protected JsonNode getCurrent(JsonNode command,JsonCallback unused) throws CommandException  {
 		try {
-			ImmutableMap<SessionKeys, ? extends Object> st = SessionTokenProviderFactory.getSessionTokenProvider().getCurrent();
+			SessionObject st = SessionTokenProviderFactory.getSessionTokenProvider().getCurrent();
 			if (st==null) return NullNode.getInstance();
 			ObjectMapperExt mapper = BBJson.mapper();
 			String s;
@@ -69,8 +69,8 @@ public class SessionsResource extends BaseRestResource {
 			String username=getUsernameFromParam(command);
 			ISessionTokenProvider tp = SessionTokenProviderFactory
 					.getSessionTokenProvider();
-			List<ImmutableMap<SessionKeys, ? extends Object>> sessions = tp.getSessions(username);
-			sessions.forEach(x->tp.removeSession((String)x.get(SessionKeys.TOKEN)));
+			List<SessionObject> sessions = tp.getSessions(username);
+			sessions.forEach(x->tp.removeSession(x.getToken()));
 			return IntNode.valueOf(sessions.size());
 		} catch (CommandParsingException e){
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(ExceptionUtils.getMessage(e),e);
@@ -110,9 +110,9 @@ public class SessionsResource extends BaseRestResource {
 			super.validateHasParams(command);
 			String username=getUsernameFromParam(command);
 			String password=getPasswordFromParam(command);
-			ImmutableMap<SessionKeys, ? extends Object> st = SessionTokenProviderFactory.getSessionTokenProvider().setSession(DbHelper.getCurrentAppCode(), username, password);
+			SessionObject st = SessionTokenProviderFactory.getSessionTokenProvider().setSession(DbHelper.getCurrentAppCode(), username, password);
 			ObjectMapperExt mapper = BBJson.mapper();
-			String s=mapper.writeValueAsString(st);
+			String s=st.toString();
 			ObjectNode stToRet = (ObjectNode) mapper.readTree(s);
 			stToRet.remove(SessionKeys.PASSWORD.toString());
 			return stToRet;
@@ -148,7 +148,7 @@ public class SessionsResource extends BaseRestResource {
 			String username=getUsernameFromParam(command);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionsResource - list sessions of user {}",username);
 			
-			List<ImmutableMap<SessionKeys, ? extends Object>> sessions = 
+			List<SessionObject> sessions = 
 					SessionTokenProviderFactory
 						.getSessionTokenProvider()
 						.getSessions(username);
