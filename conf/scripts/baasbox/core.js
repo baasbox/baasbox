@@ -783,6 +783,13 @@ Links.save = function(params){
 };
 //---------- END Links ------
 
+
+//---------- UTILS --------
+var Utils = {}
+Utils.stringify=function(obj){
+	return JSON.stringify(obj);
+}
+
 exports.Documents = Documents;
 exports.Users = Users;
 exports.DB = DB;
@@ -791,6 +798,7 @@ exports.WS= WS;
 exports.log = log;
 exports.Links = Links;
 exports.Sessions = Sessions;
+exports.Utils = Utils;
 
 
 exports.runAsAdmin=runAsAdmin;
