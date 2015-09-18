@@ -68,7 +68,7 @@ import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionObject;
 import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.FriendShipService;
@@ -80,7 +80,7 @@ import com.baasbox.util.QueryParams;
 import com.baasbox.util.Util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -226,12 +226,13 @@ public class User extends Controller {
 				else return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
-			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider()
+					.setSession(appcode, username, password);
+			response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 
 			String result=prepareResponseToJson(profile);
 			ObjectMapper mapper = BBJson.mapper();
-			result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+			result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.getToken()+"\"}";
 			JsonNode jn = mapper.readTree(result);
 
 			return created(jn);
@@ -709,7 +710,7 @@ public class User extends Controller {
 				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
 			else appcode=bodyUrlEncoded.get("appcode")[0];
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password <hidden>");
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
@@ -782,11 +783,11 @@ public class User extends Controller {
 					}
 					UserService.registerDevice(data);
 				}
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
-				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 
 				ObjectMapper mapper = BBJson.mapper();
-				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.getToken()+"\"}";
 				JsonNode jn = mapper.readTree(user);
 				return ok(jn);
 			} catch (OSecurityAccessException e){

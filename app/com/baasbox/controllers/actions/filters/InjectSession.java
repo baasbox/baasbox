@@ -23,9 +23,9 @@ import play.mvc.Http.Context;
 import play.mvc.SimpleResult;
 
 import com.baasbox.security.SessionKeys;
+import com.baasbox.security.SessionObject;
 import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
-import com.google.common.collect.ImmutableMap;
 
 public class InjectSession extends Action.Simple {
 
@@ -39,11 +39,11 @@ public class InjectSession extends Action.Simple {
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (token!=null) {
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
+			  SessionObject sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
 			  if (sessionData!=null){
-					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
-					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
-					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
+					ctx.args.put("username", sessionData.getUsername());
+					ctx.args.put("password", sessionData.getPassword());
+					ctx.args.put("appcode", sessionData.getAppcode());
 					ctx.args.put("token", token);
 			  }
 		}
