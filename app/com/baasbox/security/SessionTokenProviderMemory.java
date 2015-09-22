@@ -20,19 +20,22 @@ package com.baasbox.security;
 
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Akka;
+import play.mvc.Http;
 import scala.concurrent.duration.FiniteDuration;
-
 import akka.actor.Cancellable;
 
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.google.common.collect.ImmutableMap;
 
-public class SessionTokenProvider implements ISessionTokenProvider {
+public class SessionTokenProviderMemory extends SessionTokenProviderAbstract {
 	
 	protected class SessionCleaner implements Runnable{
         @Override
@@ -50,15 +53,15 @@ public class SessionTokenProvider implements ISessionTokenProvider {
         }
     }
 
-	protected final static ConcurrentHashMap<String,ImmutableMap<SessionKeys,? extends Object>> sessions=new ConcurrentHashMap<String, ImmutableMap<SessionKeys,? extends Object>>();
+	protected final static ConcurrentHashMap<String,SessionObject> sessions=new ConcurrentHashMap<String, SessionObject>();
 	protected long expiresInMilliseconds=0; //default expiration of session tokens
 	protected long  sessionClenanerLaunchInMinutes=60; //the session cleaner will be launch each x minutes.
 	
 	private Cancellable sessionCleaner=null;
-	private static SessionTokenProvider me; 
+	private static SessionTokenProviderMemory me; 
 	
 	private static ISessionTokenProvider initialize(){
-		if (me==null) me=new SessionTokenProvider();
+		if (me==null) me=new SessionTokenProviderMemory();
 		return me;
 	}
 	public static ISessionTokenProvider getSessionTokenProvider(){
@@ -73,7 +76,7 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 		me=null;
 	}
 	
-	public SessionTokenProvider(){
+	public SessionTokenProviderMemory(){
 		setTimeout(expiresInMilliseconds);
 		startSessionCleaner(sessionClenanerLaunchInMinutes*60000); //converts minutes in milliseconds
 	};	
@@ -84,32 +87,33 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	}	//setTimeout
 	
 	@Override
-	public ImmutableMap<SessionKeys, ? extends Object> setSession(String AppCode, String username,	String password) {
+	public SessionObject setSession(String AppCode, String username,String password) {
 		UUID token = UUID.randomUUID();
-		ImmutableMap<SessionKeys, ? extends Object> info = ImmutableMap.of
-				(SessionKeys.APP_CODE, AppCode, 
-						SessionKeys.TOKEN, token.toString(),
-						SessionKeys.USERNAME, username,
-						SessionKeys.PASSWORD,password,
-						SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInMilliseconds);
+		long now = (new Date()).getTime();
+		SessionObject info = SessionObject.create(
+						token.toString(),
+						AppCode,
+						username,
+						password,
+						now,
+						now+expiresInMilliseconds);
 		sessions.put(token.toString(), info);
 		return info;
 	}
 
 	@Override
-	public ImmutableMap<SessionKeys, ? extends Object> getSession(String token) {
+	public SessionObject getSession(String token) {
 		if (isExpired(token)){
 			return null;
 		}
-		ImmutableMap<SessionKeys, ? extends Object> info = sessions.get(token);
-		ImmutableMap<SessionKeys, ? extends Object> newInfo	= ImmutableMap.of
-				(SessionKeys.APP_CODE, info.get(SessionKeys.APP_CODE),
-						SessionKeys.TOKEN, token,
-						SessionKeys.USERNAME, info.get(SessionKeys.USERNAME),
-						SessionKeys.PASSWORD,info.get(SessionKeys.PASSWORD),
-						SessionKeys.EXPIRE_TIME,(new Date()).getTime()+expiresInMilliseconds);	
-		sessions.put(token, newInfo);
-		return newInfo;
+		SessionObject info = sessions.get(token);
+		if (info==null){
+			BaasBoxLogger.warn("Token {} is not valid and will be revoked.", token);
+			removeSession(token);
+			return null;
+		}
+		info.setExpirationTime( (new Date().getTime())+expiresInMilliseconds);
+		return info;
 	}
 
 	@Override
@@ -125,9 +129,9 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 	}
 	
 	private boolean isExpired(String token){
-		ImmutableMap<SessionKeys, ? extends Object> info = sessions.get(token);
+		SessionObject info = sessions.get(token);
 		if (info==null) return true;
-		if (expiresInMilliseconds!=0 && (new Date()).getTime()>(Long)info.get(SessionKeys.EXPIRE_TIME)){
+		if (expiresInMilliseconds!=0 && (new Date()).getTime()>(Long)info.getExpirationTime()){
 			removeSession(token);
 			return true;
 		}
@@ -140,5 +144,24 @@ public class SessionTokenProvider implements ISessionTokenProvider {
 			    new FiniteDuration(timeoutInMilliseconds, TimeUnit.MILLISECONDS), 
 			    new SessionCleaner() , 
 			    Akka.system().dispatcher()); 
+	}
+	
+	@Override
+	public List<SessionObject> getSessions(String username) {
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("SessionTokenProvider (in memory) - getSessions method started for user {}",username);
+		Stream<SessionObject> 
+			values = sessions
+						.values()
+						.stream()
+						.filter(x->x.getUsername().equals(username));
+		List<SessionObject> toRet = values.collect(Collectors.toList());
+		return toRet;
+	}
+	
+	@Override
+	public SessionObject getCurrent() {
+		String token = (String) Http.Context.current().args.get("token");
+		if (token != null) return sessions.get(token);
+		else return null;
 	}
 }

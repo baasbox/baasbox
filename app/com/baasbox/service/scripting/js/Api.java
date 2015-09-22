@@ -18,25 +18,27 @@
 
 package com.baasbox.service.scripting.js;
 
-import com.baasbox.db.DbHelper;
-import com.baasbox.commands.exceptions.CommandException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+import jdk.nashorn.internal.runtime.ECMAErrors;
+import jdk.nashorn.internal.runtime.ECMAException;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.baasbox.BBConfiguration;
 import com.baasbox.commands.CommandRegistry;
+import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.db.DbHelper;
+import com.baasbox.service.events.EventsService;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import jdk.nashorn.internal.runtime.ECMAErrors;
-import jdk.nashorn.internal.runtime.ECMAException;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-
-import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -66,15 +68,23 @@ public class Api {
             BaasBoxLogger.debug("Command result: "+res);
             return res;
         } catch (IOException e) {
-            BaasBoxLogger.error("IoError "+e.getMessage(),e);
+            BaasBoxLogger.error("IoError "+ExceptionUtils.getMessage(e),e);
             throw ECMAErrors.typeError(e,"Invalid command definition");
         } catch (CommandException e){
-            BaasBoxLogger.error("CommandError: "+e.getMessage(),e);
-            throw new ECMAException(e.getMessage(),e);
+            BaasBoxLogger.error("CommandError: "+ExceptionUtils.getMessage(e),e);
+            throw new ECMAException(ExceptionUtils.getMessage(e),e);
         }
     }
 
 
+    public static String getBaasBoxVersion(){
+        return BBConfiguration.getApiVersion();
+    }
+
+    public static boolean isScriptLoggingActive(){
+    	return (EventsService.howManyScriptLoggerListener.get() > 0);
+    }
+    
     public static String currentUserName(){
         String currentUser = DbHelper.getCurrentHTTPUsername();
         return currentUser;

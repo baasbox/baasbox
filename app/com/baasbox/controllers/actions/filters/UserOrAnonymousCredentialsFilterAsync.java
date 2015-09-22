@@ -106,7 +106,7 @@ public class UserOrAnonymousCredentialsFilterAsync extends Action.Simple {
 			if (tempResult == null)
 				tempResult = delegate.call(ctx);
 		}
-
+		
 		WrapResponse wr = new WrapResponse();
 		return wr.wrapAsync(ctx, tempResult);
 	}

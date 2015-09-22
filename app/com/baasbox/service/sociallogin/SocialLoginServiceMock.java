@@ -14,7 +14,7 @@ import play.mvc.Http.Session;
 public class SocialLoginServiceMock extends SocialLoginService {
 	
 	private static String port = (Play.isTest())?System.getProperty("testserver.port", "3333"):System.getProperty("http.port", "9000");
-	private static String mockUrl = "http://localhost"+port;
+	private static String mockUrl = "http://localhost:"+port;
 	
 	public   String PREFIX = "";
 	public   String SOCIAL = "";

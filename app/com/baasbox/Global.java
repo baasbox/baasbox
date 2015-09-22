@@ -19,6 +19,7 @@ package com.baasbox;
 import static play.Logger.debug;
 import static play.Logger.error;
 import static play.Logger.info;
+import static play.Logger.warn;
 import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
@@ -38,7 +39,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import play.Application;
 import play.Configuration;
 import play.GlobalSettings;
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.Play;
 import play.api.mvc.EssentialFilter;
 import play.core.j.JavaResultExtractor;
@@ -55,10 +55,12 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.ScriptingSandboxSecurityManager;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderMemory;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StatisticsService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -81,13 +83,23 @@ public class Global extends GlobalSettings {
 	@Override
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
+		  info("...Loading Play plugin...");
+		  
+		  //If the session encryption is enabled, checks if the secret is different by its default
+		  if (app.configuration().getBoolean(BBConfiguration.SESSION_ENCRYPT)
+				  &&
+			  app.configuration().getString(BBConfiguration.APPLICATION_SECRET).equals(BBConfiguration.getSecretDefault())){
+				  error("The session encryption is enabled but the application secret has not been changed.");
+				  error("Please set the 'application.secret' parameter. It must be a string of 16 characters.");
+				  error("For security reasons BaasBox cannot start");
+				  System.exit(-1);
+			  }
+		  
 		  info("System details:");
 		  info(StatisticsService.os().toString());
 		  info(StatisticsService.memory().toString());
 		  info(StatisticsService.java().toString());
-		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString());
-		 
-		  info("...Loading plugin...");
+		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString()); 
 	  }
 	  
 	  @Override
@@ -158,9 +170,6 @@ public class Global extends GlobalSettings {
 		    		//we MUST use admin/admin because the db was just created
 		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
 		    		DbHelper.setupDb();
-			    	info("Initializing session manager");
-			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
-			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
 		    	}catch (Throwable e){
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
@@ -180,7 +189,10 @@ public class Global extends GlobalSettings {
     		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
     		DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
-			
+			info("Initializing session manager");
+	    	ISessionTokenProvider stp = SessionTokenProviderFactory.getSessionTokenProvider();
+	    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*60*1000); //minutes * 60 seconds * 1000 milliseconds
+	    	
 			String bbid=Internal.INSTALLATION_ID.getValueAsString();
 			if (bbid==null) throw new Exception ("Unique id not found! Hint: could the DB be corrupted?");
 			info ("BaasBox unique id is " + bbid);
@@ -209,6 +221,35 @@ public class Global extends GlobalSettings {
     	//activate metrics
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
     	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
+    	
+    	//print out Redis info
+    	if (BBConfiguration.isRedisActive()){
+    		info("BaasBox will use REDIS as external cache");
+    		String redisHost=BBConfiguration.configuration.getString("redis.host");
+    		String redisPort=BBConfiguration.configuration.getString("redis.port");
+    		String redisURI=BBConfiguration.configuration.getString("redis.uri");
+    		String redisDatabase=BBConfiguration.configuration.getString("redis.database");
+    		if (StringUtils.isBlank(redisHost)) redisHost="localhost";
+    		if (StringUtils.isBlank(redisPort)) redisPort="6379";
+    		if (StringUtils.isBlank(redisDatabase)) redisDatabase="0";
+    		info("REDIS server: " + (StringUtils.isBlank(redisURI)?redisHost + ":" + redisPort:redisURI));
+    		info("REDIS database: " + redisDatabase);
+    	}
+    	//print out Sessions encryption info
+    	if (BBConfiguration.isSessionEncryptionEnabled()){
+    		info("BaasBox will encrypt sensitive information within users' sessions");
+    		if (BBConfiguration.getApplicationSecret().length()<16){
+    			error("The encription key has less than 16 character. Please check the application.secret parameter");
+    			System.exit(-1);
+    		}
+    		if (BBConfiguration.getApplicationSecret().length()>16){
+    			warn("The encription key has more than 16 character. Only 16 characters will be used (128 bits)");
+    		}
+    		if (!BBConfiguration.isRedisActive()){
+    			warn("REDIS is not enabled: encryption will not work in memory. Check and set 'redisplugin' parameter");
+    		}
+    	}
+    	
     	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
@@ -322,7 +363,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".value"));
 						PropertiesConfigurationHelper.override(key,value);
 					} catch (Exception e) {
-                        error ("Error overriding the setting " + key + " with the value " + value + ": " +e.getMessage());
+                        error ("Error overriding the setting " + key + " with the value " + value + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".visible")){ //or maybe we have to hide it when a REST API is called
     				//sets the visibility
@@ -332,7 +373,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".visible"));
 						PropertiesConfigurationHelper.setVisible(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the visible attribute for setting " + key + ": " +e.getMessage());
+						error ("Error overriding the visible attribute for setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else if (key.endsWith(".editable")){ //or maybe we have to 
     				//sets the possibility to edit the value via REST API by the admin
@@ -342,7 +383,7 @@ public class Global extends GlobalSettings {
     					key = key.substring(0, key.lastIndexOf(".editable"));
 						PropertiesConfigurationHelper.setEditable(key,value);
 					} catch (Exception e) {
-						error ("Error overriding the editable attribute setting " + key + ": " +e.getMessage());
+						error ("Error overriding the editable attribute setting " + key + ": " +ExceptionUtils.getMessage(e));
 					}
     			}else { 
     				error("The configuration key: " + key + " is invalid. value, visible or editable are missing");
@@ -372,7 +413,7 @@ public class Global extends GlobalSettings {
 	    	error("!! Error shutting down BaasBox!", e);
 	    }
 	    info("Destroying session manager...");
-	    SessionTokenProvider.destroySessionTokenProvider();
+	    SessionTokenProviderMemory.destroySessionTokenProvider();
 	    info("...BaasBox has stopped");
 		debug("Global.onStop() ended");
 	  }  
@@ -384,7 +425,7 @@ public class Global extends GlobalSettings {
 	
 	public ObjectNode prepareError(RequestHeader request, String error) {
 		ObjectNode result = Json.newObject();
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 			result.put("result", "error");
 			result.put("message", error);
 			result.put("resource", request.path());
@@ -425,7 +466,7 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public F.Promise<SimpleResult> onError(RequestHeader request, Throwable throwable) {
 		  error("INTERNAL SERVER ERROR: " + request.method() + " " + request);
-		  ObjectNode result = prepareError(request, throwable.getMessage());
+		  ObjectNode result = prepareError(request, ExceptionUtils.getMessage(throwable));
 		  result.put("http_code", 500);
 		  result.put("stacktrace", ExceptionUtils.getFullStackTrace(throwable));
 		  error(ExceptionUtils.getFullStackTrace(throwable));
@@ -440,7 +481,6 @@ public class Global extends GlobalSettings {
 
 	@Override 
 	public <T extends EssentialFilter> Class<T>[] filters() {
-		
 		return new Class[]{GzipFilter.class,com.baasbox.filters.LoggingFilter.class};
 	}
 

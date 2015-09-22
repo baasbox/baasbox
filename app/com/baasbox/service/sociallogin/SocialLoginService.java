@@ -22,15 +22,11 @@ import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
@@ -39,7 +35,6 @@ import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.cache.Cache;
 import play.mvc.Http.Request;
 import play.mvc.Http.Session;
@@ -49,6 +44,11 @@ import com.baasbox.configuration.Application;
 import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
@@ -234,14 +234,14 @@ public abstract class SocialLoginService {
 			if(StringUtils.isEmpty(body)){
 				return false;
 			}else{
-				ObjectMapper mapper = new ObjectMapper();
+				ObjectMapper mapper = BBJson.mapper();
 				JsonFactory factory = mapper.getJsonFactory(); // since 2.1 use mapper.getFactory() instead
 				JsonParser jp = factory.createJsonParser(body);
 				JsonNode jn = mapper.readTree(jp);
 				return validate(jn);
 			}
 		} catch (IOException e) {
-			throw new BaasBoxSocialTokenValidationException("There was an error in the token validation process:"+e.getMessage());
+			throw new BaasBoxSocialTokenValidationException("There was an error in the token validation process:"+ExceptionUtils.getMessage(e));
 		}
 
 	}

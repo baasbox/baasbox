@@ -99,7 +99,7 @@ class UsersResource extends BaseRestResource {
 
                 return BBJson.mapper().readTreeOrMissing(s);
             } catch (SqlInjectionException e){
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         };
     }
@@ -110,7 +110,7 @@ class UsersResource extends BaseRestResource {
 //            String s = JSONFormats.prepareResponseToJson(friendsOf, JSONFormats.Formats.USER);
 //            return Json.mapper().readTreeOrMissing(s);
 //        } catch (SqlInjectionException | IOException e) {
-//            throw new CommandExecutionException(command,e.getMessage(),e);
+//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 //        }
 //    }
 
@@ -142,7 +142,7 @@ class UsersResource extends BaseRestResource {
         try {
             return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -152,13 +152,13 @@ class UsersResource extends BaseRestResource {
             String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
             return BBJson.mapper().readTree(s);
         } catch (UserNotFoundException e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         } catch (AlreadyFriendsException e) {
             return NullNode.getInstance();
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -266,7 +266,7 @@ class UsersResource extends BaseRestResource {
             String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
             return BBJson.mapper().readTree(s);
         } catch (Exception e) {
-            throw new CommandExecutionException(command,"Error updating user: "+e.getMessage());
+            throw new CommandExecutionException(command,"Error updating user: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -280,9 +280,9 @@ class UsersResource extends BaseRestResource {
             if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
             JsonNode id = params.get(BaasBoxPrivateFields.ID.toString());
             String idString=null;
-            if (!(id instanceof NullNode) && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
-            if (!(id instanceof NullNode) && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
-            if (!(id instanceof NullNode) && id.isTextual()) idString=id.asText();
+            if (!(id instanceof NullNode) && id!=null && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
+            if (!(id instanceof NullNode) && id!=null && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
+            if (!(id instanceof NullNode) && id!=null && id.isTextual()) idString=id.asText();
             JsonNode roleNode = params.get("role");
             String role;
             if (roleNode == null){
@@ -321,9 +321,9 @@ class UsersResource extends BaseRestResource {
             String response = prepareResponseToJson(users);
             return BBJson.mapper().readTree(response);
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command, "error executing command: " + e.getMessage());
+            throw new CommandExecutionException(command, "error executing command: " + ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command, "error parsing response: " + e.getMessage());
+            throw new CommandExecutionException(command, "error parsing response: " + ExceptionUtils.getMessage(e));
         }
     }
 
@@ -339,9 +339,9 @@ class UsersResource extends BaseRestResource {
             String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
             return BBJson.mapper().readTree(resp);
         } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error parsing response: "+e.getMessage());
+            throw new CommandExecutionException(command,"error parsing response: "+ExceptionUtils.getMessage(e));
         }
     }
 

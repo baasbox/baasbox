@@ -20,7 +20,8 @@ package com.baasbox.commands;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.UUID;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -168,7 +169,7 @@ class DocumentsResource extends BaseRestResource {
         } catch (ODatabaseException e){
             return null;
         } catch (Throwable e){
-            throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+ExceptionUtils.getMessage(e));
         }
         return null;
     }
@@ -216,15 +217,16 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+coll);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+ExceptionUtils.getMessage(e));
         } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
+            throw new CommandExecutionException(command,"data do not represents a valid document, message: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+e.getMessage());
+			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (Throwable e){
-			throw new CommandExecutionException(command," error updating document: "+id+" message:"+e.getMessage());
+			BaasBoxLogger.error("error updating document: "+id,e);
+			throw new CommandExecutionException(command," error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		}
     }
 
@@ -251,9 +253,9 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException throwable) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error creating document: "+e.getMessage());
+            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
         } catch (Throwable e) {
-            throw new CommandExecutionException(command,"error creating document: "+e.getMessage());
+            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -289,7 +291,7 @@ class DocumentsResource extends BaseRestResource {
 			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
             return lst;
         } catch (SqlInjectionException | IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+collection,e);
         }
@@ -318,11 +320,11 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -397,11 +399,6 @@ class DocumentsResource extends BaseRestResource {
             throw new CommandParsingException(command,"missing document id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"document id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 

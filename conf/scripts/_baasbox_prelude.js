@@ -223,6 +223,10 @@ var GLOBAL=this;
 
     Module.prototype.BaasBoxError=BaasBoxError;
 
+    Module.prototype.__getBaasBoxVersion = function (){
+    	return Api.getBaasBoxVersion();
+    }
+    Object.defineProperty(Module.prototype,"__getBaasBoxVersion",{configurable: false,enumerable: false});
 
     /**
      * The require function
@@ -231,11 +235,11 @@ var GLOBAL=this;
      */
     Module.prototype.require = function(name){
         if (typeof name !== 'string'){
-            throw new TypeError("require needs a single string argument");
+            throw new TypeError("'require' needs a single string argument");
         }
         var mod =Api.require(name);
         if(mod === null){
-            throw new Error("module "+name+"does not exists");
+            throw new Error("module "+name+" does not exist");
         }
         return mod.module.exports;
     };
@@ -254,6 +258,11 @@ var GLOBAL=this;
     	return Api.atob(stringToConvert);
     }
 
+    Module.prototype.isLoggingActive = function (){
+    	return Api.isScriptLoggingActive();
+    }
+
+    
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});

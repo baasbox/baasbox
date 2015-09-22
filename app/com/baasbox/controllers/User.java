@@ -68,7 +68,8 @@ import com.baasbox.exception.PasswordRecoveryException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionObject;
+import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.user.FriendShipService;
 import com.baasbox.service.user.UserService;
@@ -202,7 +203,6 @@ public class User extends Controller {
 
 		if (StringUtils.isEmpty(password)) {
 			return F.Promise.pure(status(422, "The password field cannot be empty"));
-
 		}
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			//try to signup new user
@@ -225,15 +225,16 @@ public class User extends Controller {
 			} catch (Throwable e){
 				BaasBoxLogger.warn("signUp", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-				else return internalServerError(e.getMessage());
+				else return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-			ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-			response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+			SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider()
+					.setSession(appcode, username, password);
+			response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 
 			String result=prepareResponseToJson(profile);
-			ObjectMapper mapper = new ObjectMapper();
-			result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+			ObjectMapper mapper = BBJson.mapper();
+			result = result.substring(0,result.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.getToken()+"\"}";
 			JsonNode jn = mapper.readTree(result);
 
 			return created(jn);
@@ -286,6 +287,7 @@ public class User extends Controller {
 				return F.Promise.pure(badRequest("The email address must be valid."));
 		}
 
+
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			ODocument profile;
 			try {
@@ -293,7 +295,7 @@ public class User extends Controller {
 			} catch (Throwable e){
 				BaasBoxLogger.warn("updateProfile", e);
 				if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-				else return internalServerError(e.getMessage());
+				else return internalServerError(ExceptionUtils.getMessage(e));
 			}
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -340,7 +342,7 @@ public class User extends Controller {
 				UserService.sendResetPwdMail(appCode, user);
 			} catch (PasswordRecoveryException e) {
 				BaasBoxLogger.warn("resetPasswordStep1", e);
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (Exception e) {
 				BaasBoxLogger.warn("resetPasswordStep1", e);
 				return internalServerError(ExceptionUtils.getFullStackTrace(e));
@@ -404,7 +406,7 @@ public class User extends Controller {
 			if (isJSON)  {
 				result.put("status", "KO");
 				result.put("user_name",username);
-				result.put("error",e.getMessage());
+				result.put("error",ExceptionUtils.getMessage(e));
 				result.put("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(result);
@@ -412,7 +414,7 @@ public class User extends Controller {
 			else {
 				ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
 				pageTemplate.add("user_name",username);
-				pageTemplate.add("error",e.getMessage());
+				pageTemplate.add("error",ExceptionUtils.getMessage(e));
 				pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				return badRequest(Html.apply(pageTemplate.render()));
 			}
@@ -507,7 +509,7 @@ public class User extends Controller {
 		}catch (Exception e){
 			if(isJSON) {
 				result.put("user_name", username);
-				result.put("error", e.getMessage());
+				result.put("error", ExceptionUtils.getMessage(e));
 				result.put("application_name", com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(result);
@@ -516,7 +518,7 @@ public class User extends Controller {
 			else {
 				ST pageTemplate = new ST(PasswordRecovery.PAGE_HTML_FEEDBACK_TEMPLATE.getValueAsString(), '$', '$');
 				pageTemplate.add("user_name",username);
-				pageTemplate.add("error",e.getMessage());
+				pageTemplate.add("error",ExceptionUtils.getMessage(e));
 				pageTemplate.add("application_name",com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString());
 				DbHelper.getConnection().close();
 				return badRequest(Html.apply(pageTemplate.render()));
@@ -571,7 +573,7 @@ public class User extends Controller {
 			BaasBoxLogger.warn("changeUserPassword", e);
 			DbHelper.getConnection().close();
 			if (Play.isDev()) return internalServerError(ExceptionUtils.getFullStackTrace(e));
-			else return internalServerError(e.getMessage());
+			else return internalServerError(ExceptionUtils.getMessage(e));
 		} 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 
@@ -643,7 +645,7 @@ public class User extends Controller {
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 			if (!StringUtils.isEmpty(token)) {
 				UserService.logout(pushToken);
-				SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+				SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token);
 			}
 			return ok("pushToken: " + pushToken + " logged out");
 		})).recover((t)->{
@@ -661,7 +663,7 @@ public class User extends Controller {
 
 		String token=(String) Http.Context.current().args.get("token");
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
-			if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
+			if (!StringUtils.isEmpty(token)) SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token);
 			return ok("user logged out");
 		})).recover((t)->{
 			if (t instanceof SqlInjectionException){
@@ -710,7 +712,7 @@ public class User extends Controller {
 				return F.Promise.pure(badRequest("The 'appcode' field is missing"));
 			else appcode=bodyUrlEncoded.get("appcode")[0];
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
-			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password <hidden>");
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
 			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					||
@@ -757,6 +759,10 @@ public class User extends Controller {
 
 		return F.Promise.promise(()->{
 			String user;
+			//the filter does not inject the appcode. Actually the login endpoint is the only one that does not enforce a check on the appcode presence. 
+			//This is not correct, BTW, for the moment we just patch it
+
+			Http.Context.current().args.put("appcode", appcode);
 			try (ODatabaseRecordTx db = DbHelper.open(appcode,username,password)){
 				user = prepareResponseToJson(UserService.getCurrentUser());
 				if (loginData != null) {
@@ -779,18 +785,18 @@ public class User extends Controller {
 					}
 					UserService.registerDevice(data);
 				}
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 
 				ObjectMapper mapper = BBJson.mapper();
-				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
+				user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.getToken()+"\"}";
 				JsonNode jn = mapper.readTree(user);
 				return ok(jn);
 			} catch (OSecurityAccessException e){
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  e.getMessage());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " +  ExceptionUtils.getMessage(e));
 				return unauthorized("user " + username + " unauthorized");
 			} catch (InvalidAppCodeException e) {
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + e.getMessage());
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserLogin: " + ExceptionUtils.getMessage(e));
 				return badRequest("user " + username + " unauthorized");
 			}
 		});
@@ -803,7 +809,7 @@ public class User extends Controller {
 			try {
 				UserService.disableCurrentUser();
 			} catch (UserNotFoundException e) {
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			} catch (OpenTransactionException e) {
 				BaasBoxLogger.error (ExceptionUtils.getFullStackTrace(e));
 				throw new RuntimeException(e);
@@ -822,23 +828,23 @@ public class User extends Controller {
 		try{
 			UserService.getOUserByUsername(currentUsername);
 		}catch(Exception e){
-			return internalServerError(e.getMessage()); 
+			return internalServerError(ExceptionUtils.getMessage(e)); 
 		}
 		try {
 			ODocument followed = FriendShipService.follow(currentUsername, toFollowUsername);
 			return created(prepareResponseToJson(followed));
 		} catch (UserToFollowNotExistsException e){
-			return notFound(e.getMessage());
+			return notFound(ExceptionUtils.getMessage(e));
 		}catch (UserNotFoundException e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		} catch (AlreadyFriendsException e) {
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		} catch (SqlInjectionException e) {
 			return badRequest("The username " + toFollowUsername + " is not a valid username. HINT: check if it contains invalid character, the server has encountered a possible SQL Injection attack");
 		} catch (IllegalArgumentException e){
-			return badRequest(e.getMessage());
+			return badRequest(ExceptionUtils.getMessage(e));
 		}catch (Exception e){
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 		}));
 	}
@@ -924,11 +930,10 @@ public class User extends Controller {
 					return notFound("User "+currentUsername+" is not a friend of "+toUnfollowUsername);
 				}
 			} catch (UserNotFoundException e) {
-				return notFound(e.getMessage());
+				return notFound(ExceptionUtils.getMessage(e));
 			} catch (Exception e) {
 				return internalServerError(e.getMessage());
 			}
-
 		}));
 	}
 

@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -23,7 +24,6 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -95,9 +95,9 @@ class DBResource extends Resource {
 	        BaasBoxLogger.debug(s);
 			lst = (ArrayNode)BBJson.mapper().readTree(s);
 		} catch (IOException e) {
-			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
-			throw new CommandExecutionException(c,"Error parsing query: "+e.getMessage(),e);
+			throw new CommandExecutionException(c,"Error parsing query: "+ExceptionUtils.getMessage(e),e);
 		}
         return lst;
     }
@@ -121,14 +121,17 @@ class DBResource extends Resource {
 	        String s = "";
 	        if (listToReturn instanceof List ) s=JSONFormats.prepareResponseToJson((List)listToReturn, JSONFormats.Formats.GENERIC,true);
 	        else if (listToReturn instanceof ODocument) s=JSONFormats.prepareResponseToJson((ODocument)listToReturn, JSONFormats.Formats.GENERIC,true);
+	        else if (listToReturn == null) s=null;
 	        else s=listToReturn.toString();
 	        BaasBoxLogger.debug("Statement result: ");
 	        BaasBoxLogger.debug(s);
-			lst = BBJson.mapper().readTree(s);
+	        if (s==null) lst=NullNode.getInstance();
+	        else lst = BBJson.mapper().readTree(s);
+
 		} catch (IOException e) {
-			 throw new CommandExecutionException(c,"error executing command: "+e.getMessage(),e);
+			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
-			throw new CommandExecutionException(c,"Error parsing statement: "+e.getMessage(),e);
+			throw new CommandExecutionException(c,"Error parsing statement: "+ExceptionUtils.getMessage(e),e);
 		}
         return lst;
     }
@@ -184,7 +187,7 @@ class DBResource extends Resource {
 //            return NullNode.getInstance();
 //        }catch (Exception e){
 //            commit = false;
-//            throw new CommandExecutionException(command,e.getMessage(),e);
+//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 //        } finally {
 //            if (commit){
 //                DbHelper.commitTransaction();
@@ -223,11 +226,6 @@ class DBResource extends Resource {
             throw new CommandParsingException(command,"missing id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 

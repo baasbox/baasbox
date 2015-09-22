@@ -20,7 +20,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.service.push.providers.APNServer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractTest;
 import core.TestConfig;
@@ -117,6 +117,42 @@ public class PushSendTest extends AbstractTest {
 					result = routeAndCall(request);
 					assertRoute(result,"testSendPushWithNewApi - ok", 200, null, true);
 					
+					//test verbose for admins
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "Profiles computed:", true);
+					
+					//verbose is not active for reg users
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					//send a message to more than a device (up to 10) at the same time
+					//populate login_info with iOS Token
+					for (int i=0;i<=9;i++){
+						request = new FakeRequest("PUT","/push/enable/ios/"+ UUID.randomUUID());
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
+						result = routeAndCall(request);
+						assertRoute(result,"populate login_info",200,null,true);
+					}
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					
 				}
 			}
 		);
@@ -147,7 +183,7 @@ public class PushSendTest extends AbstractTest {
 					
 					try{
 						DbHelper.open("1234567890", sFakeUserNotAccess, sPwd);
-						ObjectMapper om = new ObjectMapper();
+						ObjectMapper om = BBJson.mapper();
 						JsonNode payload = om.readTree("{"+
 								"\"custom\" :     {"+
 								"		\"QBKey\" : \"12a535fb-5732-44e0-8a97-0a4688ba75ba\","+
@@ -168,7 +204,6 @@ public class PushSendTest extends AbstractTest {
 	}
 	
 				
-	
 
 	
 	@Override

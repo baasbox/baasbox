@@ -18,12 +18,12 @@ package com.baasbox.controllers.actions.filters;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Http.Context;
 
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.google.common.collect.ImmutableMap;
+import com.baasbox.security.SessionObject;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 
 public class SessionTokenAccess implements IAccessMethod  {
@@ -37,16 +37,16 @@ public class SessionTokenAccess implements IAccessMethod  {
 		
 		if (token!=null) {
 			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Received session token " + token);
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  SessionObject sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
 			  if (sessionData!=null){
 				  	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Token identified: ");
-					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
-					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
-					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
+					ctx.args.put("username", sessionData.getUsername());
+					ctx.args.put("password", sessionData.getPassword());
+					ctx.args.put("appcode", sessionData.getAppcode());
 					ctx.args.put("token", token);
-					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("username: " + (String)sessionData.get(SessionKeys.USERNAME));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("username: " + (String)sessionData.getUsername());
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("password: <hidden>" );
-					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("appcode: " + (String)sessionData.get(SessionKeys.APP_CODE));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("appcode: " + (String)sessionData.getAppcode());
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("token: " + token);
 					return true;
 			  }else{

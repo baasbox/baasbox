@@ -39,6 +39,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	//the db size Threshold in bytes
 	private static BigInteger dbSizeThreshold=BigInteger.ZERO;
 	private static boolean isDBSizeThresholdOverridden=false; 
+	private static final boolean _isRedisActive = BBConfiguration.configuration.getString("redisplugin").equals("enabled");
 	
 	
 	@Deprecated
@@ -78,9 +79,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getBoolean(WRITE_ACCESS_LOG);
 	}
 	
+	public static boolean isRedisActive(){
+		return _isRedisActive;
+	}
+	
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
+
 	public static String getDBFullPath(){
 		return configuration.getString(DB_PATH);
 	}
@@ -120,6 +126,30 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(ROOT_PASSWORD);
 	}
 
+	public static int getImportExportBufferSize(){
+		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
+	}
+	
+	public static Boolean isChunkedEnabled(){
+		return configuration.getBoolean(CHUNKED_RESPONSE);
+	}
+	
+	public static int getChunkSize(){
+		return configuration.getInt(CHUNK_SIZE);
+	}
+	
+	//sessions
+	public static Boolean isSessionEncryptionEnabled(){
+		return configuration.getBoolean(SESSION_ENCRYPT);
+	}
+	
+	public static String getApplicationSecret(){
+		return configuration.getString(APPLICATION_SECRET);
+	}
+	
+	public static String getSecretDefault(){
+		return "CHANGE_ME";
+	}
 	
 	//metrics
 	public static boolean getComputeMetrics() {

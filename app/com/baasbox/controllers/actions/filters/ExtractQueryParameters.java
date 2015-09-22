@@ -16,17 +16,19 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import com.baasbox.util.IQueryParametersKeys;
-import com.baasbox.util.QueryParams;
+import org.scribe.utils.MapUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.mvc.Result;
 import play.mvc.SimpleResult;
-import play.libs.F;
+
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.IQueryParametersKeys;
+import com.baasbox.util.QueryParams;
+import com.google.common.collect.ArrayListMultimap;
 
 public class ExtractQueryParameters extends Action.Simple{
 
@@ -34,10 +36,19 @@ public class ExtractQueryParameters extends Action.Simple{
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);		
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters for resource {} {}" , Http.Context.current().request(), Http.Context.current().request().version());
+		if (BaasBoxLogger.isDebugEnabled()) {
+			String toString=BBJson.mapper().writeValueAsString(Http.Context.current().request().headers());
+			BaasBoxLogger.debug("Request header is {}", toString);
+		}
+		
+		if (BaasBoxLogger.isDebugEnabled()) {
+			String toString=BBJson.mapper().writeValueAsString(Http.Context.current().request().queryString());
+			BaasBoxLogger.debug("Request QueryString is {}", toString);
+		}
 		
 		QueryParams qryp =QueryParams.getParamsFromQueryString(Http.Context.current().request());
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters " + qryp);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("ExtractQueryParameters {}" , qryp);
 		
 		ctx.args.put(IQueryParametersKeys.QUERY_PARAMETERS, qryp);
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");

@@ -18,11 +18,10 @@
 
 package com.baasbox.configuration;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.configuration.index.IndexApplicationConfiguration;
 import com.baasbox.security.ISessionTokenProvider;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.google.common.annotations.VisibleForTesting;
 
 
@@ -32,7 +31,7 @@ public enum Application implements IProperties{
 			//this callback function is invoked when the value changes. It sets the timeout for the session tokens
 			new IPropertyChangeCallback(){
 				public void change(final Object iCurrentValue, final Object iNewValue){
-					ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+					ISessionTokenProvider stp = SessionTokenProviderFactory.getSessionTokenProvider();
 					stp.setTimeout(Integer.parseInt(iNewValue.toString())*60000);
 				}
 			}),

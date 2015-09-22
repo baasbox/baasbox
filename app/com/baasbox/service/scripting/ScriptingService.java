@@ -29,14 +29,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import com.baasbox.service.logging.BaasBoxLogger;
+
 import play.libs.EventSource;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import play.libs.WS;
 
 /**
@@ -287,7 +288,7 @@ public class ScriptingService {
             if (e instanceof ScriptEvalException){
                 throw (ScriptEvalException)e;
             } else {
-                throw new ScriptEvalException(e.getMessage(),e);
+                throw new ScriptEvalException(ExceptionUtils.getMessage(e),e);
             }
         }finally {
             MAIN.set(null);
@@ -368,16 +369,25 @@ public class ScriptingService {
 
 
     public static JsonNode callJsonSync(JsonNode req) throws Exception{
-        return callJsonSync(req.get("url").asText(),
-                req.get("method").asText(),
+    	JsonNode url = req.get("url");
+    	JsonNode method = req.get("method");
+    	JsonNode timeout = req.get("timeout");
+
+    	if (url == null || url instanceof NullNode ) throw new IllegalArgumentException("Missing URL to call");
+    	if (method == null || method instanceof NullNode ) throw new IllegalArgumentException("Missing method to use when calling the URL");
+    	
+    	return callJsonSync(
+    			url.asText(),
+    			method.asText(),
                 mapJson(req.get("params")),
                 mapJson(req.get("headers")),
-                req.get("body"));
+                req.get("body"),
+                (timeout != null && timeout.isNumber()) ? timeout.asInt() : null);
     }
 
 
     private static Map<String,List<String>> mapJson(JsonNode node){
-        if (node == null){
+        if (node == null || node instanceof NullNode){
             return null;
         }
         if (node.isObject()){
@@ -406,13 +416,22 @@ public class ScriptingService {
         }
     }
 
-    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
+    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body, Integer timeout) throws Exception{
         try {
             ObjectNode node = BBJson.mapper().createObjectNode();
-            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
+            WS.Response resp = null;
+            
+            long startTime = System.nanoTime();
+            if (timeout==null) {
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body));
+            } else {
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body), timeout);            	
+            }
+            long endTime = System.nanoTime();
 
             int status = resp.getStatus();
             node.put("status",status);
+            node.put("execution_time", (endTime-startTime)/1000000L);
 
             String header = resp.getHeader("Content-Type");
             if (header==null ||  header.startsWith("text")){
@@ -425,7 +444,7 @@ public class ScriptingService {
 
             return node;
         } catch (Exception e) {
-            BaasBoxLogger.error("failed to connect: "+e.getMessage());
+            BaasBoxLogger.error("failed to connect: "+ ExceptionUtils.getMessage(e));
             throw e;
         }
 

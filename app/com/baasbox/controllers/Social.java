@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.scribe.model.Token;
 
 import play.libs.F;
@@ -45,7 +46,8 @@ import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionObject;
+import com.baasbox.security.SessionTokenProviderFactory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.BaasBoxSocialException;
 import com.baasbox.service.sociallogin.BaasBoxSocialTokenValidationException;
@@ -97,9 +99,9 @@ public class Social extends Controller{
 				Token t = sc.requestAccessToken(request(),session());
 				return ok("{\""+OAUTH_TOKEN+"\":\""+t.getToken()+"\",\""+OAUTH_SECRET+"\":\""+t.getSecret()+"\"}");
 			}catch (UnsupportedSocialNetworkException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}catch (java.lang.IllegalArgumentException e){
-				return badRequest(e.getMessage());
+				return badRequest(ExceptionUtils.getMessage(e));
 			}
 		});
 
@@ -170,7 +172,7 @@ public class Social extends Controller{
 			try{
 				existingUser = userDao.getBySocialUserId(result);
 			}catch(SqlInjectionException sie){
-				return internalServerError(sie.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(sie));
 			}
 
 			if(existingUser!=null){
@@ -181,17 +183,17 @@ public class Social extends Controller{
 						throw new InvalidModelException("username for profile is null");
 					}
 				} catch (InvalidModelException e) {
-					internalServerError("unable to login with "+socialNetwork+" : "+e.getMessage());
+					internalServerError("unable to login with "+socialNetwork+" : "+ExceptionUtils.getMessage(e));
 				}
 				String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
 
-				ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode,username, password);
-				response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode,username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				ObjectNode on = Json.newObject();
 				if(existingUser!=null){
 					on = (ObjectNode)Json.parse( User.prepareResponseToJson(existingUser));
 				}
-				on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+				on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				return ok(on);
 			}else{
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User does not exists with tokens...trying to create");
@@ -206,17 +208,17 @@ public class Social extends Controller{
 					UserService.signUp(username, password, signupDate, null, privateData, null, null,true);
 					ODocument profile=UserService.getUserProfilebyUsername(username);
 					UserService.addSocialLoginTokens(profile,result);
-					ImmutableMap<SessionKeys, ? extends Object> sessionObject = SessionTokenProvider.getSessionTokenProvider().setSession(appcode, username, password);
-					response().setHeader(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+					SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode, username, password);
+					response().setHeader(SessionKeys.TOKEN.toString(),sessionObject.getToken());
 					ObjectNode on = Json.newObject();
 					if(profile!=null){
 						on = (ObjectNode)Json.parse( User.prepareResponseToJson(profile));
 					}
-					on.put(SessionKeys.TOKEN.toString(), (String) sessionObject.get(SessionKeys.TOKEN));
+					on.put(SessionKeys.TOKEN.toString(),sessionObject.getToken());
 
 					return ok(on);
 				}catch(Exception uaee){
-					return internalServerError(uaee.getMessage());
+					return internalServerError(ExceptionUtils.getMessage(uaee));
 				}
 			}
 		}));
@@ -250,7 +252,7 @@ public class Social extends Controller{
 					return ok(Json.toJson(result));
 				}
 			}catch(Exception e){
-				return internalServerError(e.getMessage());
+				return internalServerError(ExceptionUtils.getMessage(e));
 			}
 		}));
 	}
@@ -288,7 +290,7 @@ public class Social extends Controller{
 						UserService.removeSocialLoginTokens(user, socialNetwork);
 						return ok();
 					} catch (Exception e) {
-						return internalServerError(e.getMessage());
+						return internalServerError(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -349,7 +351,7 @@ public class Social extends Controller{
 			}
 			return ok();
 		} catch (SqlInjectionException e) {
-			return internalServerError(e.getMessage());
+			return internalServerError(ExceptionUtils.getMessage(e));
 		}
 
 

@@ -44,7 +44,7 @@ import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -69,6 +69,7 @@ public class DocumentService {
 		try	{
 			doc = dao.create();
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			//since 0.9.4 clients can choose their own IDs (inside a plugin). So if provided we use them
@@ -121,6 +122,7 @@ public class DocumentService {
 		try{
 			DocumentDao dao = DocumentDao.getInstance(collectionName);
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			DbHelper.commitTransaction();
@@ -250,7 +252,7 @@ public class DocumentService {
 			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		StringBuffer q = new StringBuffer("");
 
 		if(!pp.isMultiField() && !pp.isArray()){
@@ -306,5 +308,15 @@ public class DocumentService {
         }
         return rid;
     }
+
+	public static boolean checkSyntax(String collectionName, QueryParams criteria) throws InvalidCollectionException, SqlInjectionException {
+		QueryParams checkCriteria = criteria.clone();
+		checkCriteria.page(0);
+		checkCriteria.recordPerPage(1);
+		checkCriteria.disablePaginationMore();
+		DocumentDao dao = DocumentDao.getInstance(collectionName);
+		dao.explainQuery(checkCriteria); //this is a trick to force the parser to evaluate the query
+		return true;
+	}
 
 }

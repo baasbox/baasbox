@@ -77,13 +77,14 @@ public class Audit extends BaasBoxHook {
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
-						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord:{} " , iRecord.getIdentity());
 						ODocument auditDoc = doc.field(BBInternalConstants.FIELD_AUDIT);
 						if (auditDoc==null) auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: {} done." , iRecord.getIdentity());
 						return RESULT.RECORD_CHANGED;
 					}
 				}

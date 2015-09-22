@@ -79,7 +79,7 @@ import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -154,7 +154,7 @@ public class File extends Controller {
             String aclJsonString;
             if (acl != null && datas.length > 0) {
                 aclJsonString = acl[0];
-                ObjectMapper mapper = new ObjectMapper();
+                ObjectMapper mapper = BBJson.mapper();
                 JsonNode aclJson = null;
                 try {
                     aclJson = mapper.readTree(aclJsonString);
@@ -228,7 +228,7 @@ public class File extends Controller {
         			        	parser.parse(is, contenthandler, metadata,new ParseContext());
         			        }catch (Exception e){
         			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
-        			        	metadata.add("_bb_parser_error", e.getMessage());
+        			        	metadata.add("_bb_parser_error", ExceptionUtils.getMessage(e));
         			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
         			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
         			        }
@@ -413,7 +413,7 @@ public class File extends Controller {
             .when(IOException.class,
                     e ->{
                         BaasBoxLogger.error("error retrieving file content " + id, e);
-                        return internalServerError(e.getMessage());
+                        return internalServerError(ExceptionUtils.getMessage(e));
                     })
             .when(DocumentIsNotAnImageException.class,
                     e -> badRequest("The id " + id + "is not an image and cannot be resize"))
@@ -445,7 +445,7 @@ public class File extends Controller {
 
                 })).recover(ErrorToResult
                     .when(IllegalArgumentException.class,
-                            e -> badRequest(e.getMessage()))
+                            e -> badRequest(ExceptionUtils.getMessage(e)))
                     .when(RoleNotFoundException.class,
                             e -> notFound("role " + rolename + " not found"))
                     .when(OSecurityAccessException.class,
@@ -453,7 +453,7 @@ public class File extends Controller {
                     .when(OSecurityException.class,
                             e -> forbidden())
                     .when(Throwable.class,
-                            e -> internalServerError(e.getMessage())));
+                            e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToRole
 
     @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
@@ -470,7 +470,7 @@ public class File extends Controller {
                     return ok();
                 })).recover(ErrorToResult
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(RoleNotFoundException.class,
                         e -> notFound("user " + username + " not found"))
                 .when(OSecurityAccessException.class,
@@ -478,7 +478,7 @@ public class File extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden())
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage()==null?"":e.getMessage())));
+                        e -> internalServerError(e.getMessage()==null?"":ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToUser
 
 

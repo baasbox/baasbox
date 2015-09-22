@@ -31,7 +31,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import org.junit.Test;
 
 import play.mvc.Http.Status;
@@ -93,7 +93,7 @@ public class AdminCollectionDropFunctionalTest extends AbstractTest{
                                          
                                          //Insert some object in there
                                          String sFakeInsertObjects = getRouteForObjects();
-                                         JsonNode payload = (new ObjectMapper()).readTree("{\"test\":\"testvalue\"}");
+                                         JsonNode payload = (BBJson.mapper()).readTree("{\"test\":\"testvalue\"}");
                                          int cont=15;
                                          for(int i=0;i<cont;i++){
                                          		 requestCreation	 = new FakeRequest(POST, sFakeInsertObjects);

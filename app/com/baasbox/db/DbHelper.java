@@ -22,8 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import java.util.Arrays;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +38,7 @@ import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Play;
@@ -42,11 +47,11 @@ import play.mvc.Http;
 import play.mvc.Result;
 
 import com.baasbox.BBConfiguration;
-import com.baasbox.IBBConfigurationKeys;
 import com.baasbox.configuration.Internal;
 import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.configuration.PropertiesConfigurationHelper;
 import com.baasbox.dao.RoleDao;
+import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
@@ -90,11 +95,8 @@ public class DbHelper {
 	private static final String SCRIPT_FILE_NAME = "db.sql";
 	private static final String CONFIGURATION_FILE_NAME = "configuration.conf";
 
-	private static ThreadLocal<Boolean> dbFreeze = new ThreadLocal<Boolean>() {
-		protected Boolean initialValue() {
-			return Boolean.FALSE;
-		};
-	};
+	private static volatile boolean dbFreeze = false;
+
 	private static ThreadLocal<Integer> tranCount = new ThreadLocal<Integer>() {
 		protected Integer initialValue() {
 			return 0;
@@ -131,7 +133,12 @@ public class DbHelper {
 		return BigInteger.valueOf(new File(BBConfiguration.getDBFullPath()).getFreeSpace());
 	}
 
-	public static String currentUsername() {
+	
+	public static String getCurrentAppCode(){
+		return appcode.get();
+	}
+	
+	public static String currentUsername(){
 		return username.get();
 	}
 
@@ -238,7 +245,7 @@ public class DbHelper {
 		}
 
 		if (!count && criteria.getPage() != null && criteria.getPage() != -1) {
-			ret += " limit " + criteria.getRecordPerPage();
+			ret += " limit " + (criteria.getRecordPerPage() + (criteria.isMoreEnabled() ? 1:0));
 		}
 		if (BaasBoxLogger.isDebugEnabled())
 			BaasBoxLogger.debug("queryBuilder: " + ret);
@@ -354,9 +361,9 @@ public class DbHelper {
 			// WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
 			db = getConnection();
 
-			synchronized (DbHelper.class) {
-				if (!dbFreeze.get()) {
-					dbFreeze.set(true);
+			synchronized(DbHelper.class)  {
+				if(!dbFreeze){
+					dbFreeze = true;
 				}
 				db.drop();
 				db.close();
@@ -369,16 +376,12 @@ public class DbHelper {
 					HooksManager.registerAll(db);
 					setupDb();
 				}
-
 			}
-
 		} catch (Throwable e) {
 			throw new RuntimeException(e);
-		} finally {
-			synchronized (DbHelper.class) {
-
-				dbFreeze.set(false);
-
+		}finally{
+			synchronized(DbHelper.class)  {
+				dbFreeze=false;
 			}
 		}
 
@@ -409,16 +412,12 @@ public class DbHelper {
 		return open(appcode, username, password);
 	}
 
-	public static ODatabaseRecordTx open(String appcode, String username,
-			String password) throws InvalidAppCodeException {
+	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
+		
+		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
+			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
+		if(dbFreeze){
 
-		if (appcode == null
-				|| !appcode.equals(BBConfiguration.configuration
-						.getString(BBConfiguration.APP_CODE)))
-			throw new InvalidAppCodeException(
-					"Authentication info not valid or not provided: " + appcode
-							+ " is an Invalid App Code");
-		if (dbFreeze.get()) {
 			throw new ShuttingDownDBException();
 		}
 
@@ -434,8 +433,7 @@ public class DbHelper {
 		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
 		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
-				+ databaseName, username, password);
-
+				+ BBConfiguration.getDBDir(), username, password);
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);
@@ -445,6 +443,7 @@ public class DbHelper {
 	}
 
 	public static boolean isConnectedAsAdmin(boolean excludeInternal) {
+		if (getConnection()==null) return false;
 		OUser user = getConnection().getUser();
 		Set<ORole> roles = user.getRoles();
 		boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN
@@ -484,10 +483,12 @@ public class DbHelper {
 		if (db != null && !db.isClosed()) {
 			// HooksManager.unregisteredAll(db);
 			try {
-				if (tranCount.get() != 0)
+				if (tranCount.get() != 0){
+					rollbackTransaction();
 					throw new TransactionIsStillOpenException(
 							"Closing a connection with an active transaction: "
-									+ tranCount.get());
+									+ tranCount.get() + ". Transaction will be rolled back");
+				}
 			} finally {
 				db.close();
 				tranCount.set(0);
@@ -500,12 +501,13 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 		try {
 			db = (ODatabaseRecordTx) ODatabaseRecordThreadLocal.INSTANCE.get();
-			if (BaasBoxLogger.isDebugEnabled())
-				BaasBoxLogger.debug("Connection id: " + db + " "
+			if (BaasBoxLogger.isTraceEnabled())
+				BaasBoxLogger.trace("Connection id: " + db + " "
 						+ ((Object) db).hashCode());
 		} catch (ODatabaseException e) {
 			BaasBoxLogger.debug("Cound not retrieve the DB connection within this thread: "
-					+ e.getMessage());
+					+ ExceptionUtils.getMessage(e));
+
 		}
 		return db;
 	}
@@ -543,14 +545,11 @@ public class DbHelper {
 	
 	public static void updateDefaultUsers() throws Exception{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
-		OUser user = db.getMetadata().getSecurity()
-				.getUser(BBConfiguration.getBaasBoxUsername());
+		UserDao udao = UserDao.getInstance();
+		OUser user = udao.getOUserByUsername(BBConfiguration.getBaasBoxUsername());
 		user.setPassword(BBConfiguration.getBaasBoxPassword());
 		user.save();
-
-		user = db.getMetadata().getSecurity()
-				.getUser(BBConfiguration.getBaasBoxAdminUsername());
+		user = udao.getOUserByUsername(BBConfiguration.getBaasBoxAdminUsername());
 		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
 		user.save();
 
@@ -576,11 +575,11 @@ public class DbHelper {
 			if (!line.startsWith("--") && !line.trim().isEmpty()){ //skip comments
 				db.command(new OCommandSQL(line.replace(';', ' '))).execute();
 			}
-		}
-		Internal.DB_VERSION._setValue(BBConfiguration.configuration
-				.getString(IBBConfigurationKeys.API_VERSION));
-		String uniqueId = "";
-		try {
+		} 
+		
+		Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+		String uniqueId="";
+		try{
 			UUID u = new UUID();
 			uniqueId = new String(Base64.encodeBase64(u.toString().getBytes()));
 		} catch (Exception e) {
@@ -655,22 +654,17 @@ public class DbHelper {
 	public static void exportData(String appcode, OutputStream os)
 			throws UnableToExportDbException {
 		ODatabaseRecordTx db = null;
-		try {
-			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(),
-					BBConfiguration.getBaasBoxAdminPassword());
 
-			ODatabaseExport oe = new ODatabaseExport(db, os,
-					new OCommandOutputListener() {
-						@Override
-						public void onMessage(String m) {
-							BaasBoxLogger.info(m);
-						}
-					});
-			synchronized (DbHelper.class) {
-				if (!dbFreeze.get()) {
-					dbFreeze.set(true);
+		try{
+			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+			
+			ODatabaseExport oe = new ODatabaseExport(db, os, new OCommandOutputListener() {
+				@Override
+				public void onMessage(String m) {
+					BaasBoxLogger.info(m);
 				}
-			}
+			});
+
 			oe.setUseLineFeedForRecords(true);
 			oe.setIncludeManualIndexes(true);
 			oe.exportDatabase();
@@ -681,60 +675,58 @@ public class DbHelper {
 			if (db != null && !db.isClosed()) {
 				db.close();
 			}
-			dbFreeze.set(false);
 		}
 	}
 
-	public static void importData(String appcode, String importData)
-			throws UnableToImportDbException {
+	
+	public static void importData(String appcode,File newFile) throws UnableToImportDbException{
+		if (newFile==null) throw new UnableToImportDbException("Cannot import file. The reference is null");
 		ODatabaseRecordTx db = null;
-		java.io.File f = null;
 		try{
 			BaasBoxLogger.info("Initializing restore operation..:");
 			BaasBoxLogger.info("...dropping the old db..:");
-			DbHelper.shutdownDB(false);
-			f = java.io.File.createTempFile("import", ".json");
-			FileUtils.writeStringToFile(f, importData);
-			synchronized (DbHelper.class) {
-				if (!dbFreeze.get()) {
-					dbFreeze.set(true);
+
+			synchronized(DbHelper.class)  {
+				if(!dbFreeze){
+					dbFreeze=true;
 				}
 			}
-
+			DbHelper.shutdownDB(false);
+			
 			db=getConnection(); 
 			BaasBoxLogger.info("...unregistering hooks...");
 			HooksManager.unregisteredAll(db);
 			BaasBoxLogger.info("...drop the O-Classes...");
 			db.getMetadata().getSchema().dropClass("OFunction");
-			db.getMetadata().getSchema().dropClass("OSchedule");
-			db.getMetadata().getSchema().dropClass("ORIDs");
-			ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
-			ODatabaseImport oi = new ODatabaseImport(dbd, f.getAbsolutePath(),
-					new OCommandOutputListener() {
-						@Override
-						public void onMessage(String m) {
-							BaasBoxLogger.info("Restore db: " + m);
-						}
-					});
 
-			oi.setIncludeManualIndexes(true);
-			oi.setUseLineFeedForRecords(true);
-			oi.setPreserveClusterIDs(true);
-			oi.setPreserveRids(true);
-			BaasBoxLogger.info("...starting import procedure...");
-			oi.importDatabase();
-			oi.close();
-
-			BaasBoxLogger.info("...setting up internal user credential...");
-			updateDefaultUsers();
-			BaasBoxLogger.info("...setting up DataBase attributes...");
-			setupAttributes();
-			BaasBoxLogger.info("...registering hooks...");
-			evolveDB(db);
-			HooksManager.registerAll(db);
-			BaasBoxLogger.info("...extract iOS certificates...");
-			IosCertificateHandler.init();
-		} catch (Exception ioe) {
+			 db.getMetadata().getSchema().dropClass("OSchedule");
+			 db.getMetadata().getSchema().dropClass("ORIDs");
+			   ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
+			ODatabaseImport oi = new ODatabaseImport(dbd, newFile.getAbsolutePath(), new OCommandOutputListener() {
+				@Override
+				public void onMessage(String m) {
+					BaasBoxLogger.info("Restore db: " + m);
+				}
+			});
+			
+			 oi.setIncludeManualIndexes(true);
+			 oi.setUseLineFeedForRecords(true);
+			 oi.setPreserveClusterIDs(true);
+			 oi.setPreserveRids(true);
+			 BaasBoxLogger.info("...starting import procedure...");
+			 oi.importDatabase();
+			 oi.close();
+			
+			 BaasBoxLogger.info("...setting up internal user credential...");
+			 updateDefaultUsers();
+			 BaasBoxLogger.info("...setting up DataBase attributes...");
+			 setupAttributes();
+			 BaasBoxLogger.info("...registering hooks...");
+			 evolveDB(db);
+			 HooksManager.registerAll(db);
+			 BaasBoxLogger.info("...extract iOS certificates...");
+			 IosCertificateHandler.init();
+		}catch(Exception ioe){
 			BaasBoxLogger.error("*** Error importing the db: ", ioe);
 			throw new UnableToImportDbException(ioe);
 		} finally {
@@ -742,9 +734,9 @@ public class DbHelper {
 				db.close();
 			}
 			BaasBoxLogger.info("...releasing the db...");
-			dbFreeze.set(false);
-			if (f != null && f.exists()) {
-				f.delete();
+			dbFreeze=false;
+			if(newFile!=null && newFile.exists()){
+				newFile.delete();
 			}
 			BaasBoxLogger.info("...restore terminated");
 		}
@@ -766,25 +758,22 @@ public class DbHelper {
 	 * @param db
 	 */
 	public static void evolveDB(ODatabaseRecordTx db) {
-		// check for evolutions
-		BaasBoxLogger.info("...looking for evolutions...");
-		String fromVersion = "";
-		if (db.getMetadata().getIndexManager().getIndex("_bb_internal") != null) {
-			BaasBoxLogger.info("...db is < 0.7 ....");
-			ORID o = (ORID) db.getMetadata().getIndexManager()
-					.getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
-			ODocument od = db.load(o);
-			fromVersion = od.field("value");
-		} else
-			fromVersion = Internal.DB_VERSION.getValueAsString();
-		
-		BaasBoxLogger.info("...db version is: " + fromVersion);
-		if (!fromVersion.equalsIgnoreCase(BBConfiguration.getApiVersion())) {
-			BaasBoxLogger.info("...imported DB needs evolutions!...");
-			Evolutions.performEvolutions(db, fromVersion);
-			Internal.DB_VERSION._setValue(BBConfiguration.getApiVersion());
-			BaasBoxLogger.info("DB version is now " + BBConfiguration.getApiVersion());
-		}// end of evolutions
+		//check for evolutions
+		 BaasBoxLogger.info("...looking for evolutions...");
+		 String fromVersion="";
+		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+			 BaasBoxLogger.warn("...DB is < 0.7 ....");
+			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
+			 ODocument od = db.load(o);
+			 fromVersion=od.field("value");
+		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
+		 BaasBoxLogger.info("...db version is: " + fromVersion);
+		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getDBVersion())){
+			 BaasBoxLogger.info("...imported DB needs evolutions!...");
+			 Evolutions.performEvolutions(db, fromVersion);
+			 Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getDBVersion());
+		 }//end of evolutions
 	}
 
 	public static OrientGraph getOrientGraphConnection() {
@@ -798,28 +787,42 @@ public class DbHelper {
 	/**
 	 * Executes a sequence of orient sql commands
 	 */
-	public static void execMultiLineCommands(ODatabaseRecordTx db, boolean log,
-			String... commands) {
+    /**
+     * Executes a sequence of orient sql commands
+     */
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,boolean stopOnException,String ... commands){
 
-		BaasBoxLogger.debug("Ready to execute these commands: " + commands);
-		if (commands == null)
-			return;
-		for (String command : commands) {
-			if (command == null) {
-				BaasBoxLogger.warn("null command found!! skipping");
-				continue;
-			}
-			if (log)
-				BaasBoxLogger.debug("sql:> " + command);
-			if (!command.startsWith("--") && !command.trim().isEmpty()) {
-				if (BaasBoxLogger.isDebugEnabled())
-					BaasBoxLogger.debug("Executing command: " + command);
-				db.command(new OCommandSQL(command.replace(';', ' ')))
-						.execute();
-			}
-		}
-	}
-
+    	BaasBoxLogger.debug("Ready to execute these commands: " + Arrays.toString(commands));
+        if (commands==null) return;
+        for (String command:commands){
+            if (command==null){
+                BaasBoxLogger.warn("null command found!! skipping");
+                continue;
+            }
+            if (log)BaasBoxLogger.debug("sql:> "+command);
+            if (!command.startsWith("--")&&!command.trim().isEmpty()){
+            	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executing command: " + command);
+            	try {
+            		db.command(new OCommandSQL(command.replace(';',' '))).execute();
+            	}catch(Throwable e){
+            		if (stopOnException){
+            			BaasBoxLogger.error("Exception during the statement execution: {}" ,ExceptionUtils.getFullStackTrace(e));
+            			throw new RuntimeException(e);
+            		}else{
+            			BaasBoxLogger.warn("Exception during the statement execution: {}" ,ExceptionUtils.getMessage(e));
+            		}
+            	}
+            }
+        }
+    }
+    
+	 /**
+     * Executes a sequence of orient sql commands
+     */
+    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+    	execMultiLineCommands (db, log,true,commands);
+    }
+    
 	public static void filterOUserPasswords(boolean activate) {
 		HooksManager.enableHidePasswordHook(getConnection(), activate);
 	}
@@ -829,10 +832,14 @@ public class DbHelper {
 			try{
 				DbHelper.openFromContext(ctx);
 				return work.apply();
-			}finally {
+			}catch (Throwable e){
+                if (DbHelper.getConnection()!=null && ! DbHelper.getConnection().isClosed() && isInTransaction()) DbHelper.rollbackTransaction();
+                throw e;
+            }finally {
 				DbHelper.close(DbHelper.getConnection());
 			}
 		};
 	}
+
 
 }

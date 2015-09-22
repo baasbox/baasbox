@@ -166,7 +166,7 @@ public class PermissionTagDao  {
             doc.save();
             changed = true;
         }
-        Cache.remove(BBCache.TAG_KEY+tagName);
+        Cache.remove(BBCache.getTagKey()+tagName);
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return changed;
     }
@@ -181,7 +181,7 @@ public class PermissionTagDao  {
     public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException,Exception {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         try {
-			return Cache.getOrElse(BBCache.TAG_KEY + tagName, ()->{
+			return Cache.getOrElse(BBCache.getTagKey() + tagName, ()->{
 				ODocument doc = getByName(tagName);
 		        if (doc==null) throw new InvalidPermissionTagException("tag not found");
 		        return doc.<Boolean>field(ENABLED);

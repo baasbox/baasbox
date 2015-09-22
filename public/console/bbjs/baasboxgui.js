@@ -53,6 +53,7 @@ var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
 
+var DOC_CLASS_SEPARATOR = "___@___";
 
 $(document).ready(function(){
 	setup();
@@ -206,7 +207,8 @@ $('a.downloadExport').live('click',function(e){
 
 function downloadExportHref(name){
 	var reg = /(http:\/\/)(.*)/;
-	var uri = BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(false);
+	var uri = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getExport(name).url;
+
 	var match = uri.match(reg);
 	if(match){
 		return match[1] + $("#login").scope().username+":"+$("#login").scope().password+"@"+match[2] + "?X-BB-SESSION="+ sessionStorage.sessionToken +"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode);
@@ -315,8 +317,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 			//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			openDocumentEditForm(id,collection);
 			break;
 		case "asset":
@@ -335,11 +337,11 @@ $(".btn-action").live("click", function() {
         openFollowersModal(parameters);
             break;
     case "suspend":
-        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to suspend user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(true,parameters);
             break;
     case "activate":
-        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to enable user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(false,parameters);
             break;
 	case "delete":
@@ -365,8 +367,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 		//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
 				return;
 			deleteDocument(collection,id);
@@ -378,6 +380,7 @@ $(".btn-action").live("click", function() {
 
 function suspendOrActivateUser(suspend,userName)
 {
+	userName=unescape(userName);
     var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
                         BBRoutes.com.baasbox.controllers.Admin.enable(userName);
     route.ajax(
@@ -452,6 +455,7 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
+	editUserName = unescape(editUserName);
     var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
@@ -477,11 +481,13 @@ function openUserEditForm(editUserName){
 }
 
 function openFollowersModal(user){
+	user = unescape(user);
     $("#followedUser").text(user);
     reloadFollowing(user);
     $("#followersModal").modal('show');
 }
 function openChangePasswordUserForm(changePassword){
+	changePassword=unescape(changePassword);
     resetChangePasswordUserForm()
     var userObject;
     $("#userTitle").text("Change password");
@@ -1327,7 +1333,8 @@ $('#assetForm').submit(function() {
 	if ($.trim(assetMeta) == "")
 		assetMeta = "{}";
 
-	var serverUrl=BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL();
+	var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Asset.post().url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1380,7 +1387,8 @@ $('#fileForm').submit(function() {
 	}
 
 
-	var serverUrl=BBRoutes.com.baasbox.controllers.File.storeFile().absoluteURL();
+	var serverUrl = BBRoutes.com.baasbox.controllers.File.storeFile().url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1567,7 +1575,8 @@ function getFileIcon(type,id){
 	var sIcon="";
 	var iconPath = "img/AssetIcons/";
 	var sContent = "content";
-	var serverUrl=BBRoutes.com.baasbox.controllers.File.streamFile("").absoluteURL();
+	var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.File.streamFile("").url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -2178,7 +2187,6 @@ function callMenu(action){
 
 
 				}
-
 				applySuccessMenu(action,settingSocialData);
 
 
@@ -2555,8 +2563,8 @@ function PushSettingsController($scope){
 			s.error ="File can't be empty"
 			return;
 		}
-		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
-		if (window.location.protocol == "https:"){
+		var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).url;
+    	if (window.location.protocol == "https:"){
 			serverUrl=serverUrl.replace("http:","https:");
 		}
 

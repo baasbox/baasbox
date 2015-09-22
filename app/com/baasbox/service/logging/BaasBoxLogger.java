@@ -16,6 +16,7 @@
  */
 
 package com.baasbox.service.logging;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import play.Logger.ALogger;
@@ -88,6 +89,7 @@ public class BaasBoxLogger  {
     }
 
     public static void debug(String message) {
+    	message=StringUtils.abbreviateMiddle(message, "....... <cut: this message exceeds 2048 chars> .......", 2103); //2048 + the message
     	play.Logger.debug(message);
     	if (isEventSourceLoggerEnabled) eventSourceLogger.debug(message);
     }

@@ -23,7 +23,11 @@ import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
+<<<<<<< HEAD
 import com.baasbox.BBConfiguration;
+=======
+import com.baasbox.configuration.Internal;
+>>>>>>> 1.0.0-m3
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
@@ -44,6 +48,8 @@ public class Evolutions {
 			IEvolution ev = it.next();
 			BaasBoxLogger.info("Applying evolution to " + ev.getFinalVersion());
 			ev.evolve(db);
+			BaasBoxLogger.info("DB version evolved to version " + ev.getFinalVersion());
+			Internal.DB_VERSION._setValue(ev.getFinalVersion());
 		}
 		postEvolutionTasks(db);
 	}
@@ -90,7 +96,6 @@ public class Evolutions {
 		me.put(ev.getFinalVersion(),ev);
 		ev = (IEvolution)new Evolution_1_0_0_M1();
 		me.put(ev.getFinalVersion(),ev);
-		
 	}
 	
 	public Collection<IEvolution> getEvolutions(){

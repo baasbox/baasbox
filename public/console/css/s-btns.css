@@ -6,7 +6,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 
-.btn-facebook {
+.btn-facebook-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #2b4b90;
@@ -23,23 +23,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-facebook:hover,
-.btn-facebook:focus,
-.btn-facebook:active,
-.btn-facebook.active,
-.btn-facebook.disabled,
-.btn-facebook[disabled] {
+.btn-facebook-noadblock:hover,
+.btn-facebook-noadblock:focus,
+.btn-facebook-noadblock:active,
+.btn-facebook-noadblock.active,
+.btn-facebook-noadblock.disabled,
+.btn-facebook-noadblock[disabled] {
   color: #ffffff;
   background-color: #133783;
   *background-color: #102e6d;
 }
 
-.btn-facebook:active,
-.btn-facebook.active {
+.btn-facebook-noadblock:active,
+.btn-facebook-noadblock.active {
   background-color: #0d2456 \9;
 }
 
-.btn-twitter {
+.btn-twitter-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #1c95d0;
@@ -56,23 +56,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-twitter:hover,
-.btn-twitter:focus,
-.btn-twitter:active,
-.btn-twitter.active,
-.btn-twitter.disabled,
-.btn-twitter[disabled] {
+.btn-twitter-noadblock:hover,
+.btn-twitter-noadblock:focus,
+.btn-twitter-noadblock:active,
+.btn-twitter-noadblock.active,
+.btn-twitter-noadblock.disabled,
+.btn-twitter-noadblock[disabled] {
   color: #ffffff;
   background-color: #0271bf;
   *background-color: #0262a6;
 }
 
-.btn-twitter:active,
-.btn-twitter.active {
+.btn-twitter-noadblock:active,
+.btn-twitter-noadblock.active {
   background-color: #01538d \9;
 }
 
-.btn-github {
+.btn-github-noadblock {
   color: #000000;
   text-shadow: 0 0.7px 0 rgba(0, 0, 0, 0.1);
   background-color: #f2f2f2;
@@ -89,23 +89,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-github:hover,
-.btn-github:focus,
-.btn-github:active,
-.btn-github.active,
-.btn-github.disabled,
-.btn-github[disabled] {
+.btn-github-noadblock:hover,
+.btn-github-noadblock:focus,
+.btn-github-noadblock:active,
+.btn-github-noadblock.active,
+.btn-github-noadblock.disabled,
+.btn-github-noadblock[disabled] {
   color: #000000;
   background-color: #e6e6e6;
   *background-color: #d9d9d9;
 }
 
-.btn-github:active,
-.btn-github.active {
+.btn-github-noadblock:active,
+.btn-github-noadblock.active {
   background-color: #cdcdcd \9;
 }
 
-.btn-pinterest {
+.btn-pinterest-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #c51e25;
@@ -122,23 +122,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-pinterest:hover,
-.btn-pinterest:focus,
-.btn-pinterest:active,
-.btn-pinterest.active,
-.btn-pinterest.disabled,
-.btn-pinterest[disabled] {
+.btn-pinterest-noadblock:hover,
+.btn-pinterest-noadblock:focus,
+.btn-pinterest-noadblock:active,
+.btn-pinterest-noadblock.active,
+.btn-pinterest-noadblock.disabled,
+.btn-pinterest-noadblock[disabled] {
   color: #ffffff;
   background-color: #ab171e;
   *background-color: #95141a;
 }
 
-.btn-pinterest:active,
-.btn-pinterest.active {
+.btn-pinterest-noadblock:active,
+.btn-pinterest-noadblock.active {
   background-color: #7e1116 \9;
 }
 
-.btn-linkedin {
+.btn-linkedin-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #60a9ce;
@@ -155,23 +155,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-linkedin:hover,
-.btn-linkedin:focus,
-.btn-linkedin:active,
-.btn-linkedin.active,
-.btn-linkedin.disabled,
-.btn-linkedin[disabled] {
+.btn-linkedin-noadblock:hover,
+.btn-linkedin-noadblock:focus,
+.btn-linkedin-noadblock:active,
+.btn-linkedin-noadblock.active,
+.btn-linkedin-noadblock.disabled,
+.btn-linkedin-noadblock[disabled] {
   color: #ffffff;
   background-color: #4393bb;
   *background-color: #3c84a8;
 }
 
-.btn-linkedin:active,
-.btn-linkedin.active {
+.btn-linkedin-noadblock:active,
+.btn-linkedin-noadblock.active {
   background-color: #367595 \9;
 }
 
-.btn-google-plus {
+.btn-google-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #d34332;
@@ -188,23 +188,57 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-google-plus:hover,
-.btn-google-plus:focus,
-.btn-google-plus:active,
-.btn-google-plus.active,
-.btn-google-plus.disabled,
-.btn-google-plus[disabled] {
+.btn-google-noadblock:hover,
+.btn-google-noadblock:focus,
+.btn-google-noadblock:active,
+.btn-google-noadblock.active,
+.btn-google-noadblock.disabled,
+.btn-google-noadblock[disabled] {
   color: #ffffff;
   background-color: #c53727;
   *background-color: #b03123;
 }
 
-.btn-google-plus:active,
-.btn-google-plus.active {
+
+.btn-google-noadblock:active,
+.btn-google-noadblock.active {
   background-color: #9a2b1f \9;
 }
 
-.btn-instagram {
+.btn-google-plus-noadblock{
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+  background-color: #d34332;
+  *background-color: #c53727;
+  background-image: -moz-linear-gradient(top, #dd4b39, #c53727);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dd4b39), to(#c53727));
+  background-image: -webkit-linear-gradient(top, #dd4b39, #c53727);
+  background-image: -o-linear-gradient(top, #dd4b39, #c53727);
+  background-image: linear-gradient(to bottom, #dd4b39, #c53727);
+  background-repeat: repeat-x;
+  border-color: #c53727 #c53727 #85251a;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdd4b39', endColorstr='#ffc53727', GradientType=0);
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+
+.btn-google-plus-noadblock:hover,
+.btn-google-plus-noadblock:focus,
+.btn-google-plus-noadblock:active,
+.btn-google-plus-noadblock.active,
+.btn-google-plus-noadblock.disabled,
+.btn-google-plus-noadblock[disabled] {
+  color: #ffffff;
+  background-color: #c53727;
+  *background-color: #b03123;
+}
+
+.btn-google-plus-noadblock:active,
+.btn-google-plus-noadblock.active {
+  background-color: #9a2b1f \9;
+}
+
+.btn-instagram-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #5c88ab;
@@ -221,23 +255,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-instagram:hover,
-.btn-instagram:focus,
-.btn-instagram:active,
-.btn-instagram.active,
-.btn-instagram.disabled,
-.btn-instagram[disabled] {
+.btn-instagram-noadblock:hover,
+.btn-instagram-noadblock:focus,
+.btn-instagram-noadblock:active,
+.btn-instagram-noadblock.active,
+.btn-instagram-noadblock.disabled,
+.btn-instagram-noadblock[disabled] {
   color: #ffffff;
   background-color: #3f729b;
   *background-color: #386589;
 }
 
-.btn-instagram:active,
-.btn-instagram.active {
+.btn-instagram-noadblock:active,
+.btn-instagram-noadblock.active {
   background-color: #305777 \9;
 }
 
-.btn-dropbox {
+.btn-dropbox-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #2e95e0;
@@ -254,23 +288,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-dropbox:hover,
-.btn-dropbox:focus,
-.btn-dropbox:active,
-.btn-dropbox.active,
-.btn-dropbox.disabled,
-.btn-dropbox[disabled] {
+.btn-dropbox-noadblock:hover,
+.btn-dropbox-noadblock:focus,
+.btn-dropbox-noadblock:active,
+.btn-dropbox-noadblock.active,
+.btn-dropbox-noadblock.disabled,
+.btn-dropbox-noadblock[disabled] {
   color: #ffffff;
   background-color: #2181cf;
   *background-color: #1d73b9;
 }
 
-.btn-dropbox:active,
-.btn-dropbox.active {
+.btn-dropbox-noadblock:active,
+.btn-dropbox-noadblock.active {
   background-color: #1a66a3 \9;
 }
 
-.btn-bitbucket {
+.btn-bitbucket-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #285991;
@@ -287,23 +321,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-bitbucket:hover,
-.btn-bitbucket:focus,
-.btn-bitbucket:active,
-.btn-bitbucket.active,
-.btn-bitbucket.disabled,
-.btn-bitbucket[disabled] {
+.btn-bitbucket-noadblock:hover,
+.btn-bitbucket-noadblock:focus,
+.btn-bitbucket-noadblock:active,
+.btn-bitbucket-noadblock.active,
+.btn-bitbucket-noadblock.disabled,
+.btn-bitbucket-noadblock[disabled] {
   color: #ffffff;
   background-color: #205081;
   *background-color: #1b436d;
 }
 
-.btn-bitbucket:active,
-.btn-bitbucket.active {
+.btn-bitbucket-noadblock:active,
+.btn-bitbucket-noadblock.active {
   background-color: #163758 \9;
 }
 
-.btn-dribbble {
+.btn-dribbble-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #de447f;
@@ -320,23 +354,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-dribbble:hover,
-.btn-dribbble:focus,
-.btn-dribbble:active,
-.btn-dribbble.active,
-.btn-dribbble.disabled,
-.btn-dribbble[disabled] {
+.btn-dribbble-noadblock:hover,
+.btn-dribbble-noadblock:focus,
+.btn-dribbble-noadblock:active,
+.btn-dribbble-noadblock.active,
+.btn-dribbble-noadblock.disabled,
+.btn-dribbble-noadblock[disabled] {
   color: #ffffff;
   background-color: #cb396f;
   *background-color: #ba3163;
 }
 
-.btn-dribbble:active,
-.btn-dribbble.active {
+.btn-dribbble-noadblock:active,
+.btn-dribbble-noadblock.active {
   background-color: #a62b59 \9;
 }
 
-.btn-flickr {
+.btn-flickr-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #f63198;
@@ -353,23 +387,23 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-flickr:hover,
-.btn-flickr:focus,
-.btn-flickr:active,
-.btn-flickr.active,
-.btn-flickr.disabled,
-.btn-flickr[disabled] {
+.btn-flickr-noadblock:hover,
+.btn-flickr-noadblock:focus,
+.btn-flickr-noadblock:active,
+.btn-flickr-noadblock.active,
+.btn-flickr-noadblock.disabled,
+.btn-flickr-noadblock[disabled] {
   color: #ffffff;
   background-color: #ff0084;
   *background-color: #e60077;
 }
 
-.btn-flickr:active,
-.btn-flickr.active {
+.btn-flickr-noadblock:active,
+.btn-flickr-noadblock.active {
   background-color: #cc006a \9;
 }
 
-.btn-foursquare {
+.btn-foursquare-noadblock {
   color: #ffffff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   background-color: #079dcd;
@@ -386,18 +420,18 @@
   filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
 }
 
-.btn-foursquare:hover,
-.btn-foursquare:focus,
-.btn-foursquare:active,
-.btn-foursquare.active,
-.btn-foursquare.disabled,
-.btn-foursquare[disabled] {
+.btn-foursquare-noadblock:hover,
+.btn-foursquare-noadblock:focus,
+.btn-foursquare-noadblock:active,
+.btn-foursquare-noadblock.active,
+.btn-foursquare-noadblock.disabled,
+.btn-foursquare-noadblock[disabled] {
   color: #ffffff;
   background-color: #0072b1;
   *background-color: #006298;
 }
 
-.btn-foursquare:active,
+.btn-foursquare-noadblock:active,
 .btn-foursquare.active {
   background-color: #00517e \9;
 }

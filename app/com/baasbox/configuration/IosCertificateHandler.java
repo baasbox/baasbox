@@ -19,20 +19,16 @@
 package com.baasbox.configuration;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-import play.Play;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import com.baasbox.BBConfiguration;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.ConfigurationFileContainer;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 public class IosCertificateHandler implements IPropertyChangeCallback{
 
@@ -59,7 +55,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 		if(iCurrentValue!=null){
 			if(iCurrentValue instanceof String){
 				try {
-					currentValue =new ObjectMapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
+					currentValue =BBJson.mapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
 				} catch (Exception e) {
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("unable to convert value to ConfigurationFileContainer");
 				}
@@ -73,7 +69,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 					try{
 						FileUtils.forceDelete(oldFile);
 					}catch(Exception e){
-						BaasBoxLogger.error(e.getMessage());
+						BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -84,7 +80,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 						newFile.createNewFile();
 					}
 				}catch(IOException ioe){
-					throw new RuntimeException("unable to create file:"+ioe.getMessage());
+					throw new RuntimeException("unable to create file:"+ExceptionUtils.getMessage(ioe));
 				}
 				ByteArrayInputStream bais = new ByteArrayInputStream(newValue.getContent());
 				try{
@@ -92,7 +88,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 					bais.close();
 				}catch(IOException ioe){
 					//TODO:more specific exception
-					throw new RuntimeException(ioe.getMessage());
+					throw new RuntimeException(ExceptionUtils.getMessage(ioe));
 				}
 
 			}else{
@@ -130,7 +126,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						prodCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -145,7 +141,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						sandboxCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -161,7 +157,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						prodCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -176,7 +172,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						sandboxCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -192,7 +188,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						prodCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -207,7 +203,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 					}catch(Exception e){
 						sandboxCertificate.delete();
-						throw new RuntimeException("Unable to create file for certificate:"+e.getMessage());
+						throw new RuntimeException("Unable to create file for certificate:"+ExceptionUtils.getMessage(e));
 					}
 				}
 			}	

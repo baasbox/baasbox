@@ -25,7 +25,7 @@ import com.baasbox.security.SessionKeys;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractTest;
@@ -165,7 +165,7 @@ public class SocialTest extends AbstractTest {
 							request = new FakeRequest("PUT", "/me/username");
 							request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 							request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
-							ObjectMapper om = new ObjectMapper();
+							ObjectMapper om = BBJson.mapper();
 							String newUsername="socialUserRenamed_" + username;
 							JsonNode nodeChangeUsername = om.readTree("{\"username\":\"" + newUsername + "\"}");
 							request = request.withJsonBody(nodeChangeUsername, PUT);

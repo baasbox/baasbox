@@ -35,7 +35,7 @@ import play.test.FakeRequest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractDocumentTest;
 import core.TestConfig;
@@ -84,7 +84,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithVersionNull(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateWithVersionNull CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -99,7 +99,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithVersion(getRouteAddress(collectionName));
 						assertRoute(result, "createWithVersion CREATE", Status.BAD_REQUEST, "UpdateOldVersionException: Are you trying to create a document with a @version field?", true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -131,7 +131,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustCollection(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustCollection CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -145,7 +145,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustOneElement(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustOneElement CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -160,7 +160,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 						Result result = createDocumentWithJustOneElementAsString(getRouteAddress(collectionName));
 						assertRoute(result, "testCreateDocumentWithJustOneElementAsString CREATE", Status.BAD_REQUEST, ERROR_MESSAGE, true);
 					}catch(Exception e){
-						assertFail(e.getMessage());
+						assertFail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}
@@ -171,7 +171,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":null}");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -181,7 +181,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("[1,2]");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -191,7 +191,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("2");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -201,7 +201,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("\"element\"");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -211,7 +211,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 	 	FakeRequest request = new FakeRequest(POST, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":2}");
 		request = request.withJsonBody(node);
 		return routeAndCall(request); 
@@ -222,7 +222,7 @@ public class DocumentSerializationTest extends AbstractDocumentTest
 		FakeRequest request = new FakeRequest(PUT, sAddress);
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-		ObjectMapper om = new ObjectMapper();
+		ObjectMapper om = BBJson.mapper();
 		JsonNode node = om.readTree("{\"k\":0,\"@version\":12}");
 		request = request.withJsonBody(node,PUT);
 		return routeAndCall(request);

@@ -18,9 +18,10 @@
 
 package com.baasbox.db.async;
 
-import com.baasbox.service.logging.BaasBoxLogger;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
 import com.baasbox.db.DbHelper;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class ImportJob implements Runnable{
 
@@ -34,12 +35,14 @@ public class ImportJob implements Runnable{
 
 	@Override
 	public void run() {
+		/*
 		try{    
 			DbHelper.importData(appcode,content);
 		}catch(Exception e){
-			BaasBoxLogger.error(e.getMessage());
+			BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 			throw new RuntimeException(e);
 		}
+		*/
 
 	}
 

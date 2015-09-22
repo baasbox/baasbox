@@ -22,43 +22,45 @@ import java.net.URLDecoder;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.baasbox.util.ErrorToResult;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-
-
+import play.libs.Akka;
 import play.libs.F;
 import play.libs.F.Promise;
 import play.libs.Json;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
-
 import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
+import scala.concurrent.duration.FiniteDuration;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserOrAnonymousCredentialsFilterAsync;
+import com.baasbox.controllers.helpers.DocumentOrientChunker;
+import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.dao.CollectionDao;
 import com.baasbox.dao.PermissionJsonWrapper;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
+import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
@@ -70,6 +72,7 @@ import com.baasbox.service.query.PartsLexer.PartValidationException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.ErrorToResult;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.JSONFormats.Formats;
@@ -91,10 +94,14 @@ public class Document extends Controller {
 
     private static String prepareResponseToJson(ODocument doc) {
         response().setContentType("application/json");
+        return formatODocToJson( doc, BooleanUtils.toBoolean(request().getQueryString("withAcl"))) ;
+    }
+    
+    private static String formatODocToJson(ODocument doc, boolean withAcl) {
         Formats format;
         try {
             DbHelper.filterOUserPasswords(true);
-            if (BooleanUtils.toBoolean(Http.Context.current().request().getQueryString("withAcl"))) {
+            if (withAcl) {
                 format = JSONFormats.Formats.DOCUMENT_WITH_ACL;
                 return JSONFormats.prepareResponseToJson(doc, format, true);
             } else {
@@ -106,6 +113,7 @@ public class Document extends Controller {
         }
     }
 
+    
     private static String prepareResponseToJson(List<ODocument> listOfDoc) throws IOException {
         response().setContentType("application/json");
         Formats format;
@@ -152,23 +160,39 @@ public class Document extends Controller {
                 .when(Exception.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-                            return internalServerError(e.getMessage());
+                            return internalServerError(ExceptionUtils.getMessage(e));
                         }));
 
     }
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-    public static Promise<Result> getDocuments(String collectionName) {
+    public static Promise<Result> getDocuments(String collectionName) throws InvalidAppCodeException, SqlInjectionException {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("collectionName: " + collectionName);
-
+        
         Context ctx = Http.Context.current.get();
-        QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-
         return F.Promise.promise(DbHelper.withDbFromContext(ctx, () -> {
+        	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+            if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
+        	
+			 if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+			 	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
+			 	DocumentService.checkSyntax(collectionName,criteria);
+			 	return getDocumentsChunked(collectionName);
+			 }
+        	 
+        	 //no chunked response
             List<ODocument> result;
             String ret = "{[]}";
             result = DocumentService.getDocuments(collectionName, criteria);
+            if (criteria.isPaginationEnabled()){
+            	if (result.size() > criteria.getRecordPerPage().intValue()){
+            		response().setHeader("X-BB-MORE", "true");
+            		result = result.subList(0, criteria.getRecordPerPage());
+            	} else {
+            		response().setHeader("X-BB-MORE", "false");
+            	}
+            }
             if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("count: " + result.size());
             ret = prepareResponseToJson(result);
             return ok(ret);
@@ -178,16 +202,54 @@ public class Document extends Controller {
                     if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(collectionName + " is not a valid collection name");
                     return notFound(collectionName + " is not a valid collection name");
                 })
+                .when(InvalidCriteriaException.class,
+                        e -> badRequest(ExceptionUtils.getMessage(e)!=null?ExceptionUtils.getMessage(e):"Invalid querystring. Please check your request")
+                )
                 .when(IOException.class,
-                        e -> internalServerError(ExceptionUtils.getFullStackTrace(e))
+                        e -> {
+                    		BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+                        	return internalServerError(ExceptionUtils.getFullStackTrace(e));
+                        }
                 )
                 .when(Exception.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
-                            return internalServerError(e.getMessage());
+                            return internalServerError(ExceptionUtils.getMessage(e));
                         }));
 
     }
+        
+    //this method is called by getDocuments()
+    private static Result getDocumentsChunked(String collectionName) throws InvalidAppCodeException {
+    	final Context ctx = Http.Context.current.get();
+    	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    	
+    	try{
+	    	DbHelper.openFromContext(ctx);
+	        if (!(CollectionDao.getInstance().existsCollection(collectionName))){
+	        	return notFound(collectionName + " is not a valid collection name");
+	        }
+    	}catch (SqlInjectionException  e){
+    		return notFound(collectionName + " is not a valid collection name");
+    	}finally{
+    		DbHelper.close(DbHelper.getConnection());
+    	}
+
+		final String appcode= DbHelper.getCurrentAppCode();
+		final String user= DbHelper.getCurrentHTTPUsername();
+		final String pass= DbHelper.getCurrentHTTPPassword();    		
+		
+		DocumentOrientChunker chunks = new DocumentOrientChunker(
+				appcode
+				,user
+				,pass
+				,ctx);
+		if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
+		chunks.setQuery(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
+    	
+		return ok(chunks).as("application/json");
+    }
+        
 
     @With({UserOrAnonymousCredentialsFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Promise<Result> queryDocument(String collectionName, String id, boolean isUUID, String parts) {
@@ -208,7 +270,7 @@ public class Document extends Controller {
                 } catch (UnsupportedEncodingException e) {
                     return Promise.pure(badRequest("Unable to decode parts"));
                 } catch (PartValidationException e) {
-                    return Promise.pure(badRequest(e.getMessage() == null ? "" : e.getMessage()));
+                    return Promise.pure(badRequest(ExceptionUtils.getMessage(e) == null ? "" : ExceptionUtils.getMessage(e)));
                 }
             }
             final PartsParser partsParser = new PartsParser(queryParts);
@@ -220,7 +282,7 @@ public class Document extends Controller {
                         return doc == null ? notFound() : ok(prepareResponseToJson(doc));
                     })).recover(ErrorToResult
                     .when(IllegalArgumentException.class,
-                            e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+                            e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : ""))
                     .when(InvalidCollectionException.class,
                             e -> notFound(collectionName + " is not a valid collection name"))
                     .when(ODatabaseException.class,
@@ -228,9 +290,9 @@ public class Document extends Controller {
                     .when(DocumentNotFoundException.class,
                             e -> notFound(id + " not found"))
                     .when(RidNotFoundException.class,
-                            e -> notFound(e.getMessage()))
+                            e -> notFound(ExceptionUtils.getMessage(e)))
                     .when(InvalidCriteriaException.class,
-                            e -> badRequest(e.getMessage() != null ? e.getMessage() : "")))
+                            e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : "")))
                     .map(r -> {
                         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
                         return r;
@@ -251,7 +313,7 @@ public class Document extends Controller {
         })).recover(ErrorToResult
 
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage() != null ? e.getMessage() : ""))
+                        e -> badRequest(ExceptionUtils.getMessage(e) != null ? ExceptionUtils.getMessage(e) : ""))
                 .when(InvalidCollectionException.class,
                         e -> notFound(collectionName + " is not a valid collection name"))
                 .when(InvalidModelException.class,
@@ -261,7 +323,7 @@ public class Document extends Controller {
                 .when(DocumentNotFoundException.class,
                         e -> notFound(id + " not found"))
                 .when(RidNotFoundException.class,
-                        e -> notFound(e.getMessage())))
+                        e -> notFound(ExceptionUtils.getMessage(e))))
 
                 .map(r -> {
                     if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -285,7 +347,7 @@ public class Document extends Controller {
                     }
                 })).recover(ErrorToResult
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(ODatabaseException.class,
                         e -> notFound(orid + " unknown")))
                 .map(r -> {
@@ -317,13 +379,13 @@ public class Document extends Controller {
                     BaasBoxLogger.trace("Document created: " + document.getRecord().getIdentity());
                 return ok(prepareResponseToJson(document));
             } catch (InvalidCollectionException e) {
-                return notFound(e.getMessage());
+                return notFound(ExceptionUtils.getMessage(e));
             } catch (InvalidJsonException e) {
                 return badRequest("JSON not valid. HINT: check if it is not just a JSON collection ([..]), a single element ({\"element\"}) or you are trying to pass a @version:null field");
             } catch (UpdateOldVersionException e) {
                 return badRequest(ExceptionUtils.getMessage(e));
             } catch (InvalidModelException e) {
-                return badRequest("ACL fields are not valid: " + e.getMessage());
+                return badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e));
             } catch (ORecordDuplicatedException e) {
             	return badRequest("Provided ID already exists: " + bodyJson.get(BaasBoxPrivateFields.ID.toString()));
             } catch (Throwable e) {
@@ -368,7 +430,7 @@ public class Document extends Controller {
                         .when(DocumentNotFoundException.class,
                                 e -> notFound("Document " + id + " not found"))
                         .when(AclNotValidException.class,
-                                e -> badRequest("ACL fields are not valid: " + e.getMessage()))
+                                e -> badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e)))
                         .when(UpdateOldVersionException.class,
                                 e -> status(CustomHttpCode.DOCUMENT_VERSION.getBbCode(),
                                         "You are attempting to update an older version of the document. Your document version is "
@@ -425,7 +487,7 @@ public class Document extends Controller {
                 String p = java.net.URLDecoder.decode(tokens[i], "UTF-8");
                 objParts.add(lexer.parse(p, i + 1));
             } catch (PartValidationException pve) {
-                return Promise.pure(badRequest(pve.getMessage()));
+                return Promise.pure(badRequest(ExceptionUtils.getMessage(pve)));
             } catch (Exception e) {
                 return Promise.pure(badRequest("Unable to parse document parts"));
             }
@@ -442,7 +504,7 @@ public class Document extends Controller {
                     }
                 })).recover(ErrorToResult
                 .when(MissingNodeException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(InvalidCollectionException.class,
                         e -> notFound(collectionName + " is not a valid collection name"))
                 .when(InvalidModelException.class,
@@ -456,7 +518,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden("You have not the right to modify the document " + id))
                 .when(RidNotFoundException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(Throwable.class,
                         e -> {
                             BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
@@ -485,9 +547,9 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden("You have not the right to delete " + id))
                 .when(InvalidCollectionException.class,
-                        e -> notFound(e.getMessage()))
+                        e -> notFound(ExceptionUtils.getMessage(e)))
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())))
+                        e -> internalServerError(ExceptionUtils.getMessage(e))))
                 .map(r -> {
                     if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
                     return r;
@@ -561,7 +623,7 @@ public class Document extends Controller {
                 .when(RidNotFoundException.class,
                         e -> notFound("id " + id + " not found"))
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(UserNotFoundException.class,
                         e -> notFound("user " + username + " not found"))
                 .when(InvalidCollectionException.class,
@@ -575,7 +637,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden())
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())));
+                        e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToUser
 
     private static Promise<Result> grantOrRevokeToRole(String collectionName, String id,
@@ -597,7 +659,7 @@ public class Document extends Controller {
                 .when(RidNotFoundException.class,
                         e -> notFound("id " + id + " no found"))
                 .when(IllegalArgumentException.class,
-                        e -> badRequest(e.getMessage()))
+                        e -> badRequest(ExceptionUtils.getMessage(e)))
                 .when(RoleNotFoundException.class,
                         e -> notFound("role " + rolename + " not found"))
                 .when(InvalidCollectionException.class,
@@ -611,7 +673,7 @@ public class Document extends Controller {
                 .when(OSecurityException.class,
                         e -> forbidden())
                 .when(Throwable.class,
-                        e -> internalServerError(e.getMessage())));
+                        e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToRole
 
 
@@ -634,7 +696,7 @@ public class Document extends Controller {
                     }))
                     .recover(ErrorToResult
                             .when(IllegalArgumentException.class,
-                                    e -> badRequest(e.getMessage()))
+                                    e -> badRequest(ExceptionUtils.getMessage(e)))
                             .when(InvalidCollectionException.class,
                                     e -> notFound("collection " + collectionName + " not found"))
                             .when(InvalidModelException.class,
@@ -648,7 +710,7 @@ public class Document extends Controller {
                             .when(Throwable.class,
                                     e -> internalServerError(ExceptionUtils.getFullStackTrace(e))));
         } catch (AclNotValidException e) {
-            return Promise.pure(badRequest("ACL fields are not valid: " + e.getMessage()));
+            return Promise.pure(badRequest("ACL fields are not valid: " + ExceptionUtils.getMessage(e)));
         }
     }
 

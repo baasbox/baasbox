@@ -28,7 +28,7 @@ import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.PushSwitchException;
 import com.baasbox.service.push.providers.GCMServer;
 import com.baasbox.util.ConfigurationFileContainer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 
 public enum Push implements IProperties	{
@@ -220,7 +220,7 @@ public enum Push implements IProperties	{
 	@Override
 	public void _setValue(Object newValue) {
 		Object parsedValue=null;
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Type:"+type+" Setting "+newValue.toString() + "of class: "+newValue.getClass().toString());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Type:"+type+" Setting {} of class: {}", newValue==null?"null":newValue.toString() , newValue==null?"null":newValue.getClass().toString());
 		try{
 			if (newValue != null)
 				if (type == Boolean.class)
@@ -246,7 +246,7 @@ public enum Push implements IProperties	{
 			idx = new IndexPushConfiguration();
 			if(type == ConfigurationFileContainer.class && parsedValue!=null){
 				ConfigurationFileContainer cfc = (ConfigurationFileContainer)parsedValue;
-				ObjectMapper om = new ObjectMapper();
+				ObjectMapper om = BBJson.mapper();
 				idx.put(key, om.writeValueAsString(cfc));
 			}else{
 				idx.put(key, parsedValue);
@@ -292,7 +292,7 @@ public enum Push implements IProperties	{
 		Object v = getValue();
 		ConfigurationFileContainer result = null;
 		if(v!=null){
-			ObjectMapper om = new ObjectMapper();
+			ObjectMapper om = BBJson.mapper();
 			try {
 				result = om.readValue(v.toString(), ConfigurationFileContainer.class);
 			} catch (Exception e) {

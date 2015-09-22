@@ -19,11 +19,8 @@
 
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
-import play.test.Helpers.*;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -31,19 +28,21 @@ import java.util.UUID;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
+
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+
 import core.AbstractAdminTest;
 import core.TestConfig;
 
@@ -115,7 +114,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		//create two doc
 		JsonNode document1;
 		try {
-			document1 = new ObjectMapper().readTree("{\"total\":2,\"city\":\"rome\"}");
+			document1 = BBJson.mapper().readTree("{\"total\":2,\"city\":\"rome\"}");
 		
 			request = new FakeRequest("POST", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -151,9 +150,9 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			BaasBoxLogger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
 			
 			} catch (JsonProcessingException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(ExceptionUtils.getMessage(e));
 		} catch (IOException e) {
-			Assert.fail(e.getMessage());
+			Assert.fail(ExceptionUtils.getMessage(e));
 		}
 		
 	}

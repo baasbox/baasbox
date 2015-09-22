@@ -70,6 +70,7 @@ import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -79,6 +80,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class UserService {
 
@@ -130,7 +132,8 @@ public class UserService {
 	}
 
 	public static OUser getOUserByUsername(String username){
-		return DbHelper.getConnection().getMetadata().getSecurity().getUser(username);	
+		UserDao dao = UserDao.getInstance();
+		return dao.getOUserByUsername(username);
 	}
 	
 	public static ODocument getUserProfilebyUsername(String username) throws SqlInjectionException{
@@ -168,13 +171,13 @@ public class UserService {
 	}
 
 
-	public static void registerDevice(HashMap<String,Object> data) throws SqlInjectionException{
+	public static void registerDevice(Map<String,Object> data) throws SqlInjectionException{
 		String username = DbHelper.getCurrentUserNameFromConnection();
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		String os=(String) data.get(UserDao.USER_DEVICE_OS);
 		boolean found=false;
 
-		com.baasbox.db.DbHelper.reconnectAsAdmin();
+		DbHelper.reconnectAsAdmin();
 		
 		List<ODocument> sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select from _BB_UserAttributes where login_info contains (pushToken = '"+pushToken+"') AND login_info contains (os = '"+os+"')",null);
 
@@ -182,18 +185,18 @@ public class UserService {
 		for(ODocument record: sqlresult ) {
 			List<ODocument> login_Infos=record.field(UserDao.USER_LOGIN_INFO);
 			for (ODocument login_Info : login_Infos){
-				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && (login_Info.field(UserDao.USER_DEVICE_OS).equals(os))){
+				if (login_Info.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) &&
+						(login_Info.field(UserDao.USER_DEVICE_OS).equals(os))){
 					login_Infos.remove(login_Info);
 					break;
 				}
 			}
 			record.save();	
 		}
-	
+
 		ODocument user=getUserProfilebyUsername(username);
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
 		ArrayList<ODocument> loginInfos=systemProps.field(UserDao.USER_LOGIN_INFO);
-		
 		for (ODocument loginInfo : loginInfos){
 
 			if (loginInfo.field(UserDao.USER_PUSH_TOKEN)!=null && loginInfo.field(UserDao.USER_PUSH_TOKEN).equals(pushToken) && loginInfo.field(UserDao.USER_DEVICE_OS).equals(os)){
@@ -206,9 +209,10 @@ public class UserService {
 			systemProps.save();
 		}
 		
-		com.baasbox.db.DbHelper.reconnectAsAuthenticatedUser();
+		DbHelper.reconnectAsAuthenticatedUser();
 
 	}
+
 	public static void unregisterDevice(String pushToken) throws SqlInjectionException{
 		ODocument user=getCurrentUser();
 		ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
@@ -510,7 +514,7 @@ public class UserService {
 				if (!RoleService.isAssignable(newORole)) throw new RoleIsNotAssignableException("Role " + role + " is not assignable");
 				ORID newRole=newORole.getDocument().getIdentity();
 				ORole oldORole=RoleDao.getRole(oldRole);
-				OUser ouser=DbHelper.getConnection().getMetadata().getSecurity().getUser(username);
+				OUser ouser=udao.getOUserByUsername(username);
 				ouser.getRoles().remove(oldORole);
 				ouser.addRole(newORole);
 				ouser.save();
@@ -533,7 +537,7 @@ public class UserService {
 		ODatabaseRecordTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
-		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
+		UserDao.getInstance().getOUserByUsername(username).setPassword(newPassword).save();
 		//DbHelper.removeConnectionFromPool();
 	}
 	
@@ -546,7 +550,7 @@ public class UserService {
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User " + username + " does not exist");
 			throw new UserNotFoundException("User " + username + " does not exist");
 		}
-		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
+		UserDao.getInstance().getOUserByUsername(username).setPassword(newPassword).save();
 	}
 
 	public static boolean exists(String username) {

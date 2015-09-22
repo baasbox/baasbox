@@ -34,7 +34,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import org.junit.Test;
 
 import play.libs.F.Callback;
@@ -154,7 +154,7 @@ public class UserUpdateTest extends AbstractUserTest
 						FakeRequest request = new FakeRequest(POST, sFakeAdminUserRoute);
 	                    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-	                    ObjectMapper mapper = new ObjectMapper();
+	                    ObjectMapper mapper = BBJson.mapper();
 	                    JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
 	                    		+ "\"password\":\"test\","	
 	                    		+ "\"role\":\"registered\",\"isrole\":true}");
@@ -167,7 +167,7 @@ public class UserUpdateTest extends AbstractUserTest
 	                    FakeRequest request1 = new FakeRequest(PUT, "/admin/user/"+userName);
 	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-	                    mapper = new ObjectMapper();
+	                    mapper = BBJson.mapper();
 	                    actualObj = mapper.readTree("{\"role\":\"backoffice\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
 	                    	 "\"visibleByRegisteredUsers\":{} }");
 	                    request1 = request1.withJsonBody(actualObj,PUT);
@@ -179,7 +179,7 @@ public class UserUpdateTest extends AbstractUserTest
 	                    request1 = new FakeRequest(PUT, "/admin/user/"+userName);
 	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-	                    mapper = new ObjectMapper();
+	                    mapper = BBJson.mapper();
 	                    actualObj = mapper.readTree("{\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
 	                    	 "\"visibleByRegisteredUsers\":{} }");
 	                    request1 = request1.withJsonBody(actualObj,PUT);
@@ -206,7 +206,7 @@ public class UserUpdateTest extends AbstractUserTest
 						FakeRequest request1 = new FakeRequest(PUT, "/admin/user/admin");
 	                    request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	                    request1 = request1.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-	                    ObjectMapper mapper = new ObjectMapper();
+	                    ObjectMapper mapper = BBJson.mapper();
 	                    JsonNode actualObj = mapper.readTree("{\"role\":\"registered\",\"visibleByAnonymousUsers\":{},\"visibleByTheUser\":{},\"visibleByFriends\":{},"+
 	                    	 "\"visibleByRegisteredUsers\":{} }");
 	                    request1 = request1.withJsonBody(actualObj,PUT);
