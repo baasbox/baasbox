@@ -219,7 +219,7 @@ public class DbHelper {
 		}
 
 		//patch for issue #469
-		if (StringUtils.isEmpty(criteria.getWhere())){
+		if (StringUtils.isEmpty(criteria.getWhere()) && getConnection() != null){
 			final OUser user = getConnection().getUser();
 			if (user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) 
 				 ret += " where 1=1";
@@ -421,19 +421,23 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 
-		//String databaseName = BBConfiguration.getDBDir();
-		//String databaseName=BBConfiguration.getDBFullPath();
+		String databaseName=BBConfiguration.getDBFullPath();
+		
+		/* these will be necessary when BaasBox will support OrientDB clusters */
+		/*
 		Path currentRelativePath = Paths.get("");
 		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
 		String databaseName=currentRelativePath.toAbsolutePath().toString()+"/databases/baasbox";
-				
+		*/
+		
 		if (BaasBoxLogger.isDebugEnabled())
 			BaasBoxLogger.debug("opening connection on db: " + databaseName + " for "
 					+ username);
 		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
 		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
-				+ BBConfiguration.getDBDir(), username, password);
+				+ databaseName, username, password);
+
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);

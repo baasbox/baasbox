@@ -86,7 +86,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
-
+	
+	public static String getDBVersion(){
+		return configuration.getString(DB_VERSION);
+	}
+	
 	public static String getDBFullPath(){
 		return configuration.getString(DB_PATH);
 	}

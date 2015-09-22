@@ -131,7 +131,6 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
-				  /*
 				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
@@ -140,14 +139,12 @@ public class Global extends GlobalSettings {
                     info("DB has been create successfully");
                    
 				}
-				 */
 			  } catch (Throwable e) {
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
 					throw e;
 			  } finally {
 		    	 if (db!=null && !db.isClosed()) db.close();
-		    	 Orient.instance().shutdown();
 			  }
 		    }catch (Throwable e){
 		    	error("!! Error initializing BaasBox!", e);
