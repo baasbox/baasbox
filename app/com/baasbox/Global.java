@@ -128,6 +128,12 @@ public class Global extends GlobalSettings {
 
 			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(1000);
 			  
+			  if (NumberUtils.isNumber(System.getProperty("db.pool.max"))) {
+				  OGlobalConfiguration.DB_POOL_MAX.setValue(System.getProperty("db.pool.max"));
+			  } else {
+				  OGlobalConfiguration.DB_POOL_MAX.setValue(config.getString("akka.actor.default-dispatcher.fork-join-executor.parallelism-max"));
+			  }
+			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
@@ -151,6 +157,7 @@ public class Global extends GlobalSettings {
 		    	error("Abnormal BaasBox termination.");
 		    	System.exit(-1);
 		    }
+		  info("Max DB connections: {}",OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
 		  debug("Global.onLoadConfig() ended");
 		  return config;
 	  }
@@ -158,7 +165,7 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public void onStart(Application app) {
 		 debug("Global.onStart() called");
-	    //Orient.instance().shutdown();
+		 
 	    ODatabaseRecordTx db =null;
 	    try{
 	    	createOrientDBDeamon();
@@ -256,7 +263,7 @@ public class Global extends GlobalSettings {
 	    //write the Welcome Message
 	    info("");
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin AppCode: " + BBConfiguration.getAPPCODE());
+	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
@@ -268,14 +275,17 @@ public class Global extends GlobalSettings {
 			NoSuchMethodException, IOException {
 		if (BBConfiguration.getOrientEnableRemoteConnection() || BBConfiguration.getOrientStartCluster()){
 			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
-				BaasBoxLogger.info("*** DUMP of OrientDB deamon configuration: ");
+				BaasBoxLogger.info("*** DUMP of OrientDB daemon configuration: ");
 				BaasBoxLogger.info(getOrientConfString());
 			}
-			BaasBoxLogger.info("Starting OrientDB deamon...");
+			BaasBoxLogger.info("Starting OrientDB daemon...");
 			server = OServerMain.create();
-			String deamonConf=getOrientConfString();
-			server.startup(deamonConf);
+			String daemonConf=getOrientConfString();
+			server.startup(daemonConf);
 			server.activate();
+			server.getNetworkListeners().stream().forEach(x->{
+				BaasBoxLogger.info("OrientDB daemon is listening on {}",x.getListeningAddress(true));
+			});
 			BaasBoxLogger.info("...done");
 		}
 	}
