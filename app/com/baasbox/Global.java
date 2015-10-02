@@ -24,12 +24,17 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang.math.NumberUtils;
 
 import play.Application;
 import play.Configuration;
@@ -63,6 +68,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 
 public class Global extends GlobalSettings {
 	static {
@@ -71,7 +78,7 @@ public class Global extends GlobalSettings {
     }
 
 	  private static Boolean  justCreated = false;
-
+	  private static OServer server = null;
 
 	@Override
 	  public void beforeStart(Application app) {
@@ -118,7 +125,14 @@ public class Global extends GlobalSettings {
 			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
+
 			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(1000);
+			  
+			  if (NumberUtils.isNumber(System.getProperty("db.pool.max"))) {
+				  OGlobalConfiguration.DB_POOL_MAX.setValue(System.getProperty("db.pool.max"));
+			  } else {
+				  OGlobalConfiguration.DB_POOL_MAX.setValue(config.getString("akka.actor.default-dispatcher.fork-join-executor.parallelism-max"));
+			  }
 			  
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
@@ -128,6 +142,8 @@ public class Global extends GlobalSettings {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
 					justCreated  = true;
+                    info("DB has been create successfully");
+                   
 				}
 			  } catch (Throwable e) {
 					error("!! Error initializing BaasBox!", e);
@@ -136,12 +152,12 @@ public class Global extends GlobalSettings {
 			  } finally {
 		    	 if (db!=null && !db.isClosed()) db.close();
 			  }
-			  info("DB has been create successfully");
 		    }catch (Throwable e){
 		    	error("!! Error initializing BaasBox!", e);
 		    	error("Abnormal BaasBox termination.");
 		    	System.exit(-1);
 		    }
+		  info("Max DB connections: {}",OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
 		  debug("Global.onLoadConfig() ended");
 		  return config;
 	  }
@@ -149,10 +165,10 @@ public class Global extends GlobalSettings {
 	  @Override
 	  public void onStart(Application app) {
 		 debug("Global.onStart() called");
-	    //Orient.instance().shutdown();
-
+		 
 	    ODatabaseRecordTx db =null;
 	    try{
+	    	createOrientDBDeamon();
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
@@ -247,11 +263,91 @@ public class Global extends GlobalSettings {
 	    //write the Welcome Message
 	    info("");
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin AppCode: " + BBConfiguration.getAPPCODE());
+	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
 	  }
+
+	private void createOrientDBDeamon() throws Exception,
+			InstantiationException, IllegalAccessException,
+			ClassNotFoundException, InvocationTargetException,
+			NoSuchMethodException, IOException {
+		if (BBConfiguration.getOrientEnableRemoteConnection() || BBConfiguration.getOrientStartCluster()){
+			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
+				BaasBoxLogger.info("*** DUMP of OrientDB daemon configuration: ");
+				BaasBoxLogger.info(getOrientConfString());
+			}
+			BaasBoxLogger.info("Starting OrientDB daemon...");
+			server = OServerMain.create();
+			String daemonConf=getOrientConfString();
+			server.startup(daemonConf);
+			server.activate();
+			server.getNetworkListeners().stream().forEach(x->{
+				BaasBoxLogger.info("OrientDB daemon is listening on {}",x.getListeningAddress(true));
+			});
+			BaasBoxLogger.info("...done");
+		}
+	}
+
+	private String getOrientConfString() {
+		Path currentRelativePath = Paths.get("");
+		Path dbPath=currentRelativePath.resolve(BBConfiguration.getDBDir());
+		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
+		String toReturn=
+ 			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+	    			   + "<orient-server>"
+	    			   + " <handlers>"
+	    			   + (BBConfiguration.getOrientStartCluster()?
+		    			     " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
+		    			   + " <parameters>"
+		    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
+		    	           + "     <parameter name=\"enabled\" value=\"true\"/>"
+		    	           + "     <parameter name=\"configuration.db.default\""
+		    	           //+ "                value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/default-distributed-db-config.json\"/>"
+		    	           + "                value=\"conf/default-distributed-db-config.json\"/>"
+		    	           + "     <parameter name=\"configuration.hazelcast\" "
+		    	           //+ "				  value=\"/Users/geniusatwork/Documents/git/giastfader/baasbox/conf/hazelcast.xml\"/>"
+		    	           + "				  value=\"conf/hazelcast.xml\"/>"
+		    	           + "     <parameter name=\"conflict.resolver.impl\""
+		    	           + "                value=\"com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver\"/>"
+	
+		    	           + "     <!-- PARTITIONING STRATEGIES -->"
+		    	           + "     <parameter name=\"sharding.strategy.round-robin\""
+		    	           + "                value=\"com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy\"/>"
+		    	           + " </parameters>"
+		    	           + " </handler>"
+	    	           :"")
+	    	           + " </handlers>"
+		
+	    			   + "<network>"
+	    			   + "<protocols>"
+	    			   + (BBConfiguration.getOrientEnableRemoteConnection()?"<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>":"")
+	    			   + "</protocols>"
+	    			   + "<listeners>"
+					   + (BBConfiguration.getOrientEnableRemoteConnection()?"<listener ip-address=\""+BBConfiguration.getOrientListeningAddress()+"\" port-range=\""+BBConfiguration.getOrientListeningPorts()+"\" protocol=\"binary\"/>":"")
+					   + "</listeners>"
+	    			   + "</network>"
+	    			   + "<users>"
+	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getRootPassword())+"\" resources=\"*\"/>"
+	    			   + "</users>"
+	    			   + "<properties>"
+	    			   //+ (BBConfiguration.getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
+	    			   //:"")
+	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
+	    			   + "<entry name=\"log.console.level\" value=\"WARNING\"/>"
+	    			   + "<entry name=\"log.file.level\" value=\"WARNING\"/>"
+	    			   // + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
+	    			  // + "<entry name=\"server.database.path\"  "
+	    			  // + "		 value=\"" + BBConfiguration.getDBFullPath() + "\"/>"
+	    			  // + "		 value=\"" + dbPath.toAbsolutePath().toString() + "/\"/>"
+	    			 
+	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
+	    			   + "<entry name=\"plugin.dynamic\" value=\"false\"/>"
+	    			   + "</properties>" + 
+	    			   "</orient-server>";
+		return toReturn;
+	}
 
 	private void overrideSettings() {
 		info ("Override settings...");
@@ -315,7 +411,8 @@ public class Global extends GlobalSettings {
 	    	info("Closing the DB connections...");
 	    	ODatabaseDocumentPool.global().close();
 	    	info("Shutting down embedded OrientDB Server");
-	    	Orient.instance().shutdown();
+	    	//Orient.instance().shutdown();
+	    	if (server!=null) server.shutdown();
 	    	info("...ok");
 	    }catch (ODatabaseException e){
 	    	error("Error closing the DB!",e);

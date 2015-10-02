@@ -144,6 +144,7 @@ public class StatisticsService {
 			map.put("configuration", dbConfiguration());
 			map.put("physical_size", DbHelper.getDBTotalSize());
 			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
+
 			map.put("size_threshold_percentage", BBConfiguration.getDBAlertThreshold());
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);

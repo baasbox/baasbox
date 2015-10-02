@@ -223,9 +223,10 @@ public class Document extends Controller {
     private static Result getDocumentsChunked(String collectionName) throws InvalidAppCodeException {
     	final Context ctx = Http.Context.current.get();
     	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-    	
+    	String select = "";
     	try{
 	    	DbHelper.openFromContext(ctx);
+	    	select = DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria);
 	        if (!(CollectionDao.getInstance().existsCollection(collectionName))){
 	        	return notFound(collectionName + " is not a valid collection name");
 	        }
@@ -245,7 +246,7 @@ public class Document extends Controller {
 				,pass
 				,ctx);
 		if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
-		chunks.setQuery(DbHelper.selectQueryBuilder(collectionName, criteria.justCountTheRecords(), criteria));
+		chunks.setQuery(select);
     	
 		return ok(chunks).as("application/json");
     }

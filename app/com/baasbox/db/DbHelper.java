@@ -22,7 +22,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import java.util.Arrays;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -76,6 +81,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -117,16 +123,14 @@ public class DbHelper {
 
 	private static final String fetchPlan = "*:?";
 
-	public static BigInteger getDBTotalSize() {
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File(BBConfiguration
-				.getDBDir()));
-	}
 
-	public static BigInteger getDBStorageFreeSpace() {
-		if (BBConfiguration.getDBSizeThreshold() != BigInteger.ZERO)
-			return BBConfiguration.getDBSizeThreshold();
-		return BigInteger.valueOf(new File(BBConfiguration.getDBDir())
-				.getFreeSpace());
+	public static BigInteger getDBTotalSize(){
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBFullPath()));
+	}
+	
+	public static BigInteger getDBStorageFreeSpace(){
+		if (BBConfiguration.getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getDBSizeThreshold();
+		return BigInteger.valueOf(new File(BBConfiguration.getDBFullPath()).getFreeSpace());
 	}
 
 	
@@ -213,9 +217,13 @@ public class DbHelper {
 		if (criteria.getWhere() != null && !criteria.getWhere().equals("")) {
 			ret += " where ( " + criteria.getWhere() + " )";
 		}
-		// patch for issue #469
-		if (StringUtils.isEmpty(criteria.getWhere()) && !isConnectedAsAdmin(false)) {
-			ret += " where 1=1";
+
+		//patch for issue #469
+		if (StringUtils.isEmpty(criteria.getWhere()) && getConnection() != null){
+			final OUser user = getConnection().getUser();
+			if (user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) 
+				 ret += " where 1=1";
+
 		}
 		if (!count && !StringUtils.isEmpty(criteria.getGroupBy())) {
 			ret += " group by ( " + criteria.getGroupBy() + " )";
@@ -412,14 +420,23 @@ public class DbHelper {
 
 			throw new ShuttingDownDBException();
 		}
-		String databaseName = BBConfiguration.getDBDir();
+
+		String databaseName=BBConfiguration.getDBFullPath();
+		
+		/* these will be necessary when BaasBox will support OrientDB clusters */
+		/*
+		Path currentRelativePath = Paths.get("");
+		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
+		String databaseName=currentRelativePath.toAbsolutePath().toString()+"/databases/baasbox";
+		*/
+		
 		if (BaasBoxLogger.isDebugEnabled())
 			BaasBoxLogger.debug("opening connection on db: " + databaseName + " for "
 					+ username);
-
+		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
 		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
-				+ BBConfiguration.getDBDir(), username, password);
+				+ databaseName, username, password);
 
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);

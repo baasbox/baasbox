@@ -216,8 +216,10 @@ public class User extends Controller {
 				return badRequest("One or more profile sections is not a valid JSON object");
 			} catch (UserAlreadyExistsException e){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
+				// Return a generic error message if the username is already in use.
 				return badRequest("Error signing up");
 			} catch (EmailAlreadyUsedException e){
+				// Return a generic error message if the email is already in use.
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("signUp", e);
 				return badRequest("Error signing up");
 			} catch (Throwable e){
