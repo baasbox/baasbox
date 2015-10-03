@@ -67,7 +67,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	public UserInfo extractUserInfo(Response r) throws BaasBoxSocialException {
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
+		if (BaasBoxLogger.isDebugEnabled() && r!=null)  BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		ui.setId("mockid_" + this.token);
 		ui.setUsername("mockusername_" + this.token);
