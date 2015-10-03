@@ -175,7 +175,7 @@ public class Social extends Controller{
 				return internalServerError(ExceptionUtils.getMessage(sie));
 			}
 
-			if(existingUser!=null){
+			if(existingUser!=null){ //the user already exists in our db
 				String username = null;
 				try {
 					username = UserService.getUsernameByProfile(existingUser);
@@ -186,7 +186,7 @@ public class Social extends Controller{
 					internalServerError("unable to login with "+socialNetwork+" : "+ExceptionUtils.getMessage(e));
 				}
 				String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
-
+				UserService.changePassword(username, password);
 				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appcode,username, password);
 				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				ObjectNode on = Json.newObject();
@@ -195,7 +195,7 @@ public class Social extends Controller{
 				}
 				on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 				return ok(on);
-			}else{
+			}else{ //it is the first time that this user logins via this social network
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("User does not exists with tokens...trying to create");
 				String username = UUID.randomUUID().toString();
 				Date signupDate = new Date();
