@@ -170,9 +170,9 @@ public class UserService {
 				generated) ;
 	}
 
+
 	public static void registerDevice(Map<String,Object> data) throws SqlInjectionException{
 		String username = DbHelper.getCurrentUserNameFromConnection();
-
 		String pushToken=(String) data.get(UserDao.USER_PUSH_TOKEN);
 		String os=(String) data.get(UserDao.USER_DEVICE_OS);
 		boolean found=false;

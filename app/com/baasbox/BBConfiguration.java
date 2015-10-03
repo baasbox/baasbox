@@ -16,6 +16,7 @@
  */
 package com.baasbox;
 
+import java.io.File;
 import java.math.BigInteger;
 
 import org.apache.commons.lang.BooleanUtils;
@@ -90,8 +91,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(DB_VERSION);
 	}
 	
-	public static String getDBDir(){
+	public static String getDBFullPath(){
 		return configuration.getString(DB_PATH);
+	}
+	
+	public static String getDBDir(){
+		if (getDBFullPath().lastIndexOf(File.separator) > -1)
+			return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
+		else return getDBFullPath();
 	}
 	
 	public static Boolean getWrapResponse(){
@@ -189,4 +196,22 @@ public class BBConfiguration implements IBBConfigurationKeys {
 			isDBSizeThresholdOverridden=true;
 	    }
 	}
+	
+	public static Boolean getOrientEnableRemoteConnection() {
+		return configuration.getBoolean(ORIENT_ENABLE_REMOTE_CONNECTION);
+	}
+
+	public static String getOrientListeningPorts() {
+		return configuration.getString(ORIENT_LISTENING_PORTS);
+	}
+
+	public static String getOrientListeningAddress() {
+		return configuration.getString(ORIENT_LISTENING_ADDRESS);
+	}
+	
+	public static Boolean getOrientStartCluster() {
+		return configuration.getBoolean(ORIENT_START_CLUSTER);
+	}
+	
+	
 }

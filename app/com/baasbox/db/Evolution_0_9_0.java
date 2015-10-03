@@ -1,9 +1,9 @@
 package com.baasbox.db;
 
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.baasbox.service.logging.BaasBoxLogger;
 
 /**
  * Created by eto on 10/23/14.

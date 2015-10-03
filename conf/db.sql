@@ -19,6 +19,7 @@ create property _BB_Node._links link _BB_NodeVertex;
 create property _BB_Node.id String;
 create property _BB_Node._author String;
 
+
 --user
 create class _BB_User extends _BB_Node;
 create class _BB_UserAttributes extends ORestricted;
@@ -116,7 +117,8 @@ create index _BB_asset.name unique;
 create index _BB_Node.id UNIQUE_HASH_INDEX;
 create index _BB_Permissions.tag UNIQUE_HASH_INDEX;
 ---bug on OrientDB index? (our issue #412) We have to define a "new" index to avoid class scan when looking for a username:
-create index _bb_user.user.name unique
+
+create index _bb_user.user.name unique;
 create index _bb_node._author notunique;
 create index _bb_node._creation_date notunique;
 

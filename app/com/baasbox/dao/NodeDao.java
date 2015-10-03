@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import ch.qos.logback.classic.db.DBHelper;
+
 import com.baasbox.BBCache;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
@@ -147,6 +149,7 @@ public abstract class NodeDao  {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OrientGraph db = DbHelper.getOrientGraphConnection();
 		try{
+				DbHelper.requestTransaction();
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
@@ -156,8 +159,10 @@ public abstract class NodeDao  {
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
 				if (!DbHelper.isInTransaction()) BBCache.cacheUUIDtoRID(token.toString(),doc.getIdentity().toString());
-			    return doc;
+				DbHelper.commitTransaction();
+				return doc;
 		}catch (Throwable e){
+			DbHelper.rollbackTransaction();
 			throw e;
 		}finally{
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
