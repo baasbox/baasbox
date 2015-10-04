@@ -28,6 +28,7 @@ import play.mvc.SimpleResult;
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.security.SessionKeys;
+
 import play.core.j.JavaResultExtractor;
 
 /**
@@ -91,16 +92,26 @@ public class UserOrAnonymousCredentialsFilterAsync extends Action.Simple {
 			if (!isCredentialOk) { // no way.... no anoymous access, but the
 									// supplied credentials aren't valid
 				tempResult = F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
-			} else // valid credentials have been found
-			// internal administrator is not allowed to access via REST
-			if (((String) ctx.args.get("username"))
+			} else {
+				// valid credentials have been found
+				// internal administrator is not allowed to access via REST
+				if (((String) ctx.args.get("username"))
 					.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
 					|| (((String) ctx.args.get("username"))
 							.equalsIgnoreCase(BBConfiguration
 									.getBaasBoxUsername()) && !anonymousInjected))
 				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username")
 						+ " cannot access via REST"));
-
+			}
+			//one last thing: is the root user that is trying to access?
+			String username = (String)ctx.args.get("username");
+			String password = (String)ctx.args.get("password");
+			if (BBConfiguration.isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getRootPassword())){
+				//then override username and password
+				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
+				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
+			}
+			
 			// if everything is ok.....
 			// executes the request
 			if (tempResult == null)

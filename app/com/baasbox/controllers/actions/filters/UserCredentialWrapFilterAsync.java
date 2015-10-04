@@ -63,7 +63,7 @@ public class UserCredentialWrapFilterAsync extends Action.Simple {
 			if (!isCredentialOk){
 				//tempResult= unauthorized("Authentication info not valid or not provided. HINT: is your session expired?");
 				tempResult= F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
-			} else	
+			} else	{
 				//internal administrator is not allowed to access via REST
 				if (((String)ctx.args.get("username"))
 						.equalsIgnoreCase(
@@ -71,10 +71,19 @@ public class UserCredentialWrapFilterAsync extends Action.Simple {
 						||
 						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
 					tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
+			}
+			//one last thing: is the root user that is trying to access?
+			String username = (String)ctx.args.get("username");
+			String password = (String)ctx.args.get("password");
+			if (BBConfiguration.isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getRootPassword())){
+				//then override username and password
+				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
+				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
+			}
 			
-				//if everything is ok.....
-				//executes the request
-				if (tempResult==null) tempResult = delegate.call(ctx);
+			//if everything is ok.....
+			//executes the request
+			if (tempResult==null) tempResult = delegate.call(ctx);
 		}
 		
 		
