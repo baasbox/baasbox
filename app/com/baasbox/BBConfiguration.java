@@ -130,6 +130,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(ROOT_PASSWORD);
 	}
 
+	public static boolean isRootAsAdmin() {
+		Boolean rootAsAdmin=configuration.getBoolean(ROOT_AS_ADMIN);
+		return rootAsAdmin==null?false:rootAsAdmin.booleanValue();
+	}
+	
 	public static int getImportExportBufferSize(){
 		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
 	}
