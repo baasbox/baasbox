@@ -201,6 +201,20 @@ public class FriendshipUserTest extends AbstractTest{
             users.removeAll(followers);
             assertEquals(java.util.Collections.EMPTY_LIST, users);
 
+            fk = new FakeRequest(GET, "/following?recordsPerPage=2");
+            fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+            fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
+            getDocumentResult = routeAndCall(fk);
+            followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
+            array = followedJson.getJSONArray("data");
+            count = 0;
+            followers = Lists.newArrayList();
+            for (int i = 0; i < array.length(); i++) {
+              String follower = array.getJSONObject(i).getJSONObject("user").getString("name");
+              followers.add(follower);
+              count++;
+            }
+            assertEquals(count, followers.size());
           } catch (JSONException e) {
             e.printStackTrace();
             fail(e.getMessage());
