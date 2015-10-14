@@ -195,7 +195,6 @@ public class FriendshipUserTest extends AbstractTest{
             for (int i = 0; i < array.length(); i++) {
               String follower = array.getJSONObject(i).getJSONObject("user").getString("name");
               followers.add(follower);
-              System.out.println("USER " + follower);
               count++;
             }
             assertEquals(count, randomUsers.length);
@@ -252,7 +251,6 @@ public class FriendshipUserTest extends AbstractTest{
             getDocumentResult = routeAndCall(fk);
             assertRoute(getDocumentResult, "Get document by friend 2", Status.OK, null, false);
             JSONObject createdDocument = (JSONObject) toJSON(contentAsString(getDocumentResult));
-            System.out.println(contentAsString(getDocumentResult));
             String author = createdDocument.getJSONObject("data").getString("_author");
             assertEquals(secondUser, author);
 
