@@ -215,6 +215,41 @@ public class FriendshipUserTest extends AbstractTest{
               count++;
             }
             assertEquals(count, followers.size());
+            fk = new FakeRequest(GET, "/following?count=true");
+            fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+            fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(firstUser, "passw1"));
+            getDocumentResult = routeAndCall(fk);
+            followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
+            count = followedJson.getJSONArray("data").getJSONObject(0).getInt("count");
+
+            String followed = followers.get(0);
+            fk = new FakeRequest(GET, "/followers?count=true");
+            fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+            fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(followed, "passw1"));
+            getDocumentResult = routeAndCall(fk);
+            followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
+            count = followedJson.getJSONArray("data").getJSONObject(0).getInt("count");
+
+            assertEquals(count, 1l);
+
+            // Test as admin
+            fk = new FakeRequest(GET, "/following/" + firstUser + "?count=true");
+            fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+            fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+            getDocumentResult = routeAndCall(fk);
+            followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
+            System.out.println("Following by admin is " + followedJson);
+            count = followedJson.getJSONArray("data").getJSONObject(0).getInt("count");
+
+            assertEquals(10l, count);
+
+            fk = new FakeRequest(GET, "/followers/" + followed + "?count=true");
+            fk = fk.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+            fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+            getDocumentResult = routeAndCall(fk);
+            followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
+            count = followedJson.getJSONArray("data").getJSONObject(0).getInt("count");
+            assertEquals(1l, count);
           } catch (JSONException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -224,7 +259,6 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
-  @Test
   public void createUsersAndFollow() {
     running(
       getFakeApplication(),
@@ -316,7 +350,6 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
-  @Test
   public void unexistentUserFollow() {
     running(
       getFakeApplication(),
@@ -336,7 +369,6 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
-  @Test
   public void unexistentFollow() {
     running(
       getFakeApplication(),
