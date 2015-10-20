@@ -73,6 +73,10 @@ POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
 
 # @tag(baasbox.social)
+GET		/social/:socialNetwork/authUrl		    	com.baasbox.controllers.Social.authorizationUrl(socialNetwork: String)
+
+
+# @tag(baasbox.social)
 POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
 
 # @tag(baasbox.social)

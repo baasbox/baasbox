@@ -31,7 +31,6 @@ import org.scribe.model.Verb;
 
 import play.libs.Json;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
 
 import com.baasbox.configuration.SocialLoginConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,6 +45,11 @@ public class GooglePlusLoginService extends SocialLoginService{
 
 	
 	@Override
+  protected String saveToken(String k, Token t) {
+    return null;
+  }
+
+  @Override
 	public String getPrefix() {
 		return PREFIX;
 	}
@@ -76,13 +80,11 @@ public class GooglePlusLoginService extends SocialLoginService{
 
 	@Override
 	public String getVerifierFromRequest(Request r) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Token getAccessTokenFromRequest(Request r, Session s) {
-		// TODO Auto-generated method stub
+  public Token getAccessTokenFromRequest(Request r) {
 		return null;
 	}
 
