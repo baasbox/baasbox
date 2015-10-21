@@ -288,6 +288,9 @@ public abstract class SocialLoginService {
     throw new InvalidSocialNetworkNameException(from);
   }
 
+  public String getCallbackUrl() {
+    return serverUrl().toString() + "/social/login/" + socialNetwork + "/callback?X-BAASBOX-APPCODE=" + this.appcode;
+  }
 
 
 }

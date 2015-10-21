@@ -96,10 +96,14 @@ public class Social extends Controller{
   public static F.Promise<Result> callback(String socialNetwork) {
     return F.Promise.promise(() -> {
       try {
-        String appcode = (String) ctx().args.get("appcode");
-        SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
-        Token t = sc.requestAccessToken(request());
-        return login(socialNetwork, sc, appcode, t);
+        if (ctx().request().queryString().keySet().contains("access_token")) {
+          return ok();
+        }else{
+            String appcode = (String) ctx().args.get("appcode");
+            SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
+            Token t = sc.requestAccessToken(request());
+          return redirect(sc.getCallbackUrl() + "&access_token=" + t.getToken() + "&access_secret=" + t.getSecret());
+        }
       } catch (UnsupportedSocialNetworkException e) {
         return badRequest(ExceptionUtils.getMessage(e));
       } catch (java.lang.IllegalArgumentException e) {
