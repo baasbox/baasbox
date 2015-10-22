@@ -901,6 +901,12 @@ public class User extends Controller {
 			} else {
 				user = username;
 			}
+
+      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1) && !justCountThem) {
+        if (BaasBoxLogger.isDebugEnabled())
+          BaasBoxLogger.info("Prepare to sending chunked response..");
+        return getFollowersChunked(user);
+      }
 			List<ODocument> listOfFollowers=new ArrayList<ODocument>();
 			long count=0;
 			try {
@@ -924,23 +930,58 @@ public class User extends Controller {
 	}
 
 
-	/***
-	 * Returns the people those the given user is following
-	 * @param username
-	 * @return
-	 */
+  private static Result getFollowersChunked(String username) {
+    final Context ctx = Http.Context.current.get();
+    QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    String select = "";
+    try {
+      DbHelper.openFromContext(ctx);
+      select = FriendShipService.getFriendsOfQuery(username, criteria);
+      System.out.println("QUERY FOR FOLLOWERS IS:" + select + " AND CRITERIA " + criteria);
+    } catch (InvalidAppCodeException e) {
+      return internalServerError("invalid app code");
+    } finally {
+      DbHelper.close(DbHelper.getConnection());
+    }
+
+    final String appcode = DbHelper.getCurrentAppCode();
+    final String user = DbHelper.getCurrentHTTPUsername();
+    final String pass = DbHelper.getCurrentHTTPPassword();
+
+    UserOrientChunker chunks = new UserOrientChunker(
+      appcode
+      , user
+      , pass
+      , ctx);
+    if (criteria.isPaginationEnabled())
+      criteria.enablePaginationMore();
+    chunks.setQuery(select);
+
+    return ok(chunks).as("application/json");
+  }
+
+  /***
+   * Returns the people those the given user is following
+   * @param username
+   * @return
+   */
 	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class,ExtractQueryParameters.class})
 	public static F.Promise<Result> following (String username){
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
 
-		String user;
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+      String user;
 			if (StringUtils.isEmpty(username)) {
 				user=DbHelper.currentUsername();
 			} else {
 				user = username;
 			}
+      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+        if (BaasBoxLogger.isDebugEnabled())
+          BaasBoxLogger.info("Prepare to sending chunked response..");
+        return getFollowingChunked(user);
+      }
 			try {
 				List<ODocument> following = FriendShipService.getFollowing(user, criteria);
 				return ok(prepareResponseToJson(following));
@@ -952,7 +993,36 @@ public class User extends Controller {
 	}
 
 
-	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
+  private static Result getFollowingChunked(String username) {
+    final Context ctx = Http.Context.current.get();
+    QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    String select = "";
+    try {
+      DbHelper.openFromContext(ctx);
+      select = UserDao.getFollowingSelectQuery(username, criteria);
+    } catch (InvalidAppCodeException e) {
+      return internalServerError("invalid app code");
+    } finally {
+      DbHelper.close(DbHelper.getConnection());
+    }
+
+    final String appcode = DbHelper.getCurrentAppCode();
+    final String user = DbHelper.getCurrentHTTPUsername();
+    final String pass = DbHelper.getCurrentHTTPPassword();
+
+    UserOrientChunker chunks = new UserOrientChunker(
+      appcode
+      , user
+      , pass
+      , ctx);
+    if (criteria.isPaginationEnabled())
+      criteria.enablePaginationMore();
+    chunks.setQuery(select);
+
+    return ok(chunks).as("application/json");
+  }
+
+  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	public static F.Promise<Result> unfollow(String toUnfollowUsername){
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()->{
 

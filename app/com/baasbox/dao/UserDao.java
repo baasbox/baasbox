@@ -202,10 +202,14 @@ public class UserDao extends NodeDao  {
 		user.save();
 	}
 
-  public List<ODocument> getFollowing(String username, QueryParams criteria) {
+  public static String getFollowingSelectQuery(String username, QueryParams criteria) {
     String queryString = StringUtils.replace(GET_FOLLOWING_FROM_FORMAT, USERNAME_PLACEHOLDER, username);
-    String query = DbHelper.selectQueryBuilder(queryString, criteria.justCountTheRecords(), criteria);
-    return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
+    return DbHelper.selectQueryBuilder(queryString, criteria.justCountTheRecords(), criteria);
+
+  }
+
+  public List<ODocument> getFollowing(String username, QueryParams criteria) {
+    return (List<ODocument>) DbHelper.genericSQLStatementExecute(getFollowingSelectQuery(username, criteria), criteria.getParams());
 
   }
 

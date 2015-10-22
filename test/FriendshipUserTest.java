@@ -259,6 +259,7 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
+  @Test
   public void createUsersAndFollow() {
     running(
       getFakeApplication(),
@@ -350,6 +351,7 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
+  @Test
   public void unexistentUserFollow() {
     running(
       getFakeApplication(),
@@ -369,6 +371,7 @@ public class FriendshipUserTest extends AbstractTest{
       });
   }
 
+  @Test
   public void unexistentFollow() {
     running(
       getFakeApplication(),

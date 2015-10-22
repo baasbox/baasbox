@@ -90,7 +90,8 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 			  	
 				out.write("{" + prelude + "["); //send ASAP (bypassing the buffer) the prelude so to reply almost immediately to the client to avoid timeouts
 				
-				final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(query);
+        final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(query);
+				
 				qry.setResultListener(new OCommandResultListener() {
 					MyBuffer buffer = new MyBuffer(out, BBConfiguration.getChunkSize());
 					boolean firstRecord=true;
