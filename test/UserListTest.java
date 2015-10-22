@@ -130,7 +130,7 @@ public class UserListTest extends AbstractUsersTest {
             fail("unable to parse json");
           }
            
-          request = new FakeRequest(GET, getRouteAddress() + "?recordsPerPage=1");
+          request = new FakeRequest(GET, getRouteAddress() + "?recordsPerPage=1&page=1");
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 
