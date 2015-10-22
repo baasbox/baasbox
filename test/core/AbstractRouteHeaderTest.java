@@ -3,10 +3,8 @@ package core;
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import org.junit.Test;
 
@@ -23,7 +21,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 		super();
 	}
 
-	@Test
+  @Test
 	public void testRouteNotValid() {
 		if (getMethod()==null) return;
 		running
@@ -65,7 +63,7 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 		);		
 	}
 
-	@Test
+  @Test
 	public void testServerNotValid() {
 		if (getMethod()==null) return;
 		running

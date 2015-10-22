@@ -52,6 +52,8 @@ import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
 import com.baasbox.controllers.actions.filters.ExtractQueryParameters;
 import com.baasbox.controllers.actions.filters.NoUserCredentialWrapFilterAsync;
 import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
+import com.baasbox.controllers.helpers.HttpConstants;
+import com.baasbox.controllers.helpers.UserOrientChunker;
 import com.baasbox.dao.ResetPwdDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.EmailAlreadyUsedException;
@@ -82,7 +84,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -156,7 +157,13 @@ public class User extends Controller {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
+      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+        if (BaasBoxLogger.isDebugEnabled())
+          BaasBoxLogger.info("Prepare to sending chunked response..");
+        return getUsersChunked();
+      }
 			List<ODocument> profiles = UserService.getUsers(criteria,true);
 			String result = prepareResponseToJson(profiles);
 			return ok(result);
@@ -169,7 +176,36 @@ public class User extends Controller {
 		});
 	}
 
-	@With ({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+  private static Result getUsersChunked() {
+    final Context ctx = Http.Context.current.get();
+    QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+    String select = "";
+    try {
+      DbHelper.openFromContext(ctx);
+      select = DbHelper.selectQueryBuilder(UserDao.MODEL_NAME, criteria.justCountTheRecords(), criteria);
+    } catch (InvalidAppCodeException e) {
+      return internalServerError("invalid app code");
+    } finally {
+      DbHelper.close(DbHelper.getConnection());
+    }
+
+    final String appcode = DbHelper.getCurrentAppCode();
+    final String user = DbHelper.getCurrentHTTPUsername();
+    final String pass = DbHelper.getCurrentHTTPPassword();
+
+    UserOrientChunker chunks = new UserOrientChunker(
+      appcode
+      , user
+      , pass
+      , ctx);
+    if (criteria.isPaginationEnabled())
+      criteria.enablePaginationMore();
+    chunks.setQuery(select);
+
+    return ok(chunks).as("application/json");
+  }
+
+  @With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
 	@BodyParser.Of(BodyParser.Json.class)
 	public static F.Promise<Result> signUp() throws IOException{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
