@@ -39,6 +39,7 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 import scala.concurrent.duration.FiniteDuration;
+import views.html.defaultpages.todo;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
@@ -569,6 +570,14 @@ public class Document extends Controller {
         return res;
     }
 
+  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
+  public static Promise<Result> queryLink(String collectionName, String id, String linkName) {
+    return Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+      QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+      return ok(prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, criteria)));
+    }));
+  }
+
     @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Promise<Result> revokeToUser(String collectionName, String rid, String username, String action, boolean isUUID) {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
@@ -640,6 +649,7 @@ public class Document extends Controller {
                 .when(Throwable.class,
                         e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToUser
+
 
     private static Promise<Result> grantOrRevokeToRole(String collectionName, String id,
                                                        String rolename, String action, boolean grant, boolean isUUID) {
