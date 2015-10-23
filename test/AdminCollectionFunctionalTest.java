@@ -157,6 +157,17 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		
 	}
 	
+  public String routeCreateCollection(String collectionName){
+	  String sFakeCollection = "/admin/collection/"+collectionName;
+	  FakeRequest request = new FakeRequest("POST",sFakeCollection);
+    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+    Result result = routeAndCall(request);
+    assertRoute(result, "testRouteOK", Status.CREATED, null, false);
+    return collectionName;
+    
+	}
+
 	public String routeCreateCollection()
 	{
 		//tries to create a series of invalid collection

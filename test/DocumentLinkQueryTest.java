@@ -69,7 +69,7 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           assertTrue(ts.postIds.size() > 0);
           assertTrue(ts.commentToAuthor.size() > 0);
           testLinks(ts);
-          // shutdownTest(true);
+          shutdownTest(true);
         }
 
       });
