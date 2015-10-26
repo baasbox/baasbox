@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.baasbox.dao.exception.InvalidCriteriaException;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import play.Logger;
 
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -169,7 +169,7 @@ public class UserDao extends NodeDao  {
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
-		user.setAccountStatus(STATUSES.SUSPENDED);
+		user.setAccountStatus(OSecurityUser.STATUSES.SUSPENDED);
 		user.save();
 		//cannot resume the old connection because now the user is disabled
 	}
@@ -178,7 +178,7 @@ public class UserDao extends NodeDao  {
 		db = DbHelper.reconnectAsAdmin();
 		OUser user = db.getMetadata().getSecurity().getUser(username);
 		if (user==null) throw new UserNotFoundException("The user " + username + " does not exist.");
-		user.setAccountStatus(STATUSES.ACTIVE);
+		user.setAccountStatus(OSecurityUser.STATUSES.ACTIVE);
 		user.save();
 	}
 

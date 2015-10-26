@@ -25,7 +25,7 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.security.SessionKeys;
 import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -85,7 +85,7 @@ public class RegisterDeviceTest extends AbstractTest {
 					if (Logger.isDebugEnabled()) Logger.debug("userAregisterDevice2 result: " + contentAsString(result));
 					assertRoute(result, "User A register 2nd device", Status.OK, "{\"result\":\"ok\",\"data\":\"\",\"http_code\":"+Status.OK+"}", true);
 					
-					ODatabaseRecordTx db = null;
+					ODatabaseDocumentTx db = null;
 					
 					try {
 						 db = com.baasbox.db.DbHelper.getOrOpenConnection(TestConfig.VALUE_APPCODE, TestConfig.ADMIN_USERNAME, TestConfig.AUTH_ADMIN_PASS);

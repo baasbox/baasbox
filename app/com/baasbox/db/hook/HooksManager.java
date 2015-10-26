@@ -26,12 +26,12 @@ import org.apache.commons.collections.IteratorUtils;
 
 import play.Logger;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager { 
-	public static void registerAll(ODatabaseRecordTx db){
+	public static void registerAll(ODatabaseDocumentTx db){
 		
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		if (Logger.isDebugEnabled()) Logger.debug("Registering hooks...");
@@ -59,7 +59,7 @@ public class HooksManager {
 		
 	}
 	
-	public static void unregisteredAll(ODatabaseRecordTx db){
+	public static void unregisteredAll(ODatabaseDocumentTx db){
 
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
 		
@@ -79,7 +79,7 @@ public class HooksManager {
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");
 	}
 	
-	public static void enableHidePasswordHook(ODatabaseRecordTx db,boolean enable){
+	public static void enableHidePasswordHook(ODatabaseDocumentTx db,boolean enable){
 		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
 		List hs = IteratorUtils.toList(hooks.keySet().iterator());
 		Iterator<ORecordHook> it =hs.iterator();

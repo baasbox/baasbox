@@ -91,7 +91,7 @@ import com.baasbox.util.Util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -99,7 +99,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
-@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
+@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, /*CheckAdminRoleFilter.class,*/ExtractQueryParameters.class})
 public class Admin extends Controller {
 
 	static String backupDir = DbManagerService.backupDir;
@@ -185,7 +185,7 @@ public class Admin extends Controller {
 	}
 
 	public static Result getDBStatistics(){
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		ImmutableMap response;
 		try {
 			String bbId = Internal.INSTALLATION_ID.getValueAsString();

@@ -18,6 +18,7 @@ package com.baasbox;
 
 import java.math.BigInteger;
 
+import net.sf.ehcache.config.InvalidConfigurationException;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -82,6 +83,23 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	public static String getDBDir(){
 		return configuration.getString(DB_PATH);
+	}
+
+	public static String getDBUrl() {
+		return configuration.getString(DB_URL);
+	}
+
+	public static String getOrientUrl() {
+		String dbUrl = getDBUrl();
+		String dbPath = getDBDir();
+
+		if (dbUrl != null && dbPath != null) {
+			throw new InvalidConfigurationException("Both remote and local db configuration cannot be set");
+		} else if (dbUrl != null) {
+			return String.format("plocal:%s", getDBDir());
+		} else {
+			return String.format("remote:%s", getDBUrl());
+		}
 	}
 	
 	public static Boolean getWrapResponse(){

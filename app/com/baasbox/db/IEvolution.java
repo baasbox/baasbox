@@ -18,11 +18,11 @@
 
 package com.baasbox.db;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public interface IEvolution {
 
 	public  String getFinalVersion();
-	public  void evolve (ODatabaseRecordTx db);
+	public  void evolve (ODatabaseDocumentTx db);
 
 }

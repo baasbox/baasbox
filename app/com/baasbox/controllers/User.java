@@ -79,7 +79,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -649,7 +649,7 @@ public class User extends Controller {
 
 		/* other useful parameter to receive and to store...*/		  	  
 		//validate user credentials
-		ODatabaseRecordTx db=null;
+		ODatabaseDocumentTx db=null;
 		String user = null;
 		try{
 			db = DbHelper.open(appcode,username, password);

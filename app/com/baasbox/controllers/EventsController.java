@@ -27,6 +27,8 @@ import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventSource;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import play.Logger;
 import play.mvc.Result;
@@ -61,8 +63,8 @@ public class EventsController {
             String password = (String) ctx().args.get("password");
             try {
                 DbHelper.open(appcode, username, password);
-                OUser user = DbHelper.getConnection().getUser();
-                Set<ORole> roles = user.getRoles();
+                OSecurityUser user = DbHelper.getConnection().getUser();
+                Set<? extends OSecurityRole> roles = user.getRoles();
                 if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
                     return forbidden("Logs can only be read by administrators");
                 }

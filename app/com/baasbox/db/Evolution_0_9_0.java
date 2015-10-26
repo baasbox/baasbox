@@ -2,7 +2,7 @@ package com.baasbox.db;
 
 import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import play.Logger;
 
 /**
@@ -17,7 +17,7 @@ public class Evolution_0_9_0 implements IEvolution {
     }
 
     @Override
-    public void evolve(ODatabaseRecordTx db) {
+    public void evolve(ODatabaseDocumentTx db) {
         Logger.info("Applying evolutions to evolve to the " + version + " level");
         try{
             addScriptsClass(db);
@@ -32,7 +32,7 @@ public class Evolution_0_9_0 implements IEvolution {
     }
 
 
-    private void addScriptsClass(ODatabaseRecordTx db){
+    private void addScriptsClass(ODatabaseDocumentTx db){
         Logger.info("Creating scripts classes...");
         DbHelper.execMultiLineCommands(db,true,
                 "create class _BB_Script;" ,
@@ -66,7 +66,7 @@ public class Evolution_0_9_0 implements IEvolution {
         Logger.info("...done!");
     }
     
-    private void addRoleFlag(ODatabaseRecordTx db) {
+    private void addRoleFlag(ODatabaseDocumentTx db) {
         Logger.info("Adding role flag on class OROLE...");
         DbHelper.execMultiLineCommands(db,true,
         		"create property orole.isrole boolean;",
@@ -74,7 +74,7 @@ public class Evolution_0_9_0 implements IEvolution {
         Logger.info("...done!");
     }
     
-	private void createBBNodeIndexes(ODatabaseRecordTx db) {
+	private void createBBNodeIndexes(ODatabaseDocumentTx db) {
 		DbHelper.execMultiLineCommands(db, true, new String[]{
 			"create property _BB_Node._author String;",
 			"create index _bb_node._author notunique;",

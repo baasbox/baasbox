@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * Created by Andrea Tortorella on 10/06/14.
  */
-@With({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class,ExtractQueryParameters.class})
+@With({UserCredentialWrapFilter.class,ConnectToDBFilter.class, /*CheckAdminRoleFilter.class,*/ExtractQueryParameters.class})
 public class ScriptsAdmin extends Controller{
 
     private static Result _activate(String name,boolean activate){

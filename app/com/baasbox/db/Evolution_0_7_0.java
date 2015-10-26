@@ -34,8 +34,7 @@ import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.service.user.RoleService;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -84,7 +83,7 @@ public class Evolution_0_7_0 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
+	public void evolve(ODatabaseDocumentTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			edgeAndClassOptimization(db);	
@@ -102,13 +101,13 @@ public class Evolution_0_7_0 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
-	private void edgeAndClassOptimization(ODatabaseRecordTx db) {
+	private void edgeAndClassOptimization(ODatabaseDocumentTx db) {
 		Logger.info("...enabling edges and vertexes optimization attributes..:");
 		ATTRIBUTES attribute = ODatabase.ATTRIBUTES.CUSTOM;
-		((ODatabaseComplex<?>) db).setInternal(attribute,  "useLightweightEdges=false");
-		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForEdgeLabel=false");
-		((ODatabaseComplex<?>) db).setInternal(attribute,  "useClassForVertexLabel=false");
-		((ODatabaseComplex<?>) db).setInternal(attribute,  "useVertexFieldsForEdgeLabels=false");
+		db.setInternal(attribute,  "useLightweightEdges=false");
+		db.setInternal(attribute,  "useClassForEdgeLabel=false");
+		db.setInternal(attribute,  "useClassForVertexLabel=false");
+		db.setInternal(attribute,  "useVertexFieldsForEdgeLabels=false");
 		Logger.info("...done...");
 	}
 
@@ -118,7 +117,7 @@ public class Evolution_0_7_0 implements IEvolution {
 	}
 	
 	
-	private void createNewIndexClass(ODatabaseRecordTx db){
+	private void createNewIndexClass(ODatabaseDocumentTx db){
 		Logger.info("...creating INDEX CLASS...");
 		OClass indexClass = db.getMetadata().getSchema().createClass(IndexDao.MODEL_NAME);
 		OProperty keyProp = indexClass.createProperty("key", OType.STRING);
@@ -126,7 +125,7 @@ public class Evolution_0_7_0 implements IEvolution {
 		keyProp.setNotNull(true).setMandatory(true);
 	}
 	
-	private void updateIndices(ODatabaseRecordTx db){
+	private void updateIndices(ODatabaseDocumentTx db){
 		List<String> indicesName = Arrays.asList(new String [] {
 				"_bb_internal",
 				"_bb_application",

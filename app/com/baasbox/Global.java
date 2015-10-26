@@ -26,6 +26,7 @@ import static play.mvc.Results.notFound;
 import java.util.Iterator;
 import java.util.Set;
 
+import ch.qos.logback.classic.db.DBHelper;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -58,7 +59,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class Global extends GlobalSettings {
@@ -96,13 +97,13 @@ public class Global extends GlobalSettings {
 			  //Deprecated due to OrientDB 1.6
 			  //OGlobalConfiguration.NON_TX_CLUSTERS_SYNC_IMMEDIATELY.setValue(OMetadata.CLUSTER_MANUAL_INDEX_NAME);
 			  
-			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
-			  OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(Boolean.FALSE);
+//			  OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(Boolean.FALSE);
+			  OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(Boolean.FALSE);
 			  
 			  OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(-1);
 			  OGlobalConfiguration.FILE_LOCK.setValue(false);
 			  
-			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
+//			  OGlobalConfiguration.FILE_DEFRAG_STRATEGY.setValue(1);
 			  
 			  OGlobalConfiguration.MEMORY_USE_UNSAFE.setValue(false);
 			  if (!NumberUtils.isNumber(System.getProperty("storage.wal.maxSize"))) OGlobalConfiguration.WAL_MAX_SIZE.setValue(300);
@@ -110,12 +111,12 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
-				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
-				if (!db.exists()) {
-					info("DB does not exist, BaasBox will create a new one");
-					db.create();
-					justCreated  = true;
-				}
+				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", BBConfiguration.getOrientUrl());
+				  justCreated  = true;
+//				if (!db.exists()) {
+//					info("DB does not exist, BaasBox will create a new one");
+//					db.create();
+//				}
 			  } catch (Throwable e) {
 					error("!! Error initializing BaasBox!", e);
 					error(ExceptionUtils.getFullStackTrace(e));
@@ -138,25 +139,24 @@ public class Global extends GlobalSettings {
 		 debug("Global.onStart() called");
 	    //Orient.instance().shutdown();
 
-	    ODatabaseRecordTx db =null;
+	    ODatabaseDocumentTx db =null;
 	    try{
-	    	if (justCreated){
-		    	try {
-		    		//we MUST use admin/admin because the db was just created
-		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
-		    		DbHelper.setupDb();
-			    	info("Initializing session manager");
-			    	ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
-			    	stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger()*1000);
-		    	}catch (Throwable e){
-					error("!! Error initializing BaasBox!", e);
-					error(ExceptionUtils.getFullStackTrace(e));
-					throw e;
-		    	} finally {
-		    		if (db!=null && !db.isClosed()) db.close();
-		    	}
-		    	justCreated=false;
-	    	}
+			try {
+				//we MUST use admin/admin because the db was just created
+				db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+				if (DbHelper.needsSetup()) {
+					DbHelper.setupDb();
+					info("Initializing session manager");
+					ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+					stp.setTimeout(com.baasbox.configuration.Application.SESSION_TOKENS_TIMEOUT.getValueAsInteger() * 1000);
+				}
+			}catch (Throwable e){
+				error("!! Error initializing BaasBox!", e);
+				error(ExceptionUtils.getFullStackTrace(e));
+				throw e;
+			} finally {
+				if (db!=null && !db.isClosed()) db.close();
+			}
 	    }catch (Throwable e){
 	    	error("!! Error initializing BaasBox!", e);
 	    	error("Abnormal BaasBox termination.");

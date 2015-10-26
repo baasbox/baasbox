@@ -20,8 +20,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import core.AbstractRouteHeaderTest;
 import core.TestConfig;
@@ -67,7 +66,7 @@ public class AdminUploadAppleCertificatesTest extends AbstractRouteHeaderTest {
 					assertTrue(folder.exists());
 					File certificate = Play.application().getFile("certificates/TestFakeCertificate.p12");
 					assertTrue(certificate.exists());
-					ODatabaseRecordTx db = null;
+					ODatabaseDocumentTx db = null;
 					try {
 						db = DbHelper.open("1234567890", "admin", "admin");
 					} catch (InvalidAppCodeException e) {

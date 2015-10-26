@@ -18,6 +18,8 @@ package com.baasbox.controllers.actions.filters;
 
 import java.util.Set;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import play.Logger;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -43,11 +45,10 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole for resource " + Http.Context.current().request());
 		if (Logger.isDebugEnabled()) Logger.debug("CheckAdminRole user: " + ctx.args.get("username"));
 		
-		OUser user=DbHelper.getConnection().getUser();
-		Set<ORole> roles=user.getRoles();
-		
+		OSecurityUser user=DbHelper.getConnection().getUser();
+
 		F.Promise<SimpleResult> result=null;
-		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
+		if (user.hasRole(DefaultRoles.ADMIN.toString(), true)){
 			result = delegate.call(ctx);
 		}else result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
 		if (Logger.isTraceEnabled()) Logger.trace("Method End");

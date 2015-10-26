@@ -39,7 +39,7 @@ import com.baasbox.service.permissions.PermissionTagService;
 import com.baasbox.service.permissions.Tags;
 import com.baasbox.util.ConfigurationFileContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -55,7 +55,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
+	public void evolve(ODatabaseDocumentTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			registeredRoleInheritsFromAnonymousRole(db);
@@ -75,7 +75,7 @@ public class Evolution_0_8_4 implements IEvolution {
 
 	
 	//issue #195 Registered users should have access to anonymous resources
-		private void registeredRoleInheritsFromAnonymousRole(ODatabaseRecordTx db) {
+		private void registeredRoleInheritsFromAnonymousRole(ODatabaseDocumentTx db) {
 			Logger.info("...updating registered role");
 			
 			RoleDao.getRole(DefaultRoles.ADMIN.toString()).getDocument().field(RoleDao.FIELD_INHERITED, RoleDao.getRole("admin").getDocument().getRecord() ).save();
@@ -92,7 +92,7 @@ public class Evolution_0_8_4 implements IEvolution {
 			Logger.info("...done");
 		}
 	
-	private void updateDefaultTimeFormat(ODatabaseRecordTx db) {
+	private void updateDefaultTimeFormat(ODatabaseDocumentTx db) {
 			DbHelper.execMultiLineCommands(db,true,"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 	}
 	
@@ -100,7 +100,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	 * creates new records for new push settings and migrates the old ones into the profile n.1
 	 * @param db
 	 */
-	private void multiPushProfileSettings(ODatabaseRecordTx db) {
+	private void multiPushProfileSettings(ODatabaseDocumentTx db) {
 		IndexPushConfiguration idx;
 		try {
 			idx = new IndexPushConfiguration();
@@ -200,7 +200,7 @@ public class Evolution_0_8_4 implements IEvolution {
 	 * @throws DocumentNotFoundException 
 	 * @throws InvalidModelException 
 	 */
-	private void exposeSocialId(ODatabaseRecordTx db) throws InvalidModelException, DocumentNotFoundException {
+	private void exposeSocialId(ODatabaseDocumentTx db) throws InvalidModelException, DocumentNotFoundException {
 		//take all users and expose their generated flag
 		//remove permission for registered users to system attributes
 		//put the signupdate in user system info

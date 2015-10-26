@@ -42,7 +42,7 @@ import com.baasbox.util.QueryParams;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -58,7 +58,7 @@ public class StatisticsService {
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
 			FileDao fileDao = FileDao.getInstance();
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			
 			long usersCount =userDao.getCount();
 			long assetsCount = assetDao.getCount();
@@ -85,7 +85,7 @@ public class StatisticsService {
 		 * @throws InvalidCollectionException
 		 */
 		public static ArrayList<ImmutableMap> collectionsDetails(List<ODocument> collections)	throws InvalidCollectionException {
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			ArrayList<ImmutableMap> collMap = new ArrayList<ImmutableMap>();
 			for(ODocument doc:collections){
 				String collectionName = doc.field(CollectionDao.NAME);
@@ -96,7 +96,7 @@ public class StatisticsService {
 					OClass myClass = db.getMetadata().getSchema().getClass(collectionName);
 					long size=0;
 					for (int clusterId : myClass.getClusterIds()) {
-					  size += db.getClusterRecordSizeById(clusterId);
+					  size += db.countClusterElements(clusterId);
 					}
 					collMap.add(ImmutableMap.of(
 							"name",collectionName,
@@ -127,12 +127,12 @@ public class StatisticsService {
 		
 		public static ImmutableMap db() {
 			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-			ODatabaseRecordTx db = DbHelper.getConnection();
+			ODatabaseDocumentTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
-			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
-			else dbProp.put("path", "N/A");
+//			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+			/*else */dbProp.put("path", "N/A");
 			dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
 			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
 			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());

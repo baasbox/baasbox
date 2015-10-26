@@ -30,7 +30,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -99,7 +99,7 @@ public class LinkDao {
 	 * @return
 	 */
 	public static ORID getRidLinkByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
+		ODatabaseDocumentTx db =DbHelper.getConnection();
 		OIndex<?> index = db.getMetadata().getIndexManager().getIndex(LinkDao.MODEL_NAME + ".id");
 		ORID rid = (ORID) index.get(id);  
 		return rid;

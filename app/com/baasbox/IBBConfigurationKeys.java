@@ -25,6 +25,7 @@ public interface IBBConfigurationKeys {
 	public static final String CAPTURE_METRICS = "baasbox.metrics.activate";
 	
 	public static final String DB_PATH = "orient.baasbox.path";
+	public static final String DB_URL = "orient.baasbox.url";
 	public static final String DB_BACKUP_PATH = "orient.baasbox.backup.path";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";
