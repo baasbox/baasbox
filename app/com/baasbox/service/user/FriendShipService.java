@@ -73,7 +73,6 @@ public class FriendShipService {
     criteria.where(getWhereFromCriteria(criteria));
     criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
     UserDao udao = UserDao.getInstance();
-    System.out.println("Friends of " + username + " with " + criteria);
     return udao.get(criteria);
 	}
 

@@ -106,7 +106,7 @@ public class FriendshipFunctionalChunkedTest extends AbstractTest {
   }
 
   @Test
-  public void testFollowersNotChunkedResponse() throws Exception {
+  public void testFollowersChunkedResponse() throws Exception {
     running(
       getTestServerWithChunkResponse(),
       HTMLUNIT,
