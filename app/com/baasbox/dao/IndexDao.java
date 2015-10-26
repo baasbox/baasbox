@@ -24,13 +24,13 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.IndexNotFoundException;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public abstract class IndexDao{
 	public final String INDEX_NAME;
 	public static final String MODEL_NAME = "_BB_Index";
-	protected ODatabaseRecordTx db;
+	protected ODatabaseDocumentTx db;
 	
 	protected IndexDao(String indexName) throws IndexNotFoundException {
 		this.INDEX_NAME=indexName.toUpperCase();
@@ -41,6 +41,7 @@ public abstract class IndexDao{
 	}
 	
 	public IndexDao put (String key,Object value){
+		db.getMetadata().getSchema().reload();
 		String indexKey = this.INDEX_NAME+":"+key;
 		ODocument newValue = getODocument(key); 
 		if(newValue==null){

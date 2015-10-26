@@ -24,10 +24,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -67,7 +72,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -109,7 +114,7 @@ public class DbHelper {
 	private static final String fetchPlan = "*:?";
 
 	public static BigInteger getDBTotalSize(){
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBDir()));
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File(BBConfiguration.getDBDir()));
 	}
 	
 	public static BigInteger getDBStorageFreeSpace(){
@@ -123,13 +128,19 @@ public class DbHelper {
 	}
 	
 	public static boolean isInTransaction(){
-		 ODatabaseRecordTx db = getConnection();
+		 ODatabaseDocumentTx db = getConnection();
 		 return db.getTransaction().isActive();
+	}
+
+	public static boolean needsSetup() throws SqlInjectionException, SQLException {
+		OCommandRequest command = selectCommandBuilder("_BB_Index", true, new QueryParams("", "key = '_BB_INTERNAL:db.version'", 0, 0, "", 0, new String[]{""}));
+		OResultSet res = command.execute((Object[]) null);
+		return (Long)((ODocument)res.get(0)).field("count") <= 0;
 	}
 
 	public static void requestTransaction(){
 		if (Logger.isDebugEnabled()) Logger.debug("Request Transaction: transaction count -before-: " + tranCount.get());
-		ODatabaseRecordTx db = getConnection();
+		ODatabaseDocumentTx db = getConnection();
 		if (!isInTransaction()){
 			if (Logger.isTraceEnabled()) Logger.trace("Begin transaction");
 			db.begin();
@@ -140,11 +151,11 @@ public class DbHelper {
 
 	public static void commitTransaction(){
 		if (Logger.isDebugEnabled()) Logger.debug("Commit Transaction: transaction count -before-: " + tranCount.get());
-		ODatabaseRecordTx db = getConnection();
+		ODatabaseDocumentTx db = getConnection();
 		if (isInTransaction()){
 
 			if (Logger.isDebugEnabled()) Logger.debug("Commit transaction");
-			tranCount.set(tranCount.get().intValue()-1);
+			tranCount.set(tranCount.get().intValue() - 1);
 			if (tranCount.get()<0) throw new RuntimeException("Commit without transaction!");
 			if (tranCount.get()==0) {
 				db.commit();
@@ -157,7 +168,7 @@ public class DbHelper {
 
 	public static void rollbackTransaction(){
 		if (Logger.isDebugEnabled()) Logger.debug("Rollback Transaction: transaction count -before-: " + tranCount.get());
-		ODatabaseRecordTx db = getConnection();
+		ODatabaseDocumentTx db = getConnection();
 		if (isInTransaction()){
 			if (Logger.isDebugEnabled()) Logger.debug("Rollback transaction");
 			db.getTransaction().rollback();
@@ -213,7 +224,7 @@ public class DbHelper {
 	 * @throws SqlInjectionException If the query is not a select statement
 	 */
 	public static OCommandRequest selectCommandBuilder(String from, boolean count, QueryParams criteria) throws SqlInjectionException{
-		ODatabaseRecordTx db =  DbHelper.getConnection();
+		ODatabaseDocumentTx db =  DbHelper.getConnection();
 		OCommandRequest command = db.command(new OSQLSynchQuery<ODocument>(
 				selectQueryBuilder(from, count, criteria)
 				));
@@ -242,7 +253,7 @@ public class DbHelper {
 	}
 	public static List<ODocument> commandExecute(OCommandRequest command, Object[] params){
 		DbHelper.filterOUserPasswords(true);
-        List<ODocument> queryResult = command.execute((Object[])params);
+        List<ODocument> queryResult = command.execute((Object[]) params);
         DbHelper.filterOUserPasswords(false);
         return queryResult;
 	}
@@ -253,7 +264,7 @@ public class DbHelper {
 	 * @return
 	 */
 	public static OCommandRequest genericSQLStatementCommandBuilder (String theQuery){
-		ODatabaseRecordTx db =  DbHelper.getConnection();
+		ODatabaseDocumentTx db =  DbHelper.getConnection();
 		OCommandRequest command = db.command(new OCommandSQL(theQuery));
 		return command;
 	}
@@ -265,7 +276,7 @@ public class DbHelper {
 	 * @return
 	 */
 	public static Object genericSQLCommandExecute(OCommandRequest command, Object[] params){
-		Object queryResult = command.execute((Object[])params);
+		Object queryResult = command.execute((Object[]) params);
 		return queryResult;
 	}
 	
@@ -282,7 +293,7 @@ public class DbHelper {
 	}
 	
 	public static void shutdownDB(boolean repopulate){
-		ODatabaseRecordTx db = null;
+		ODatabaseDocumentTx db = null;
 
 		try{
 			//WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
@@ -295,8 +306,8 @@ public class DbHelper {
 				db.drop();
 				db.close();
 				db.create();
-				db.getLevel1Cache().clear();
-				db.getLevel2Cache().clear();
+//				db.getLevel1Cache().clear();
+				db.getLocalCache().clear();
 				db.reload();
 				db.getMetadata().reload();
 				if(repopulate){
@@ -319,14 +330,14 @@ public class DbHelper {
 
 	}
 
-	public static ODatabaseRecordTx getOrOpenConnection(String appcode, String username,String password) throws InvalidAppCodeException {
-		ODatabaseRecordTx db= getConnection();
+	public static ODatabaseDocumentTx getOrOpenConnection(String appcode, String username,String password) throws InvalidAppCodeException {
+		ODatabaseDocumentTx db= getConnection();
 		if (db==null || db.isClosed()) db = open ( appcode,  username, password) ;
 		return db;
 	}
 
-	public static ODatabaseRecordTx getOrOpenConnectionWIthHTTPUsername() throws InvalidAppCodeException {
-		ODatabaseRecordTx db= getConnection();
+	public static ODatabaseDocumentTx getOrOpenConnectionWIthHTTPUsername() throws InvalidAppCodeException {
+		ODatabaseDocumentTx db= getConnection();
 		if (db==null || db.isClosed()) db = open (  
 				(String) Http.Context.current().args.get("appcode"),  
 				getCurrentHTTPUsername(), 
@@ -334,9 +345,9 @@ public class DbHelper {
 		return db;
 	}
 	
-	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
+	public static ODatabaseDocumentTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
-		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
+		if (appcode==null || !appcode.equals(BBConfiguration.getAPPCODE()))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		if(dbFreeze.get()){
 			throw new ShuttingDownDBException();
@@ -344,8 +355,10 @@ public class DbHelper {
 		String databaseName=BBConfiguration.getDBDir();
 		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
 		
-		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("plocal:" + BBConfiguration.getDBDir());
+		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("remote:192.168.99.100:32771/eventrent");
 		conn.open(username,password);
+		conn.activateOnCurrentThread();
+
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
 		DbHelper.username.set(username);
@@ -355,14 +368,14 @@ public class DbHelper {
 	}
 
     public static boolean isConnectedAsAdmin(boolean excludeInternal){
-        OUser user = getConnection().getUser();
-        Set<ORole> roles = user.getRoles();
+        OSecurityUser user = getConnection().getUser();
+        Set<? extends OSecurityRole> roles = user.getRoles();
         boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
         return excludeInternal ? isAdminRole && !BBConfiguration.getBaasBoxAdminUsername().equals(user.getName()) : isAdminRole;
     }
 
 
-	public static ODatabaseRecordTx reconnectAsAdmin (){
+	public static ODatabaseDocumentTx reconnectAsAdmin (){
 		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to admin context within an open transaction");
 		getConnection().close();
 		try {
@@ -372,7 +385,7 @@ public class DbHelper {
 		}
 	}
 
-	public static ODatabaseRecordTx reconnectAsAuthenticatedUser (){
+	public static ODatabaseDocumentTx reconnectAsAuthenticatedUser (){
 		if (tranCount.get()>0) throw new SwitchUserContextException("Cannot switch to user context within an open transaction");
 		getConnection().close();
 		try {
@@ -382,7 +395,7 @@ public class DbHelper {
 		}
 	}
 	
-	public static void close(ODatabaseRecordTx db) {
+	public static void close(ODatabaseDocumentTx db) {
 		if (Logger.isDebugEnabled()) Logger.debug("closing connection");
 		if (db!=null && !db.isClosed()){
 			//HooksManager.unregisteredAll(db);
@@ -395,10 +408,10 @@ public class DbHelper {
 		}else if (Logger.isDebugEnabled()) Logger.debug("connection already close or null");
 	}
 
-	public static ODatabaseRecordTx getConnection(){
-		ODatabaseRecordTx db = null;
+	public static ODatabaseDocumentTx getConnection(){
+		ODatabaseDocumentTx db = null;
 		try {
-			db=(ODatabaseRecordTx)ODatabaseRecordThreadLocal.INSTANCE.get();
+			db=(ODatabaseDocumentTx)ODatabaseRecordThreadLocal.INSTANCE.get();
 			if (Logger.isDebugEnabled()) Logger.debug("Connection id: " + db + " " + ((Object) db).hashCode());
 		}catch (ODatabaseException e){
 			Logger.debug("Cound not retrieve the DB connection within this thread: " + e.getMessage());
@@ -438,7 +451,7 @@ public class DbHelper {
 	
 	public static void updateDefaultUsers() throws Exception{
 		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		OUser user=db.getMetadata().getSecurity().getUser(BBConfiguration.getBaasBoxUsername());
 		user.setPassword(BBConfiguration.getBaasBoxPassword());
 		user.save();
@@ -452,7 +465,7 @@ public class DbHelper {
 
 
 	public static void populateDB() throws IOException{
-		ODatabaseRecordTx db = getConnection();
+		ODatabaseDocumentTx db = getConnection();
 		//DO NOT DELETE THE FOLLOWING LINE!
 		OrientGraphNoTx dbg =  new OrientGraphNoTx(getODatabaseDocumentTxConnection()); 
 		Logger.info("Populating the db...");
@@ -529,6 +542,7 @@ public class DbHelper {
 		DbHelper.createDefaultRoles();
 		populateDB();
 		getConnection().getMetadata().getIndexManager().reload();
+		getConnection().getMetadata().getSchema().reload();
 		Logger.info("Creating default users...");
 		createDefaultUsers();
 		populateConfiguration();
@@ -536,7 +550,7 @@ public class DbHelper {
 	}
 
 	public static void exportData(String appcode,OutputStream os) throws UnableToExportDbException{
-		ODatabaseRecordTx db = null;
+		ODatabaseDocumentTx db = null;
 		try{
 			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
 			
@@ -566,7 +580,7 @@ public class DbHelper {
 	}
 	
 	public static void importData(String appcode,String importData) throws UnableToImportDbException{
-		ODatabaseRecordTx db = null;
+		ODatabaseDocumentTx db = null;
 		java.io.File f = null;
 		try{
 			Logger.info("Initializing restore operation..:");
@@ -587,8 +601,7 @@ public class DbHelper {
 			db.getMetadata().getSchema().dropClass("OFunction");
 			 db.getMetadata().getSchema().dropClass("OSchedule");
 			 db.getMetadata().getSchema().dropClass("ORIDs");
-			   ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
-			ODatabaseImport oi = new ODatabaseImport(dbd, f.getAbsolutePath(), new OCommandOutputListener() {
+			ODatabaseImport oi = new ODatabaseImport(db, f.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
 					Logger.info("Restore db: " + m);
@@ -629,21 +642,21 @@ public class DbHelper {
 	}
 
 	private static void setupAttributes() {
-		ODatabaseRecordTx db = DbHelper.getConnection();
-		DbHelper.execMultiLineCommands(db,Logger.isDebugEnabled(),
+		ODatabaseDocumentTx db = DbHelper.getConnection();
+		DbHelper.execMultiLineCommands(db, Logger.isDebugEnabled(),
 				"alter database DATETIMEFORMAT yyyy-MM-dd'T'HH:mm:ss.sssZ"
-				,"alter database custom useLightweightEdges=false"
-				,"alter database custom useClassForEdgeLabel=false"
-				,"alter database custom useClassForVertexLabel=true"
-				,"alter database custom useVertexFieldsForEdgeLabels=true"
-  	        );
+				, "alter database custom useLightweightEdges=false"
+				, "alter database custom useClassForEdgeLabel=false"
+				, "alter database custom useClassForVertexLabel=true"
+				, "alter database custom useVertexFieldsForEdgeLabels=true"
+		);
 	}
 
 	/**
 	 * Check the db level and evolve it
 	 * @param db
 	 */
-	public static void evolveDB(ODatabaseRecordTx db) {
+	public static void evolveDB(ODatabaseDocumentTx db) {
 		//check for evolutions
 		 Logger.info("...looking for evolutions...");
 		 String fromVersion="";
@@ -670,13 +683,13 @@ public class DbHelper {
 
 
 	public static ODatabaseDocumentTx getODatabaseDocumentTxConnection(){
-		return new ODatabaseDocumentTx(getConnection());
+		return getConnection();
 	}
 
     /**
      * Executes a sequence of orient sql commands
      */
-    public static void execMultiLineCommands(ODatabaseRecordTx db,boolean log,String ... commands){
+    public static void execMultiLineCommands(ODatabaseDocumentTx db,boolean log,String ... commands){
 
     		Logger.debug("Ready to execute these commands: " + commands);
         if (commands==null) return;

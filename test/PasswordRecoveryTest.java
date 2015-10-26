@@ -43,7 +43,7 @@ import ch.qos.logback.classic.db.DBHelper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.junit.Assert;
@@ -161,7 +161,7 @@ public class PasswordRecoveryTest extends AbstractUserTest
 						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep1", BAD_REQUEST, "Cannot send mail to reset the password:  Could not reach the mail server. Please contact the server administrator", true);	
 					
 						// try to recover the password [step2]
-						ODatabaseRecordTx db = null;
+						ODatabaseDocumentTx db = null;
 						
 						try {
 							 db = com.baasbox.db.DbHelper.getOrOpenConnection(TestConfig.VALUE_APPCODE, TestConfig.ADMIN_USERNAME, TestConfig.AUTH_ADMIN_PASS);

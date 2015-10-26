@@ -251,7 +251,7 @@ public class Asset extends Controller{
 		}
 	}
 
-	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class, ExtractQueryParameters.class})
+	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, /*CheckAdminRoleFilter.class, */ExtractQueryParameters.class})
 	public static Result getAll() throws  Throwable{
 		Context ctx=Http.Context.current.get();
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
@@ -297,7 +297,7 @@ public class Asset extends Controller{
 	  return created(ret);
 	}
 
-	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class})
+	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class/*, CheckAdminRoleFilter.class*/})
 	public static Result post() throws  Throwable{
 		String ct = request().getHeader(CONTENT_TYPE);
 		if (ct.indexOf("multipart/form-data")!=-1) return postFile();
@@ -331,7 +331,7 @@ public class Asset extends Controller{
 	  return created(ret);
 	}
 	
-	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class, CheckAdminRoleFilter.class})
+	@With  ({UserCredentialWrapFilter.class,ConnectToDBFilter.class/*, CheckAdminRoleFilter.class*/})
 	public static Result delete(String name) throws Throwable{
 		try{
 			AssetService.deleteByName(name);

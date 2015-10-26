@@ -66,7 +66,7 @@ import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -242,7 +242,7 @@ public class UserService {
 			if (StringUtils.isEmpty(username)) throw new IllegalArgumentException("username cannot be null or empty");
 			if (StringUtils.isEmpty(password)) throw new IllegalArgumentException("password cannot be null or empty");
 			
-			ODatabaseRecordTx db =  DbHelper.getConnection();
+			ODatabaseDocumentTx db =  DbHelper.getConnection();
 			ODocument profile=null;
 			UserDao dao = UserDao.getInstance();
 			try{
@@ -253,7 +253,7 @@ public class UserService {
 			      if (role==null) profile=dao.create(username, password);
 			      else profile=dao.create(username, password,role);
 			      
-			      ORID userRid = ((ORID)profile.field("user")).getIdentity();
+			      ORID userRid = ((ODocument)profile.field("user")).getIdentity();
 			      ORole friendRole=RoleDao.createFriendRole(username);
 			      friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
 			      friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
@@ -476,7 +476,7 @@ public class UserService {
 	}//updateProfile with role
 
 	public static void changePasswordCurrentUser(String newPassword) throws OpenTransactionException {
-		ODatabaseRecordTx db = DbHelper.getConnection();
+		ODatabaseDocumentTx db = DbHelper.getConnection();
 		String username=db.getUser().getName();
 		db = DbHelper.reconnectAsAdmin();
 		db.getMetadata().getSecurity().getUser(username).setPassword(newPassword).save();
@@ -484,7 +484,7 @@ public class UserService {
 	}
 	
 	public static void changePassword(String username, String newPassword) throws SqlInjectionException, UserNotFoundException, OpenTransactionException {
-		ODatabaseRecordTx db=DbHelper.getConnection();
+		ODatabaseDocumentTx db=DbHelper.getConnection();
 		db = DbHelper.reconnectAsAdmin();
 		UserDao udao=UserDao.getInstance();
 		ODocument user = udao.getByUserName(username);
@@ -635,7 +635,7 @@ public class UserService {
 	public static void resetUserPasswordFinalStep(String username, String newPassword) throws SqlInjectionException, ResetPasswordException {
 		ODocument user = UserDao.getInstance().getByUserName(username);
 		ODocument ouser = ((ODocument) user.field("user"));
-		ouser.field("password",newPassword).save();
+		ouser.field("password", newPassword).save();
 		ResetPwdDao.getInstance().setResetPasswordDone(username);
 	}
 
@@ -727,7 +727,7 @@ public class UserService {
 		ORole toRole=RoleDao.getRole(role);
 		ORID toRID=toRole.getDocument().getRecord().getIdentity();
 		sqlAdd=sqlAdd.replace("{TO_ROLE}", toRID.toString());
-		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
+		GenericDao.getInstance().executeCommand(sqlAdd, new String[]{username});
 		if(!admin){
 			DbHelper.reconnectAsAuthenticatedUser();
 		}
@@ -744,7 +744,7 @@ public class UserService {
 		ORole fromRole=RoleDao.getRole(role);
 		ORID fromRID=fromRole.getDocument().getRecord().getIdentity();
 		sqlRemove=sqlRemove.replace("{FROM_ROLE}", fromRID.toString());
-		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[]{username});
 		if(admin){
 			DbHelper.reconnectAsAuthenticatedUser();
 		}
@@ -764,7 +764,7 @@ public class UserService {
 		sqlRemove=sqlRemove.replace("{TO_ROLE}", toRID.toString()).replace("{FROM_ROLE}", fromRID.toString());
 
 		GenericDao.getInstance().executeCommand(sqlAdd, new String[] {username});
-		GenericDao.getInstance().executeCommand(sqlRemove, new String[] {username});
+		GenericDao.getInstance().executeCommand(sqlRemove, new String[]{username});
 	}
 	
 	

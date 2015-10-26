@@ -38,8 +38,7 @@ import com.baasbox.util.QueryParams;
 import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -70,7 +69,7 @@ public class Evolution_0_7_4 implements IEvolution {
 	}
 
 	@Override
-	public void evolve(ODatabaseRecordTx db) {
+	public void evolve(ODatabaseDocumentTx db) {
 		Logger.info ("Applying evolutions to evolve to the " + version + " level");
 		try{
 			changePushTokenFieldName(db);
@@ -82,7 +81,7 @@ public class Evolution_0_7_4 implements IEvolution {
 		Logger.info ("DB now is on " + version + " level");
 	}
 	
-	private void changePushTokenFieldName(ODatabaseRecordTx db)  {
+	private void changePushTokenFieldName(ODatabaseDocumentTx db)  {
 		Logger.info("..changing 'deviceId' to 'pushToken' field name..:");
 		UserDao dao = UserDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance();
@@ -107,7 +106,7 @@ public class Evolution_0_7_4 implements IEvolution {
 		Logger.info("...done...");
 	}
 		
-	private void addProfileSections(ODatabaseRecordTx db) {
+	private void addProfileSections(ODatabaseDocumentTx db) {
 		Logger.info("...adding missing profile section..:");
 		UserDao dao = UserDao.getInstance();
 		QueryParams criteria = QueryParams.getInstance();

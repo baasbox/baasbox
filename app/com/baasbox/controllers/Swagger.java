@@ -23,7 +23,7 @@ import com.baasbox.controllers.actions.filters.CheckAdminRoleFilter;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
 
 
-@With  ({ConnectToDBFilter.class, CheckAdminRoleFilter.class})
+@With  ({ConnectToDBFilter.class/*, CheckAdminRoleFilter.class*/})
 public class Swagger extends Controller{
 	/*
 	public static Result health(){
