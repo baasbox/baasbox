@@ -224,6 +224,8 @@ GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+
 # @tag(baasbox.data.update)
 PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+%5D)?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
+# @tag(baasbox.data.read)
+GET		 /document/:collection/:id/:linkName						com.baasbox.controllers.Document.queryLink(collection: String,id: String,linkName: String,linkDir: String ?= "out")
 
 #Links between objects (documents, files, users)
 

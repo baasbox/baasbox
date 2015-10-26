@@ -61,7 +61,11 @@ public abstract class NodeDao  {
 	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	
 	public static final String FIELD_LINK_TO_VERTEX = "_links";
+
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";
+
+  public static final String LINKS_QUERY_FORMAT = "(select expand(_links.%s(\"%s\")._node) from %s where id = '%s')";
+
 	public static final String FIELD_CREATION_DATE = BaasBoxPrivateFields.CREATION_DATE.toString();
 	
 	public static final String EDGE_CLASS_CREATED = "Created";
