@@ -574,7 +574,7 @@ public class Document extends Controller {
   public static Promise<Result> queryLink(String collectionName, String id, String linkName) {
     return Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
       QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-      return ok(prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, criteria)));
+      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, criteria), JSONFormats.Formats.DOCUMENT));
     }));
   }
 
