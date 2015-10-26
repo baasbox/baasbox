@@ -111,7 +111,7 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
-				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "remote:192.168.99.100:32771/eventrent");
+				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", BBConfiguration.getOrientUrl());
 				  justCreated  = true;
 //				if (!db.exists()) {
 //					info("DB does not exist, BaasBox will create a new one");

@@ -33,6 +33,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.metadata.security.OSecurityRole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
+import net.sf.ehcache.config.InvalidConfigurationException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
@@ -243,12 +244,12 @@ public class DbHelper {
 	 */
 	public static List<ODocument> selectCommandExecute(OCommandRequest command, Object[] params){
 		DbHelper.filterOUserPasswords(true);
-		List<ODocument> queryResult = command.execute((Object[])params);
+		List<ODocument> queryResult = command.execute((Object[]) params);
 		DbHelper.filterOUserPasswords(false);
 		return queryResult;
 	}
 	public static Integer sqlCommandExecute(OCommandRequest command, Object[] params){
-		Integer updateQueryResult = command.execute((Object[])params);
+		Integer updateQueryResult = command.execute((Object[]) params);
 		return updateQueryResult;
 	}
 	public static List<ODocument> commandExecute(OCommandRequest command, Object[] params){
@@ -288,7 +289,7 @@ public class DbHelper {
 	 */
 	public static Object genericSQLStatementExecute(String statement, Object[] params){
 		OCommandRequest command = genericSQLStatementCommandBuilder(statement);
-		Object ret = genericSQLCommandExecute(command,params);
+		Object ret = genericSQLCommandExecute(command, params);
 		return ret;
 	}
 	
@@ -352,10 +353,12 @@ public class DbHelper {
 		if(dbFreeze.get()){
 			throw new ShuttingDownDBException();
 		}
-		String databaseName=BBConfiguration.getDBDir();
-		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + databaseName + " for " + username);
-		
-		ODatabaseDocumentTx conn = new ODatabaseDocumentTx("remote:192.168.99.100:32771/eventrent");
+
+		String orientUrl = BBConfiguration.getOrientUrl();
+
+		if (Logger.isDebugEnabled()) Logger.debug("opening connection on db: " + orientUrl + " for " + username);
+
+		ODatabaseDocumentTx conn = new ODatabaseDocumentTx(orientUrl);
 		conn.open(username,password);
 		conn.activateOnCurrentThread();
 
@@ -367,7 +370,7 @@ public class DbHelper {
 		return getConnection();
 	}
 
-    public static boolean isConnectedAsAdmin(boolean excludeInternal){
+	public static boolean isConnectedAsAdmin(boolean excludeInternal){
         OSecurityUser user = getConnection().getUser();
         Set<? extends OSecurityRole> roles = user.getRoles();
         boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
