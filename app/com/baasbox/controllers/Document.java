@@ -571,10 +571,14 @@ public class Document extends Controller {
     }
 
   @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
-  public static Promise<Result> queryLink(String collectionName, String id, String linkName) {
+  public static Promise<Result> queryLink(String collectionName, String id, String linkName, String linkDirection) {
+
     return Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+      if (!linkDirection.matches("(in|out|both)")) {
+        return badRequest("linkDir param must contain one of the following values: out(default),in or both");
+      }
       QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, criteria), JSONFormats.Formats.DOCUMENT));
+      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, linkDirection, criteria), JSONFormats.Formats.DOCUMENT));
     }));
   }
 

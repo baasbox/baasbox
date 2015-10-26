@@ -1,4 +1,5 @@
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static play.test.Helpers.DELETE;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.contentAsString;
@@ -7,6 +8,8 @@ import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +27,7 @@ import utils.LoremIpsum;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -56,6 +60,7 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
 
   }
 
+  @Test
   public void testLinkNavigation() {
     running(
       getFakeApplication(), 
@@ -72,7 +77,8 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           assertTrue(ts.commentToAuthor.size() > 0);
           String postWithMoreComments = ts.getPostWithMoreComments();
           String comment = ts.postToComments.get(postWithMoreComments).get(0);
-          FakeRequest rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment");
+          int commentCount = ts.postToComments.get(postWithMoreComments).size();
+          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/comment");
           rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           Result r = routeAndCall(rq);
@@ -82,18 +88,36 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           try {
             JsonNode node = om.readTree(content);
             String author = node.get("data").get(0).get("_author").asText();
-            Assert.assertEquals(author, ts.postToAuthors.get(postWithMoreComments));
+            Assert.assertEquals(author, ts.commentToAuthor.get(comment));
+            Assert.assertEquals(node.get("data").size(), commentCount);
 
           } catch (IOException e) {
             e.printStackTrace();
           }
+          rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment?linkDir=in");
+          rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          r = routeAndCall(rq);
+          assertRoute(r, "get link", 200, null, false);
+          content = contentAsString(r);
 
+          try {
+            JsonNode node = om.readTree(content);
+            String author = node.get("data").get(0).get("_author").asText();
+            String id = node.get("data").get(0).get("id").asText();
+            Assert.assertEquals(author, ts.postToAuthors.get(postWithMoreComments));
+            Assert.assertEquals(node.get("data").size(), 1);
+            Assert.assertEquals(postWithMoreComments, id);
+          } catch (IOException e) {
+            fail("Unable to parse json");
+          }
           shutdownTest(true);
         }
 
       });
   }
 
+  @Test
   public void testLinkNavigationMassive() {
     running(
       getFakeApplication(),
@@ -111,7 +135,9 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
 
           String postWithMoreComments = ts.getPostWithMoreComments();
           String comment = ts.postToComments.get(postWithMoreComments).get(0);
-          FakeRequest rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment");
+          int commentCount = ts.postToComments.get(postWithMoreComments).size();
+
+          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/comment");
           rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           Result r = routeAndCall(rq);
@@ -120,12 +146,122 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           try {
             JsonNode node = om.readTree(content);
             String author = node.get("data").get(0).get("_author").asText();
-            Assert.assertEquals(author, ts.postToAuthors.get(postWithMoreComments));
+            Assert.assertEquals(author, ts.commentToAuthor.get(comment));
+            Assert.assertEquals(node.get("data").size(), commentCount);
             
           } catch (IOException e) {
             e.printStackTrace();
           }
 
+          shutdownTest(true);
+        }
+
+      });
+  }
+
+  @Test
+  public void testWrongQueryParams() {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+          int minComments = 3;
+          int minPosts = 1;
+          shutdownTest(false);
+          TestSetup ts = prepareTest(minPosts, minComments);
+          assertTrue(ts.authors.size() > 0);
+          assertTrue(ts.postIds.size() > 0);
+          assertTrue(ts.commentToAuthor.size() > 0);
+
+          String postWithMoreComments = ts.getPostWithMoreComments();
+          String comment = ts.postToComments.get(postWithMoreComments).get(0);
+          int commentCount = ts.postToComments.get(postWithMoreComments).size();
+
+          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/comment?linkDir=wrong");
+          rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          Result r = routeAndCall(rq);
+          assertRoute(r, "get link", 400, null, false);
+          shutdownTest(true);
+        }
+
+      });
+  }
+
+  @Test
+  public void testWhere() {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+          int minComments = 3;
+          int minPosts = 1;
+          shutdownTest(false);
+          TestSetup ts = new TestSetup();
+          new AdminCollectionFunctionalTest().routeCreateCollection(PARENT_COLLECTION_NAME);
+          new AdminCollectionFunctionalTest().routeCreateCollection(CHILD_COLLECTION_NAME);
+          int numberOfUsers = 5;
+          // Create n users
+          IntStream.range(0, numberOfUsers).forEach(i -> {
+            ts.addAuthor(new AdminCollectionFunctionalTest().createNewUser("user" + i));
+          });
+          createPosts(1, ts);
+          createComments(10, ts);
+          String encoding = "";
+          
+          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + ts.getPostWithMoreComments() + "/comment");
+          rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          Result r = routeAndCall(rq);
+          assertRoute(r, "get link", 200, null, false);
+
+          String content = contentAsString(r);
+          String commentFirstThreeWords = null;
+          int count = 0;
+          try {
+            JsonNode node = om.readTree(content);
+            Iterator<JsonNode> comments = node.get("data").iterator();
+            while(comments.hasNext()){
+              JsonNode n = comments.next();
+              String id = n.get("id").asText();
+              String comment = n.get("comment").asText();
+              if (commentFirstThreeWords == null) {
+                String[] split = comment.split(" ");
+                commentFirstThreeWords = Joiner.on(" ").join(Lists.newArrayList(split[0], split[1], split[2]));
+              }
+              if (comment.indexOf(commentFirstThreeWords) > -1) {
+                count++;
+              }
+              
+            }
+
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          try {
+            encoding = "comment like '%<Text placeholder>%'".replace("<Text placeholder>", commentFirstThreeWords);
+            encoding = URLEncoder.encode(encoding, "UTF-8");
+          } catch (Exception e) {
+            fail("encoding of query string failed");
+          }
+          rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + ts.getPostWithMoreComments() + "/comment?where="+encoding);
+          rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          r = routeAndCall(rq);
+          assertRoute(r, "get link", 200, null, false);
+          content = contentAsString(r);
+          try {
+            JsonNode node = om.readTree(content);
+
+            int size = node.get("data").size();
+            Assert.assertEquals(size,count);
+          }catch(Exception e){
+            fail("Unable to parse json");
+          }
           shutdownTest(true);
         }
 
@@ -150,7 +286,8 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
 
           String postWithMoreComments = ts.getPostWithMoreComments();
           String comment = ts.postToComments.get(postWithMoreComments).get(0);
-          FakeRequest rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment");
+          int commentCount = ts.postToComments.get(postWithMoreComments).size();
+          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/comment");
           rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           Result r = routeAndCall(rq);
@@ -159,7 +296,8 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           try {
             JsonNode node = om.readTree(content);
             String author = node.get("data").get(0).get("_author").asText();
-            Assert.assertEquals(author, ts.postToAuthors.get(postWithMoreComments));
+            Assert.assertEquals(author, ts.commentToAuthor.get(comment));
+            Assert.assertEquals(node.get("data").size(), commentCount);
 
           } catch (IOException e) {
             e.printStackTrace();
@@ -194,7 +332,7 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
     TestSetup ts = new TestSetup();
     new AdminCollectionFunctionalTest().routeCreateCollection(PARENT_COLLECTION_NAME);
     new AdminCollectionFunctionalTest().routeCreateCollection(CHILD_COLLECTION_NAME);
-    int numberOfUsers = r.nextInt(100);
+    int numberOfUsers = r.nextInt(100) + 1;
     // Create n users
     IntStream.range(0, numberOfUsers).forEach(i -> {
       ts.addAuthor(new AdminCollectionFunctionalTest().createNewUser("user" + i));
@@ -248,7 +386,7 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
   }
 
   private void createLink(String linkName, String postId, String rid, String commentAuthor) {
-    FakeRequest request = new FakeRequest(POST, "/link/" + rid + "/" + linkName + "/" + postId);
+    FakeRequest request = new FakeRequest(POST, "/link/" + postId + "/" + linkName + "/" + rid);
     request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
     request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(commentAuthor, "passw1"));
     Result result = routeAndCall(request);

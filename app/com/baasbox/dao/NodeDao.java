@@ -64,7 +64,7 @@ public abstract class NodeDao  {
 
 	public static final String FIELD_TO_DOCUMENT_FIELD = "_node";
 
-  public static final String LINKS_QUERY_FORMAT = "(select expand(_links.out(\"%s\")._node) from %s where id = '%s')";
+  public static final String LINKS_QUERY_FORMAT = "(select expand(_links.%s(\"%s\")._node) from %s where id = '%s')";
 
 	public static final String FIELD_CREATION_DATE = BaasBoxPrivateFields.CREATION_DATE.toString();
 	
