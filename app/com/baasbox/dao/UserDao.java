@@ -100,7 +100,7 @@ public class UserDao extends NodeDao  {
 			user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{role}); 
 		}
 		
-		ODocument doc = new ODocument(this.MODEL_NAME);
+    ODocument doc = new ODocument(UserDao.MODEL_NAME);
 		ODocument vertex = db.addVertex("class:"+CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 		doc.field(FIELD_LINK_TO_VERTEX,vertex);
 		doc.field(FIELD_CREATION_DATE,new Date());
@@ -112,6 +112,10 @@ public class UserDao extends NodeDao  {
 		doc.save();
 		return doc;
 	}
+
+  public void delete(OUser user) {
+    db.getMetadata().getSecurity().dropUser(user.getName());
+  }
 
 	public boolean existsUserName(String username){
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(USER_NAME_INDEX);

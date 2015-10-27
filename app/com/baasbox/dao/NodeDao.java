@@ -18,8 +18,10 @@ package com.baasbox.dao;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import ch.qos.logback.classic.db.DBHelper;
 
@@ -78,7 +80,7 @@ public abstract class NodeDao  {
 				"update _bb_node set _author=? where _author=?", new String[]{newAuthor,oldAuthor});
 	}
 	 
-	public NodeDao(String modelName) {
+  protected NodeDao(String modelName) {
 		super();
 		this.MODEL_NAME=modelName;
 		this.db=DbHelper.getConnection();
@@ -353,6 +355,34 @@ public abstract class NodeDao  {
 		}
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
+
+  public static void deleteVerticesByAuthor(OUser user) throws Throwable {
+    deleteByQuery("delete vertex " + CLASS_VERTEX_NAME + " where node._author=?", new Object[] {user.getName()});
+  }
+
+  public static void deleteDocumentsByAuthor(OUser user) throws Throwable {
+    deleteByQuery("delete from " + CLASS_NODE_NAME + " where _author = ?", new Object[] {user.getName()});
+  }
+
+  private static void deleteByQuery(String query, Object[] params) throws Throwable {
+    if (BaasBoxLogger.isTraceEnabled())
+      BaasBoxLogger.trace("Method Start");
+    try {
+      DbHelper.requestTransaction();
+      DbHelper.sqlCommandExecute(new OCommandSQL(
+        query), params);
+      DbHelper.commitTransaction();
+      if (BaasBoxLogger.isTraceEnabled())
+        BaasBoxLogger.trace("Method End");
+    } catch (Throwable e) {
+      DbHelper.rollbackTransaction();
+      throw e;
+    }
+  }
+
+  public void deleteNodesByAuthor(OUser user) throws Throwable {
+
+  }
 	
 	
 }

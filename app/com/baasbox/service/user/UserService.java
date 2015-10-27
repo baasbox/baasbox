@@ -904,6 +904,17 @@ public class UserService {
 		//warning! from this point there is no database available!
 	}
 	
+  public static void dropUser(OUser user) throws Throwable {
+    try {
+      NodeDao.deleteVerticesByAuthor(user);
+      NodeDao.deleteDocumentsByAuthor(user);
+    } catch (Throwable t) {
+      throw t;
+    }
+    RoleDao.delete(RoleDao.getFriendRoleName(user));
+    UserDao.getInstance().delete(user);
+  }
+
  	public static boolean isAnAdmin(String username){
 		List<ODocument> res=(List<ODocument>) DbHelper.genericSQLStatementExecute(
 				"select count(*) from (traverse orole.inheritedRole from (select roles from ouser where name=?)) where name=\"administrator\""
