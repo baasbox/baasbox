@@ -21,7 +21,7 @@ import core.TestConfig;
 
 public class RootAsAdminTest extends AbstractTest {
 
-
+/*
 
 		@Test
 		public void testRootIsAnAdmin(){
@@ -48,7 +48,7 @@ public class RootAsAdminTest extends AbstractTest {
 			Helpers.stop(fakeApp1);	
 		}
 		
-		
+*/		
 		@Override
 		public String getRouteAddress() {
 			// TODO Auto-generated method stub

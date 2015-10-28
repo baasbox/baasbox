@@ -18,8 +18,10 @@
 
 package com.baasbox.service.sociallogin;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang.StringUtils;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.GoogleApi;
 import org.scribe.model.OAuthRequest;
@@ -27,11 +29,11 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import com.baasbox.configuration.SocialLoginConfiguration;
-
 import play.libs.Json;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+
+import com.baasbox.configuration.SocialLoginConfiguration;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class GooglePlusLoginService extends SocialLoginService{
 	public static String SOCIAL = "google";
@@ -43,6 +45,11 @@ public class GooglePlusLoginService extends SocialLoginService{
 
 	
 	@Override
+  protected String saveToken(String k, Token t) {
+    return null;
+  }
+
+  @Override
 	public String getPrefix() {
 		return PREFIX;
 	}
@@ -73,13 +80,11 @@ public class GooglePlusLoginService extends SocialLoginService{
 
 	@Override
 	public String getVerifierFromRequest(Request r) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Token getAccessTokenFromRequest(Request r, Session s) {
-		// TODO Auto-generated method stub
+  public Token getAccessTokenFromRequest(Request r) {
 		return null;
 	}
 
@@ -120,7 +125,8 @@ public class GooglePlusLoginService extends SocialLoginService{
 		if(response instanceof JsonNode){
 			JsonNode jn = (JsonNode)response;
 			String clientId = jn.get("issued_to").textValue();
-			boolean isValid = clientId!=null && clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString());
+      boolean isValid = clientId != null
+        && (clientId.equals(SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString()) || isSubset(clientId, SocialLoginConfiguration.GOOGLE_TOKEN.getValueAsString()));
 			if(!isValid){
 				throw new BaasBoxSocialTokenValidationException("The provided g+ token is not valid");
 			}
@@ -129,8 +135,30 @@ public class GooglePlusLoginService extends SocialLoginService{
 			throw new RuntimeException("G+ validation token failed");
 		}
 	}
-	
-	
+
+  private boolean isSubset(String clientId, String parentToken) {
+    Pattern p = Pattern.compile("^([0-9]+)(-(.*))?\\.apps.googleusercontent.com$");
+    Matcher firstMatcher = p.matcher(clientId);
+    Matcher secondMatcher = p.matcher(parentToken);
+    String header = header(firstMatcher);
+    if (header == null) {
+      return false;
+    }
+    String secondHeader = header(secondMatcher);
+    if (secondHeader == null) {
+      return false;
+    }
+    return header.equals(secondHeader);
+  }
+
+  private static String header(Matcher m) {
+    if (m.matches()) {
+      return m.group(1);
+    } else {
+      return null;
+    }
+  }
+
 
 	
 	

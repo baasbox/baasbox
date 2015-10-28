@@ -19,6 +19,8 @@ package com.baasbox.service.storage;
 import java.security.InvalidParameterException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
@@ -43,13 +45,13 @@ import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -61,6 +63,7 @@ public class DocumentService {
 
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
+
 
 	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException,ORecordDuplicatedException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
@@ -192,6 +195,23 @@ public class DocumentService {
 		DocumentDao dao = DocumentDao.getInstance(collectionName);
 		return dao.get(criteria);
 	}
+
+  /**
+   * Navigates and applies a query on a document link
+   * @param collectionName
+   * @param rid
+   * @param linkName
+   * @param criteria
+   * @return list of links satisfying criteria
+   */
+  public static List<ODocument> queryLink(String collectionName, String rid, String linkName, String linkDirection, QueryParams criteria) {
+    String select = String.format(NodeDao.LINKS_QUERY_FORMAT, linkDirection, linkName, collectionName, rid);
+    if (StringUtils.isEmpty(criteria.getFields())) {
+      criteria.fields("*");
+    }
+    String query = DbHelper.selectQueryBuilder(select, criteria.justCountTheRecords(), criteria);
+    return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
+  }
 
 	/**
 	 * @param rid
