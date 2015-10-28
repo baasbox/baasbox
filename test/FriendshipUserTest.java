@@ -238,7 +238,6 @@ public class FriendshipUserTest extends AbstractTest{
             fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
             getDocumentResult = routeAndCall(fk);
             followedJson = (JSONObject) toJSON(contentAsString(getDocumentResult));
-            System.out.println("Following by admin is " + followedJson);
             count = followedJson.getJSONArray("data").getJSONObject(0).getInt("count");
 
             assertEquals(10l, count);

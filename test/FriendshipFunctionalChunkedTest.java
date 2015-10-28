@@ -138,7 +138,6 @@ public class FriendshipFunctionalChunkedTest extends AbstractTest {
           String content = new String(myContentAsBytes((SimpleResult) result));
           try {
             JsonNode jn = om.readTree(content);
-            System.out.println("FOLLOWERS:" + content);
             final List<String> followingMe = Lists.newArrayList();
             jn.get("data").forEach(j -> {
               followingMe.add(j.get("user").get("name").asText());

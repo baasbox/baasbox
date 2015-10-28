@@ -937,7 +937,6 @@ public class User extends Controller {
     try {
       DbHelper.openFromContext(ctx);
       select = FriendShipService.getFriendsOfQuery(username, criteria);
-      System.out.println("QUERY FOR FOLLOWERS IS:" + select + " AND CRITERIA " + criteria);
     } catch (InvalidAppCodeException e) {
       return internalServerError("invalid app code");
     } finally {

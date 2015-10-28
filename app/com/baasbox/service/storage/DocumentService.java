@@ -210,7 +210,6 @@ public class DocumentService {
       criteria.fields("*");
     }
     String query = DbHelper.selectQueryBuilder(select, criteria.justCountTheRecords(), criteria);
-    System.out.println("WILL EXECUTE " + query);
     return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
   }
 
