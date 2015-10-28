@@ -75,9 +75,9 @@ import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
 
-import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
+import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -151,7 +151,7 @@ public abstract class AbstractTest extends FluentTest
 		return fakeApplication(additionalConfigurations.asMap());
 	}
 	
-	private static FakeApplication getFakeApplicationChunkResponse(){
+  protected static FakeApplication getFakeApplicationChunkResponse() {
 		return fakeApplication(additionalConfigurationsChunk.asMap());
 	}
 	

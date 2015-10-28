@@ -100,7 +100,7 @@ public class UserDao extends NodeDao  {
 			user=db.getRawGraph().getMetadata().getSecurity().createUser(username,password,new String[]{role}); 
 		}
 		
-		ODocument doc = new ODocument(this.MODEL_NAME);
+    ODocument doc = new ODocument(UserDao.MODEL_NAME);
 		ODocument vertex = db.addVertex("class:"+CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 		doc.field(FIELD_LINK_TO_VERTEX,vertex);
 		doc.field(FIELD_CREATION_DATE,new Date());
@@ -112,6 +112,10 @@ public class UserDao extends NodeDao  {
 		doc.save();
 		return doc;
 	}
+
+  public void delete(OUser user) {
+    db.getMetadata().getSecurity().dropUser(user.getName());
+  }
 
 	public boolean existsUserName(String username){
 		OIndex idx = db.getMetadata().getIndexManager().getIndex(USER_NAME_INDEX);
@@ -202,10 +206,14 @@ public class UserDao extends NodeDao  {
 		user.save();
 	}
 
-  public List<ODocument> getFollowing(String username, QueryParams criteria) {
+  public static String getFollowingSelectQuery(String username, QueryParams criteria) {
     String queryString = StringUtils.replace(GET_FOLLOWING_FROM_FORMAT, USERNAME_PLACEHOLDER, username);
-    String query = DbHelper.selectQueryBuilder(queryString, criteria.justCountTheRecords(), criteria);
-    return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
+    return DbHelper.selectQueryBuilder(queryString, criteria.justCountTheRecords(), criteria);
+
+  }
+
+  public List<ODocument> getFollowing(String username, QueryParams criteria) {
+    return (List<ODocument>) DbHelper.genericSQLStatementExecute(getFollowingSelectQuery(username, criteria), criteria.getParams());
 
   }
 

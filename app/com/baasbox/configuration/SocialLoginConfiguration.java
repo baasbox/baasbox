@@ -18,9 +18,8 @@
 
 package com.baasbox.configuration;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.configuration.index.IndexSocialLoginConfiguration;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public enum SocialLoginConfiguration implements IProperties{
 	FACEBOOK_TOKEN("social.facebook.token","Application Token for facebook app",String.class),
@@ -28,7 +27,10 @@ public enum SocialLoginConfiguration implements IProperties{
 	FACEBOOK_ENABLED("social.facebook.enabled","Facebook link enable flag",Boolean.class),
 	GOOGLE_TOKEN("social.google.token","Application Token for google app",String.class),
 	GOOGLE_SECRET("social.google.secret","Application secret for google app",String.class),
-	GOOGLE_ENABLED("social.google.enabled","Google link enable flag",Boolean.class),;
+  GOOGLE_ENABLED("social.google.enabled", "Google link enable flag", Boolean.class),
+  TWITTER_TOKEN("social.twitter.token", "Application Token for twitter app", String.class),
+  TWITTER_SECRET("social.twitter.secret", "Application secret for twitter app", String.class),
+  TWITTER_ENABLED("social.twitter.enabled", "Twitter link enable flag", Boolean.class), ;
 
 	
 	private final String                 key;
