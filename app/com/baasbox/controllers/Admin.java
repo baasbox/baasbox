@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipInputStream;
@@ -98,6 +99,7 @@ import com.baasbox.util.Util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -566,9 +568,12 @@ public class Admin extends Controller {
         if (user == null) {
           return notFound();
         } else {
+          if(!checkUserIsDeletable(user)){
+            return badRequest("user is not deletable");
+          };
           // Remove all posts related to the deleting user
-      UserService.dropUser(user);
-      return ok();
+          UserService.dropUser(user);
+          return ok();
     }
   } catch (Exception e) {
     e.printStackTrace();
@@ -577,7 +582,10 @@ public class Admin extends Controller {
     }));
   }
 
-  /***
+  private static boolean checkUserIsDeletable(OUser user) {
+    return !(user.getName().equals("admin") || UserService.isInternalUsername(user.getName()));
+  }
+/***
    * Drop an entire collection
    * Data are lost... forever
    * @param name the Collection to drop

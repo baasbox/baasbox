@@ -14,6 +14,7 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import static org.junit.Assert.assertTrue;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.service.user.FriendShipService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -135,6 +136,35 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
 
           testUserHasRole(newUser, toDeleteRoleName, false);
 
+        }
+      });
+  }
+
+  @Test
+  public void testSystemUserDeletion() throws Exception {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+          FakeRequest request = new FakeRequest("DELETE", getRouteAddress() + "/admin");
+          request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          Result result = routeAndCall(request);
+          assertRoute(result, "testDelete", Status.BAD_REQUEST, null, true);
+
+          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getBaasBoxAdminUsername());
+          request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          result = routeAndCall(request);
+          assertRoute(result, "testDelete", Status.BAD_REQUEST, null, true);
+
+          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getBaasBoxUsername());
+          request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+          result = routeAndCall(request);
+          assertRoute(result, "testDelete", Status.BAD_REQUEST, null, true);
         }
       });
   }
