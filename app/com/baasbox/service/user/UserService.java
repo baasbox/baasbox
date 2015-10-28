@@ -67,10 +67,11 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
+import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -80,7 +81,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class UserService {
 
@@ -911,7 +911,24 @@ public class UserService {
     } catch (Throwable t) {
       throw t;
     }
+    QueryParams emptyCriteria = QueryParams.getInstance();
+    String toDeleteUsername = user.getName();
+    long friendsOfCount = FriendShipService.getCountFriendsOf(toDeleteUsername, emptyCriteria);
+    if (friendsOfCount > 0) {
+      List<ODocument> friendsOf = FriendShipService.getFriendsOf(toDeleteUsername, emptyCriteria);
+      ObjectMapper om = new ObjectMapper();
+      // TODO: this looks over complex
+      for (ODocument oDocument : friendsOf) {
+        String jsonR = JSONFormats.prepareDocToJson(oDocument, JSONFormats.Formats.USER);
+        JsonNode jn = om.readTree(jsonR);
+        String username = jn.get("user").get("name").asText();
+        FriendShipService.unfollow(username, toDeleteUsername);
+
+
+      }
+    }
     RoleDao.delete(RoleDao.getFriendRoleName(user));
+
     UserDao.getInstance().delete(user);
   }
 

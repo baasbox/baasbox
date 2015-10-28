@@ -106,4 +106,12 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 		);
 	}
 
+  protected void grantToRole(String action, String role, String collection, String objectRid, String author) {
+    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/role/" + role);
+    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+    Result result = routeAndCall(request);
+    assertRoute(result, "grantPostToRegistered", 200, null, false);
+  }
+
 }

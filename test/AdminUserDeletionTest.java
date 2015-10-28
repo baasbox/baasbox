@@ -1,19 +1,24 @@
+import static org.junit.Assert.fail;
+import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.contentAsString;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.UUID;
 
 import org.junit.Test;
-import static org.junit.Assert.fail;
+
+import play.mvc.Http.Status;
+import play.mvc.Result;
+import play.test.FakeRequest;
+import static org.junit.Assert.assertTrue;
+
 import com.baasbox.dao.RoleDao;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.baasbox.service.user.FriendShipService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import play.mvc.Result;
-import play.mvc.Http.Status;
-import play.test.FakeRequest;
 import core.AbstractRouteHeaderTest;
 import core.TestConfig;
 
@@ -38,7 +43,7 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
   final ObjectMapper _om = new ObjectMapper();
 
   @Test
-  public void testSimpleUserCreationAndDrop() throws Exception {
+  public void testUserCreationWithDocumentAndDrop() throws Exception {
     running(
       getFakeApplication(),
       new Runnable()
@@ -70,7 +75,6 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
           String documentId = null;
           try {
             String content = contentAsString(result);
-            System.out.println("CONTENT IS" + content);
             documentId = _om.readTree(content).get("data").get("id").asText();
           } catch (IOException e) {
             fail("Unable to parse simple json");
@@ -86,7 +90,7 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
   }
 
   @Test
-  public void testSimpleUserCreationDocumentAndDrop() throws Exception {
+  public void testUserCreationAndDrop() throws Exception {
     running(
       getFakeApplication(),
       new Runnable()
@@ -102,9 +106,216 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
           testRoleExists(RoleDao.getFriendRoleName(newUser), true);
 
           deleteUser(newUser);
-
           testUserExists(newUser, false);
           testRoleExists(RoleDao.getFriendRoleName(newUser), false);
+
+        }
+
+      });
+  }
+
+  @Test
+  public void testUserCreationWithSingleWayFriendshipAndDrop() throws Exception {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+          String newUserToDelete = new AdminUserFunctionalTest().routeCreateNewUser();
+          String newUser = new AdminUserFunctionalTest().routeCreateNewUser();
+          
+          makeUserFollowerOf(newUser, newUserToDelete);
+
+          String toDeleteRoleName = RoleDao.getFriendRoleName(newUserToDelete);
+
+          testUserHasRole(newUser, toDeleteRoleName, true);
+
+          deleteUser(newUserToDelete);
+
+          testUserHasRole(newUser, toDeleteRoleName, false);
+
+        }
+      });
+  }
+
+
+
+  @Test
+  public void testUserCreationWithDocumentAndLinkInAndDrop() throws Exception {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+    String newUserToDelete = new AdminUserFunctionalTest().routeCreateNewUser();
+    String newUser = new AdminUserFunctionalTest().routeCreateNewUser();
+
+    testUserExists(newUser, true);
+    testUserExists(newUserToDelete, true);
+    testRoleExists(RoleDao.getFriendRoleName(newUser), true);
+    testRoleExists(RoleDao.getFriendRoleName(newUserToDelete), true);
+
+    String parentCollectionName = "posts_" + UUID.randomUUID().toString();
+    String childCollectionName = "comments_" + UUID.randomUUID().toString();
+    new AdminCollectionFunctionalTest().routeCreateCollection(parentCollectionName);
+    new AdminCollectionFunctionalTest().routeCreateCollection(childCollectionName);
+
+    FakeRequest fq = new FakeRequest("POST", "/document/" + parentCollectionName);
+    fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+    try {
+      fq = fq.withJsonBody(_om.readTree("{\"title\":\"my awesome post\",\"content\":\"that will be deleted\"}"));
+    } catch (IOException e) {
+      fail("Unable to parse simple json");
+    }
+    Result result = routeAndCall(fq);
+    assertRoute(result, "testCreatePost", Status.OK, null, true);
+
+    String postId = null;
+    try {
+      String content = contentAsString(result);
+      postId = _om.readTree(content).get("data").get("id").asText();
+    } catch (IOException e) {
+      fail("Unable to parse simple json");
+    }
+
+    grantToRole("read", "registered", parentCollectionName, postId, newUser);
+
+    fq = new FakeRequest("POST", "/document/" + childCollectionName);
+    fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUserToDelete, "passw1"));
+    try {
+      fq = fq.withJsonBody(_om.readTree("{\"comment\":\"your post sucks\",\"rating\":5}"));
+    } catch (IOException e) {
+      fail("Unable to parse simple json");
+    }
+    result = routeAndCall(fq);
+    assertRoute(result, "testCreateComment", Status.OK, null, true);
+    String commentId = null;
+    try {
+      String content = contentAsString(result);
+      commentId = _om.readTree(content).get("data").get("id").asText();
+    } catch (IOException e) {
+      fail("Unable to parse simple json");
+    }
+
+    grantToRole("read", "registered", childCollectionName, commentId, newUserToDelete);
+
+    testDocumentExists(parentCollectionName, postId, true);
+    testDocumentExists(childCollectionName, commentId, true);
+
+    fq = new FakeRequest("POST", "/link/" + postId + "/comment/" + commentId);
+    fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+    result = routeAndCall(fq);
+    assertRoute(result, "testCreateLink", Status.OK, null, true);
+
+    deleteUser(newUserToDelete);
+
+    testDocumentExists(parentCollectionName, postId, true);
+    testDocumentExists(childCollectionName, commentId, false);
+
+    fq = new FakeRequest("GET", "/document/" + parentCollectionName + "/" + postId + "/comment");
+    fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+    result = routeAndCall(fq);
+    assertRoute(result, "testGetLink", Status.OK, "{\"result\":\"ok\",\"data\":[]", true);
+
+        }
+
+      });
+  }
+
+
+  @Test
+  public void testUserCreationWithDocumentAndLinkOutAndDrop() throws Exception {
+    running(
+      getFakeApplication(),
+      new Runnable()
+      {
+        public void run()
+        {
+
+          String newUserToDelete = new AdminUserFunctionalTest().routeCreateNewUser();
+          String newUser = new AdminUserFunctionalTest().routeCreateNewUser();
+
+          // Let's get the user and the role to check that have been created
+
+          testUserExists(newUser, true);
+          testUserExists(newUserToDelete, true);
+          testRoleExists(RoleDao.getFriendRoleName(newUser), true);
+          testRoleExists(RoleDao.getFriendRoleName(newUserToDelete), true);
+
+          String parentCollectionName = "posts_" + UUID.randomUUID().toString();
+          String childCollectionName = "comments_" + UUID.randomUUID().toString();
+          new AdminCollectionFunctionalTest().routeCreateCollection(parentCollectionName);
+          new AdminCollectionFunctionalTest().routeCreateCollection(childCollectionName);
+
+          FakeRequest fq = new FakeRequest("POST", "/document/" + parentCollectionName);
+          fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUserToDelete, "passw1"));
+          try {
+            fq = fq.withJsonBody(_om.readTree("{\"title\":\"my awesome post\",\"content\":\"that will be deleted\"}"));
+          } catch (IOException e) {
+            fail("Unable to parse simple json");
+          }
+          Result result = routeAndCall(fq);
+          assertRoute(result, "testCreatePost", Status.OK, null, true);
+
+
+          String postId = null;
+          try {
+            String content = contentAsString(result);
+            postId = _om.readTree(content).get("data").get("id").asText();
+          } catch (IOException e) {
+            fail("Unable to parse simple json");
+          }
+
+          grantToRole("read", "registered", parentCollectionName, postId, newUserToDelete);
+
+          fq = new FakeRequest("POST", "/document/" + childCollectionName);
+          fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+          try {
+            fq = fq.withJsonBody(_om.readTree("{\"comment\":\"your post sucks\",\"rating\":5}"));
+          } catch (IOException e) {
+            fail("Unable to parse simple json");
+          }
+          result = routeAndCall(fq);
+          assertRoute(result, "testCreateComment", Status.OK, null, true);
+          String commentId = null;
+          try {
+            String content = contentAsString(result);
+            commentId = _om.readTree(content).get("data").get("id").asText();
+          } catch (IOException e) {
+            fail("Unable to parse simple json");
+          }
+
+          grantToRole("read", "registered", childCollectionName, commentId, newUser);
+
+          testDocumentExists(parentCollectionName, postId, true);
+          testDocumentExists(childCollectionName, commentId, true);
+
+         
+          fq = new FakeRequest("POST", "/link/" + postId + "/comment/" + commentId);
+          fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUserToDelete, "passw1"));
+          result = routeAndCall(fq);
+          assertRoute(result, "testCreateLink", Status.OK, null, true);
+
+          deleteUser(newUserToDelete);
+
+          testDocumentExists(parentCollectionName, postId, false);
+          testDocumentExists(childCollectionName, commentId, true);
+
+          fq = new FakeRequest("GET", "/document/" + childCollectionName + "/" + commentId + "/comment?linkDir=in");
+          fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+          fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+          result = routeAndCall(fq);
+          assertRoute(result, "testGetLink", Status.OK, "{\"result\":\"ok\",\"data\":[]", true);
+
 
         }
 
@@ -144,6 +355,51 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
     } else {
       assertRoute(result, "testUserExists", Status.NOT_FOUND, null, true);
     }
+
+  }
+
+  private void testUserHasRole(String user, String roleName, boolean roleExists) {
+    // TODO:commented request fails with a NPE...ask @giastfader
+    /*
+     * FakeRequest request = new FakeRequest("GET", "/me");
+     * request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+     * request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(user,"passw1");
+     * Result result = routeAndCall(request);
+     */
+    FakeRequest request = new FakeRequest("GET", "/admin/user/" + user);
+    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+    Result result = routeAndCall(request);
+    assertRoute(result, "testUserExists", Status.OK, null, true);
+    try {
+      String content = contentAsString(result);
+      JsonNode root = _om.readTree(content);
+      JsonNode jn = root.get("data").get("user").get("roles");
+      Iterator<JsonNode> i = jn.iterator();
+      boolean found = false;
+      while (i.hasNext()) {
+        JsonNode role = i.next();
+        if (role.get("name").asText().equals(roleName)) {
+          found = true;
+          break;
+        }
+      }
+      String message = "User should have the role " + roleName;
+      if (!roleExists) {
+        message = "User shouldn't have the role " + roleName;
+      }
+      assertTrue(message, found == roleExists);
+    } catch (IOException e) {
+      fail("Unable to parse simple json");
+    }
+  }
+
+  protected void makeUserFollowerOf(String follower, String toFollow) {
+    FakeRequest request = new FakeRequest("POST", "/follow/" + toFollow);
+    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(follower, "passw1"));
+    Result result = routeAndCall(request);
+    assertRoute(result, "testFriendshipCreation", Status.CREATED, null, true);
 
   }
 

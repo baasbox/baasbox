@@ -420,20 +420,13 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
       String rid = om.readTree(postContent).get("data").get("id").asText();
       ts.addPostId(rid);
       ts.addPostAndAuthor(author, rid);
-      grant("read", "registered", PARENT_COLLECTION_NAME, rid, author);
+      grantToRole("read", "registered", PARENT_COLLECTION_NAME, rid, author);
     } catch (Exception e) {
     }
 
     });
   }
 
-  private void grant(String action, String role, String collection, String objectRid, String author) {
-    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/role/" + role);
-    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
-    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
-    Result result = routeAndCall(request);
-    assertRoute(result, "grantPostToRegistered", 200, null, false);
-  }
 
   static class TestSetup {
     int createdPosts;

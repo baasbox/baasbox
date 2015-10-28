@@ -387,9 +387,6 @@ DELETE /admin/plugin/:name					   com.baasbox.controllers.ScriptsAdmin.drop(name
 PUT /admin/plugin/:name/active                 com.baasbox.controllers.ScriptsAdmin.activate(name: String)
 DELETE /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.deactivate(name: String)
 
-
-#GET /admin/stats/logs                           com.baasbox.controllers.Stats.log()
-
 # endpoints switches
 
 GET     /admin/endpoints                                        com.baasbox.controllers.Admin.getPermissionTags
