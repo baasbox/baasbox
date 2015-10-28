@@ -106,7 +106,7 @@ public class UserListTest extends AbstractUsersTest {
 
           Map<String, String> headers = headers(result);
           assertNotNull(headers.get("Transfer-Encoding"));
-          assertEquals(headers.get("Transfer-Encoding"), "chunked");
+          assertEquals("chunked",headers.get("Transfer-Encoding"));
           assertRoute(result, "testListUser", Status.OK, null, false);
 
           String queryString = "user.roles[0].name='administrator'";

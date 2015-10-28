@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
@@ -57,6 +59,7 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.InvalidJsonException;
@@ -794,7 +797,7 @@ public class UserService {
 	
 	public static void removeUserFromRole(String username,String role) throws OpenTransactionException{
 		boolean admin = false;
-		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
+		if(!isAnAdmin(DbHelper.getCurrentUserNameFromConnection())){
 			DbHelper.reconnectAsAdmin();
 			admin = true;
 		}
@@ -905,31 +908,36 @@ public class UserService {
 	}
 	
   public static void dropUser(OUser user) throws Throwable {
-    try {
-      NodeDao.deleteVerticesByAuthor(user);
-      NodeDao.deleteDocumentsByAuthor(user);
-    } catch (Throwable t) {
-      throw t;
-    }
+	HooksManager.enableHidePasswordHook(DbHelper.getConnection(), false);
     QueryParams emptyCriteria = QueryParams.getInstance();
     String toDeleteUsername = user.getName();
-    long friendsOfCount = FriendShipService.getCountFriendsOf(toDeleteUsername, emptyCriteria);
-    if (friendsOfCount > 0) {
-      List<ODocument> friendsOf = FriendShipService.getFriendsOf(toDeleteUsername, emptyCriteria);
-      ObjectMapper om = new ObjectMapper();
-      // TODO: this looks over complex
-      for (ODocument oDocument : friendsOf) {
-        String jsonR = JSONFormats.prepareDocToJson(oDocument, JSONFormats.Formats.USER);
-        JsonNode jn = om.readTree(jsonR);
-        String username = jn.get("user").get("name").asText();
-        FriendShipService.unfollow(username, toDeleteUsername);
-
-
-      }
-    }
-    RoleDao.delete(RoleDao.getFriendRoleName(user));
-
-    UserDao.getInstance().delete(user);
+	List<ODocument> friendsOf = FriendShipService.getFriendsOf(toDeleteUsername, emptyCriteria);   
+	
+	DbHelper.requestTransaction();
+	try {
+		NodeDao.deleteVerticesByAuthor(user);
+	    NodeDao.deleteDocumentsByAuthor(user);
+	    if (friendsOf != null && friendsOf.size()>0){
+	        List<String> usernames = friendsOf.stream().map(x->{
+			   return  (String)((ODocument)x.field("user")).field("name");
+		    }).collect(Collectors.toList());
+		  
+		    for(String u:usernames) {
+		      FriendShipService.unfollow(u, toDeleteUsername);
+		    }
+	    }
+	    RoleDao.delete(RoleDao.getFriendRoleName(user));
+	
+	    UserDao.getInstance().delete(user);
+	    
+	   DbHelper.commitTransaction();
+	}catch (Exception e){
+		DbHelper.rollbackTransaction();
+		BaasBoxLogger.error("Error deleting user {}: {}", user.getName(),ExceptionUtils.getStackTrace(e));
+		throw e;
+	}finally{
+		HooksManager.enableHidePasswordHook(DbHelper.getConnection(), true);
+	}
   }
 
  	public static boolean isAnAdmin(String username){

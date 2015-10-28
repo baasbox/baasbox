@@ -82,7 +82,7 @@ public class FriendshipFunctionalChunkedTest extends AbstractTest {
           fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(first, "passw1"));
           Result result = routeAndCall(fk);
           Map<String,String> headers = headers(result);
-          Assert.assertEquals(headers.get("Transfer-Encoding"), "chunked");
+          Assert.assertEquals("chunked",headers.get("Transfer-Encoding"));
           String content = new String(myContentAsBytes((SimpleResult) result));
           try {
             JsonNode jn = om.readTree(content);
@@ -134,7 +134,7 @@ public class FriendshipFunctionalChunkedTest extends AbstractTest {
           fk = fk.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(first, "passw1"));
           Result result = routeAndCall(fk);
           Map<String, String> headers = headers(result);
-          Assert.assertEquals(headers.get("Transfer-Encoding"), "chunked");
+          Assert.assertEquals("chunked",headers.get("Transfer-Encoding"));
           String content = new String(myContentAsBytes((SimpleResult) result));
           try {
             JsonNode jn = om.readTree(content);
