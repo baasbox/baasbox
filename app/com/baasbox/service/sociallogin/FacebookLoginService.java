@@ -47,7 +47,7 @@ public class FacebookLoginService extends SocialLoginService{
 	
 	@Override
   protected String saveToken(String key, Token t) {
-    return null;
+		throw new UnsupportedOperationException();
   }
 
   @Override
