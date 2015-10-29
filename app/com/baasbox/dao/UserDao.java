@@ -113,12 +113,12 @@ public class UserDao extends NodeDao  {
 		return doc;
 	}
 
-  public void delete(OUser user) {
+  public void delete(OUser user) throws Throwable {
 	  try{
 		  delete(getByUserName(user.getName()).getIdentity());
 		  db.getMetadata().getSecurity().dropUser(user.getName());
 	  }catch(Throwable e){
-		  e.printStackTrace();
+		 throw e;
 	  }
   }
 
