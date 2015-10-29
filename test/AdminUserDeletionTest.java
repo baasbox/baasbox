@@ -258,6 +258,59 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
       });
   }
 
+  @Test
+  public void testAllowUserToBeDeletedGrantsOnDocumentAndDrop() throws Exception {
+	  running(
+		      getFakeApplication(),
+		      new Runnable()
+		      {
+		        public void run()
+		        {
+
+		          String newUserToDelete = new AdminUserFunctionalTest().routeCreateNewUser();
+		          String newUser = new AdminUserFunctionalTest().routeCreateNewUser();
+
+		          // Let's get the user and the role to check that have been created
+
+		          testUserExists(newUser, true);
+		          testUserExists(newUserToDelete, true);
+		          testRoleExists(RoleDao.getFriendRoleName(newUser), true);
+		          testRoleExists(RoleDao.getFriendRoleName(newUserToDelete), true);
+
+		          String collectionName = "posts_" + UUID.randomUUID().toString();
+		          new AdminCollectionFunctionalTest().routeCreateCollection(collectionName);
+
+		          FakeRequest fq = new FakeRequest("POST", "/document/" + collectionName);
+		          fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		          fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
+		          try {
+		            fq = fq.withJsonBody(_om.readTree("{\"title\":\"my awesome post\",\"content\":\"that will be deleted\"}"));
+		          } catch (IOException e) {
+		            fail("Unable to parse simple json");
+		          }
+		          Result result = routeAndCall(fq);
+		          assertRoute(result, "testCreatePost", Status.OK, null, true);
+
+
+		          String postId = null;
+		          try {
+		            String content = contentAsString(result);
+		            postId = _om.readTree(content).get("data").get("id").asText();
+		          } catch (IOException e) {
+		            fail("Unable to parse simple json");
+		          }
+
+		          grantToUser("read", newUserToDelete, collectionName, postId,newUser);
+
+		          deleteUser(newUserToDelete);
+
+		          testDocumentExists(collectionName, postId, true);
+
+
+		        }
+
+		      });
+  }
 
   @Test
   public void testUserCreationWithDocumentAndLinkOutAndDrop() throws Exception {
@@ -340,7 +393,7 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
           testDocumentExists(parentCollectionName, postId, false);
           testDocumentExists(childCollectionName, commentId, true);
 
-          fq = new FakeRequest("GET", "/document/" + childCollectionName + "/" + commentId + "/comment?linkDir=in");
+          fq = new FakeRequest("GET", "/document/" + childCollectionName + "/" + commentId + "/comment?linkDir=from");
           fq = fq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           fq = fq.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(newUser, "passw1"));
           result = routeAndCall(fq);

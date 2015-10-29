@@ -62,322 +62,327 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class Social extends Controller{
 
-  private static final String OAUTH_TOKEN = "oauth_token";
-  private static final String OAUTH_SECRET = "oauth_secret";
+	private static final String ACCESS_TOKEN = "access_token";
+	private static final String ACCESS_SECRET = "access_secret";
+	private static final String OAUTH_TOKEN = "oauth_token";
+	private static final String OAUTH_SECRET = "oauth_secret";
+	private static final String APP_CODE = "appcode";
 
-  @With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  @BodyParser.Of(BodyParser.Json.class)
-  public static F.Promise<Result> authorizationUrl(String socialNetwork) {
+	@With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	@BodyParser.Of(BodyParser.Json.class)
+	public static F.Promise<Result> authorizationUrl(String socialNetwork) {
 
-    return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
-      String keyFormat = socialNetwork.toUpperCase() + "_ENABLED";
-      Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			String keyFormat = socialNetwork.toUpperCase() + "_ENABLED";
+			Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
 
-      if (enabled == null || !enabled) {
-        return badRequest("Social login for " + socialNetwork + " is not enabled");
-      } else {
-        SocialLoginService sc = SocialLoginService.by(socialNetwork, (String) ctx().args.get("appcode"));
-        return ok("{\"url\":\"" + sc.getAuthorizationURL() + "\"}");
-      }
-    }));
+			if (enabled == null || !enabled) {
+				return badRequest("Social login for " + socialNetwork + " is not enabled");
+			} else {
+				SocialLoginService sc = SocialLoginService.by(socialNetwork, (String) ctx().args.get(APP_CODE));
+				return ok("{\"url\":\"" + sc.getAuthorizationURL() + "\"}");
+			}
+		}));
 
-  }
+	}
 
-  /**
-   * This method is a common callback for all oauth
-   * providers.It isn't annotated with a Filter because
-   * social networks callback requests couldn't pass the 
-   * auth headers needed by baasbox.
-   * @param socialNetwork
-   * @return
-   * 
-   */
-  @With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  public static F.Promise<Result> callback(String socialNetwork) {
-    return F.Promise.promise(() -> {
-      try {
-        if (ctx().request().queryString().keySet().contains("access_token")) {
-          return ok();
-        }else{
-            String appcode = (String) ctx().args.get("appcode");
-            SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
-            Token t = sc.requestAccessToken(request());
-          return redirect(sc.getCallbackUrl() + "&access_token=" + t.getToken() + "&access_secret=" + t.getSecret());
-        }
-      } catch (UnsupportedSocialNetworkException e) {
-        return badRequest(ExceptionUtils.getMessage(e));
-      } catch (java.lang.IllegalArgumentException e) {
-        return badRequest(ExceptionUtils.getMessage(e));
-      }
-    });
+	/**
+	 * This method is a common callback for all oauth
+	 * providers.It isn't annotated with a Filter because
+	 * social networks callback requests couldn't pass the 
+	 * auth headers needed by baasbox.
+	 * @param socialNetwork
+	 * @return
+	 * 
+	 */
+	@With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> callback(String socialNetwork) {
+		return F.Promise.promise(() -> {
+			try {
+				if (ctx().request().queryString().keySet().contains(ACCESS_TOKEN)) {
+					return ok();
+				}else{
+					String appcode = (String) ctx().args.get(APP_CODE);
+					SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
+					Token t = sc.requestAccessToken(request());
+					return redirect(sc.getCallbackUrl() + "&" + ACCESS_TOKEN
+							+ "=" + t.getToken() + "&" + ACCESS_SECRET
+							+ t.getSecret());
+				}
+			} catch (UnsupportedSocialNetworkException e) {
+				return badRequest(ExceptionUtils.getMessage(e));
+			} catch (java.lang.IllegalArgumentException e) {
+				return badRequest(ExceptionUtils.getMessage(e));
+			}
+		});
 
-  }
+	}
 
-  private static Token extractOAuthTokensFromRequest(Request r) {
-    // issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
-    Http.RequestBody body = request().body();
-    JsonNode bodyJson = body.asJson();
-    if (BaasBoxLogger.isDebugEnabled())
-      BaasBoxLogger.debug("signUp bodyJson: " + bodyJson);
+	private static Token extractOAuthTokensFromRequest(Request r) {
+		// issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+		Http.RequestBody body = request().body();
+		JsonNode bodyJson = body.asJson();
+		if (BaasBoxLogger.isDebugEnabled())
+			BaasBoxLogger.debug("signUp bodyJson: " + bodyJson);
 
-    String authToken = null;
-    String authSecret = null;
+		String authToken = null;
+		String authSecret = null;
 
-    if (bodyJson.has(OAUTH_TOKEN))
-      authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
-    if (bodyJson.has(OAUTH_SECRET))
-      authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
+		if (bodyJson.has(OAUTH_TOKEN))
+			authToken = bodyJson.findValuesAsText(OAUTH_TOKEN).get(0);
+		if (bodyJson.has(OAUTH_SECRET))
+			authSecret = bodyJson.findValuesAsText(OAUTH_SECRET).get(0);
 
-    // NOTE: to maintain compatibility with previous versions, we leave the option to use QueryStrings
-    if (StringUtils.isEmpty(authToken))
-      authToken = request().getQueryString(OAUTH_TOKEN);
-    if (StringUtils.isEmpty(authSecret))
-      authSecret = request().getQueryString(OAUTH_SECRET);
+		// NOTE: to maintain compatibility with previous versions, we leave the option to use QueryStrings
+		if (StringUtils.isEmpty(authToken))
+			authToken = request().getQueryString(OAUTH_TOKEN);
+		if (StringUtils.isEmpty(authSecret))
+			authSecret = request().getQueryString(OAUTH_SECRET);
 
-    if (StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)) {
-      return null;
-    }
-    return new Token(authToken, authSecret);
-  }
+		if (StringUtils.isEmpty(authToken) || StringUtils.isEmpty(authSecret)) {
+			return null;
+		}
+		return new Token(authToken, authSecret);
+	}
 
-  private static Results.Status login(String socialNetwork, SocialLoginService sc, String appCode, Token t) {
-    UserInfo result = null;
-    try {
-      if(sc.validationRequest(t.getToken())){
-        result = sc.getUserInfo(t);
-      }else{
-        return badRequest("Provided token is not valid");
-      }
-    } catch (BaasBoxSocialException e1) {
-      return badRequest(e1.getError());
-    }catch (BaasBoxSocialTokenValidationException e2) {
-      return badRequest("Unable to validate provided token");
-    }
+	private static Results.Status login(String socialNetwork, SocialLoginService sc, String appCode, Token t) {
+		UserInfo result = null;
+		try {
+			if(sc.validationRequest(t.getToken())){
+				result = sc.getUserInfo(t);
+			}else{
+				return badRequest("Provided token is not valid");
+			}
+		} catch (BaasBoxSocialException e1) {
+			return badRequest(e1.getError());
+		}catch (BaasBoxSocialTokenValidationException e2) {
+			return badRequest("Unable to validate provided token");
+		}
 
-    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserInfo received: " + result.toString());
-    result.setFrom(socialNetwork);
-    result.setToken(t.getToken());
-    //Setting token as secret for one-token only social networks
-    result.setSecret(t.getSecret()!=null && StringUtils.isNotEmpty(t.getSecret())?t.getSecret():t.getToken());
-    UserDao userDao = UserDao.getInstance();
-    ODocument existingUser =  null;
-    try{
-      existingUser = userDao.getBySocialUserId(result);
-    }catch(SqlInjectionException sie){
-      return internalServerError(ExceptionUtils.getMessage(sie));
-    }
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("UserInfo received: " + result.toString());
+		result.setFrom(socialNetwork);
+		result.setToken(t.getToken());
+		//Setting token as secret for one-token only social networks
+		result.setSecret(t.getSecret()!=null && StringUtils.isNotEmpty(t.getSecret())?t.getSecret():t.getToken());
+		UserDao userDao = UserDao.getInstance();
+		ODocument existingUser =  null;
+		try{
+			existingUser = userDao.getBySocialUserId(result);
+		}catch(SqlInjectionException sie){
+			return internalServerError(ExceptionUtils.getMessage(sie));
+		}
 
-    if(existingUser!=null){ //the user already exists in our db
-      String username = null;
-      try {
-        username = UserService.getUsernameByProfile(existingUser);
-        if(username==null){
-          throw new InvalidModelException("username for profile is null");
-        }
-      } catch (InvalidModelException e) {
-        return internalServerError("unable to login with " + socialNetwork + " : " + ExceptionUtils.getMessage(e));
-      }
-      String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
-      try {
-        UserService.changePassword(username, password);
-      } catch (Exception ote) {
-        return internalServerError("unable to login with " + socialNetwork + " : " + ExceptionUtils.getMessage(ote));
-      }
-      SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appCode,username, password);
-      response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
-      ObjectNode on = Json.newObject();
-      if(existingUser!=null){
-        on = (ObjectNode)Json.parse( User.prepareResponseToJson(existingUser));
-      }
-      on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
-      return ok(on);
-    } else { // it is the first time that this user logins via this social network
-      if (BaasBoxLogger.isDebugEnabled())
-        BaasBoxLogger.debug("User does not exists with tokens...trying to create");
-      String username = UUID.randomUUID().toString();
-      Date signupDate = new Date();
-      try {
-        String password = UserService.generateFakeUserPassword(username, signupDate);
-        JsonNode privateData = null;
-        if (result.getAdditionalData() != null && !result.getAdditionalData().isEmpty()) {
-          privateData = Json.toJson(result.getAdditionalData());
-        }
-        UserService.signUp(username, password, signupDate, null, privateData, null, null, true);
-        ODocument profile = UserService.getUserProfilebyUsername(username);
-        UserService.addSocialLoginTokens(profile, result);
-        SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appCode, username, password);
-        response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
-        ObjectNode on = Json.newObject();
-        if (profile != null) {
-          on = (ObjectNode) Json.parse(User.prepareResponseToJson(profile));
-        }
-        on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
+		if(existingUser!=null){ //the user already exists in our db
+			String username = null;
+			try {
+				username = UserService.getUsernameByProfile(existingUser);
+				if(username==null){
+					throw new InvalidModelException("username for profile is null");
+				}
+			} catch (InvalidModelException e) {
+				return internalServerError("unable to login with " + socialNetwork + " : " + ExceptionUtils.getMessage(e));
+			}
+			String password = UserService.generateFakeUserPassword(username, (Date)existingUser.field(UserDao.USER_SIGNUP_DATE));
+			try {
+				UserService.changePassword(username, password);
+			} catch (Exception ote) {
+				return internalServerError("unable to login with " + socialNetwork + " : " + ExceptionUtils.getMessage(ote));
+			}
+			SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appCode,username, password);
+			response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
+			ObjectNode on = Json.newObject();
+			if(existingUser!=null){
+				on = (ObjectNode)Json.parse( User.prepareResponseToJson(existingUser));
+			}
+			on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
+			return ok(on);
+		} else { // it is the first time that this user logins via this social network
+			if (BaasBoxLogger.isDebugEnabled())
+				BaasBoxLogger.debug("User does not exists with tokens...trying to create");
+			String username = UUID.randomUUID().toString();
+			Date signupDate = new Date();
+			try {
+				String password = UserService.generateFakeUserPassword(username, signupDate);
+				JsonNode privateData = null;
+				if (result.getAdditionalData() != null && !result.getAdditionalData().isEmpty()) {
+					privateData = Json.toJson(result.getAdditionalData());
+				}
+				UserService.signUp(username, password, signupDate, null, privateData, null, null, true);
+				ODocument profile = UserService.getUserProfilebyUsername(username);
+				UserService.addSocialLoginTokens(profile, result);
+				SessionObject sessionObject = SessionTokenProviderFactory.getSessionTokenProvider().setSession(appCode, username, password);
+				response().setHeader(SessionKeys.TOKEN.toString(), sessionObject.getToken());
+				ObjectNode on = Json.newObject();
+				if (profile != null) {
+					on = (ObjectNode) Json.parse(User.prepareResponseToJson(profile));
+				}
+				on.put(SessionKeys.TOKEN.toString(), sessionObject.getToken());
 
-        return ok(on);
-      } catch (Exception uaee) {
-        return internalServerError(ExceptionUtils.getMessage(uaee));
-      }
-    }
-  }
+				return ok(on);
+			} catch (Exception uaee) {
+				return internalServerError(ExceptionUtils.getMessage(uaee));
+			}
+		}
+	}
 
-  /**
-   * Login the user through socialnetwork specified
-   * 
-   * An oauth_token and oauth_secret provided by oauth steps
-   * are mandatory 
-   * @param socialNetwork the social network name (facebook,google)
-   * @return 200 status code with the X-BB-SESSION token for further calls
-   */
-  @With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  public static F.Promise<Result> loginWith(String socialNetwork) {
+	/**
+	 * Login the user through socialnetwork specified
+	 * 
+	 * An oauth_token and oauth_secret provided by oauth steps
+	 * are mandatory 
+	 * @param socialNetwork the social network name (facebook,google)
+	 * @return 200 status code with the X-BB-SESSION token for further calls
+	 */
+	@With({AdminCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> loginWith(String socialNetwork) {
 
-    return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
-      String appcode = (String) ctx().args.get("appcode");
-      // after this call, db connection is lost!
-      SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
-      Token t = extractOAuthTokensFromRequest(request());
-      if (t == null) {
-        return badRequest(String.format("Both %s and %s should be specified as query parameters or in the json body", OAUTH_TOKEN, OAUTH_SECRET));
-      }
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+							String appcode = (String) ctx().args.get(APP_CODE);
+			// after this call, db connection is lost!
+			SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
+			Token t = extractOAuthTokensFromRequest(request());
+			if (t == null) {
+				return badRequest(String.format("Both %s and %s should be specified as query parameters or in the json body", OAUTH_TOKEN, OAUTH_SECRET));
+			}
 
-      return login(socialNetwork, sc, appcode, t);
+			return login(socialNetwork, sc, appcode, t);
 
-    }));
+		}));
 
-  }
+	}
 
-  /**
-   * Returns for the current user the linked accounts to external
-   * social providers.
-   * 
-   * 
-   *  @return a json representation of the list of connected social networks
-   *  404 if no social networks are connected 
-   */
+	/**
+	 * Returns for the current user the linked accounts to external
+	 * social providers.
+	 * 
+	 * 
+	 *  @return a json representation of the list of connected social networks
+	 *  404 if no social networks are connected 
+	 */
 
-  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  public static F.Promise<Result> socialLogins() {
-    return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
-      try {
-        ODocument user = UserService.getCurrentUser();
-        Map<String, ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM + "." + UserDao.SOCIAL_LOGIN_INFO);
-        if (logins == null || logins.isEmpty()) {
-          return notFound();
-        } else {
-          List<UserInfo> result = new ArrayList<UserInfo>();
-          for (ODocument d : logins.values()) {
-            UserInfo i = UserInfo.fromJson(d.toJSON());
-            result.add(i);
-          }
-          return ok(Json.toJson(result));
-        }
-      } catch (Exception e) {
-        return internalServerError(ExceptionUtils.getMessage(e));
-      }
-    }));
-  }
+	@With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> socialLogins() {
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+			try {
+				ODocument user = UserService.getCurrentUser();
+				Map<String, ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM + "." + UserDao.SOCIAL_LOGIN_INFO);
+				if (logins == null || logins.isEmpty()) {
+					return notFound();
+				} else {
+					List<UserInfo> result = new ArrayList<UserInfo>();
+					for (ODocument d : logins.values()) {
+						UserInfo i = UserInfo.fromJson(d.toJSON());
+						result.add(i);
+					}
+					return ok(Json.toJson(result));
+				}
+			} catch (Exception e) {
+				return internalServerError(ExceptionUtils.getMessage(e));
+			}
+		}));
+	}
 
-  /**
-   * Unlink given social network from current user.
-   * In case that the user was generated by any social network and
-   * at the moment of the unlink the user has only one social network connected
-   * the controller will throw an Exception with a clear message.
-   * Otherwise a 200 code will be returned
-   * @param socialNetwork
-   * @return
-   * @throws SqlInjectionException 
-   */
-  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  public static F.Promise<Result> unlink(String socialNetwork) {
-    return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+	/**
+	 * Unlink given social network from current user.
+	 * In case that the user was generated by any social network and
+	 * at the moment of the unlink the user has only one social network connected
+	 * the controller will throw an Exception with a clear message.
+	 * Otherwise a 200 code will be returned
+	 * @param socialNetwork
+	 * @return
+	 * @throws SqlInjectionException 
+	 */
+	@With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> unlink(String socialNetwork) {
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 
-      ODocument user = null;
-      try {
-        user = UserService.getCurrentUser();
-      } catch (Exception e) {
-        internalServerError(e.getMessage());
-      }
+			ODocument user = null;
+			try {
+				user = UserService.getCurrentUser();
+			} catch (Exception e) {
+				internalServerError(e.getMessage());
+			}
 
-      Map<String, ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM + "." + UserDao.SOCIAL_LOGIN_INFO);
-      if (logins == null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork) == null) {
-        return notFound("User's account is not linked with " + StringUtils.capitalize(socialNetwork));
-      } else {
-        boolean generated = UserService.isSocialAccount(DbHelper.getCurrentUserNameFromConnection());
-        if (logins.size() == 1 && generated) {
-          return internalServerError("User's account can't be unlinked.");
-        } else {
-          try {
-            UserService.removeSocialLoginTokens(user, socialNetwork);
-            return ok();
-          } catch (Exception e) {
-            return internalServerError(ExceptionUtils.getMessage(e));
-          }
-        }
-      }
-    }));
-  }
+			Map<String, ODocument> logins = user.field(UserDao.ATTRIBUTES_SYSTEM + "." + UserDao.SOCIAL_LOGIN_INFO);
+			if (logins == null || logins.isEmpty() || !logins.containsKey(socialNetwork) || logins.get(socialNetwork) == null) {
+				return notFound("User's account is not linked with " + StringUtils.capitalize(socialNetwork));
+			} else {
+				boolean generated = UserService.isSocialAccount(DbHelper.getCurrentUserNameFromConnection());
+				if (logins.size() == 1 && generated) {
+					return internalServerError("User's account can't be unlinked.");
+				} else {
+					try {
+						UserService.removeSocialLoginTokens(user, socialNetwork);
+						return ok();
+					} catch (Exception e) {
+						return internalServerError(ExceptionUtils.getMessage(e));
+					}
+				}
+			}
+		}));
+	}
 
-  /**
-   * links current user with specified social network param
-   * 
-   * In case the token obtained by the service is already existing in the database
-   * for another user an exception is raised
-   * @param socialNetwork the social network to be linked to
-   * @return a 200 code if the link is correctly generated
-   * 
-   *  
-   */
-  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
-  public static F.Promise<Result> linkWith(String socialNetwork) {
-    // issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
+	/**
+	 * links current user with specified social network param
+	 * 
+	 * In case the token obtained by the service is already existing in the database
+	 * for another user an exception is raised
+	 * @param socialNetwork the social network to be linked to
+	 * @return a 200 code if the link is correctly generated
+	 * 
+	 *  
+	 */
+	@With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class})
+	public static F.Promise<Result> linkWith(String socialNetwork) {
+		// issue #217: "oauth_token" parameter should be moved to request body in Social Login APIs
 
-    Token t = extractOAuthTokensFromRequest(request());
-    if (t == null) {
-      return F.Promise.pure(badRequest("Both '" + OAUTH_TOKEN + "' and '" + OAUTH_SECRET + "' should be specified."));
-    }
+		Token t = extractOAuthTokensFromRequest(request());
+		if (t == null) {
+			return F.Promise.pure(badRequest("Both '" + OAUTH_TOKEN + "' and '" + OAUTH_SECRET + "' should be specified."));
+		}
 
-    String appcode = (String) ctx().args.get("appcode");
-    return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+		String appcode = (String) ctx().args.get(APP_CODE);
+		return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
 
-      SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
+			SocialLoginService sc = SocialLoginService.by(socialNetwork, appcode);
 
-      UserInfo result = null;
-      try {
-        if (sc.validationRequest(t.getToken())) {
-          result = sc.getUserInfo(t);
-        } else {
-          return badRequest("Provided token is not valid.");
-        }
-      } catch (BaasBoxSocialException e1) {
-        return badRequest(e1.getError());
-      }
-      catch (BaasBoxSocialTokenValidationException e2) {
-        return badRequest("Unable to validate provided token.");
-      }
-      result.setFrom(socialNetwork);
-      result.setToken(t.getToken());
+			UserInfo result = null;
+			try {
+				if (sc.validationRequest(t.getToken())) {
+					result = sc.getUserInfo(t);
+				} else {
+					return badRequest("Provided token is not valid.");
+				}
+			} catch (BaasBoxSocialException e1) {
+				return badRequest(e1.getError());
+			}
+			catch (BaasBoxSocialTokenValidationException e2) {
+				return badRequest("Unable to validate provided token.");
+			}
+			result.setFrom(socialNetwork);
+			result.setToken(t.getToken());
 
-      // Setting token as secret for one-token only social networks
-      result.setSecret(t.getSecret() != null && StringUtils.isNotEmpty(t.getSecret()) ? t.getSecret() : t.getToken());
-      ODocument user;
-      try {
-        user = UserService.getCurrentUser();
-        ODocument other = UserDao.getInstance().getBySocialUserId(result);
-        boolean sameUser = other != null && other.getIdentity().equals(user.getIdentity());
-        if (other == null || !sameUser) {
-          UserService.addSocialLoginTokens(user, result);
-        } else {
-          internalServerError("A user with this token already exists and it's not the current user.");
-        }
-        return ok();
-      } catch (SqlInjectionException e) {
-        return internalServerError(ExceptionUtils.getMessage(e));
-      }
+			// Setting token as secret for one-token only social networks
+			result.setSecret(t.getSecret() != null && StringUtils.isNotEmpty(t.getSecret()) ? t.getSecret() : t.getToken());
+			ODocument user;
+			try {
+				user = UserService.getCurrentUser();
+				ODocument other = UserDao.getInstance().getBySocialUserId(result);
+				boolean sameUser = other != null && other.getIdentity().equals(user.getIdentity());
+				if (other == null || !sameUser) {
+					UserService.addSocialLoginTokens(user, result);
+				} else {
+					internalServerError("A user with this token already exists and it's not the current user.");
+				}
+				return ok();
+			} catch (SqlInjectionException e) {
+				return internalServerError(ExceptionUtils.getMessage(e));
+			}
 
 
-    }));
+		}));
 
-  }
+	}
 
 
 

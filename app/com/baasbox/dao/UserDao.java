@@ -114,7 +114,12 @@ public class UserDao extends NodeDao  {
 	}
 
   public void delete(OUser user) {
-    db.getMetadata().getSecurity().dropUser(user.getName());
+	  try{
+		  delete(getByUserName(user.getName()).getIdentity());
+		  db.getMetadata().getSecurity().dropUser(user.getName());
+	  }catch(Throwable e){
+		  e.printStackTrace();
+	  }
   }
 
 	public boolean existsUserName(String username){
