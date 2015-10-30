@@ -38,7 +38,6 @@ import org.scribe.oauth.OAuthService;
 
 import play.cache.Cache;
 import play.mvc.Http.Request;
-import sun.security.jca.GetInstance;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
@@ -55,7 +54,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
 
-<<<<<<< HEAD
   private static final String PROTOCOL = "http://";
   private static final String SECURE_PROTOCOL = "https://";
   private static final String DEFAULT_HOST = "localhost";

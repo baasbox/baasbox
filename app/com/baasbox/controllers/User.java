@@ -159,7 +159,7 @@ public class User extends Controller {
 		QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
 
 		return F.Promise.promise(DbHelper.withDbFromContext(ctx,()->{
-      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+      if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
         if (BaasBoxLogger.isDebugEnabled())
           BaasBoxLogger.info("Prepare to sending chunked response..");
         return getUsersChunked();
@@ -902,7 +902,7 @@ public class User extends Controller {
 				user = username;
 			}
 
-      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1) && !justCountThem) {
+      if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1) && !justCountThem) {
         if (BaasBoxLogger.isDebugEnabled())
           BaasBoxLogger.info("Prepare to sending chunked response..");
         return getFollowersChunked(user);
@@ -976,7 +976,7 @@ public class User extends Controller {
 			} else {
 				user = username;
 			}
-      if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+      if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
         if (BaasBoxLogger.isDebugEnabled())
           BaasBoxLogger.info("Prepare to sending chunked response..");
         return getFollowingChunked(user);
