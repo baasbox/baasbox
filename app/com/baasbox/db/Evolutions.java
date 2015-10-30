@@ -61,7 +61,7 @@ public class Evolutions {
 		BaasBoxLogger.info("Performing post-evolutions tasks....");
 		 DbHelper.execMultiLineCommands(db,true,
                  "rebuild index *");
-		if (BBConfiguration.configuration.getBoolean(BBConfiguration.ORIENT_START_CLUSTER)){
+		if (BBConfiguration.getInstance().configuration.getBoolean(BBConfiguration.getInstance().ORIENT_START_CLUSTER)){
 			//in case of internal clustering support we have to drop some constaints because of http://orientdb.com/docs/last/orientdb.wiki/Graph-Schema.html#constraints
 			 DbHelper.execMultiLineCommands(db,true,
 	                 "alter property _BB_Node._links mandatory=false",

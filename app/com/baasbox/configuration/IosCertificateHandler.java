@@ -34,14 +34,14 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 
 
 	static String sep = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
-	static String folder = BBConfiguration.getPushCertificateFolder();
+	static String folder = BBConfiguration.getInstance().getPushCertificateFolder();
 	@Override
 	public void change(Object iCurrentValue, Object iNewValue) {
 
 		if(iNewValue==null){
 			return;
 		}
-		String folder = BBConfiguration.getPushCertificateFolder();
+		String folder = BBConfiguration.getInstance().getPushCertificateFolder();
 		File f = new File(folder);
 		if(!f.exists()){
 			f.mkdirs();
@@ -101,7 +101,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 		}
 
 		public static void init(){
-			String folder = BBConfiguration.getPushCertificateFolder();
+			String folder = BBConfiguration.getInstance().getPushCertificateFolder();
 			File f = new File(folder);
 			if(!f.exists()){
 				f.mkdirs();
@@ -211,7 +211,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 		}
 
 		public static File getCertificate(String name) {
-			return new File(BBConfiguration.getPushCertificateFolder()+sep+name);
+			return new File(BBConfiguration.getInstance().getPushCertificateFolder()+sep+name);
 		}
 
 

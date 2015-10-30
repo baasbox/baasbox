@@ -52,7 +52,7 @@ public class AdminImportTest extends AbstractRouteHeaderTest {
 			@Override
 			public void run() {
 				try{
-					String version = BBConfiguration.getApiVersion();
+					String version = BBConfiguration.getInstance().getApiVersion();
 					String fileContent = BBInternalConstants.IMPORT_MANIFEST_VERSION_PREFIX+version;
 					String classloaderPath = new File(Play.application().classloader().getResource(".").getFile()).getAbsolutePath();
 					File json = Play.application().getFile("test"+File.separator+"resources"+File.separator+"adminImportJson.json");

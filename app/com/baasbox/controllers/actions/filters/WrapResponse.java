@@ -120,8 +120,8 @@ public class WrapResponse {
 		result.put("resource", request.path());
 		result.put("method", request.method());
 		result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
-		result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
-		result.put("db_schema_version", BBConfiguration.getDBVersion());
+		result.put("API_version", BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().API_VERSION));
+		result.put("db_schema_version", BBConfiguration.getInstance().getDBVersion());
 		this.setCallIdOnResult(request, result);
 		return result;
 	} 
@@ -248,7 +248,7 @@ public class WrapResponse {
 		if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
 		
 	    byte[] resultContent=null;
-		if (BBConfiguration.getWrapResponse()){
+		if (BBConfiguration.getInstance().getWrapResponse()){
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 			final int statusCode = result.getWrappedSimpleResult().header().status();
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
@@ -293,7 +293,7 @@ public class WrapResponse {
 			try {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 			}catch (Throwable e){}
-		}else{ //if (BBConfiguration.getWrapResponse())
+		}else{ //if (BBConfiguration.getInstance().getWrapResponse())
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response will not be wrapped due configuration parameter");
 			try {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
@@ -318,7 +318,7 @@ public class WrapResponse {
 			String username=(String) ctx.args.get("username");
 			if (username!=null) ctx.response().setHeader("BB-USERNAME", username);
 			
-			if (BBConfiguration.getWrapResponse()){
+			if (BBConfiguration.getInstance().getWrapResponse()){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 				final int statusCode = result.getWrappedSimpleResult().header().status();
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
@@ -361,7 +361,7 @@ public class WrapResponse {
 				try {
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));
 				}catch (Throwable e){}
-			}else{ //if (BBConfiguration.getWrapResponse())
+			}else{ //if (BBConfiguration.getInstance().getWrapResponse())
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("The response will not be wrapped due configuration parameter");
 				try {
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("WrapperResponse:\n  + result: \n" + result.toString() + "\n  --> Body:\n" + new String(JavaResultExtractor.getBody(result),"UTF-8"));

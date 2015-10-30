@@ -92,7 +92,7 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 				
 				final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(query);
 				qry.setResultListener(new OCommandResultListener() {
-					MyBuffer buffer = new MyBuffer(out, BBConfiguration.getChunkSize());
+					MyBuffer buffer = new MyBuffer(out, BBConfiguration.getInstance().getChunkSize());
 					boolean firstRecord=true;
 					boolean more = false;
 					AtomicInteger numOfRecords = new AtomicInteger(0);

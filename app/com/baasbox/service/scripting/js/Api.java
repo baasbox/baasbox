@@ -78,7 +78,7 @@ public class Api {
 
 
     public static String getBaasBoxVersion(){
-        return BBConfiguration.getApiVersion();
+        return BBConfiguration.getInstance().getApiVersion();
     }
 
     public static boolean isScriptLoggingActive(){

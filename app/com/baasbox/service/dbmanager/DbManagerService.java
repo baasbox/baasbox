@@ -51,7 +51,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.FileSystemPathUtil;
 
 public class DbManagerService {
-	public static final String backupDir = BBConfiguration.getDBBackupDir();
+	public static final String backupDir = BBConfiguration.getInstance().getDBBackupDir();
 	public static final String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	/**
@@ -135,7 +135,7 @@ public class DbManagerService {
 				if(ze!=null){
 					newFile = File.createTempFile("export",".json");
 					fout = new FileOutputStream(newFile);
-					IOUtils.copy(zis, fout,BBConfiguration.getImportExportBufferSize());
+					IOUtils.copy(zis, fout,BBConfiguration.getInstance().getImportExportBufferSize());
 					fout.close();
 				}else{
 					throw new FileFormatException("Looks like the uploaded file is not a valid export.");
@@ -155,7 +155,7 @@ public class DbManagerService {
 					if(m.matches()){
 						String version = m.group(1);
 						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
-							throw new FileFormatException(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
+							throw new FileFormatException(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getInstance().getApiVersion(),version));
 						}else{
 							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Version : "+version+" is valid");
 						}

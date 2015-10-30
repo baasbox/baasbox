@@ -67,18 +67,18 @@ public class UserCredentialWrapFilterAsync extends Action.Simple {
 				//internal administrator is not allowed to access via REST
 				if (((String)ctx.args.get("username"))
 						.equalsIgnoreCase(
-								BBConfiguration.getBaasBoxAdminUsername())
+								BBConfiguration.getInstance().getBaasBoxAdminUsername())
 						||
-						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
 					tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
 			}
 			//one last thing: is the root user that is trying to access?
 			String username = (String)ctx.args.get("username");
 			String password = (String)ctx.args.get("password");
-			if (BBConfiguration.isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getRootPassword())){
+			if (BBConfiguration.getInstance().isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getInstance().getRootPassword())){
 				//then override username and password
-				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
+				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxAdminUsername());
+				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxAdminPassword());
 			}
 			
 			//if everything is ok.....

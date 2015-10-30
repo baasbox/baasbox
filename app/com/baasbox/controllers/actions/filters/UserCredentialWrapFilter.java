@@ -64,9 +64,9 @@ public class UserCredentialWrapFilter extends Action.Simple {
 				tempResult= F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
 			} else	
 				//internal administrator is not allowed to access via REST
-				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+				if (((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 						||
-						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
 					tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
 			
 				//if everything is ok.....

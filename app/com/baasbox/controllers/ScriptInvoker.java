@@ -65,7 +65,7 @@ public class ScriptInvoker extends Controller{
 
             ODocument serv = null;
             if (request().body().asText() != null && request().body().isMaxSizeExceeded())//fixes issue_561
-                return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.configuration.getString("parsers.text.maxLength"), "128KB"));
+                return badRequest("Too much data! The maximum is " + ObjectUtils.toString(BBConfiguration.getInstance().configuration.getString("parsers.text.maxLength"), "128KB"));
             try {
                 serv = ScriptingService.get(name, true, true);
             } catch (ScriptException e) {

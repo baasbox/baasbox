@@ -83,12 +83,13 @@ public class Global extends GlobalSettings {
 	@Override
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
+		  BBConfiguration.init();
 		  info("...Loading Play plugin...");
 		  
 		  //If the session encryption is enabled, checks if the secret is different by its default
-		  if (app.configuration().getBoolean(BBConfiguration.SESSION_ENCRYPT)
+		  if (app.configuration().getBoolean(BBConfiguration.getInstance().SESSION_ENCRYPT)
 				  &&
-			  app.configuration().getString(BBConfiguration.APPLICATION_SECRET).equals(BBConfiguration.getSecretDefault())){
+			  app.configuration().getString(BBConfiguration.getInstance().APPLICATION_SECRET).equals(BBConfiguration.getInstance().getSecretDefault())){
 				  error("The session encryption is enabled but the application secret has not been changed.");
 				  error("Please set the 'application.secret' parameter. It must be a string of 16 characters.");
 				  error("For security reasons BaasBox cannot start");
@@ -99,7 +100,7 @@ public class Global extends GlobalSettings {
 		  info(StatisticsService.os().toString());
 		  info(StatisticsService.memory().toString());
 		  info(StatisticsService.java().toString());
-		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString()); 
+		  if (Boolean.parseBoolean(app.configuration().getString(BBConfiguration.getInstance().DUMP_DB_CONFIGURATION_ON_STARTUP))) info(StatisticsService.db().toString()); 
 	  }
 	  
 	  @Override
@@ -137,7 +138,7 @@ public class Global extends GlobalSettings {
 			  Orient.instance().startup();
 			  ODatabaseDocumentTx db = null;
 			  try{
-				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.DB_PATH) );
+				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.getInstance().DB_PATH) );
 				if (!db.exists()) {
 					info("DB does not exist, BaasBox will create a new one");
 					db.create();
@@ -172,7 +173,7 @@ public class Global extends GlobalSettings {
 	    	if (justCreated){
 		    	try {
 		    		//we MUST use admin/admin because the db was just created
-		    		db = DbHelper.open( BBConfiguration.getAPPCODE(),"admin", "admin");
+		    		db = DbHelper.open( BBConfiguration.getInstance().getAPPCODE(),"admin", "admin");
 		    		DbHelper.setupDb();
 		    	}catch (Throwable e){
 					error("!! Error initializing BaasBox!", e);
@@ -190,7 +191,7 @@ public class Global extends GlobalSettings {
 	    }
     	info("Updating default users passwords...");
     	try {
-    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+    		db = DbHelper.open( BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxAdminUsername(), BBConfiguration.getInstance().getBaasBoxAdminPassword());
     		DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
 			info("Initializing session manager");
@@ -209,7 +210,7 @@ public class Global extends GlobalSettings {
     	}
     	
     	try{
-    		db = DbHelper.open( BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+    		db = DbHelper.open( BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxAdminUsername(), BBConfiguration.getInstance().getBaasBoxAdminPassword());
     		IosCertificateHandler.init();
     	}catch (Exception e) {
 	    	error("!! Error initializing BaasBox!", e);
@@ -224,32 +225,32 @@ public class Global extends GlobalSettings {
     	
     	//activate metrics
     	BaasBoxMetric.setExcludeURIStartsWith(com.baasbox.controllers.routes.Root.startMetrics().url());
-    	if (BBConfiguration.getComputeMetrics()) BaasBoxMetric.start();
+    	if (BBConfiguration.getInstance().getComputeMetrics()) BaasBoxMetric.start();
     	
     	//print out Redis info
-    	if (BBConfiguration.isRedisActive()){
+    	if (BBConfiguration.getInstance().isRedisActive()){
     		info("BaasBox will use REDIS as external cache");
-    		String redisHost=BBConfiguration.configuration.getString("redis.host");
-    		String redisPort=BBConfiguration.configuration.getString("redis.port");
-    		String redisURI=BBConfiguration.configuration.getString("redis.uri");
-    		String redisDatabase=BBConfiguration.configuration.getString("redis.database");
+    		String redisHost=BBConfiguration.getInstance().configuration.getString("redis.host");
+    		String redisPort=BBConfiguration.getInstance().configuration.getString("redis.port");
+    		String redisURI=BBConfiguration.getInstance().configuration.getString("redis.uri");
+    		String redisDatabase=BBConfiguration.getInstance().configuration.getString("redis.database");
     		if (StringUtils.isBlank(redisHost)) redisHost="localhost";
     		if (StringUtils.isBlank(redisPort)) redisPort="6379";
     		if (StringUtils.isBlank(redisDatabase)) redisDatabase="0";
     		info("REDIS server: " + (StringUtils.isBlank(redisURI)?redisHost + ":" + redisPort:redisURI));
     		info("REDIS database: " + redisDatabase);
-    	}
+    	} 
     	//print out Sessions encryption info
-    	if (BBConfiguration.isSessionEncryptionEnabled()){
+    	if (BBConfiguration.getInstance().isSessionEncryptionEnabled()){
     		info("BaasBox will encrypt sensitive information within users' sessions");
-    		if (BBConfiguration.getApplicationSecret().length()<16){
+    		if (BBConfiguration.getInstance().getApplicationSecret().length()<16){
     			error("The encription key has less than 16 character. Please check the application.secret parameter");
     			System.exit(-1);
     		}
-    		if (BBConfiguration.getApplicationSecret().length()>16){
+    		if (BBConfiguration.getInstance().getApplicationSecret().length()>16){
     			warn("The encription key has more than 16 character. Only 16 characters will be used (128 bits)");
     		}
-    		if (!BBConfiguration.isRedisActive()){
+    		if (!BBConfiguration.getInstance().isRedisActive()){
     			warn("REDIS is not enabled: encryption will not work in memory. Check and set 'redisplugin' parameter");
     		}
     	}
@@ -263,7 +264,7 @@ public class Global extends GlobalSettings {
 	    //write the Welcome Message
 	    info("");
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
-	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getAPPCODE());
+	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getInstance().getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
@@ -273,8 +274,8 @@ public class Global extends GlobalSettings {
 			InstantiationException, IllegalAccessException,
 			ClassNotFoundException, InvocationTargetException,
 			NoSuchMethodException, IOException {
-		if (BBConfiguration.getOrientEnableRemoteConnection() || BBConfiguration.getOrientStartCluster()){
-			if (BBConfiguration.configuration.getBoolean(BBConfiguration.DUMP_DB_CONFIGURATION_ON_STARTUP)){
+		if (BBConfiguration.getInstance().getOrientEnableRemoteConnection() || BBConfiguration.getInstance().getOrientStartCluster()){
+			if (BBConfiguration.getInstance().configuration.getBoolean(BBConfiguration.getInstance().DUMP_DB_CONFIGURATION_ON_STARTUP)){
 				BaasBoxLogger.info("*** DUMP of OrientDB daemon configuration: ");
 				BaasBoxLogger.info(getOrientConfString());
 			}
@@ -292,13 +293,13 @@ public class Global extends GlobalSettings {
 
 	private String getOrientConfString() {
 		Path currentRelativePath = Paths.get("");
-		Path dbPath=currentRelativePath.resolve(BBConfiguration.getDBDir());
+		Path dbPath=currentRelativePath.resolve(BBConfiguration.getInstance().getDBDir());
 		System.setProperty("ORIENTDB_HOME",currentRelativePath.toAbsolutePath().toString());
 		String toReturn=
  			   "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
 	    			   + "<orient-server>"
 	    			   + " <handlers>"
-	    			   + (BBConfiguration.getOrientStartCluster()?
+	    			   + (BBConfiguration.getInstance().getOrientStartCluster()?
 		    			     " <handler class=\"com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin\">"
 		    			   + " <parameters>"
 		    	           + "     <parameter name=\"nodeName\" value=\""+UUID.randomUUID()+"\" /> "
@@ -322,24 +323,24 @@ public class Global extends GlobalSettings {
 		
 	    			   + "<network>"
 	    			   + "<protocols>"
-	    			   + (BBConfiguration.getOrientEnableRemoteConnection()?"<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>":"")
+	    			   + (BBConfiguration.getInstance().getOrientEnableRemoteConnection()?"<protocol name=\"binary\" implementation=\"com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary\"/>":"")
 	    			   + "</protocols>"
 	    			   + "<listeners>"
-					   + (BBConfiguration.getOrientEnableRemoteConnection()?"<listener ip-address=\""+BBConfiguration.getOrientListeningAddress()+"\" port-range=\""+BBConfiguration.getOrientListeningPorts()+"\" protocol=\"binary\"/>":"")
+					   + (BBConfiguration.getInstance().getOrientEnableRemoteConnection()?"<listener ip-address=\""+BBConfiguration.getInstance().getOrientListeningAddress()+"\" port-range=\""+BBConfiguration.getInstance().getOrientListeningPorts()+"\" protocol=\"binary\"/>":"")
 					   + "</listeners>"
 	    			   + "</network>"
 	    			   + "<users>"
-	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getRootPassword())+"\" resources=\"*\"/>"
+	    			   + "<user name=\"root\" password=\""+(StringUtils.isEmpty(BBConfiguration.getInstance().getRootPassword()) ? UUID.randomUUID().toString():BBConfiguration.getInstance().getRootPassword())+"\" resources=\"*\"/>"
 	    			   + "</users>"
 	    			   + "<properties>"
-	    			   //+ (BBConfiguration.getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
+	    			   //+ (BBConfiguration.getInstance().getOrientStartCluster() ?  "<entry name=\"cache.level2.impl\" value=\"com.orientechnologies.orient.server.hazelcast.OHazelcastCache\" />"
 	    			   //:"")
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
 	    			   + "<entry name=\"log.console.level\" value=\"WARNING\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"WARNING\"/>"
-	    			   // + "<entry value=\""+BBConfiguration.getDBDir()+"\" name=\"server.database.path\" />"
+	    			   // + "<entry value=\""+BBConfiguration.getInstance().getDBDir()+"\" name=\"server.database.path\" />"
 	    			  // + "<entry name=\"server.database.path\"  "
-	    			  // + "		 value=\"" + BBConfiguration.getDBFullPath() + "\"/>"
+	    			  // + "		 value=\"" + BBConfiguration.getInstance().getDBFullPath() + "\"/>"
 	    			  // + "		 value=\"" + dbPath.toAbsolutePath().toString() + "/\"/>"
 	    			 
 	    			   //The following is required to eliminate an error or warning "Error on resolving property: ORIENTDB_HOME"
@@ -352,7 +353,7 @@ public class Global extends GlobalSettings {
 	private void overrideSettings() {
 		info ("Override settings...");
     	//takes only the settings that begin with baasbox.settings
-    	Configuration bbSettingsToOverride=BBConfiguration.configuration.getConfig("baasbox.settings");
+    	Configuration bbSettingsToOverride=BBConfiguration.getInstance().configuration.getConfig("baasbox.settings");
     	//if there is at least one of them
     	if (bbSettingsToOverride!=null) {
     		//takes the part after the "baasbox.settings" of the key names
@@ -421,6 +422,7 @@ public class Global extends GlobalSettings {
 	    }
 	    info("Destroying session manager...");
 	    SessionTokenProviderMemory.destroySessionTokenProvider();
+	    BBConfiguration.shutdown();
 	    info("...BaasBox has stopped");
 		debug("Global.onStop() ended");
 	  }  
@@ -438,7 +440,7 @@ public class Global extends GlobalSettings {
 			result.put("resource", request.path());
 			result.put("method", request.method());
 			result.put("request_header", (JsonNode)mapper.valueToTree(request.headers()));
-			result.put("API_version", BBConfiguration.configuration.getString(BBConfiguration.API_VERSION));
+			result.put("API_version", BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().API_VERSION));
 			setCallIdOnResult(request, result);
 		return result;
 	} 
