@@ -38,6 +38,7 @@ import org.scribe.oauth.OAuthService;
 
 import play.cache.Cache;
 import play.mvc.Http.Request;
+import sun.security.jca.GetInstance;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
@@ -54,6 +55,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
 
+<<<<<<< HEAD
   private static final String PROTOCOL = "http://";
   private static final String SECURE_PROTOCOL = "https://";
   private static final String DEFAULT_HOST = "localhost";
@@ -166,11 +168,11 @@ public abstract class SocialLoginService {
 
   public Tokens getTokens() throws UnsupportedSocialNetworkException {
     // since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
-    if (BBConfiguration.getSocialMock())
+    if (BBConfiguration.getInstance().getSocialMock())
       return new Tokens("fake_token", "fake_secret");
     ODatabaseRecordTx db = null;
     try {
-      db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());
+      db = DbHelper.getOrOpenConnection(BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxUsername(), BBConfiguration.getInstance().getBaasBoxPassword());
       String keyFormat = socialNetwork.toUpperCase() + "_TOKEN";
       String token = (String) Cache.get(keyFormat);
       if (token == null) {
@@ -225,7 +227,7 @@ public abstract class SocialLoginService {
   public abstract UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
 
   public static SocialLoginService by(String socialNetwork, String appcode) {
-    if (BBConfiguration.getSocialMock())
+    if (BBConfiguration.getInstance().getSocialMock())
       return new SocialLoginServiceMock(socialNetwork, appcode);
 
     if (socialNetwork.equals("facebook")) {
@@ -291,6 +293,7 @@ public abstract class SocialLoginService {
   public String getCallbackUrl() {
     return serverUrl().toString() + "/social/login/" + socialNetwork + "/callback?X-BAASBOX-APPCODE=" + this.appcode;
   }
+
 
 
 }

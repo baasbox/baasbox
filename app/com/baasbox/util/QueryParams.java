@@ -36,10 +36,10 @@ public class QueryParams implements IQueryParametersKeys{
 	private String where="";
 	private Integer page=-1;
 	private Integer skip=null;
-	private Integer recordPerPage=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_PER_PAGE));
+	private Integer recordPerPage=new Integer(BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().QUERY_RECORD_PER_PAGE));
 	private String groupBy="";
 	private String orderBy="";
-	private Integer depth=new Integer(BBConfiguration.configuration.getString(BBConfiguration.QUERY_RECORD_DEPTH));;
+	private Integer depth=new Integer(BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().QUERY_RECORD_DEPTH));;
 	private Object[] params={};
 	private boolean more = false;
 

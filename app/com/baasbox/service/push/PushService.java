@@ -220,8 +220,8 @@ public class PushService {
 	}
 
 	public boolean isMocked(){
-		if (BBConfiguration.getPushMock()) BaasBoxLogger.warn("PushService is Mocked!!");
-		return BBConfiguration.getPushMock();
+		if (BBConfiguration.getInstance().getPushMock()) BaasBoxLogger.warn("PushService is Mocked!!");
+		return BBConfiguration.getInstance().getPushMock();
 	}
 	
 

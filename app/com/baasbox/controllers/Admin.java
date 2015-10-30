@@ -222,7 +222,7 @@ public class Admin extends Controller {
     response = ImmutableMap.<String, Object>builder().
       put("installation", (Object) ImmutableMap.of(
         "bb_id", bbId
-        , "bb_version", BBConfiguration.getApiVersion()
+        , "bb_version", BBConfiguration.getInstance().getApiVersion()
         , "db_version", Internal.DB_VERSION.getValueAsString()
         ))
       .put("db", StatisticsService.db())
@@ -927,8 +927,8 @@ public class Admin extends Controller {
    * @return
    */
   public static F.Promise<Result> disable(String username) {
-    if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-      username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+    if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername()) ||
+      username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
       return F.Promise.pure(badRequest("Cannot disable/suspend internal users"));
     return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
       try {
@@ -950,8 +950,8 @@ public class Admin extends Controller {
    * @return
    */
   public static F.Promise<Result> enable(String username) {
-    if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-      username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+    if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername()) ||
+      username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
       return F.Promise.pure(badRequest("Cannot enable/activate internal users"));
     return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
       try {
@@ -977,10 +977,10 @@ public class Admin extends Controller {
     /**
      * Test if the usernames provided do not match internal users' usernames 
      */
-    if ((follower.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-      follower.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())) ||
-      (theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername()) ||
-      theFollowed.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())))
+    if ((follower.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername()) ||
+      follower.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())) ||
+      (theFollowed.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername()) ||
+      theFollowed.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())))
       return F.Promise.pure(badRequest("Cannot create followship relationship with internal users"));
 
     return F.Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {

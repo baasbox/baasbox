@@ -138,7 +138,7 @@ public class User extends Controller {
 	public static F.Promise<Result> getUser(String username) throws SqlInjectionException{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (ArrayUtils.contains(
-				new String[]{ BBConfiguration.getBaasBoxAdminUsername() , BBConfiguration.getBaasBoxUsername()},
+				new String[]{ BBConfiguration.getInstance().getBaasBoxAdminUsername() , BBConfiguration.getInstance().getBaasBoxUsername()},
 				username)){
 			return F.Promise.pure(badRequest(username + " cannot be queried"));
 		}
@@ -426,8 +426,8 @@ public class User extends Controller {
 			username = tokens [1];
 			tokenId= tokens [2];
 
-			adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-			adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
+			adminUser=BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
+			adminPassword = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
 
 			try {
 				DbHelper.open(appCode, adminUser, adminPassword);
@@ -522,8 +522,8 @@ public class User extends Controller {
 			username = tokens [1];
 			tokenId= tokens [2];
 
-			String adminUser=BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
-			String adminPassword = BBConfiguration.configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
+			String adminUser=BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.ADMIN_USERNAME);
+			String adminPassword = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.ADMIN_PASSWORD);
 
 			try {
 				DbHelper.open(appCode, adminUser, adminPassword);
@@ -750,9 +750,9 @@ public class User extends Controller {
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password <hidden>");
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
-			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+			if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 					||
-					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())
 					) return F.Promise.pure(forbidden(username + " cannot login"));
 	
 			if (bodyUrlEncoded.get("login_data")!=null)
@@ -782,9 +782,9 @@ public class User extends Controller {
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Username " + username);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Password " + password);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Appcode " + appcode);		
-			if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+			if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 					||
-					username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())
+					username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())
 					) return F.Promise.pure(forbidden(username + " cannot login"));
 	
 			if (bodyJson.get("login_data")!=null)

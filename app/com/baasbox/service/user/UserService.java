@@ -90,13 +90,13 @@ public class UserService {
 	public static void createDefaultUsers(){
 		try{
 			//the baasbox default user used to connect to the DB like anonymous user
-			String username=BBConfiguration.getBaasBoxUsername();
-			String password=BBConfiguration.getBaasBoxPassword();
+			String username=BBConfiguration.getInstance().getBaasBoxUsername();
+			String password=BBConfiguration.getInstance().getBaasBoxPassword();
 			UserService.signUp(username, password,new Date(),DefaultRoles.ANONYMOUS_USER.toString(), null,null,null,null,false);
 	
 			//the baasbox default user used to act internally as the administrator
-			username=BBConfiguration.getBaasBoxAdminUsername();
-			password=BBConfiguration.getBaasBoxAdminPassword();
+			username=BBConfiguration.getInstance().getBaasBoxAdminUsername();
+			password=BBConfiguration.getInstance().getBaasBoxAdminPassword();
 			UserService.signUp(username, password,new Date(),DefaultRoles.ADMIN.toString(), null,null,null,null,false);
 			
 			moveUserToRole("admin",DefaultRoles.BASE_ADMIN.toString(), DefaultRoles.ADMIN.toString());
@@ -112,8 +112,8 @@ public class UserService {
                 where += " and (" + criteria.getWhere() + ")";
             }
             Object[] params = criteria.getParams();
-            Object[] injectedParams = new String[]{BBConfiguration.getBaasBoxAdminUsername(),
-                                                   BBConfiguration.getBaasBoxUsername()};
+            Object[] injectedParams = new String[]{BBConfiguration.getInstance().getBaasBoxAdminUsername(),
+                                                   BBConfiguration.getInstance().getBaasBoxUsername()};
             Object[] newParams = ArrayUtils.addAll(new Object[]{injectedParams},params);
             criteria.where(where);
             criteria.params(newParams);
@@ -780,7 +780,7 @@ public class UserService {
 	
 	public static void addUserToRole(String username,String role) throws OpenTransactionException{
 		boolean admin = true;
-		if(!DbHelper.currentUsername().equals(BBConfiguration.getBaasBoxAdminUsername())){
+		if(!DbHelper.currentUsername().equals(BBConfiguration.getInstance().getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
 			admin = false;
 		}
@@ -797,7 +797,7 @@ public class UserService {
 	
 	public static void removeUserFromRole(String username,String role) throws OpenTransactionException{
 		boolean admin = false;
-		if(!isAnAdmin(DbHelper.getCurrentUserNameFromConnection())){
+		if(!DbHelper.currentUsername().equals(BBConfiguration.getInstance().getBaasBoxAdminUsername())){
 			DbHelper.reconnectAsAdmin();
 			admin = true;
 		}
@@ -866,8 +866,8 @@ public class UserService {
 	}
 
     public static boolean isInternalUsername(String username) {
-        return BBConfiguration.getBaasBoxAdminUsername().equals(username)||
-               BBConfiguration.getBaasBoxUsername().equals(username);
+        return BBConfiguration.getInstance().getBaasBoxAdminUsername().equals(username)||
+               BBConfiguration.getInstance().getBaasBoxUsername().equals(username);
     }
 
     public static boolean isSocialAccount(String username) throws SqlInjectionException {

@@ -176,7 +176,7 @@ public class Document extends Controller {
         	QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
             if (criteria.isPaginationEnabled()) criteria.enablePaginationMore();
         	
-			 if (BBConfiguration.isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
+			 if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
 			 	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Prepare to sending chunked response..");
 			 	DocumentService.checkSyntax(collectionName,criteria);
 			 	return getDocumentsChunked(collectionName);

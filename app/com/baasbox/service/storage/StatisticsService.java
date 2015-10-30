@@ -133,7 +133,7 @@ public class StatisticsService {
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
 			if (db != null){
-				if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+				if (BBConfiguration.getInstance().getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
 				else dbProp.put("path", "N/A");
 				dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
 				dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
@@ -145,7 +145,7 @@ public class StatisticsService {
 			map.put("physical_size", DbHelper.getDBTotalSize());
 			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
 
-			map.put("size_threshold_percentage", BBConfiguration.getDBAlertThreshold());
+			map.put("size_threshold_percentage", BBConfiguration.getInstance().getDBAlertThreshold());
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
 
@@ -156,7 +156,7 @@ public class StatisticsService {
 		public static ImmutableMap os() {
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
-			if (BBConfiguration.getStatisticsSystemOS()){
+			if (BBConfiguration.getInstance().getStatisticsSystemOS()){
 				response = ImmutableMap.of(
 						"os_name", System.getProperty("os.name"),
 						"os_arch",  System.getProperty("os.arch"),
@@ -191,7 +191,7 @@ public class StatisticsService {
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
 
-			if (BBConfiguration.getStatisticsSystemMemory()){
+			if (BBConfiguration.getInstance().getStatisticsSystemMemory()){
 				Runtime rt = Runtime.getRuntime(); 
 				long maxMemory=rt.maxMemory();
 				long freeMemory=rt.freeMemory();
