@@ -33,10 +33,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static void init(Configuration config){
-		if (me==null){
-			System.out.println("Configuration initialized");
-			me=new BBConfiguration(config);
-		}
+		me=new BBConfiguration(config);
 	}
 	
 	public static Configuration configuration;
@@ -120,7 +117,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static Boolean getPushMock(){
-		if (pushMock==null) pushMock=	BooleanUtils.isTrue(configuration.getBoolean(PUSH_MOCK));
+		pushMock=	BooleanUtils.isTrue(configuration.getBoolean(PUSH_MOCK));
 		return pushMock;
 	}
 	

@@ -151,14 +151,14 @@ public abstract class AbstractTest extends FluentTest
 		Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
 		GlobalTest global = new GlobalTest();
 		global.setTestConfiguration(additionalConfig);
-		return fakeApplication(new Configuration(global.getTestConfiguration()).asMap(),global);
+		return fakeApplication(global);
 	}
 	
 	protected static FakeApplication getFakeApplicationChunkResponse() {
 		Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
 		GlobalTest global = new GlobalTest();
 		global.setTestConfiguration(additionalConfigNoChunk);
-		return fakeApplication(new Configuration(global.getTestConfiguration()).asMap(),global);
+		return fakeApplication(global);
 	}
 	
 	protected static FakeApplication getFakeApplicationWithDefaultConf(){

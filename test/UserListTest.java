@@ -1,7 +1,7 @@
 import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.routeAndCall;
+import static play.test.Helpers.route;
 import static play.test.Helpers.running;
 import static play.test.Helpers.headers;
 import static play.test.Helpers.contentAsString;
@@ -16,12 +16,14 @@ import java.util.UUID;
 
 import org.junit.Test;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.helpers.BaasBoxHelpers;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+import play.Play;
 import play.libs.F.Callback;
 import play.mvc.Http.Status;
 import play.mvc.Result;
@@ -75,7 +77,7 @@ public class UserListTest extends AbstractUsersTest {
     request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
     request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
     request = request.withJsonBody(node, POST);
-    Result result = routeAndCall(request);
+    Result result = route(request);
     assertRoute(result, "Create user.", Status.CREATED, null, false);
 
     return sFakeUser;
@@ -92,6 +94,9 @@ public class UserListTest extends AbstractUsersTest {
           {
         public void invoke(TestBrowser browser) 
         {
+        	
+          System.out.println("CHUNKED METHOD from configuration:"+Play.application().configuration().getBoolean("baasbox.list.response.chunked"));
+          System.out.println("CHUNKED METHOD from bbconfiguration:"+BBConfiguration.isChunkedEnabled());
           ObjectMapper om = new ObjectMapper();
           List<String> createdUsernames = Lists.newArrayList();
           for (int i = 0; i < 10; i++) {
@@ -101,7 +106,7 @@ public class UserListTest extends AbstractUsersTest {
           FakeRequest request = new FakeRequest(GET, getRouteAddress());
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-          Result result = routeAndCall(request);
+          Result result = route(request);
           String content = new String(myContentAsBytes((SimpleResult) result));
 
           Map<String, String> headers = headers(result);
@@ -119,7 +124,7 @@ public class UserListTest extends AbstractUsersTest {
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 
-          result = routeAndCall(request);
+          result = route(request);
           content = new String(myContentAsBytes((SimpleResult) result));
           assertNotNull(content);
           try{
@@ -134,7 +139,7 @@ public class UserListTest extends AbstractUsersTest {
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 
-          result = routeAndCall(request);
+          result = route(request);
           content = new String(myContentAsBytes((SimpleResult) result));
           assertNotNull(content);
           try {
