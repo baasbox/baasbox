@@ -280,35 +280,73 @@ public class DbHelper {
 		return command;
 	}
 
+	
+		/***
+		 * Executes a select eventually passing the parameters
+		 * 
+		 * @param command
+		 * @param params
+		 *            positional parameters
+		 * @return the List of the record retrieved (the command MUST be a select)
+		 */
+		public static List<ODocument> selectCommandExecute(OCommandRequest command,
+				Object[] params) {
+			List<ODocument> result = selectCommandExecute(command, true, params);
+			return result;
+		}
+
+		/***
+		 * Executes a select eventually passing the parameters
+		 * 
+		 * @param command
+		 * @param securityExecution 
+		 * @param params
+		 *            positional parameters
+		 * @return the List of the record retrieved (the command MUST be a select)
+		 */
+		public static List<ODocument> selectCommandExecute(OCommandRequest command,
+				boolean securityExecution, Object[] params) {
+			if(securityExecution){
+				DbHelper.filterOUserPasswords(true);
+			}
+			List<ODocument> queryResult = command.execute((Object[]) params);
+			if (securityExecution) {
+				DbHelper.filterOUserPasswords(false);
+			}
+			return queryResult;
+		}
+
+		public static List<ODocument> commandExecute(OCommandRequest command,
+				boolean securityExecution, Object[] params) {
+			if (securityExecution) {
+				DbHelper.filterOUserPasswords(true);
+			}
+			List<ODocument> queryResult = command.execute((Object[]) params);
+			if (securityExecution) {
+				DbHelper.filterOUserPasswords(false);
+			}
+			return queryResult;
+		}
+
+		public static List<ODocument> commandExecute(OCommandRequest command,
+				Object[] params) {
+			List<ODocument> queryResult = commandExecute(command, true, params);
+			return queryResult;
+		}
+	
+	
 	/***
-	 * Executes a select eventually passing the parameters
-	 * 
+	 * Used to perform delete(s) and update(s) operations
 	 * @param command
 	 * @param params
-	 *            positional parameters
-	 * @return the List of the record retrieved (the command MUST be a select)
+	 * @return
 	 */
-	public static List<ODocument> selectCommandExecute(OCommandRequest command,
-			Object[] params) {
-		DbHelper.filterOUserPasswords(true);
-		List<ODocument> queryResult = command.execute((Object[]) params);
-		DbHelper.filterOUserPasswords(false);
-		return queryResult;
-	}
-
 	public static Integer sqlCommandExecute(OCommandRequest command,
 			Object[] params) {
 		Integer updateQueryResult = command.execute((Object[]) params);
 		return updateQueryResult;
 	}
-
-	public static List<ODocument> commandExecute(OCommandRequest command,
-			Object[] params) {
-		DbHelper.filterOUserPasswords(true);
-		List<ODocument> queryResult = command.execute((Object[]) params);
-		DbHelper.filterOUserPasswords(false);
-		return queryResult;
-	}
+	
 
 	/**
 	 * Prepares the command API to execute an arbitrary SQL statement

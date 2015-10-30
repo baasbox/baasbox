@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
@@ -57,6 +59,7 @@ import com.baasbox.dao.exception.ResetPasswordException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.db.hook.HooksManager;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.InvalidJsonException;
@@ -67,10 +70,11 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
+import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -80,7 +84,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class UserService {
 
@@ -904,6 +907,39 @@ public class UserService {
 		//warning! from this point there is no database available!
 	}
 	
+  public static void dropUser(OUser user) throws Throwable {
+	HooksManager.enableHidePasswordHook(DbHelper.getConnection(), false);
+    QueryParams emptyCriteria = QueryParams.getInstance();
+    String toDeleteUsername = user.getName();
+	List<ODocument> friendsOf = FriendShipService.getFriendsOf(toDeleteUsername, emptyCriteria);   
+	
+	DbHelper.requestTransaction();
+	try {
+		NodeDao.deleteVerticesByAuthor(user);
+	    NodeDao.deleteDocumentsByAuthor(user);
+	    if (friendsOf != null && friendsOf.size()>0){
+	        List<String> usernames = friendsOf.stream().map(x->{
+			   return  (String)((ODocument)x.field("user")).field("name");
+		    }).collect(Collectors.toList());
+		  
+		    for(String u:usernames) {
+		      FriendShipService.unfollow(u, toDeleteUsername);
+		    }
+	    }
+	    RoleDao.delete(RoleDao.getFriendRoleName(user));
+	
+	    UserDao.getInstance().delete(user);
+	    
+	   DbHelper.commitTransaction();
+	}catch (Exception e){
+		DbHelper.rollbackTransaction();
+		BaasBoxLogger.error("Error deleting user {}: {}", user.getName(),ExceptionUtils.getStackTrace(e));
+		throw e;
+	}finally{
+		HooksManager.enableHidePasswordHook(DbHelper.getConnection(), true);
+	}
+  }
+
  	public static boolean isAnAdmin(String username){
 		List<ODocument> res=(List<ODocument>) DbHelper.genericSQLStatementExecute(
 				"select count(*) from (traverse orole.inheritedRole from (select roles from ouser where name=?)) where name=\"administrator\""

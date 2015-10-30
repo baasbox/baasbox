@@ -20,6 +20,7 @@ package com.baasbox.service.sociallogin;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -37,7 +38,7 @@ import org.scribe.oauth.OAuthService;
 
 import play.cache.Cache;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+import sun.security.jca.GetInstance;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
@@ -45,220 +46,253 @@ import com.baasbox.configuration.SocialLoginConfiguration;
 import com.baasbox.db.DbHelper;
 import com.baasbox.exception.InvalidAppCodeException;
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
 
-	private static final String PROTOCOL = "http://";
-	private static final String SECURE_PROTOCOL = "https://";
-	private static final String DEFAULT_HOST = "localhost";
-	private static final String DEFAULT_PORT = "9000";
+<<<<<<< HEAD
+  private static final String PROTOCOL = "http://";
+  private static final String SECURE_PROTOCOL = "https://";
+  private static final String DEFAULT_HOST = "localhost";
+  private static final String DEFAULT_PORT = "9000";
 
-	protected OAuthService service;
-
-
-	public OAuthService getService() {
-		return service;
-	}
-
-	protected Tokens token;
-	protected String socialNetwork;
-	protected String appcode;
-	public abstract Class<? extends Api> provider();
-	public abstract Boolean needToken();
-	public abstract String userInfoUrl();
-
-	public abstract String getVerifierFromRequest(Request r);
-	public abstract Token getAccessTokenFromRequest(Request r,Session s);
+  protected OAuthService service;
 
 
-	public void build(){
-		StringBuilder serverUrl = new StringBuilder();
-		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
-		try{
-			DbHelper.getOrOpenConnectionWIthHTTPUsername();		
-			Boolean isSSL = (Boolean)Application.NETWORK_HTTP_SSL.getValueAsBoolean();
-			if(isSSL){
-				serverUrl.append(SECURE_PROTOCOL);
-			}else{
-				serverUrl.append(PROTOCOL);
-			}
-			String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
-			serverUrl.append(serverName!=null?serverName:DEFAULT_HOST);
-			String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
-			serverUrl.append(serverPort!=null?":"+serverPort:":"+DEFAULT_PORT);
-			this.service = new ServiceBuilder().
-					provider(provider())
-					.apiKey(this.token.getToken())
-					.apiSecret(this.token.getSecret())
-					.callback(serverUrl.toString()+"/login/"+socialNetwork+"/callback")
-					.build();
-		}catch(InvalidAppCodeException iace){
-			throw new RuntimeException(iace);
-		}
+  public OAuthService getService() {
+    return service;
+  }
 
-	}
+  protected Tokens token;
+  protected String socialNetwork;
+  protected String appcode;
 
-	public SocialLoginService(String socialNetwork,String appcode){
-		this.socialNetwork = socialNetwork;
-		this.appcode = appcode;
-		this.token = getTokens();
-		build();
-	}
+  public abstract Class<? extends Api> provider();
 
-	public String getAuthorizationURL(Session s){
-		Token t = null;
-		if(this.needToken()){
-			t = this.service.getRequestToken();
-			if(this.socialNetwork.equals("twitter")){
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("setting token");
-				s.put("twitter.token",t.getToken());
-				s.put("twitter.secret",t.getSecret());
-			}
-		}
-		return this.service.getAuthorizationUrl(t);
-	}
+  public abstract Boolean needToken();
 
-	public Token requestAccessToken(Request r,Session s){
-		Token t = getAccessTokenFromRequest(r,s);
-		Verifier v = new Verifier(getVerifierFromRequest(r));
-		return this.service.getAccessToken(t, v);
-	}
+  public abstract String userInfoUrl();
 
-	public UserInfo getUserInfo(Token accessToken) throws BaasBoxSocialException{
+  public abstract String getVerifierFromRequest(Request r);
 
-		OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
+  public abstract Token getAccessTokenFromRequest(Request r);
 
-		this.service.signRequest(accessToken, request);
-		Response response = request.send();
-		return extractUserInfo(response);
-	}
+  private String serverUrl() {
+    StringBuilder serverUrl = new StringBuilder();
+    try {
+      DbHelper.getOrOpenConnectionWIthHTTPUsername();
+      Boolean isSSL = (Boolean) Application.NETWORK_HTTP_SSL.getValueAsBoolean();
+      if (isSSL) {
+        serverUrl.append(SECURE_PROTOCOL);
+      } else {
+        serverUrl.append(PROTOCOL);
+      }
+      String serverName = Application.NETWORK_HTTP_URL.getValueAsString();
+      serverUrl.append(serverName != null ? serverName : DEFAULT_HOST);
+      String serverPort = Application.NETWORK_HTTP_PORT.getValueAsString();
+      serverUrl.append(serverPort != null ? ":" + serverPort : ":" + DEFAULT_PORT);
+    } catch (InvalidAppCodeException iace) {
+      throw new RuntimeException(iace);
+    }
+    return serverUrl.toString();
+  }
 
-	protected abstract OAuthRequest buildOauthRequestForUserInfo(Token accessToken);
+  public void build() {
 
-	public boolean isClientEnabled(){
-		String keyFormat = socialNetwork.toUpperCase()+"_ENABLED";
-		Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
-		return enabled == null ? false : enabled;
-	}
+    this.service = new ServiceBuilder().
+      provider(provider())
+      .apiKey(this.token.getToken())
+      .apiSecret(this.token.getSecret())
+      .callback(serverUrl() + "/social/login/" + socialNetwork + "/callback")
+      .build();
 
-	public  Tokens getTokens() throws UnsupportedSocialNetworkException{
-		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
-		if (BBConfiguration.getInstance().getSocialMock())  return new Tokens("fake_token","fake_secret");
-		ODatabaseRecordTx db=null;
-		try {
-			db = DbHelper.getOrOpenConnection(BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxUsername(), BBConfiguration.getInstance().getBaasBoxPassword());		
-			String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";
-			String token = (String)Cache.get(keyFormat);
-			if(token ==null){
-				token = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
-				Cache.set(keyFormat,token,0);
-			}
-			keyFormat =  socialNetwork.toUpperCase()+"_SECRET";
-			String secret =  (String)Cache.get(keyFormat);;
-			if(secret ==null){
-				secret = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
-				Cache.set(keyFormat,secret,0);
-			}
-			if(secret==null || token == null){
-				throw new UnsupportedSocialNetworkException("Social login for "+socialNetwork+" is not enabled.Please add app token and secret to configuration");
-			}
-			return new Tokens(token,secret);
-		} catch (InvalidAppCodeException e) {
-			//a very strange thing happened here!
-			throw new RuntimeException(e);
-		}finally{
-			if (db!=null && !db.isClosed()) db.close();
-		}
-	}
+  }
 
-	public static class Tokens implements Serializable{
-		private String token;
-		private String secret;
+  public SocialLoginService(String socialNetwork, String appcode) {
+    this.socialNetwork = socialNetwork;
+    this.appcode = appcode;
+    this.token = getTokens();
+    build();
+  }
 
-		public Tokens(String token,String secret){
-			assert(!(StringUtils.isEmpty(token) || StringUtils.isEmpty(secret)));
+  public String getAuthorizationURL() {
+    Token t = null;
+    String key = UUID.randomUUID().toString();
+    if(this.needToken()){
+      this.service = new ServiceBuilder().
+        provider(provider())
+        .apiKey(this.token.getToken())
+        .apiSecret(this.token.getSecret())
+        .callback(serverUrl().toString() + "/social/login/" + socialNetwork + "/callback?X-BAASBOX-APPCODE=" + this.appcode + "&_id=" + key)
+        .build();
 
-			this.token = token;
-			this.secret = secret;
-		}
+      t = this.service.getRequestToken();
+      if(this.needToken()){
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("setting token");
+        key = this.saveToken(key,t);
 
-		public String getToken() {
-			return token;
-		}
+      }
+    }
+    return service.getAuthorizationUrl(t);
+  }
 
-		public String getSecret() {
-			return secret;
-		}
+  protected abstract String saveToken(String k, Token t);
 
-		public String toString(){
-			return "Tokens:{token:"+this.token+",secret:"+this.secret+"}";
-		}
+  public Token requestAccessToken(Request r) {
+    Token t = getAccessTokenFromRequest(r);
+    Verifier v = new Verifier(getVerifierFromRequest(r));
+    return this.service.getAccessToken(t, v);
+  }
 
-	}
+  public UserInfo getUserInfo(Token accessToken) throws BaasBoxSocialException {
 
-	public abstract  UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
+    OAuthRequest request = buildOauthRequestForUserInfo(accessToken);
 
-	public static SocialLoginService by(String socialNetwork,String appcode) {
-		if (BBConfiguration.getInstance().getSocialMock()) return new SocialLoginServiceMock(socialNetwork,appcode);
+    this.service.signRequest(accessToken, request);
+    Response response = request.send();
+    return extractUserInfo(response);
+  }
 
-		if(socialNetwork.equals("facebook")){
-			return new FacebookLoginService(appcode);
-		}else if(socialNetwork.equals("github")){
-			return new GithubLoginService(appcode);
-		}else if(socialNetwork.equals("google")){
-			return new GooglePlusLoginService(appcode);
-		}
+  protected abstract OAuthRequest buildOauthRequestForUserInfo(Token accessToken);
 
-		return null;
-	}
+  public boolean isClientEnabled() {
+    String keyFormat = socialNetwork.toUpperCase() + "_ENABLED";
+    Boolean enabled = SocialLoginConfiguration.valueOf(keyFormat).getValueAsBoolean();
+    return enabled == null ? false : enabled;
+  }
 
-	public abstract String getPrefix();
-	protected abstract String getValidationURL(String token);
+  public Tokens getTokens() throws UnsupportedSocialNetworkException {
+    // since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
+    if (BBConfiguration.getInstance().getSocialMock())
+      return new Tokens("fake_token", "fake_secret");
+    ODatabaseRecordTx db = null;
+    try {
+      db = DbHelper.getOrOpenConnection(BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxUsername(), BBConfiguration.getInstance().getBaasBoxPassword());
+      String keyFormat = socialNetwork.toUpperCase() + "_TOKEN";
+      String token = (String) Cache.get(keyFormat);
+      if (token == null) {
+        token = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
+        Cache.set(keyFormat, token, 0);
+      }
+      keyFormat = socialNetwork.toUpperCase() + "_SECRET";
+      String secret = (String) Cache.get(keyFormat);
+      ;
+      if (secret == null) {
+        secret = SocialLoginConfiguration.valueOf(keyFormat).getValueAsString();
+        Cache.set(keyFormat, secret, 0);
+      }
+      if (secret == null || token == null) {
+        throw new UnsupportedSocialNetworkException("Social login for " + socialNetwork + " is not enabled.Please add app token and secret to configuration");
+      }
+      return new Tokens(token, secret);
+    } catch (InvalidAppCodeException e) {
+      // a very strange thing happened here!
+      throw new RuntimeException(e);
+    } finally {
+      if (db != null && !db.isClosed())
+        db.close();
+    }
+  }
 
-	public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException{
-		String url = getValidationURL(token);
-		HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
-		HttpGet method = new HttpGet(url);
+  public static class Tokens implements Serializable {
+    private String token;
+    private String secret;
 
-		BasicResponseHandler brh = new BasicResponseHandler();
+    public Tokens(String token, String secret) {
+      assert (!(StringUtils.isEmpty(token) || StringUtils.isEmpty(secret)));
 
-		String body;
-		try {
-			body = client.execute(method,brh);
+      this.token = token;
+      this.secret = secret;
+    }
 
-			if(StringUtils.isEmpty(body)){
-				return false;
-			}else{
-				ObjectMapper mapper = BBJson.mapper();
-				JsonFactory factory = mapper.getJsonFactory(); // since 2.1 use mapper.getFactory() instead
-				JsonParser jp = factory.createJsonParser(body);
-				JsonNode jn = mapper.readTree(jp);
-				return validate(jn);
-			}
-		} catch (IOException e) {
-			throw new BaasBoxSocialTokenValidationException("There was an error in the token validation process:"+ExceptionUtils.getMessage(e));
-		}
+    public String getToken() {
+      return token;
+    }
 
-	}
+    public String getSecret() {
+      return secret;
+    }
 
-	protected abstract boolean validate(Object response);
+    public String toString() {
+      return "Tokens:{token:" + this.token + ",secret:" + this.secret + "}";
+    }
+
+  }
+
+  public abstract UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
+
+  public static SocialLoginService by(String socialNetwork, String appcode) {
+    if (BBConfiguration.getInstance().getSocialMock())
+      return new SocialLoginServiceMock(socialNetwork, appcode);
+
+    if (socialNetwork.equals("facebook")) {
+      return new FacebookLoginService(appcode);
+    } else if (socialNetwork.equals("github")) {
+      return new GithubLoginService(appcode);
+    } else if (socialNetwork.equals("google")) {
+      return new GooglePlusLoginService(appcode);
+    }
+    else if (socialNetwork.equals("twitter")) {
+      return new TwitterLoginService(appcode);
+    }
+
+    return null;
+  }
+
+  public abstract String getPrefix();
+
+  protected abstract String getValidationURL(String token);
+
+  public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException {
+    String url = getValidationURL(token);
+    HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
+    HttpGet method = new HttpGet(url);
+
+    BasicResponseHandler brh = new BasicResponseHandler();
+
+    String body;
+    try {
+      body = client.execute(method, brh);
+
+      if (StringUtils.isEmpty(body)) {
+        return false;
+      } else {
+        ObjectMapper mapper = BBJson.mapper();
+        JsonFactory factory = mapper.getJsonFactory(); // since 2.1 use mapper.getFactory() instead
+        JsonParser jp = factory.createJsonParser(body);
+        JsonNode jn = mapper.readTree(jp);
+        return validate(jn);
+      }
+    } catch (IOException e) {
+      throw new BaasBoxSocialTokenValidationException("There was an error in the token validation process:" + ExceptionUtils.getMessage(e));
+    }
+
+  }
+
+  protected abstract boolean validate(Object response);
 
 
-	public  String getPrefixByName(String from) {
-		if(from.equals("facebook")){
-			return FacebookLoginService.PREFIX;
-		}else if(socialNetwork.equals("github")){
-			return GithubLoginService.PREFIX;
-		}else if(socialNetwork.equals("google")){
-			return GooglePlusLoginService.PREFIX;
-		}
-		throw new InvalidSocialNetworkNameException(from);
-	}
+  public String getPrefixByName(String from) {
+    if (from.equals("facebook")) {
+      return FacebookLoginService.PREFIX;
+    } else if (socialNetwork.equals("github")) {
+      return GithubLoginService.PREFIX;
+    } else if (socialNetwork.equals("twitter")) {
+      return TwitterLoginService.PREFIX;
+    } else if (socialNetwork.equals("google")) {
+      return GooglePlusLoginService.PREFIX;
+    }
+    throw new InvalidSocialNetworkNameException(from);
+  }
+
+  public String getCallbackUrl() {
+    return serverUrl().toString() + "/social/login/" + socialNetwork + "/callback?X-BAASBOX-APPCODE=" + this.appcode;
+  }
 
 
 

@@ -11,7 +11,7 @@ public class BBCache {
 	public static final int UUID_TIMEOUT=0; //seconds, 0=unlimited
 	private static final String TAG_KEY=":tag:";
 	public static final int TAG_TIMEOUT=120;
-	
+  private static final String TWITTER_KEY = ":twitter:";
 
 	public static String getUUIDKey(){
 		return (new StringBuilder())
@@ -20,6 +20,17 @@ public class BBCache {
 				.toString(); 
 	}
 	
+  public static String getTwitterKey() {
+    return (new StringBuilder())
+      .append(Http.Context.current().args.get("appcode"))
+      .append(TWITTER_KEY)
+      .toString();
+  }
+
+  public static void setTwitterToken(String uuid, String token) {
+    Cache.set(getTwitterKey() + uuid, token);
+  }
+
 	public static String getTagKey(){
 		return (new StringBuilder())
 				.append(Http.Context.current().args.get("appcode"))

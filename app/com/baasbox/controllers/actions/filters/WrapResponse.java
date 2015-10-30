@@ -16,22 +16,17 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
-import play.api.libs.iteratee.Enumerator;
-import play.api.mvc.ChunkedResult;
 import play.core.j.JavaResultExtractor;
 import play.libs.F;
 import play.libs.Json;
@@ -48,9 +43,7 @@ import com.baasbox.controllers.helpers.HttpConstants;
 import com.baasbox.controllers.helpers.WrapResponseHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -130,6 +123,7 @@ public class WrapResponse {
 	private SimpleResult onCustomCode(int statusCode, Context ctx, String data) throws Exception {
 		Request request = ctx.request();
 		CustomHttpCode customCode = CustomHttpCode.getFromBbCode(statusCode);
+
 		if (customCode.getType().equals("error")){
 			ObjectNode result=null;
 			result = prepareError(request, data);
@@ -251,6 +245,9 @@ public class WrapResponse {
 		if (BBConfiguration.getInstance().getWrapResponse()){
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 			final int statusCode = result.getWrappedSimpleResult().header().status();
+      if (isRedirect(statusCode)) {
+        return result;
+      }
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
 			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
 			if (ctx.response().getHeaders().get("Content-Type")!=null 
@@ -321,6 +318,9 @@ public class WrapResponse {
 			if (BBConfiguration.getInstance().getWrapResponse()){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 				final int statusCode = result.getWrappedSimpleResult().header().status();
+        if (isRedirect(statusCode)) {
+				  return result;
+				}
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Result type:"+result.getWrappedResult().getClass().getName() + " Response Content-Type:" +ctx.response().getHeaders().get("Content-Type"));
 				if (ctx.response().getHeaders().get("Content-Type")!=null 
@@ -374,5 +374,11 @@ public class WrapResponse {
 			return result;
 		}); //map
 	}//wrapAsync
+
+  private static boolean isRedirect(Integer statusCode) {
+    return statusCode == 301 || statusCode == 303 || statusCode == 307;
+  }
+
+
 
 }
