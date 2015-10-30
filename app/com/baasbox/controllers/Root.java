@@ -314,27 +314,27 @@ public class Root extends Controller {
 		public static F.Promise<Result> overrideConfiguration(){
 			Http.RequestBody body = request().body();
 			JsonNode bodyJson= body.asJson();
-			JsonNode newDBAlert = bodyJson.get(BBConfiguration.DB_ALERT_THRESHOLD);
-			JsonNode newDBSize = bodyJson.get(BBConfiguration.DB_SIZE_THRESHOLD);
+			JsonNode newDBAlert = bodyJson.get(BBConfiguration.getInstance().DB_ALERT_THRESHOLD);
+			JsonNode newDBSize = bodyJson.get(BBConfiguration.getInstance().DB_SIZE_THRESHOLD);
 			try{
 				if (newDBAlert!=null && !newDBAlert.isInt() && newDBAlert.asInt()<1) {
-					throw new IllegalArgumentException(BBConfiguration.DB_ALERT_THRESHOLD + " must be a positive integer value");
+					throw new IllegalArgumentException(BBConfiguration.getInstance().DB_ALERT_THRESHOLD + " must be a positive integer value");
 				}
 				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0)
-					throw new IllegalArgumentException(BBConfiguration.DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
+					throw new IllegalArgumentException(BBConfiguration.getInstance().DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
 			}catch (Throwable e){
 				return F.Promise.pure(badRequest(ExceptionUtils.getMessage(e)));
 			}
 
 			if (newDBAlert!=null){
-				BBConfiguration.setDBAlertThreshold(newDBAlert.asInt());
+				BBConfiguration.getInstance().setDBAlertThreshold(newDBAlert.asInt());
 			}
 			if (newDBSize!=null) {
-				BBConfiguration.setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
+				BBConfiguration.getInstance().setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
 			}
 			Map<String, ? extends Number> ret = ImmutableMap.of(
-					BBConfiguration.DB_ALERT_THRESHOLD, BBConfiguration.getDBAlertThreshold(),
-					BBConfiguration.DB_SIZE_THRESHOLD, BBConfiguration.getDBSizeThreshold());
+					BBConfiguration.getInstance().DB_ALERT_THRESHOLD, BBConfiguration.getInstance().getDBAlertThreshold(),
+					BBConfiguration.getInstance().DB_SIZE_THRESHOLD, BBConfiguration.getInstance().getDBSizeThreshold());
 
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));
@@ -346,8 +346,8 @@ public class Root extends Controller {
 		@With({RootCredentialWrapFilterAsync.class})
 		public static F.Promise<Result> getOverridableConfiguration(){
 			Map<String, ? extends Number> ret = ImmutableMap.of(
-					BBConfiguration.DB_ALERT_THRESHOLD, BBConfiguration.getDBAlertThreshold(),
-					BBConfiguration.DB_SIZE_THRESHOLD, BBConfiguration.getDBSizeThreshold());
+					BBConfiguration.getInstance().DB_ALERT_THRESHOLD, BBConfiguration.getInstance().getDBAlertThreshold(),
+					BBConfiguration.getInstance().DB_SIZE_THRESHOLD, BBConfiguration.getInstance().getDBSizeThreshold());
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));
 			} catch (JsonProcessingException e) {

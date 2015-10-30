@@ -230,7 +230,7 @@ public class File extends Controller {
         			        	BaasBoxLogger.warn("Could not parse the file " + fileName,e);
         			        	metadata.add("_bb_parser_error", ExceptionUtils.getMessage(e));
         			        	metadata.add("_bb_parser_exception", ExceptionUtils.getFullStackTrace(e));
-        			        	metadata.add("_bb_parser_version", BBConfiguration.getApiVersion());
+        			        	metadata.add("_bb_parser_version", BBConfiguration.getInstance().getApiVersion());
         			        }
                             String contentType = metadata.get(Metadata.CONTENT_TYPE);
                             if (StringUtils.isEmpty(contentType)) contentType = "application/octet-stream";

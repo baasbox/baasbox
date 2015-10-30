@@ -85,7 +85,7 @@ public class SessionObject implements Serializable{
 		if (serializedSession.startsWith("{")){
 			return createSessionFromString(serializedSession);
 		}else{  //maybe the string contains an encrypted SessionObject
-			if (BBConfiguration.isSessionEncryptionEnabled()){
+			if (BBConfiguration.getInstance().isSessionEncryptionEnabled()){
 				serializedSession=decrypt(serializedSession);
 				return createSessionFromString(serializedSession);
 			}else{
@@ -117,12 +117,12 @@ public class SessionObject implements Serializable{
 	@Override
 	public String toString(){
 		String toRet=this.toJSON().toString();
-		if (BBConfiguration.isSessionEncryptionEnabled()) toRet = encrypt(toRet);
+		if (BBConfiguration.getInstance().isSessionEncryptionEnabled()) toRet = encrypt(toRet);
 		return toRet;
 	}
 	
 	private static String encrypt(String stringToEncrypt){
-		if (BBConfiguration.isSessionEncryptionEnabled()){
+		if (BBConfiguration.getInstance().isSessionEncryptionEnabled()){
 			return Crypto.encryptAES(stringToEncrypt);
 		}else {
 			return stringToEncrypt;
@@ -130,7 +130,7 @@ public class SessionObject implements Serializable{
 	}
 	
 	private static String decrypt(String stringToDecrypt){
-		if (BBConfiguration.isSessionEncryptionEnabled()){
+		if (BBConfiguration.getInstance().isSessionEncryptionEnabled()){
 			String toRet=null;
 			try{
 				toRet=Crypto.decryptAES(stringToDecrypt); 

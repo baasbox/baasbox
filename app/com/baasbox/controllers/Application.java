@@ -33,23 +33,23 @@ public class Application extends Controller {
 	   * @return
 	   */
 	  public static Result login(){
-		  String version = BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION);
-		  String edition = BBConfiguration.configuration.getString(IBBConfigurationKeys.EDITION);
+		  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
+		  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
 		  return ok(views.html.admin.index.render(version,edition));
 	  } 
 	  
 	//renders the spashscreen
   public static Result index() {
-	  String version = BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION);
-	  String edition = BBConfiguration.configuration.getString(IBBConfigurationKeys.EDITION);
+	  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
+	  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
 	  return ok(views.html.index.render(version,edition));
   }
 
 
   public static Result apiVersion() {
 	  ObjectNode result = Json.newObject();
-	  result.put("api_version", BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
-	  result.put("edition", BBConfiguration.configuration.getString(IBBConfigurationKeys.API_VERSION));
+	  result.put("api_version", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
+	  result.put("edition", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
 	  return ok(result);
   }
   

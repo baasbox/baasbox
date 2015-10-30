@@ -19,7 +19,7 @@ public class HttpClientService {
 	@Deprecated
     public static WS.Response callSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,Object body) throws Exception{
        try {
-    	   return callSync(url, method, params, headers, body, BBConfiguration.configuration.getInt("ws.timeout.request"));
+    	   return callSync(url, method, params, headers, body, BBConfiguration.getInstance().configuration.getInt("ws.timeout.request"));
        } catch (Exception e){
            throw e;
        }

@@ -43,8 +43,8 @@ public class AdminCredentialWrapFilterAsync extends Action.Simple {
 			appCode = ctx.request().getQueryString("appcode");
 		}
 
-		String adminUser=BBConfiguration.getBaasBoxAdminUsername();
-		String adminPassword = BBConfiguration.getBaasBoxAdminPassword();
+		String adminUser=BBConfiguration.getInstance().getBaasBoxAdminUsername();
+		String adminPassword = BBConfiguration.getInstance().getBaasBoxAdminPassword();
 		ctx.args.put("username", adminUser);
 		ctx.args.put("password", adminPassword);
 		ctx.args.put("appcode", appCode);

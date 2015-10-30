@@ -64,7 +64,7 @@ public class ExportJob implements Runnable{
 			ZipEntry entry = new ZipEntry("export.json");
 			zip.putNextEntry(entry);
 				in = new FileInputStream(tmpJson);
-				final int BUFFER = BBConfiguration.getImportExportBufferSize(); 
+				final int BUFFER = BBConfiguration.getInstance().getImportExportBufferSize(); 
 		        byte buffer[] = new byte[BUFFER];
 		        
 				int length;
@@ -75,7 +75,7 @@ public class ExportJob implements Runnable{
     		in.close();
     		
     		File manifest = File.createTempFile("manifest", ".txt");
-			FileUtils.writeStringToFile(manifest, BBInternalConstants.IMPORT_MANIFEST_VERSION_PREFIX+BBConfiguration.getApiVersion());
+			FileUtils.writeStringToFile(manifest, BBInternalConstants.IMPORT_MANIFEST_VERSION_PREFIX+BBConfiguration.getInstance().getApiVersion());
     		
     		ZipEntry entryManifest = new ZipEntry("manifest.txt");
 				zip.putNextEntry(entryManifest);

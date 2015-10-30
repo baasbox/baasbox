@@ -58,8 +58,8 @@ public class UserOrAnonymousCredentialsFilterAsync extends Action.Simple {
 		if (StringUtils.isEmpty(token) && StringUtils.isEmpty(authHeader)) {
 			if (!StringUtils.isEmpty(appCode)) {
 				// inject the internal username/password
-				ctx.args.put("username", BBConfiguration.getBaasBoxUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxPassword());
+				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxUsername());
+				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxPassword());
 				ctx.args.put("appcode", appCode);
 				isCredentialOk = true;
 				anonymousInjected = true;
@@ -96,9 +96,9 @@ public class UserOrAnonymousCredentialsFilterAsync extends Action.Simple {
 				// valid credentials have been found
 				// internal administrator is not allowed to access via REST
 				if (((String) ctx.args.get("username"))
-					.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 					|| (((String) ctx.args.get("username"))
-							.equalsIgnoreCase(BBConfiguration
+							.equalsIgnoreCase(BBConfiguration.getInstance()
 									.getBaasBoxUsername()) && !anonymousInjected))
 				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username")
 						+ " cannot access via REST"));
@@ -106,10 +106,10 @@ public class UserOrAnonymousCredentialsFilterAsync extends Action.Simple {
 			//one last thing: is the root user that is trying to access?
 			String username = (String)ctx.args.get("username");
 			String password = (String)ctx.args.get("password");
-			if (BBConfiguration.isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getRootPassword())){
+			if (BBConfiguration.getInstance().isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getInstance().getRootPassword())){
 				//then override username and password
-				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
+				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxAdminUsername());
+				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxAdminPassword());
 			}
 			
 			// if everything is ok.....

@@ -47,7 +47,7 @@ package com.baasbox.filters {
 				val dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S")
 				val userAgent = requestHeader.headers.get("User-Agent").getOrElse("")
 				contentLength = result.header.headers.get("Content-Length").getOrElse("-")
-				if(BBConfiguration.getWriteAccessLog()){
+				if(BBConfiguration.getInstance().getWriteAccessLog()){
 					/*
 					* Log format is the combined one: http://httpd.apache.org/docs/2.2/logs.html
 					* Unfortunely we have to do a litlle hack to log the authenticated username due a limitation of the framework: scala cannot access to the current Http Context where the username is stored

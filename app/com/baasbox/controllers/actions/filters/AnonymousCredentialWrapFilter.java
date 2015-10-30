@@ -37,8 +37,8 @@ public class AnonymousCredentialWrapFilter extends Action.Simple {
 		
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
-		String user=BBConfiguration.getBaasBoxUsername();
-		String password = BBConfiguration.getBaasBoxPassword();
+		String user=BBConfiguration.getInstance().getBaasBoxUsername();
+		String password = BBConfiguration.getInstance().getBaasBoxPassword();
 		
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);

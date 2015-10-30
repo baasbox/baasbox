@@ -148,10 +148,10 @@ public abstract class SocialLoginService {
 
 	public  Tokens getTokens() throws UnsupportedSocialNetworkException{
 		//since this method can be called by the /callback endpoint that does not open a DB connection, we need to manage it here
-		if (BBConfiguration.getSocialMock())  return new Tokens("fake_token","fake_secret");
+		if (BBConfiguration.getInstance().getSocialMock())  return new Tokens("fake_token","fake_secret");
 		ODatabaseRecordTx db=null;
 		try {
-			db = DbHelper.getOrOpenConnection(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxUsername(), BBConfiguration.getBaasBoxPassword());		
+			db = DbHelper.getOrOpenConnection(BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxUsername(), BBConfiguration.getInstance().getBaasBoxPassword());		
 			String keyFormat = socialNetwork.toUpperCase()+"_TOKEN";
 			String token = (String)Cache.get(keyFormat);
 			if(token ==null){
@@ -204,7 +204,7 @@ public abstract class SocialLoginService {
 	public abstract  UserInfo extractUserInfo(Response r) throws BaasBoxSocialException;
 
 	public static SocialLoginService by(String socialNetwork,String appcode) {
-		if (BBConfiguration.getSocialMock()) return new SocialLoginServiceMock(socialNetwork,appcode);
+		if (BBConfiguration.getInstance().getSocialMock()) return new SocialLoginServiceMock(socialNetwork,appcode);
 
 		if(socialNetwork.equals("facebook")){
 			return new FacebookLoginService(appcode);

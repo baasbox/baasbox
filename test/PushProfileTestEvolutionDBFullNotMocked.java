@@ -35,8 +35,8 @@ public class PushProfileTestEvolutionDBFullNotMocked extends PushProfileAbstract
 					setAssetFile("/BB_export_083_push_test.zip", "application/zip");
 					int status = httpRequest("http://localhost:3333/admin/db/import", POST,new HashMap<String,String>());
 					assertTrue(status==200);
-					oldMockValue=BBConfiguration.getPushMock();
-					BBConfiguration._overrideConfigurationPushMock(false);
+					oldMockValue=BBConfiguration.getInstance().getPushMock();
+					BBConfiguration.getInstance()._overrideConfigurationPushMock(false);
 				}//invoke
 			}//Callback<TestBrowser>() 
 		);//running
@@ -50,7 +50,7 @@ public class PushProfileTestEvolutionDBFullNotMocked extends PushProfileAbstract
 			HTMLUNIT, 
 			new Callback<TestBrowser>()  {
 				public void invoke(TestBrowser browser) {
-					BBConfiguration._overrideConfigurationPushMock(oldMockValue);
+					BBConfiguration.getInstance()._overrideConfigurationPushMock(oldMockValue);
 				}
 			}
 			);

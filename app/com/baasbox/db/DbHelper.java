@@ -125,12 +125,12 @@ public class DbHelper {
 
 
 	public static BigInteger getDBTotalSize(){
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getDBFullPath()));
+		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getInstance().getDBFullPath()));
 	}
 	
 	public static BigInteger getDBStorageFreeSpace(){
-		if (BBConfiguration.getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getDBSizeThreshold();
-		return BigInteger.valueOf(new File(BBConfiguration.getDBFullPath()).getFreeSpace());
+		if (BBConfiguration.getInstance().getDBSizeThreshold()!=BigInteger.ZERO) return BBConfiguration.getInstance().getDBSizeThreshold();
+		return BigInteger.valueOf(new File(BBConfiguration.getInstance().getDBFullPath()).getFreeSpace());
 	}
 
 	
@@ -414,14 +414,14 @@ public class DbHelper {
 
 	public static ODatabaseRecordTx open(String appcode, String username,String password) throws InvalidAppCodeException {
 		
-		if (appcode==null || !appcode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
+		if (appcode==null || !appcode.equals(BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().APP_CODE)))
 			throw new InvalidAppCodeException("Authentication info not valid or not provided: " + appcode + " is an Invalid App Code");
 		if(dbFreeze){
 
 			throw new ShuttingDownDBException();
 		}
 
-		String databaseName=BBConfiguration.getDBFullPath();
+		String databaseName=BBConfiguration.getInstance().getDBFullPath();
 		
 		/* these will be necessary when BaasBox will support OrientDB clusters */
 		/*
@@ -453,7 +453,7 @@ public class DbHelper {
 		boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN
 				.toString()));
 		return excludeInternal ? isAdminRole
-				&& !BBConfiguration.getBaasBoxAdminUsername().equals(
+				&& !BBConfiguration.getInstance().getBaasBoxAdminUsername().equals(
 						user.getName()) : isAdminRole;
 	}
 
@@ -463,8 +463,8 @@ public class DbHelper {
 		DbHelper.close(DbHelper.getConnection());
 		try {
 			return open(appcode.get(),
-					BBConfiguration.getBaasBoxAdminUsername(),
-					BBConfiguration.getBaasBoxAdminPassword());
+					BBConfiguration.getInstance().getBaasBoxAdminUsername(),
+					BBConfiguration.getInstance().getBaasBoxAdminPassword());
 		} catch (InvalidAppCodeException e) {
 			throw new RuntimeException(e);
 		}
@@ -530,7 +530,7 @@ public class DbHelper {
 
 	public static boolean isConnectedLikeBaasBox() {
 		return getCurrentHTTPUsername().equalsIgnoreCase(
-				BBConfiguration.getBaasBoxUsername());
+				BBConfiguration.getInstance().getBaasBoxUsername());
 	}
 
 
@@ -550,11 +550,11 @@ public class DbHelper {
 	public static void updateDefaultUsers() throws Exception{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		UserDao udao = UserDao.getInstance();
-		OUser user = udao.getOUserByUsername(BBConfiguration.getBaasBoxUsername());
-		user.setPassword(BBConfiguration.getBaasBoxPassword());
+		OUser user = udao.getOUserByUsername(BBConfiguration.getInstance().getBaasBoxUsername());
+		user.setPassword(BBConfiguration.getInstance().getBaasBoxPassword());
 		user.save();
-		user = udao.getOUserByUsername(BBConfiguration.getBaasBoxAdminUsername());
-		user.setPassword(BBConfiguration.getBaasBoxAdminPassword());
+		user = udao.getOUserByUsername(BBConfiguration.getInstance().getBaasBoxAdminUsername());
+		user.setPassword(BBConfiguration.getInstance().getBaasBoxAdminPassword());
 		user.save();
 
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -581,7 +581,7 @@ public class DbHelper {
 			}
 		} 
 		
-		Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
+		Internal.DB_VERSION._setValue(BBConfiguration.getInstance().getDBVersion());
 		String uniqueId="";
 		try{
 			UUID u = new UUID();
@@ -660,7 +660,7 @@ public class DbHelper {
 		ODatabaseRecordTx db = null;
 
 		try{
-			db = open(appcode, BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminPassword());
+			db = open(appcode, BBConfiguration.getInstance().getBaasBoxAdminUsername(), BBConfiguration.getInstance().getBaasBoxAdminPassword());
 			
 			ODatabaseExport oe = new ODatabaseExport(db, os, new OCommandOutputListener() {
 				@Override
@@ -772,11 +772,11 @@ public class DbHelper {
 			 fromVersion=od.field("value");
 		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
 		 BaasBoxLogger.info("...db version is: " + fromVersion);
-		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getDBVersion())){
+		 if (!fromVersion.equalsIgnoreCase(BBConfiguration.getInstance().getDBVersion())){
 			 BaasBoxLogger.info("...imported DB needs evolutions!...");
 			 Evolutions.performEvolutions(db, fromVersion);
-			 Internal.DB_VERSION._setValue(BBConfiguration.getDBVersion());
-			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getDBVersion());
+			 Internal.DB_VERSION._setValue(BBConfiguration.getInstance().getDBVersion());
+			 BaasBoxLogger.info("DB version is now " + BBConfiguration.getInstance().getDBVersion());
 		 }//end of evolutions
 	}
 
