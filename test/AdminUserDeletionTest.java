@@ -154,13 +154,13 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
           Result result = routeAndCall(request);
           assertRoute(result, "testDelete", Status.BAD_REQUEST, null, true);
 
-          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getBaasBoxAdminUsername());
+          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getInstance().getBaasBoxAdminUsername());
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           result = routeAndCall(request);
           assertRoute(result, "testDelete", Status.BAD_REQUEST, null, true);
 
-          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getBaasBoxUsername());
+          request = new FakeRequest("DELETE", getRouteAddress() + "/" + BBConfiguration.getInstance().getBaasBoxUsername());
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           result = routeAndCall(request);

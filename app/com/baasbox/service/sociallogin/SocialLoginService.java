@@ -38,7 +38,6 @@ import org.scribe.oauth.OAuthService;
 
 import play.cache.Cache;
 import play.mvc.Http.Request;
-import sun.security.jca.GetInstance;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.Application;
