@@ -55,7 +55,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public abstract class SocialLoginService {
 
-<<<<<<< HEAD
   private static final String PROTOCOL = "http://";
   private static final String SECURE_PROTOCOL = "https://";
   private static final String DEFAULT_HOST = "localhost";
