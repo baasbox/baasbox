@@ -36,8 +36,8 @@ public class PushProfileTestDBNewNotMocked extends PushProfileAbstractTestNotMoc
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					Result result = routeAndCall(request);
 					assertRoute(result, "testDelete", Status.OK, null, true);
-					oldMockValue=BBConfiguration.getPushMock();
-					BBConfiguration._overrideConfigurationPushMock(false);
+					oldMockValue=BBConfiguration.getInstance().getPushMock();
+					BBConfiguration.getInstance()._overrideConfigurationPushMock(false);
 				}//run
 			}//Runnable() 
 		);//running
@@ -51,7 +51,7 @@ public class PushProfileTestDBNewNotMocked extends PushProfileAbstractTestNotMoc
 			HTMLUNIT, 
 			new Callback<TestBrowser>()  {
 				public void invoke(TestBrowser browser) {
-					BBConfiguration._overrideConfigurationPushMock(oldMockValue);
+					BBConfiguration.getInstance()._overrideConfigurationPushMock(oldMockValue);
 				}
 			}
 			);

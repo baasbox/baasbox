@@ -27,195 +27,213 @@ import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
 
-
-	public static Configuration configuration = Play.application().configuration();
-	private static Boolean computeMetrics;
-	private static Boolean pushMock;;
+	private static BBConfiguration me = null;
+	
+	public static BBConfiguration getInstance(){
+		return me;
+	}
+	
+	public static void shutdown(){
+		me=null;
+	}
+	
+	private BBConfiguration(Configuration config){
+		configuration = config;
+	}
+	
+	public static void init(){
+		me = new BBConfiguration(Play.application().configuration());
+	}
+	
+	public  Configuration configuration;
+	
+	private  Boolean computeMetrics;
+	private  Boolean pushMock;;
 	
 	//this is a percentage needed by the console to show alerts on dashboard when DB size is near the defined Threshold
-	private static Integer dbAlertThreshold=Integer.valueOf(10); 
-	private static boolean isDBAlertThresholdOverridden=false; 
+	private  Integer dbAlertThreshold=Integer.valueOf(10); 
+	private  boolean isDBAlertThresholdOverridden=false; 
 	
 	//the db size Threshold in bytes
-	private static BigInteger dbSizeThreshold=BigInteger.ZERO;
-	private static boolean isDBSizeThresholdOverridden=false; 
-	private static final boolean _isRedisActive = BBConfiguration.configuration.getString("redisplugin").equals("enabled");
+	private  BigInteger dbSizeThreshold=BigInteger.ZERO;
+	private  boolean isDBSizeThresholdOverridden=false; 
 	
 	
 	@Deprecated
-	public static String getRealm(){
-		return configuration.getString(REALM);
+	public  String getRealm(){
+		return this.configuration.getString(REALM);
 	}
 	
-	public static int getMVCCMaxRetries(){
-		return configuration.getInt(MVCC_MAX_RETRIES);
+	public  int getMVCCMaxRetries(){
+		return this.configuration.getInt(MVCC_MAX_RETRIES);
 	}
 	
-	public static String getBaasBoxUsername(){
-		return configuration.getString(ANONYMOUS_USERNAME);
+	public  String getBaasBoxUsername(){
+		return this.configuration.getString(ANONYMOUS_USERNAME);
 	}
 	
-	public static String getBaasBoxPassword(){
-		return configuration.getString(ANONYMOUS_PASSWORD);
+	public  String getBaasBoxPassword(){
+		return this.configuration.getString(ANONYMOUS_PASSWORD);
 	}
 	
-	public static String getBaasBoxAdminUsername(){
-		return configuration.getString(ADMIN_USERNAME);
+	public  String getBaasBoxAdminUsername(){
+		return this.configuration.getString(ADMIN_USERNAME);
 	}
 	
-	public static String getBaasBoxAdminPassword(){
-		return configuration.getString(ADMIN_PASSWORD);
+	public  String getBaasBoxAdminPassword(){
+		return this.configuration.getString(ADMIN_PASSWORD);
 	}
 
-	public static  Boolean getStatisticsSystemOS(){
-		return configuration.getBoolean(STATISTICS_SYSTEM_OS);
+	public   Boolean getStatisticsSystemOS(){
+		return this.configuration.getBoolean(STATISTICS_SYSTEM_OS);
 	}	
 
-	public static Boolean getStatisticsSystemMemory(){
-		return configuration.getBoolean(STATISTICS_SYSTEM_MEMORY);
+	public  Boolean getStatisticsSystemMemory(){
+		return this.configuration.getBoolean(STATISTICS_SYSTEM_MEMORY);
 	}
 
-	public static Boolean getWriteAccessLog(){
-		return configuration.getBoolean(WRITE_ACCESS_LOG);
+	public  Boolean getWriteAccessLog(){
+		return this.configuration.getBoolean(WRITE_ACCESS_LOG);
 	}
 	
-	public static boolean isRedisActive(){
-		return _isRedisActive;
+	public  boolean isRedisActive(){
+		return this.configuration.getString("redisplugin").equals("enabled");
 	}
 	
-	public static String getApiVersion(){
-		return configuration.getString(API_VERSION);
+	public  String getApiVersion(){
+		return this.configuration.getString(API_VERSION);
 	}
 	
-	public static String getDBVersion(){
-		return configuration.getString(DB_VERSION);
+	public  String getDBVersion(){
+		return this.configuration.getString(DB_VERSION);
 	}
 	
-	public static String getDBFullPath(){
-		return configuration.getString(DB_PATH);
+	public  String getDBFullPath(){
+		return this.configuration.getString(DB_PATH);
 	}
 	
-	public static String getDBDir(){
+	public  String getDBDir(){
 		if (getDBFullPath().lastIndexOf(File.separator) > -1)
 			return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
 		else return getDBFullPath();
 	}
 	
-	public static Boolean getWrapResponse(){
-		return Boolean.valueOf(configuration.getString(WRAP_RESPONSE));
+	public  Boolean getWrapResponse(){
+		return Boolean.valueOf(this.configuration.getString(WRAP_RESPONSE));
 	}
 	
-	public static Boolean getSocialMock(){
-		return Boolean.valueOf(configuration.getString(SOCIAL_MOCK));
+	public  Boolean getSocialMock(){
+		return Boolean.valueOf(this.configuration.getString(SOCIAL_MOCK));
 	}
 	
-	public static Boolean getPushMock(){
-		if (pushMock==null) pushMock=	BooleanUtils.isTrue(configuration.getBoolean(PUSH_MOCK));
-		return pushMock;
+	public  Boolean getPushMock(){
+		if (this.pushMock==null) this.pushMock=	BooleanUtils.isTrue(this.configuration.getBoolean(PUSH_MOCK));
+		return this.pushMock;
 	}
 	
-	public static String getAPPCODE() {
-		return configuration.getString(APP_CODE);
+	public  String getAPPCODE() {
+		return this.configuration.getString(APP_CODE);
 	}
 	
-	public static String getDBBackupDir() {
-		return configuration.getString(DB_BACKUP_PATH);
+	public  String getDBBackupDir() {
+		return this.configuration.getString(DB_BACKUP_PATH);
 	}
 	
-	public static String getPushCertificateFolder(){
-		return configuration.getString(PUSH_CERTIFICATES_FOLDER);
+	public  String getPushCertificateFolder(){
+		return this.configuration.getString(PUSH_CERTIFICATES_FOLDER);
 	}
 
-	public static String getRootPassword() {
-		return configuration.getString(ROOT_PASSWORD);
+	public  String getRootPassword() {
+		return this.configuration.getString(ROOT_PASSWORD);
 	}
 
-	public static boolean isRootAsAdmin() {
-		Boolean rootAsAdmin=configuration.getBoolean(ROOT_AS_ADMIN);
+	public  boolean isRootAsAdmin() {
+		Boolean rootAsAdmin=this.configuration.getBoolean(ROOT_AS_ADMIN);
 		return rootAsAdmin==null?false:rootAsAdmin.booleanValue();
 	}
 	
-	public static int getImportExportBufferSize(){
-		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
+	public  int getImportExportBufferSize(){
+		return this.configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
 	}
 	
-	public static Boolean isChunkedEnabled(){
-		return configuration.getBoolean(CHUNKED_RESPONSE);
+	public  Boolean isChunkedEnabled(){
+		return this.configuration.getBoolean(CHUNKED_RESPONSE);
 	}
 	
-	public static int getChunkSize(){
-		return configuration.getInt(CHUNK_SIZE);
+	public  int getChunkSize(){
+		return this.configuration.getInt(CHUNK_SIZE);
 	}
 	
 	//sessions
-	public static Boolean isSessionEncryptionEnabled(){
-		return configuration.getBoolean(SESSION_ENCRYPT);
+	public  Boolean isSessionEncryptionEnabled(){
+		return this.configuration.getBoolean(SESSION_ENCRYPT);
 	}
 	
-	public static String getApplicationSecret(){
-		return configuration.getString(APPLICATION_SECRET);
+	public  String getApplicationSecret(){
+		return this.configuration.getString(APPLICATION_SECRET);
 	}
 	
-	public static String getSecretDefault(){
+	public  String getSecretDefault(){
 		return "CHANGE_ME";
 	}
 	
 	//metrics
-	public static boolean getComputeMetrics() {
-		if (computeMetrics==null) 
-			computeMetrics=(!StringUtils.isEmpty(configuration.getString(ROOT_PASSWORD)) 
-				&& 	BooleanUtils.isTrue(configuration.getBoolean(CAPTURE_METRICS)));
-		return computeMetrics;
+	public  boolean getComputeMetrics() {
+		if (this.computeMetrics==null) 
+			this.computeMetrics=(!StringUtils.isEmpty(this.configuration.getString(ROOT_PASSWORD)) 
+				&& 	BooleanUtils.isTrue(this.configuration.getBoolean(CAPTURE_METRICS)));
+		return this.computeMetrics;
 	}
 	
-	public static void overrideConfigurationComputeMetrics(boolean computeMetrics) {
-		BBConfiguration.computeMetrics = computeMetrics;
+	public  void overrideConfigurationComputeMetrics(boolean computeMetrics) {
+		this.computeMetrics = computeMetrics;
 	}
 	
 	//used by tests
-	public static void _overrideConfigurationPushMock(boolean pushMock) {
-		BBConfiguration.pushMock = pushMock;
+	public  void _overrideConfigurationPushMock(boolean pushMock) {
+		this.pushMock = pushMock;
 	}
 	
 	//DB Size Thresholds and Alerts
-	public static int getDBAlertThreshold(){
-		if (!isDBAlertThresholdOverridden && configuration.getInt(DB_ALERT_THRESHOLD)!=null) return configuration.getInt(DB_ALERT_THRESHOLD);
-		return dbAlertThreshold;
+	public  int getDBAlertThreshold(){
+		if (!this.isDBAlertThresholdOverridden && this.configuration.getInt(DB_ALERT_THRESHOLD)!=null) 
+			return this.configuration.getInt(DB_ALERT_THRESHOLD);
+		return this.dbAlertThreshold;
+	}
+		
+	public  BigInteger getDBSizeThreshold(){
+		if (!this.isDBSizeThresholdOverridden && this.configuration.getLong(DB_SIZE_THRESHOLD)!=null) return BigInteger.valueOf(this.configuration.getLong(DB_SIZE_THRESHOLD));
+		return this.dbSizeThreshold;
 	}
 	
-	public static BigInteger getDBSizeThreshold(){
-		if (!isDBSizeThresholdOverridden && configuration.getLong(DB_SIZE_THRESHOLD)!=null) return BigInteger.valueOf(configuration.getLong(DB_SIZE_THRESHOLD));
-		return dbSizeThreshold;
-	}
-	
-	public static void setDBAlertThreshold(int newValue){
-		synchronized(dbAlertThreshold){
-			dbAlertThreshold=Integer.valueOf(newValue);
-			isDBAlertThresholdOverridden=true;
+	public  void setDBAlertThreshold(int newValue){
+		synchronized(this.dbAlertThreshold){
+			this.dbAlertThreshold=Integer.valueOf(newValue);
+			this.isDBAlertThresholdOverridden=true;
 	    }
 	}
 	
-	public static void setDBSizeThreshold(BigInteger newValue){
-		synchronized(dbSizeThreshold){
-			dbSizeThreshold=newValue;
-			isDBSizeThresholdOverridden=true;
+	public  void setDBSizeThreshold(BigInteger newValue){
+		synchronized(this.dbSizeThreshold){
+			this.dbSizeThreshold=newValue;
+			this.isDBSizeThresholdOverridden=true;
 	    }
 	}
 	
-	public static Boolean getOrientEnableRemoteConnection() {
-		return configuration.getBoolean(ORIENT_ENABLE_REMOTE_CONNECTION);
+	public  Boolean getOrientEnableRemoteConnection() {
+		return this.configuration.getBoolean(ORIENT_ENABLE_REMOTE_CONNECTION);
 	}
 
-	public static String getOrientListeningPorts() {
-		return configuration.getString(ORIENT_LISTENING_PORTS);
+	public  String getOrientListeningPorts() {
+		return this.configuration.getString(ORIENT_LISTENING_PORTS);
 	}
 
-	public static String getOrientListeningAddress() {
-		return configuration.getString(ORIENT_LISTENING_ADDRESS);
+	public  String getOrientListeningAddress() {
+		return this.configuration.getString(ORIENT_LISTENING_ADDRESS);
 	}
 	
-	public static Boolean getOrientStartCluster() {
-		return configuration.getBoolean(ORIENT_START_CLUSTER);
+	public  Boolean getOrientStartCluster() {
+		return this.configuration.getBoolean(ORIENT_START_CLUSTER);
 	}
 	
 	

@@ -98,8 +98,8 @@ public class EventsController {
             return false;
         } else {
             String username = (String) ctx().args.get("username");
-            if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
-                    username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
+            if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()) ||
+                    username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())) {
                 return false;
             }
         }

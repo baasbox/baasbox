@@ -37,8 +37,8 @@ public class AnonymousLogin extends Action.Simple {
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("AnonymousLogin  for resource " + Http.Context.current().request());
 		
 		
-		String user=BBConfiguration.getBaasBoxUsername();
-		String password = BBConfiguration.getBaasBoxPassword();
+		String user=BBConfiguration.getInstance().getBaasBoxUsername();
+		String password = BBConfiguration.getInstance().getBaasBoxPassword();
 
 		ctx.args.put("username", user);
 		ctx.args.put("password", password);

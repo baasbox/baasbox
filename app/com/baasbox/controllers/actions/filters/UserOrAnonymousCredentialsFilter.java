@@ -57,8 +57,8 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 		if (StringUtils.isEmpty(token) && StringUtils.isEmpty(authHeader)) {
 			if (!StringUtils.isEmpty(appCode)) {
 				// inject the internal username/password
-				ctx.args.put("username", BBConfiguration.getBaasBoxUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxPassword());
+				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxUsername());
+				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxPassword());
 				ctx.args.put("appcode", appCode);
 				isCredentialOk = true;
 				anonymousInjected = true;
@@ -94,9 +94,9 @@ public class UserOrAnonymousCredentialsFilter extends Action.Simple {
 			} else // valid credentials have been found
 			// internal administrator is not allowed to access via REST
 			if (((String) ctx.args.get("username"))
-					.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+					.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 					|| (((String) ctx.args.get("username"))
-							.equalsIgnoreCase(BBConfiguration
+							.equalsIgnoreCase(BBConfiguration.getInstance()
 									.getBaasBoxUsername()) && !anonymousInjected))
 				tempResult = F.Promise.<SimpleResult>pure(forbidden("The user " + ctx.args.get("username")
 						+ " cannot access via REST"));

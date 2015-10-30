@@ -195,9 +195,9 @@ public class SessionsResource extends BaseRestResource {
             throw new CommandParsingException(command,"invalid \"username\" param: "+(usernameNode==null?"null":usernameNode.toString()));
         }
         String username=usernameNode.asText();
-        if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+        if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
         		||
-        	username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername())){
+        	username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())){
         	throw new CommandParsingException(command,"invalid \"username\" param: "+username+" it is reserved");
         }
         return usernameNode.asText();

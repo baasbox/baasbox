@@ -20,7 +20,7 @@ public class SessionTokenProviderFactory {
 	
 	public static ISessionTokenProvider getSessionTokenProvider(){
 		
-		if (BBConfiguration.configuration.getString("redisplugin").equals("enabled"))
+		if (BBConfiguration.getInstance().configuration.getString("redisplugin").equals("enabled"))
 			return getSessionTokenProvider ("SessionTokenProviderRedis");
 		else
 			return getSessionTokenProvider ("SessionTokenProvider");
