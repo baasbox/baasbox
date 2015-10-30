@@ -797,7 +797,7 @@ public class UserService {
 	
 	public static void removeUserFromRole(String username,String role) throws OpenTransactionException{
 		boolean admin = false;
-		if(!DbHelper.currentUsername().equals(BBConfiguration.getInstance().getBaasBoxAdminUsername())){
+		if(!isAnAdmin(DbHelper.getCurrentUserNameFromConnection())){
 			DbHelper.reconnectAsAdmin();
 			admin = true;
 		}

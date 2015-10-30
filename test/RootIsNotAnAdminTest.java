@@ -1,26 +1,17 @@
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.UUID;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import play.libs.Json;
 import play.mvc.Result;
 import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.Helpers;
-
-import com.baasbox.security.SessionKeys;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import core.AbstractTest;
 import core.TestConfig;
 
 
 public class RootIsNotAnAdminTest extends AbstractTest {
-/*	
+	
 	@Test
 	public void testRootIsNotAdmin(){
 		continueOnFail(true);
@@ -47,7 +38,7 @@ public class RootIsNotAnAdminTest extends AbstractTest {
 		Helpers.stop(fakeApp2);
 	}
 		
-*/	
+	
 	@Override
 	public String getRouteAddress() {
 		// TODO Auto-generated method stub
