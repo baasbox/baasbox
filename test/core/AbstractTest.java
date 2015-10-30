@@ -75,9 +75,9 @@ import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
 
+import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
-import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -149,12 +149,16 @@ public abstract class AbstractTest extends FluentTest
 	}
 	protected static FakeApplication getFakeApplication(){
 		Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
-		return fakeApplication(new Configuration(additionalConfig).asMap());
+		GlobalTest global = new GlobalTest();
+		global.setTestConfiguration(additionalConfig);
+		return fakeApplication(new Configuration(global.getTestConfiguration()).asMap(),global);
 	}
 	
 	protected static FakeApplication getFakeApplicationChunkResponse() {
-	  	Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
-		return fakeApplication(new Configuration(additionalConfigNoChunk).asMap());
+		Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
+		GlobalTest global = new GlobalTest();
+		global.setTestConfiguration(additionalConfigNoChunk);
+		return fakeApplication(new Configuration(global.getTestConfiguration()).asMap(),global);
 	}
 	
 	protected static FakeApplication getFakeApplicationWithDefaultConf(){
