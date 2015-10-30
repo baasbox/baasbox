@@ -46,7 +46,7 @@ public class GooglePlusLoginService extends SocialLoginService{
 	
 	@Override
   protected String saveToken(String k, Token t) {
-    return null;
+		throw new UnsupportedOperationException();
   }
 
   @Override

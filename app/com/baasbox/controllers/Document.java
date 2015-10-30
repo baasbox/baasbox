@@ -574,11 +574,15 @@ public class Document extends Controller {
   public static Promise<Result> queryLink(String collectionName, String id, String linkName, String linkDirection) {
 
     return Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
-      if (!linkDirection.matches("(in|out|both)")) {
-        return badRequest("linkDir param must contain one of the following values: out(default),in or both");
+      
+	  if (!linkDirection.matches(LinkDirection.regexp())) {
+        return badRequest("linkDir param must contain one of the following values: to(default),from or both");
       }
+	  
+	  
+	  
       QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
-      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, linkDirection, criteria), JSONFormats.Formats.DOCUMENT));
+      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, LinkDirection.map(linkDirection), criteria), JSONFormats.Formats.DOCUMENT));
     }));
   }
 
@@ -729,5 +733,39 @@ public class Document extends Controller {
         }
     }
 
+    static enum LinkDirection{
+		IN("from"), OUT("to"), BOTH("both");
+    	String direction;
+    	
+    	LinkDirection(String direction){
+    		this.direction = direction;
+    	}
+
+		public static String map(String linkDirection) {
+			String result = null;
+			switch(linkDirection){
+				case("from"):{
+					result = IN.toString().toLowerCase();
+					break;
+				}
+				case("to"):{
+					result = OUT.toString().toLowerCase();
+					break;
+				}
+				case("both"):{
+					result = BOTH.toString().toLowerCase();
+					break;
+				}
+				default:{
+					throw new IllegalArgumentException();
+				}
+			}
+			return result;
+		}
+
+		static String regexp() {
+			return "(from|to|both)";
+		}
+    }
 }
 

@@ -289,6 +289,16 @@ $(".btn-action").live("click", function() {
             if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(false,parameters);
             break;
+    case "drop":{
+    	switch (actionType)	{
+		case "user":
+			 if(!confirm("Do you want to drop user '"+ unescape(parameters) +"' and all its documents ?")) return;
+	            deleteUser(parameters);
+	            break;
+			break;
+    	break
+    	}
+    }
 	case "insert":
 		switch (actionType)	{
 		case "user":
@@ -377,6 +387,23 @@ $(".btn-action").live("click", function() {
 		break;
 		}
 	});
+
+
+function deleteUser(userName){
+	userName=unescape(userName);
+    var route = BBRoutes.com.baasbox.controllers.Admin.dropUser(userName);
+    	route.ajax(
+    	        {
+    	            data: {"username": userName},
+    	            error: function(data){
+    	                alert(JSON.parse(data.responseText)["message"]);
+    	            },
+    	            success: function(data){
+    	                loadUserTable();
+    	            }
+    	        }
+    	    );
+}
 
 function suspendOrActivateUser(suspend,userName)
 {
@@ -1493,6 +1520,11 @@ function getActionButton(action, actionType,parameters){
 		iconType = "icon-trash";
 		classType = "btn-danger";
 		labelName = "Delete...";
+		break;
+	case "drop":
+		iconType = "icon-trash";
+		classType = "btn-danger";
+		labelName = "Drop";
 		break;
     case "suspend":
        iconType = "icon-off";
