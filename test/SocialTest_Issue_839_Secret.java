@@ -16,6 +16,7 @@ import com.baasbox.security.SessionKeys;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import core.AbstractTest;
+import core.GlobalTest;
 import core.TestConfig;
 
 
@@ -30,8 +31,10 @@ public class SocialTest_Issue_839_Secret extends AbstractTest {
 				overrideSecret.put("baasbox.social.mock", true);
 				overrideSecret.put("baasbox.list.response.chunked", false);
 				
+				
+				
 				//signup
-				FakeApplication fakeApp1 = play.test.Helpers.fakeApplication(overrideSecret);
+				FakeApplication fakeApp1 = getCustomFakeApplication(overrideSecret);
 				Helpers.start(fakeApp1);
 					HashSet <String> validSet=new HashSet<String>();
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();	
@@ -46,7 +49,7 @@ public class SocialTest_Issue_839_Secret extends AbstractTest {
 				
 				//login with different application.secret 
 				overrideSecret.put("application.secret", "abcdefghilmnopqrstuvz");   //<<-- a different secret is set
-				FakeApplication fakeApp2 = play.test.Helpers.fakeApplication(overrideSecret);
+				FakeApplication fakeApp2 =  getCustomFakeApplication(overrideSecret);
 				Helpers.start(fakeApp2);
 					FakeRequest request2 = new FakeRequest(getMethod(), getRouteAddress());
 					request2 = request2.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -69,7 +72,7 @@ public class SocialTest_Issue_839_Secret extends AbstractTest {
 				
 				//login again with the older secret
 				overrideSecret.put("application.secret", "1234567890123456");   //<<-- a different secret is set
-				FakeApplication fakeApp3 = play.test.Helpers.fakeApplication(overrideSecret);
+				FakeApplication fakeApp3 =  getCustomFakeApplication(overrideSecret);
 				Helpers.start(fakeApp3);
 					FakeRequest request4 = new FakeRequest(getMethod(), getRouteAddress());
 					request4 = request4.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);

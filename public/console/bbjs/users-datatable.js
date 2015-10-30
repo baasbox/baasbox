@@ -35,7 +35,7 @@ var  userDataArray= new Array();
 	                               var _active = data.status == "ACTIVE";
 	                               var escapedName=escape(data.name);
 	                               return getActionButton("edit", "user", escapedName) + "&nbsp;" + getActionButton("changePwdUser", "user", escapedName) +
-	                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", escapedName);
+	                                   "&nbsp;" + getActionButton(_active?"suspend":"activate", "user", escapedName) +   getActionButton("drop", "user", escapedName);
 	                           }
 			            	   return "No action available";
 			               },bSortable:false

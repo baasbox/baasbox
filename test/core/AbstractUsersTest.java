@@ -22,7 +22,7 @@ package core;
 
 
 
-public abstract class AbstractUsersTest extends AbstractRouteHeaderTest 
+public abstract class AbstractUsersTest extends AbstractTest 
 {
   protected static final String ROUTE_USERS = "/users";
 }

@@ -94,7 +94,7 @@ public class DocumentLinkQueryTest extends AbstractDocumentTest {
           } catch (IOException e) {
             e.printStackTrace();
           }
-          rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment?linkDir=in");
+          rq = new FakeRequest("GET", "/document/" + CHILD_COLLECTION_NAME + "/" + comment + "/comment?linkDir=from");
           rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           r = routeAndCall(rq);
