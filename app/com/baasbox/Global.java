@@ -25,6 +25,7 @@ import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,12 +56,13 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.metrics.BaasBoxMetric;
 import com.baasbox.security.ISessionTokenProvider;
 import com.baasbox.security.ScriptingSandboxSecurityManager;
-import com.baasbox.security.SessionTokenProviderMemory;
 import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.security.SessionTokenProviderMemory;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -84,7 +86,10 @@ public class Global extends GlobalSettings {
 	  public void beforeStart(Application app) {
 		  info("BaasBox is starting...");
 		  info("...Loading Play plugin...");
+		  System.out.println("SOCIAL from BBConfiguration: "+BBConfiguration.getSocialMock());
+		  System.out.println("SOCIAL from app: "+app.configuration().getBoolean("baasbox.social.mock"));
 		  
+			
 		  //If the session encryption is enabled, checks if the secret is different by its default
 		  if (app.configuration().getBoolean(BBConfiguration.SESSION_ENCRYPT)
 				  &&
@@ -106,8 +111,19 @@ public class Global extends GlobalSettings {
 	  public Configuration onLoadConfig(Configuration config,
           java.io.File path,
           java.lang.ClassLoader classloader){  
+		  BBConfiguration.init(config);
 		  debug("Global.onLoadConfig() called");
 		  info("BaasBox is preparing OrientDB Embedded Server...");
+		  
+		  
+		  System.out.println(String.format("process id: %s thread id: %s", ManagementFactory.getRuntimeMXBean()
+				    .getName(), Thread.currentThread().getId()));
+		  System.out.println("SOCIAL METHOD from configuration: "+config.getBoolean("baasbox.social.mock"));
+		  System.out.println("configuration: "+config.toString());
+		 
+		  
+		  
+		  
 		  try{
 			  OGlobalConfiguration.TX_LOG_SYNCH.setValue(Boolean.FALSE);
 			  OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(Boolean.FALSE);
