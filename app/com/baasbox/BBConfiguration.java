@@ -23,12 +23,23 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import play.Configuration;
-import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
 
-
-	public static Configuration configuration = Play.application().configuration();
+	private static BBConfiguration me = null;
+	
+	private BBConfiguration(Configuration config){
+		configuration = config;
+	}
+	
+	public static void init(Configuration config){
+		if (me==null){
+			System.out.println("Configuration initialized");
+			me=new BBConfiguration(config);
+		}
+	}
+	
+	public static Configuration configuration;
 	private static Boolean computeMetrics;
 	private static Boolean pushMock;;
 	
@@ -39,7 +50,6 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	//the db size Threshold in bytes
 	private static BigInteger dbSizeThreshold=BigInteger.ZERO;
 	private static boolean isDBSizeThresholdOverridden=false; 
-	private static final boolean _isRedisActive = BBConfiguration.configuration.getString("redisplugin").equals("enabled");
 	
 	
 	@Deprecated
@@ -80,7 +90,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public static boolean isRedisActive(){
-		return _isRedisActive;
+		return BBConfiguration.configuration.getString("redisplugin").equals("enabled");
 	}
 	
 	public static String getApiVersion(){
