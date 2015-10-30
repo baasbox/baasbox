@@ -18,7 +18,7 @@
 
 package com.baasbox.service.sociallogin;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.scribe.builder.api.Api;
 import org.scribe.builder.api.TwitterApi;
 import org.scribe.model.OAuthRequest;
@@ -26,10 +26,13 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import com.baasbox.service.logging.BaasBoxLogger;
+import play.cache.Cache;
 import play.libs.Json;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+
+import com.baasbox.BBCache;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class TwitterLoginService extends SocialLoginService {
 
@@ -52,6 +55,7 @@ public class TwitterLoginService extends SocialLoginService {
 	
 	
 
+
 	@Override
 	public String getPrefix() {
 		return PREFIX;
@@ -73,15 +77,20 @@ public class TwitterLoginService extends SocialLoginService {
 	}
 
 	@Override
-	public Token getAccessTokenFromRequest(Request r,Session s) {
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(Json.stringify(Json.toJson(s.keySet())));
-		if(s.get("twitter.token")!=null && s.get("twitter.secret")!=null){
-			String token = s.get("twitter.token");
-			String secret = s.get("twitter.secret");
-			Token t = new Token(token,secret);
-			s.remove("twitter.token");
-			s.remove("twitter.secret");
-			return t;
+  public Token getAccessTokenFromRequest(Request r) {
+	  String token = r.getQueryString("oauth_token");
+    String uuid = r.getQueryString("_id");
+    if (StringUtils.isEmpty(uuid)) {
+      throw new RuntimeException("Unable to retreive the original UUID");
+    }
+
+    String cachedToken = (String) Cache.get(BBCache.getTwitterKey() + uuid);
+    if (StringUtils.isEmpty(cachedToken)) {
+      throw new RuntimeException("Unable to retreive the token from cache");
+    }
+    if (cachedToken.equals(token)) {
+      Cache.remove(BBCache.getTwitterKey() + uuid);
+	    return new Token(token,"");
 		}else{
 			throw new RuntimeException("Unable to retrieve token and secret from session");
 		}
@@ -90,12 +99,29 @@ public class TwitterLoginService extends SocialLoginService {
 		
 	}
 
+
 	
+
 	@Override
+  public boolean validationRequest(String token) throws BaasBoxSocialTokenValidationException {
+    return true;
+  }
+
+  @Override
+  protected String saveToken(String k, Token t) {
+    BBCache.setTwitterToken(k, t.getToken());
+    return k;
+  }
+
+  @Override
 	public UserInfo extractUserInfo(Response r) {
+    BaasBoxLogger.info("Getting twitter user info" + r.getBody());
+
 		UserInfo i =  new UserInfo();
 		JsonNode user = Json.parse(r.getBody());
-		i.setUsername(user.get("screen_name").textValue());
+    String screenName = user.get("screen_name").textValue();
+    i.setUsername(screenName);
+    i.setId(screenName);
 		i.addData("location",user.get("time_zone").get("name").asText());
 		i.setFrom(SOCIAL);
 		return i;
@@ -103,14 +129,13 @@ public class TwitterLoginService extends SocialLoginService {
 
 	@Override
 	protected String getValidationURL(String token) {
-		// TODO Auto-generated method stub
-		return null;
+    return "";
 	}
 
 	@Override
 	protected boolean validate(Object response) {
 		// TODO Auto-generated method stub
-		return false;
+    return true;
 	}
 	
 	

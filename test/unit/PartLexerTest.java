@@ -56,7 +56,6 @@ public class PartLexerTest {
 			fail();
 		}catch(Exception e ){
 			assertEquals(PartsLexer.PartValidationException.class,e.getClass());
-			System.out.println(ExceptionUtils.getMessage(e));
 			assertTrue(ExceptionUtils.getMessage(e).toLowerCase().indexOf("unrecognized")>-1);
 		}
 	}

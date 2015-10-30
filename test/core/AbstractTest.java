@@ -75,9 +75,9 @@ import play.test.FakeApplication;
 import play.test.FakeRequest;
 import play.test.TestServer;
 
-import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.BBJson;
+import com.baasbox.controllers.helpers.BaasBoxHelpers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -148,11 +148,13 @@ public abstract class AbstractTest extends FluentTest
 		mHeaders.clear();
 	}
 	protected static FakeApplication getFakeApplication(){
-		return fakeApplication(additionalConfigurations.asMap());
+		Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
+		return fakeApplication(new Configuration(additionalConfig).asMap());
 	}
 	
-	private static FakeApplication getFakeApplicationChunkResponse(){
-		return fakeApplication(additionalConfigurationsChunk.asMap());
+	protected static FakeApplication getFakeApplicationChunkResponse() {
+	  	Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
+		return fakeApplication(new Configuration(additionalConfigNoChunk).asMap());
 	}
 	
 	protected static FakeApplication getFakeApplicationWithDefaultConf(){
@@ -171,17 +173,7 @@ public abstract class AbstractTest extends FluentTest
 		return testServer(TestConfig.SERVER_PORT,getFakeApplicationChunkResponse());
 	}
 	
-	protected  static Configuration additionalConfigurations=null;
-	static{
-	    Config additionalConfig = ConfigFactory.parseFile(new File("conf/rootTest.conf")).resolve();
-	    additionalConfigurations = new Configuration(additionalConfig);
-	}
-
-	protected  static Configuration additionalConfigurationsChunk=null;
-	static{
-	    Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
-	    additionalConfigurationsChunk = new Configuration(additionalConfigNoChunk);
-	}
+	
 
 	// Abstract methods
 	public abstract String getRouteAddress();

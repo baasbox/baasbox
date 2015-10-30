@@ -39,6 +39,7 @@ import play.mvc.Http.Context;
 import play.mvc.Result;
 import play.mvc.With;
 import scala.concurrent.duration.FiniteDuration;
+import views.html.defaultpages.todo;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
@@ -569,6 +570,22 @@ public class Document extends Controller {
         return res;
     }
 
+  @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
+  public static Promise<Result> queryLink(String collectionName, String id, String linkName, String linkDirection) {
+
+    return Promise.promise(DbHelper.withDbFromContext(ctx(), () -> {
+      
+	  if (!linkDirection.matches(LinkDirection.regexp())) {
+        return badRequest("linkDir param must contain one of the following values: to(default),from or both");
+      }
+	  
+	  
+	  
+      QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
+      return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, LinkDirection.map(linkDirection), criteria), JSONFormats.Formats.DOCUMENT));
+    }));
+  }
+
     @With({UserCredentialWrapFilterAsync.class, ConnectToDBFilterAsync.class, ExtractQueryParameters.class})
     public static Promise<Result> revokeToUser(String collectionName, String rid, String username, String action, boolean isUUID) {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
@@ -640,6 +657,7 @@ public class Document extends Controller {
                 .when(Throwable.class,
                         e -> internalServerError(ExceptionUtils.getMessage(e))));
     }//grantOrRevokeToUser
+
 
     private static Promise<Result> grantOrRevokeToRole(String collectionName, String id,
                                                        String rolename, String action, boolean grant, boolean isUUID) {
@@ -715,5 +733,39 @@ public class Document extends Controller {
         }
     }
 
+    static enum LinkDirection{
+		IN("from"), OUT("to"), BOTH("both");
+    	String direction;
+    	
+    	LinkDirection(String direction){
+    		this.direction = direction;
+    	}
+
+		public static String map(String linkDirection) {
+			String result = null;
+			switch(linkDirection){
+				case("from"):{
+					result = IN.toString().toLowerCase();
+					break;
+				}
+				case("to"):{
+					result = OUT.toString().toLowerCase();
+					break;
+				}
+				case("both"):{
+					result = BOTH.toString().toLowerCase();
+					break;
+				}
+				default:{
+					throw new IllegalArgumentException();
+				}
+			}
+			return result;
+		}
+
+		static String regexp() {
+			return "(from|to|both)";
+		}
+    }
 }
 

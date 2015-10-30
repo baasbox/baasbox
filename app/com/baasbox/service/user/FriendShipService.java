@@ -24,10 +24,13 @@ import java.util.Objects;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import ch.qos.logback.classic.db.DBHelper;
+
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.exception.AlreadyFriendsException;
 import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.exception.UserToFollowNotExistsException;
@@ -52,15 +55,24 @@ public class FriendShipService {
 		return veryNewParams;
 	}
 
+	
     public static List<ODocument> getFollowing(String username,QueryParams criteria) throws SqlInjectionException {
     return UserDao.getInstance().getFollowing(username, criteria);
     }
+
+
+  public static String getFriendsOfQuery(String username, QueryParams criteria) {
+    String friendShipRole = RoleDao.getFriendRoleName(username);
+    criteria.where(getWhereFromCriteria(criteria));
+    criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
+    return DbHelper.selectQueryBuilder(UserDao.MODEL_NAME, criteria.justCountTheRecords(), criteria);
+  }
 
 	public static List<ODocument> getFriendsOf(String username, QueryParams criteria) throws InvalidCriteriaException, SqlInjectionException {
     String friendShipRole = RoleDao.getFriendRoleName(username);
     criteria.where(getWhereFromCriteria(criteria));
     criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
-		UserDao udao= UserDao.getInstance();
+    UserDao udao = UserDao.getInstance();
     return udao.get(criteria);
 	}
 
