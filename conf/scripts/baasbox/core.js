@@ -784,12 +784,28 @@ Links.save = function(params){
 //---------- END Links ------
 //---------- CACHE ----------
 var Cache = {};
+var validCacheType = function(cacheType){
+	return cacheType && (cacheType == 'global' || cacheType == 'local')
+}
+var validateCacheParams = function(methodName,cacheType,key){
+	var printInfo = function(){
+		return "cacheType:"+cacheType + " key: "+ key;
+	}
+	if(!cacheType || !validCacheType(cacheType) ){
+		throw new TypeError("Invalid arguments:"+methodName +" needs a first string param that should be either global or local.Info:"+ printInfo()); 
+	}
+	if(!key){
+		throw new TypeError("Invalid arguments: "+methodName +" needs a second string param representing the key of your cache value.Info:"+printInfo()); 
+	}
+}
 Cache.setValue = function(cacheType,key,obj){
+	validateCacheParams("setValue()",cacheType,key);
 	setValueInCache(cacheType,key,obj);
 	return {"key":key,"value":obj};
 }
 
 Cache.getValueOrElse = function(cacheType,key,callback){
+	validateCacheParams("getValue()",cacheType,key);
 	var inCache = getValueFromCache(cacheType,key);
 	if(!inCache){
 		return callback(key);
