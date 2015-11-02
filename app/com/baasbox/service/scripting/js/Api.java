@@ -35,7 +35,9 @@ import com.baasbox.service.events.EventsService;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.service.scripting.cache.CacheAccess;
 import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -100,6 +102,14 @@ public class Api {
 
     public static Object require(String name){
         return NashornEngine.getNashorn().require(name);
+    }
+    
+    public static void setValueInCache(String cacheType,String key,Object value){
+    	new CacheAccess(currentUserName()).setValue(cacheType, key, value);
+    }
+    
+    public static Object getValueFromCache(String cacheType,String key){
+    	return new CacheAccess(currentUserName()).getValue(cacheType, key);
     }
     
     public static String btoa (String stringToConvert){

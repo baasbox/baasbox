@@ -782,7 +782,22 @@ Links.save = function(params){
   
 };
 //---------- END Links ------
+//---------- CACHE ----------
+var Cache = {};
+Cache.setValue = function(cacheType,key,obj){
+	setValueInCache(cacheType,key,obj);
+	return {"key":key,"value":obj};
+}
 
+Cache.getValueOrElse = function(cacheType,key,callback){
+	var inCache = getValueFromCache(cacheType,key);
+	if(!inCache){
+		return callback(key);
+	}else{
+		return {"key":key,"value":inCache};
+	}
+};
+//---------- END Cache ------
 
 //---------- UTILS --------
 var Utils = {}
@@ -799,6 +814,7 @@ exports.log = log;
 exports.Links = Links;
 exports.Sessions = Sessions;
 exports.Utils = Utils;
+exports.Cache = Cache;
 
 
 exports.runAsAdmin=runAsAdmin;

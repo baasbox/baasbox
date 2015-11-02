@@ -1,13 +1,19 @@
 package com.baasbox;
 
+import java.io.Serializable;
+
 import play.cache.Cache;
 import play.mvc.Http;
+
+import com.baasbox.service.scripting.cache.CacheType;
 
 
 
 public class BBCache {
 
 	private static final String UUID_KEY=":uuid:";
+	private static final String GLOBAL_CACHE_KEY_FORMAT="%s:global:cache:%s";
+	private static final String LOCAL_CACHE_KEY_FORMAT="%s:%s:cache:%s";
 	public static final int UUID_TIMEOUT=0; //seconds, 0=unlimited
 	private static final String TAG_KEY=":tag:";
 	public static final int TAG_TIMEOUT=120;
@@ -54,4 +60,25 @@ public class BBCache {
 	public void removeUUID(String uuid){
 		Cache.remove(getUUIDKey()+uuid);
 	}
+	
+	public static void setValueInLocalCache(String username,String key,Object value){
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		Cache.set(String.format(LOCAL_CACHE_KEY_FORMAT,appcode,username,key), value);
+	}
+	
+	public static  void setValueInGlobalCache(String key,Object value){
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		Cache.set(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key), value);
+	}
+	
+	public static Object getValueFromLocalCache(String username,String key){
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		return Cache.get(String.format(LOCAL_CACHE_KEY_FORMAT,appcode,username,key));
+	}
+	
+	public static Object getValueFromGlobalCache(String key){
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		return Cache.get(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key));
+	}
+
 }
