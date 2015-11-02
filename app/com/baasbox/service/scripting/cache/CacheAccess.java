@@ -1,7 +1,5 @@
 package com.baasbox.service.scripting.cache;
 
-import java.io.Serializable;
-
 import com.baasbox.BBCache;
 
 public class CacheAccess {
