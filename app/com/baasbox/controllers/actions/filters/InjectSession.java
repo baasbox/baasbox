@@ -16,36 +16,34 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.mvc.Result;
+import play.mvc.SimpleResult;
 
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.google.common.collect.ImmutableMap;
-import play.mvc.SimpleResult;
-import play.libs.F;
+import com.baasbox.security.SessionObject;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class InjectSession extends Action.Simple {
 
 
 	@Override
 	public F.Promise<SimpleResult>  call(Context ctx) throws Throwable {
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
 		ctx.response().setHeader("Access-Control-Allow-Origin", "*");
 		//injects the user data & credential into the context
 		String token=ctx.request().getHeader(SessionKeys.TOKEN.toString());
 		if (token!=null) {
-			  ImmutableMap<SessionKeys, ? extends Object> sessionData = SessionTokenProvider.getSessionTokenProvider().getSession(token);
+			  SessionObject sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
 			  if (sessionData!=null){
-					ctx.args.put("username", sessionData.get(SessionKeys.USERNAME));
-					ctx.args.put("password", sessionData.get(SessionKeys.PASSWORD));
-					ctx.args.put("appcode", sessionData.get(SessionKeys.APP_CODE));
+					ctx.args.put("username", sessionData.getUsername());
+					ctx.args.put("password", sessionData.getPassword());
+					ctx.args.put("appcode", sessionData.getAppcode());
 					ctx.args.put("token", token);
 			  }
 		}
@@ -53,7 +51,7 @@ public class InjectSession extends Action.Simple {
 		//executes the request
 		F.Promise<SimpleResult> result = delegate.call(ctx);
 
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	    return result;
 	}
 

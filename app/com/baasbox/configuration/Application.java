@@ -18,11 +18,10 @@
 
 package com.baasbox.configuration;
 
-import play.Logger;
-
 import com.baasbox.configuration.index.IndexApplicationConfiguration;
 import com.baasbox.security.ISessionTokenProvider;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.google.common.annotations.VisibleForTesting;
 
 
@@ -32,7 +31,7 @@ public enum Application implements IProperties{
 			//this callback function is invoked when the value changes. It sets the timeout for the session tokens
 			new IPropertyChangeCallback(){
 				public void change(final Object iCurrentValue, final Object iNewValue){
-					ISessionTokenProvider stp = SessionTokenProvider.getSessionTokenProvider();
+					ISessionTokenProvider stp = SessionTokenProviderFactory.getSessionTokenProvider();
 					stp.setTimeout(Integer.parseInt(iNewValue.toString())*60000);
 				}
 			}),
@@ -73,7 +72,7 @@ public enum Application implements IProperties{
 	@Override
 	public void _setValue(Object newValue) {
 	    Object parsedValue=null;
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (newValue != null)
 	      if (type == Boolean.class)
 	    	  parsedValue = Boolean.parseBoolean(newValue.toString());
@@ -92,7 +91,7 @@ public enum Application implements IProperties{
 			idx = new IndexApplicationConfiguration();
 			idx.put(key, parsedValue);
 		} catch (Exception e) {
-			Logger.error("Could not store key " + key, e);
+			BaasBoxLogger.error("Could not store key " + key, e);
 			throw new RuntimeException("Could not store key " + key,e);
 		}
 	}
@@ -108,10 +107,10 @@ public enum Application implements IProperties{
 		IndexApplicationConfiguration idx;
 		try {
 			idx = new IndexApplicationConfiguration();
-			if (Logger.isDebugEnabled()) Logger.debug("getting "+key+" from index");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("getting "+key+" from index");
 			return idx.get(key);
 		} catch (Exception e) {
-			Logger.error("Could not retrieve key " + key, e);
+			BaasBoxLogger.error("Could not retrieve key " + key, e);
 		}
 		return null;
 	}
@@ -171,7 +170,7 @@ public enum Application implements IProperties{
 	public void override(Object newValue) {
 	    Object parsedValue=null;
 
-	    if (Logger.isDebugEnabled()) Logger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
+	    if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("New setting value, key: " + this.key + ", type: "+ this.type + ", new value: " + newValue);
 	    if (changeCallback != null) changeCallback.change(getValue(), newValue);	
 	    if (newValue != null)
 	      if (type == Boolean.class)

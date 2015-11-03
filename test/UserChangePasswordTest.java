@@ -36,9 +36,9 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F.Callback;
 import play.mvc.Result;
 import play.mvc.Http.Status;
@@ -101,7 +101,7 @@ public class UserChangePasswordTest extends AbstractUserTest
                     request1 = request1.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                     request1 = request1.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
                     
-                    ObjectMapper mapper = new ObjectMapper();
+                    ObjectMapper mapper = BBJson.mapper();
                     JsonNode actualObj=null;
 					try {
 						actualObj = mapper.readTree("{\"visibleByTheUser\":{\"email\":\"john@example.com\"}}");
@@ -146,8 +146,8 @@ public class UserChangePasswordTest extends AbstractUserTest
 					request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 					request = request.withJsonBody(getPayload("/userChangePasswordPayload.json"), getMethod());
 					Result result = routeAndCall(request);
-					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
-					if (Logger.isDebugEnabled()) Logger.debug("testRouteChangePassword result: " + contentAsString(result));
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testRouteChangePassword request: " + request.getWrappedRequest().headers());
+					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("testRouteChangePassword result: " + contentAsString(result));
 					assertRoute(result, "testRouteChangePassword", Status.OK, null, false);
 
 					String sPwdChanged = getPayloadFieldValue("/userChangePasswordPayload.json", "new");

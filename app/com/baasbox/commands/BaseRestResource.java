@@ -19,9 +19,11 @@
 package com.baasbox.commands;
 
 import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
+import com.baasbox.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -105,5 +107,11 @@ public abstract class BaseRestResource extends Resource {
 			        throw new CommandParsingException(commnand,"missing parameters");
 			    }
 			}
+	
+	protected JsonNode getParamField(JsonNode command,String field) {
+	        JsonNode params = command.get(ScriptCommand.PARAMS);
+	        JsonNode id = params.get(field);
+	        return id;
+	}
 
 }

@@ -19,17 +19,23 @@
 package com.baasbox.commands;
 
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.*;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.google.common.collect.ImmutableMap;
-
-import java.util.*;
 
 /**
  * Created by Andrea Tortorella on 07/08/14.
@@ -96,7 +102,7 @@ class PushResource extends Resource {
 
         try {
             ps.send(message,users,profiles,body,errors);
-            Json.ObjectMapperExt mapper = Json.mapper();
+            BBJson.ObjectMapperExt mapper = BBJson.mapper();
             boolean someOk = false;
             boolean someFail = false;
             for (boolean error:errors){
@@ -111,7 +117,7 @@ class PushResource extends Resource {
                 return IntNode.valueOf(0);
             }
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 }

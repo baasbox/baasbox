@@ -19,6 +19,8 @@ GET 	/console/						com.baasbox.controllers.Application.login()
 GET     /console/js/routes      	 	com.baasbox.controllers.AllRoutes.javascriptRoutes()
 GET     /console/*file               	controllers.Assets.at(path="/public/console", file)
 
+# Admin log
+GET 	/admin/log						com.baasbox.controllers.EventsController.openSystemLogger
 
 #Assets action
 POST	/admin/asset						com.baasbox.controllers.Asset.post()
@@ -69,6 +71,10 @@ POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 
 # @tag(baasbox.social)
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()
+
+# @tag(baasbox.social)
+GET		/social/:socialNetwork/authUrl		    	com.baasbox.controllers.Social.authorizationUrl(socialNetwork: String)
+
 
 # @tag(baasbox.social)
 POST	/social/:socialNetwork						com.baasbox.controllers.Social.loginWith(socialNetwork: String)
@@ -218,6 +224,8 @@ GET      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+
 # @tag(baasbox.data.update)
 PUT      /document/:collection/:uuid/$parts<((/)?([.])([a-zA-Z0-9])+(%5B([0-9])+%5D)?/?)+>  com.baasbox.controllers.Document.updateDocumentWithParts(collection: String, uuid: String, isUUID: Boolean ?= true, parts: String)
 
+# @tag(baasbox.data.read)
+GET		 /document/:collection/:id/:linkName						com.baasbox.controllers.Document.queryLink(collection: String,id: String,linkName: String,linkDir: String ?= "to")
 
 #Links between objects (documents, files, users)
 
@@ -268,6 +276,7 @@ PUT 	/document/:collection/:uuid/acl							com.baasbox.controllers.Document.upda
 GET		/admin/user						com.baasbox.controllers.Admin.getUsers()
 GET		/admin/user/:username			com.baasbox.controllers.Admin.getUser(username: String)
 POST	/admin/user						com.baasbox.controllers.Admin.createUser()
+DELETE	/admin/user/:username			com.baasbox.controllers.Admin.dropUser(username: String)
 PUT		/admin/user/:username			com.baasbox.controllers.Admin.updateUser(username: String)
 PUT 	/admin/user/suspend/:username	com.baasbox.controllers.Admin.disable(username: String)
 PUT 	/admin/user/activate/:username	com.baasbox.controllers.Admin.enable(username: String)
@@ -378,9 +387,6 @@ DELETE /admin/plugin/:name					   com.baasbox.controllers.ScriptsAdmin.drop(name
 PUT /admin/plugin/:name/active                 com.baasbox.controllers.ScriptsAdmin.activate(name: String)
 DELETE /admin/plugin/:name/active              com.baasbox.controllers.ScriptsAdmin.deactivate(name: String)
 
-
-#GET /admin/stats/logs                           com.baasbox.controllers.Stats.log()
-
 # endpoints switches
 
 GET     /admin/endpoints                                        com.baasbox.controllers.Admin.getPermissionTags
@@ -416,5 +422,5 @@ GET		/root/configuration										com.baasbox.controllers.Root.getOverridableCon
 # Home page & general API
 GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
 GET     /                           com.baasbox.controllers.Application.index()
-GET 	/*file						controllers.Assets.at(path="/public/", file)
+GET 	/*file						com.baasbox.controllers.MyAssets.at(path="/public/", file)
 OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)

@@ -18,18 +18,28 @@
 
 package com.baasbox.commands;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
-import com.baasbox.dao.exception.*;
+import com.baasbox.dao.exception.DocumentNotFoundException;
+import com.baasbox.dao.exception.InvalidCollectionException;
+import com.baasbox.dao.exception.InvalidModelException;
+import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,19 +47,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import org.apache.commons.lang.exception.ExceptionUtils;
-
-import play.Logger;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * {resource: 'documents',
@@ -130,7 +131,7 @@ class DocumentsResource extends BaseRestResource {
                 alterGrants(command, coll, rid, true, grant);
                 alterGrants(command, coll, rid, false, grant);
             } catch (Exception e){
-                Logger.error("error",e);
+                BaasBoxLogger.error("error",e);
                 throw  e;
             }
         } catch (UserNotFoundException e) {
@@ -168,7 +169,7 @@ class DocumentsResource extends BaseRestResource {
         } catch (ODatabaseException e){
             return null;
         } catch (Throwable e){
-            throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+ExceptionUtils.getMessage(e));
         }
         return null;
     }
@@ -191,12 +192,21 @@ class DocumentsResource extends BaseRestResource {
         JsonNode data = getData(command);
         String id = getDocumentId(command);
         try {
-            String rid = DocumentService.getRidByString(id, true);
-            ODocument doc = DocumentService.update(coll, rid, (ObjectNode)data);
+    		String rid=null;
+        	try{
+        		rid = DocumentService.getRidByString(id, true);
+        	} catch (RidNotFoundException e) {
+                //swallow
+            }	
+            ODocument doc=null;
+            if (rid!=null) //update
+            	doc = DocumentService.update(coll, rid, (ObjectNode)data);
+            else // save
+            	doc = DocumentService.create(coll, (ObjectNode)data);
             String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ObjectNode node = (ObjectNode)Json.mapper().readTree(json);
+            ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
             node.remove(TO_REMOVE);
-            node.remove("@rid");
+            //node.remove("@rid");
             return node;
         } catch (RidNotFoundException e) {
             throw new CommandExecutionException(command,"document: "+id+" does not exists");
@@ -207,13 +217,16 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+coll);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message: "+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+ExceptionUtils.getMessage(e));
         } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"data do not represents a valid document, message: "+e.getMessage());
+            throw new CommandExecutionException(command,"data do not represents a valid document, message: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+            throw new CommandExecutionException(command,"error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document: "+id+" message:"+e.getMessage());
+			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+ExceptionUtils.getMessage(e));
+		} catch (Throwable e){
+			BaasBoxLogger.error("error updating document: "+id,e);
+			throw new CommandExecutionException(command," error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		}
     }
 
@@ -232,17 +245,17 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             }
             String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            JsonNode node = Json.mapper().readTree(fmt);
+            JsonNode node = BBJson.mapper().readTree(fmt);
             ObjectNode n =(ObjectNode)node;
-            n.remove(TO_REMOVE).remove("@rid");
+            n.remove(TO_REMOVE);
 //            n.remove("@rid");
             return n;
         } catch (InvalidCollectionException throwable) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error creating document: "+e.getMessage());
+            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
         } catch (Throwable e) {
-            throw new CommandExecutionException(command,"error creating document: "+e.getMessage());
+            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -274,11 +287,11 @@ class DocumentsResource extends BaseRestResource {
             List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
             String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
-            lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));
+            ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
+			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
             return lst;
         } catch (SqlInjectionException | IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage(),e);
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+collection,e);
         }
@@ -296,8 +309,8 @@ class DocumentsResource extends BaseRestResource {
                 return null;
             } else {
                 String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
-                ObjectNode node = (ObjectNode)Json.mapper().readTree(s);
-                node.remove(TO_REMOVE).remove("@rid");
+                ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
+				node.remove(TO_REMOVE);
                 return node;
             }
         } catch (RidNotFoundException e) {
@@ -307,11 +320,11 @@ class DocumentsResource extends BaseRestResource {
         } catch (InvalidCollectionException e) {
             throw new CommandExecutionException(command,"invalid collection: "+collection);
         } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         } catch (IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+e.getMessage());
+            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
         }
     }
 
@@ -323,10 +336,21 @@ class DocumentsResource extends BaseRestResource {
             if (read!=null){
                 alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
             }
+            
+            //DEPRECATED
             JsonNode write = node.get("write");
             if (write!=null){
                 alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
             }
+            
+            //issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
+            //we now have to maintain both due retro-compatibility 
+            JsonNode update = node.get("update");
+            if (update!=null){
+                alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+            }
+            //------
+            
             JsonNode delete = node.get("delete");
             if (delete!=null){
                 alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);
@@ -375,11 +399,6 @@ class DocumentsResource extends BaseRestResource {
             throw new CommandParsingException(command,"missing document id");
         }
         String idString = id.asText();
-        try{
-            UUID.fromString(idString);
-        } catch (IllegalArgumentException e){
-            throw new CommandParsingException(command,"document id: "+id+" must be a valid uuid");
-        }
         return idString;
     }
 

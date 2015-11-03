@@ -16,7 +16,7 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
@@ -36,10 +36,10 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 	@Override
 	public F.Promise<SimpleResult> call(Context ctx) throws Throwable {
 		F.Promise<SimpleResult> tempResult=null;
-		if (Logger.isTraceEnabled())  Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled())  BaasBoxLogger.trace("Method Start");
 		Http.Context.current.set(ctx);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("AdminCredentialWrapFilter  for resource " + Http.Context.current().request());
 		//retrieve AppCode
 		String appCode=RequestHeaderHelper.getAppCode(ctx);
 		//try to retrieve from querystring
@@ -47,19 +47,19 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 			appCode = ctx.request().getQueryString("appcode");
 		}
 
-		String adminUser=BBConfiguration.getBaasBoxAdminUsername();
-		String adminPassword = BBConfiguration.getBaasBoxAdminPassword();
+		String adminUser=BBConfiguration.getInstance().getBaasBoxAdminUsername();
+		String adminPassword = BBConfiguration.getInstance().getBaasBoxAdminPassword();
 		ctx.args.put("username", adminUser);
 		ctx.args.put("password", adminPassword);
 		ctx.args.put("appcode", appCode);
 		
-		if (Logger.isDebugEnabled()) Logger.debug("admin username (defined in conf file): " + adminUser);
-		if (Logger.isDebugEnabled()) Logger.debug("admin password (defined in conf file): " + adminPassword);
-		if (Logger.isDebugEnabled()) Logger.debug("appcode (from header): " + appCode);
-		if (Logger.isDebugEnabled()) Logger.debug("token: N/A"); 
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("admin username (defined in conf file): " + adminUser);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("admin password (defined in conf file): " + adminPassword);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("appcode (from header): " + appCode);
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("token: N/A"); 
 		
 		if (appCode == null || appCode.isEmpty() || appCode.equals("null")){
-	    	if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
+	    	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 		}
 		
@@ -71,8 +71,8 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result=wr.wrap(ctx, tempResult);
 		
-		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+
 	    return F.Promise.<SimpleResult>pure(result);
 	}
 

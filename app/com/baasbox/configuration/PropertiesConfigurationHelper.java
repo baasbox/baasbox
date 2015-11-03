@@ -26,7 +26,7 @@ import java.util.EnumSet;
 
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.exception.ConfigurationException;
 import com.baasbox.service.push.PushNotInitializedException;
@@ -35,7 +35,7 @@ import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -116,14 +116,14 @@ public class PropertiesConfigurationHelper {
 			gen.close();
 			return sw.toString();
 		} catch (Exception e) {
-			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+			BaasBoxLogger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
 		}
 		return "{}";
 	}//dumpConfigurationAsJson(en)
 	
 	public static String dumpConfigurationAsJson(){
 		ImmutableCollection<String> keys = CONFIGURATION_SECTIONS.keySet();  
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		JsonFactory jfactory = mapper.getJsonFactory();
 		StringWriter sw = new StringWriter();	
 		try{
@@ -131,10 +131,10 @@ public class PropertiesConfigurationHelper {
 			gen.writeStartArray();	
 			for (String v: keys){
 				String st = dumpConfigurationAsJson(v);
-				ObjectMapper op= new ObjectMapper();
+				ObjectMapper op= BBJson.mapper();
 				JsonNode p = op.readTree(st);
-				Logger.debug("OBJECT:" + p.toString());
-				Logger.debug("STRING:" + st);
+				BaasBoxLogger.debug("OBJECT:" + p.toString());
+				BaasBoxLogger.debug("STRING:" + st);
 				//JsonParser jp = jfactory.createJsonParser(st);
 				gen.writeTree(p);
 			}
@@ -142,7 +142,7 @@ public class PropertiesConfigurationHelper {
 			gen.close();
 			return sw.toString();
 		}catch (Exception e) {
-			Logger.error("Cannot generate a json for the configuration",e);
+			BaasBoxLogger.error("Cannot generate a json for the configuration",e);
 		}
 		return "[]";
 	}//dumpConfigurationAsJson()	
@@ -195,7 +195,7 @@ public class PropertiesConfigurationHelper {
 		    }
 		    return sb.toString();
 		} catch (Exception e) {
-			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+			BaasBoxLogger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
 		}
 		return "";
 	}//dumpConfiguration
@@ -235,7 +235,7 @@ public class PropertiesConfigurationHelper {
 			gen.close();
 			return sw.toString();
 		} catch (Exception e) {
-			Logger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
+			BaasBoxLogger.error("Cannot generate a json for "+ en.getSimpleName()+" Enum. Is it an Enum that implements the IProperties interface?",e);
 		}
 		return "{}";
 	}//dumpConfigurationSectionAsJson(String)()
@@ -326,7 +326,7 @@ public class PropertiesConfigurationHelper {
 			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 			en.getMethod("setVisible",boolean.class).invoke(enumValue,value);
 		} catch (Exception e) {
-			Logger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
+			BaasBoxLogger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
 			throw new ConfigurationException ("Invalid key -" +completeKey+ "- or value -" +value+"-"  ,e );
 		}
 	}
@@ -339,7 +339,7 @@ public class PropertiesConfigurationHelper {
 			Class en = PropertiesConfigurationHelper.CONFIGURATION_SECTIONS.get(section);
 			en.getMethod("setEditable",boolean.class).invoke(enumValue,value);
 		} catch (Exception e) {
-			Logger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
+			BaasBoxLogger.error("Invalid key -" +completeKey+ "- or value -" +value+"-",e);
 			throw new ConfigurationException ("Invalid key -" +completeKey+ "- or value -" +value+"-"  ,e );
 		}
 	}

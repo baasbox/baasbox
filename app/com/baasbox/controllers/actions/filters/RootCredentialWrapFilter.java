@@ -19,7 +19,7 @@ package com.baasbox.controllers.actions.filters;
 
 import org.apache.commons.lang3.StringUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
@@ -57,8 +57,8 @@ public class RootCredentialWrapFilter extends Action.Simple {
 			else   
 				tempResult=F.Promise.<SimpleResult>pure(badRequest("Missing Session Token, Authorization info and even the AppCode"));
 		}else if (!StringUtils.isEmpty(authHeader) && StringUtils.isEmpty(RequestHeaderHelper.getAppCode(ctx))) {
-			if (Logger.isDebugEnabled()) Logger.debug("There is basic auth header, but the appcode is missing");
-			if (Logger.isDebugEnabled()) Logger.debug("Invalid App Code, AppCode is empty!");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("There is basic auth header, but the appcode is missing");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invalid App Code, AppCode is empty!");
 	    	tempResult= F.Promise.<SimpleResult>pure(badRequest("Invalid App Code. AppCode is empty or not set"));
 		} 
 		
@@ -71,9 +71,9 @@ public class RootCredentialWrapFilter extends Action.Simple {
 
 				tempResult= F.Promise.<SimpleResult>pure(CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus());
 			} else	if //internal administrator is not allowed to access via REST
-						(((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())
+						(((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())
 						||
-						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()))
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
 								tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
 			else if (tempResult==null){
 
@@ -81,17 +81,17 @@ public class RootCredentialWrapFilter extends Action.Simple {
 				//let's check the root credentials
 				String username=(String)ctx.args.get("username");
 				String password=(String)ctx.args.get("password");
-				if (!username.equals(ROOT_USER) || !password.equals(BBConfiguration.getRootPassword())){
+				if (!username.equals(ROOT_USER) || !password.equals(BBConfiguration.getInstance().getRootPassword())){
 					tempResult= F.Promise.<SimpleResult>pure(unauthorized("root username/password not valid"));
 				}
 				
 				//let's check the appCode
 				String appCode=(String)Http.Context.current().args.get("appcode");
-				if (appCode==null || !appCode.equals(BBConfiguration.configuration.getString(BBConfiguration.APP_CODE)))
+				if (appCode==null || !appCode.equals(BBConfiguration.getInstance().configuration.getString(BBConfiguration.getInstance().APP_CODE)))
 					tempResult=F.Promise.<SimpleResult>pure(unauthorized("Authentication info not valid or not provided: " + appCode + " is an Invalid App Code"));
 				//injects the internal admin credentials in case the controller have to connect with the DB
-				ctx.args.put("username", BBConfiguration.getBaasBoxAdminUsername());
-				ctx.args.put("password", BBConfiguration.getBaasBoxAdminPassword());
+				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxAdminUsername());
+				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxAdminPassword());
 				//executes the request
 				if (tempResult==null) tempResult = delegate.call(ctx);
 			}
@@ -102,7 +102,7 @@ public class RootCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result=wr.wrap(ctx, tempResult);
 		
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	    return F.Promise.<SimpleResult>pure(result);	
 	}
 

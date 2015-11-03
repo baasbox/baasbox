@@ -31,7 +31,7 @@ import static play.test.Helpers.running;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -101,7 +101,7 @@ public class RoleInheritsFunctionalTest extends AbstractTest{
                                         requestCreation = new FakeRequest(POST, sFakeCreateUser);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                         requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                        ObjectMapper mapper = new ObjectMapper();
+                                        ObjectMapper mapper = BBJson.mapper();
                                         JsonNode actualObj = mapper.readTree("{\"username\":\""+userName+"\","
                                         		+ "\"password\":\"test\","	
                                         		+ "\"role\":\""+ roleName +"\"}");
@@ -142,7 +142,7 @@ public class RoleInheritsFunctionalTest extends AbstractTest{
                                          requestCreation = new FakeRequest(POST, "/admin/user");
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
                                          requestCreation = requestCreation.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
-                                         mapper = new ObjectMapper();
+                                         mapper = BBJson.mapper();
                                          actualObj = mapper.readTree("{\"username\":\""+sFakeRegUser+"\","
                                          		+ "\"password\":\"test\","	
                                          		+ "\"role\":\"registered\",\"isrole\":true}");

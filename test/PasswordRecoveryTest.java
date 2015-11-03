@@ -17,55 +17,29 @@
 
 // @author: Marco Tibuzzi
 
-import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.BAD_REQUEST;
-import static play.mvc.Http.Status.UNAUTHORIZED;
-import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.POST;
 import static play.test.Helpers.GET;
-import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
-import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-
-import ch.qos.logback.classic.db.DBHelper;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import play.libs.F.Callback;
-import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
-import play.test.TestBrowser;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.PasswordRecovery;
-import com.baasbox.dao.GenericDao;
-import com.baasbox.dao.NodeDao;
-import com.baasbox.dao.ResetPwdDao;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -180,13 +154,14 @@ public class PasswordRecoveryTest extends AbstractUserTest
 						//step 2
 						request=new FakeRequest("GET", "/user/password/reset/"+token1JSON);
 						result = routeAndCall(request);
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2 - 1", Status.OK, null,false);
 						
 						sqlresult = (List<ODocument>) com.baasbox.db.DbHelper.genericSQLStatementExecute("select base64_code_step2 from _BB_ResetPwd where user.user.name='"+sFakeUser+"'",null);
 
 						String token2=sqlresult.get(0).field("base64_code_step2");
 						String token2JSON=token2.concat(".json");
 						
-						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"link\":\"/user/password/reset/"+token2JSON+"\",\"token\":\""+token2+"\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
+						assertRoute(result, "testTokenPasswordRecovery.resetpwdStep2 - 2", Status.OK, "{\"user_name\":\""+sFakeUser+"\",\"link\":\"/user/password/reset/"+token2JSON+"\",\"token\":\""+token2+"\",\"application_name\":\""+com.baasbox.configuration.Application.APPLICATION_NAME.getValueAsString()+"\"}", true);	
 
 						//step 3
 						
@@ -207,7 +182,7 @@ public class PasswordRecoveryTest extends AbstractUserTest
 						request = request.withHeader(TestConfig.KEY_AUTH, sAuthEnc);
 						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 						result=routeAndCall(request);
-						assertRoute(result, "testTokenPasswordRecovery.loginWithOlderPassword", Status.UNAUTHORIZED, "{\"result\":\"error\",\"message\":\"User "+sFakeUser+" is not authorized to access\",\"resource\":\"/me\",\"method\":\"GET\",\"request_header\":{\"AUTHORIZATION\":[\""+sAuthEnc+"\"],\"X-BAASBOX-APPCODE\":[\""+TestConfig.VALUE_APPCODE+"\"]},\"API_version\":\""+BBConfiguration.getApiVersion()+"\",\"http_code\":"+Status.UNAUTHORIZED+"}", true);	
+						assertRoute(result, "testTokenPasswordRecovery.loginWithOlderPassword", Status.UNAUTHORIZED, "{\"result\":\"error\",\"message\":\"User "+sFakeUser+" is not authorized to access\",\"resource\":\"/me\",\"method\":\"GET\",\"request_header\":{\"AUTHORIZATION\":[\""+sAuthEnc+"\"],\"X-BAASBOX-APPCODE\":[\""+TestConfig.VALUE_APPCODE+"\"]},\"API_version\":\""+BBConfiguration.getInstance().getApiVersion()+"\",\"db_schema_version\":\"" + BBConfiguration.getInstance().getDBVersion() + "\",\"http_code\":"+Status.UNAUTHORIZED+"}", true);	
 
 						//try to authenticate with newer password
 						sAuthEnc=TestConfig.encodeAuth(sFakeUser,newPassword);

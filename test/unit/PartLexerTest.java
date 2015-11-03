@@ -1,10 +1,15 @@
 package unit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
 import com.baasbox.service.query.PartFactory;
 import com.baasbox.service.query.PartsLexer;
 import com.baasbox.service.query.PartsParser;
@@ -38,7 +43,7 @@ public class PartLexerTest {
 			fail();
 		}catch(Exception e ){
 			assertEquals(PartsLexer.PartValidationException.class,e.getClass());
-			assertTrue(e.getMessage().indexOf("private")>-1);
+			assertTrue(ExceptionUtils.getMessage(e).indexOf("private")>-1);
 		}
 	}
 	
@@ -51,8 +56,7 @@ public class PartLexerTest {
 			fail();
 		}catch(Exception e ){
 			assertEquals(PartsLexer.PartValidationException.class,e.getClass());
-			System.out.println(e.getMessage());
-			assertTrue(e.getMessage().toLowerCase().indexOf("unrecognized")>-1);
+			assertTrue(ExceptionUtils.getMessage(e).toLowerCase().indexOf("unrecognized")>-1);
 		}
 	}
 	

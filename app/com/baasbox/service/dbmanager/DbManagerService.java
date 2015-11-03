@@ -19,7 +19,6 @@
 package com.baasbox.service.dbmanager;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -34,30 +33,25 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.comparator.LastModifiedFileComparator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.xmlbeans.impl.piccolo.io.FileFormatException;
 
-import play.Logger;
 import play.libs.Akka;
-import play.libs.Json;
-import play.mvc.Result;
-import play.mvc.Http.MultipartFormData;
-import play.mvc.Http.MultipartFormData.FilePart;
 import scala.concurrent.duration.Duration;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.BBInternalConstants;
-import com.baasbox.configuration.IosCertificateHandler;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.db.async.ExportJob;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.FileSystemPathUtil;
 
 public class DbManagerService {
-	public static final String backupDir = BBConfiguration.getDBBackupDir();
+	public static final String backupDir = BBConfiguration.getInstance().getDBBackupDir();
 	public static final String fileSeparator = System.getProperty("file.separator")!=null?System.getProperty("file.separator"):"/";
 
 	/**
@@ -81,7 +75,7 @@ public class DbManagerService {
 		String fileName = String.format("%s-%s.zip", sdf.format(new Date()),FileSystemPathUtil.escapeName(appcode));
 		//Async task
 		Akka.system().scheduler().scheduleOnce(
-				Duration.create(2, TimeUnit.SECONDS),
+				Duration.create(1, TimeUnit.SECONDS),
 				new ExportJob(dir.getAbsolutePath()+fileSeparator+fileName,appcode),
 				Akka.system().dispatcher()
 				); 
@@ -129,7 +123,8 @@ public class DbManagerService {
 	
 	
 	public static void importDb(String appcode,ZipInputStream zis) throws FileFormatException,Exception{
-		String fileContent = null;
+		File newFile = null;
+		FileOutputStream fout = null;
 			try{
 				//get the zipped file list entry
 				ZipEntry ze = zis.getNextEntry();
@@ -138,21 +133,17 @@ public class DbManagerService {
 					ze = zis.getNextEntry();
 				}
 				if(ze!=null){
-					File newFile = File.createTempFile("export",".json");
-					FileOutputStream fout = new FileOutputStream(newFile);
-					for (int c = zis.read(); c != -1; c = zis.read()) {
-						fout.write(c);
-					}
+					newFile = File.createTempFile("export",".json");
+					fout = new FileOutputStream(newFile);
+					IOUtils.copy(zis, fout,BBConfiguration.getInstance().getImportExportBufferSize());
 					fout.close();
-					fileContent = FileUtils.readFileToString(newFile);
-					newFile.delete();
 				}else{
 					throw new FileFormatException("Looks like the uploaded file is not a valid export.");
 				}
 				ZipEntry manifest = zis.getNextEntry();
 				if(manifest!=null){
 					File manifestFile = File.createTempFile("manifest",".txt");
-					FileOutputStream fout = new FileOutputStream(manifestFile);
+					fout = new FileOutputStream(manifestFile);
 					for (int c = zis.read(); c != -1; c = zis.read()) {
 						fout.write(c);
 					}
@@ -164,9 +155,9 @@ public class DbManagerService {
 					if(m.matches()){
 						String version = m.group(1);
 						if (version.compareToIgnoreCase("0.6.0")<0){ //we support imports from version 0.6.0
-							throw new FileFormatException(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getApiVersion(),version));
+							throw new FileFormatException(String.format("Current baasbox version(%s) is not compatible with import file version(%s)",BBConfiguration.getInstance().getApiVersion(),version));
 						}else{
-							if (Logger.isDebugEnabled()) Logger.debug("Version : "+version+" is valid");
+							if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Version : "+version+" is valid");
 						}
 					}else{
 						throw new FileFormatException("The manifest file does not contain a version number");
@@ -174,24 +165,26 @@ public class DbManagerService {
 				}else{
 					throw new FileFormatException("Looks like zip file does not contain a manifest file");
 				}
-				if (Logger.isDebugEnabled()) Logger.debug("Importing: "+fileContent);
-				if(fileContent!=null && StringUtils.isNotEmpty(fileContent.trim())){
-					DbHelper.importData(appcode, fileContent);
+				if(newFile!=null){
+					DbHelper.importData(appcode, newFile);
 					zis.closeEntry();
 					zis.close();
 				}else{
 					throw new FileFormatException("The import file is empty");
 				}
 			}catch(FileFormatException e){
-				Logger.error(e.getMessage());
+				BaasBoxLogger.error(ExceptionUtils.getMessage(e));
 				throw e;
 			}catch(Throwable e){
-				Logger.error(ExceptionUtils.getStackTrace(e));
+				BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
 				throw new Exception("There was an error handling your zip import file.", e);
 			}finally{
 				try {
 					if(zis!=null){
 						zis.close();
+					}
+					if (fout!=null){
+						fout.close();
 					}
 				} catch (IOException e) {
 					// Nothing to do here

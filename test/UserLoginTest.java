@@ -1,23 +1,34 @@
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.baasbox.security.SessionKeys;
-
+import play.libs.F.Callback;
 import play.libs.Json;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
+import play.test.TestBrowser;
+
+import com.baasbox.security.SessionKeys;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+
 import core.AbstractTest;
 import core.TestConfig;
+
+
 public class UserLoginTest extends AbstractTest
 {
 
@@ -90,4 +101,94 @@ public class UserLoginTest extends AbstractTest
 			}
 		);		
 	}
+
+
+	@Test
+	public void testRouteLoginUserJson()
+	{
+		running
+		(
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					
+					// Test login user
+					ObjectMapper om = BBJson.mapper();
+					JsonNode payload;
+					try {
+						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");
+					} catch (IOException e) {
+						Assert.fail(ExceptionUtils.getFullStackTrace((e)));
+						return;
+					}
+					
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+					httpRequest	( 
+							TestConfig.SERVER_URL + getRouteAddress(),
+							getMethod(),
+							payload
+					);
+					assertServer("testServerLoginUserJson", Status.OK, null, false);
+					
+					String body = getResponse();
+					
+					JsonNode jsonRes = Json.parse(body);
+					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
+					Assert.assertNotNull(token);
+					JsonNode user = jsonRes.get("data").get("user");
+					Assert.assertNotNull(user);
+					assertJSON(user, "admin");
+					
+					//test logout
+					setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					setHeader(TestConfig.KEY_TOKEN, token);
+					removeHeader(HttpHeaders.CONTENT_TYPE);
+					httpRequest	( 
+							TestConfig.SERVER_URL + "/logout",
+							POST
+					);
+					
+					assertServer("testServerLogoutUser", Status.OK, "\"result\":\"ok\",\"data\":\"user logged out\",\"http_code\":200", true);
+					
+				}
+			}
+		);		
+	}
+
+	
+	@Test
+	public void testRouteLoginUserPlainText()
+	{
+		running
+		(
+			getTestServer(), 
+			HTMLUNIT, 
+			new Callback<TestBrowser>() 
+	        {
+				public void invoke(TestBrowser browser) 
+				{
+					
+					ObjectMapper om = BBJson.mapper();
+					JsonNode payload;
+					try {
+						payload = om.readTree("{\"username\":\""+ADMIN_USERNAME+"\",\"password\":\""+ADMIN_PASSWORD+"\",\"appcode\":\""+TestConfig.VALUE_APPCODE+"\"}");
+					} catch (IOException e) {
+						Assert.fail(ExceptionUtils.getFullStackTrace((e)));
+						return;
+					}
+					
+					setHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN);
+					httpRequest	( 
+							TestConfig.SERVER_URL + getRouteAddress(),
+							getMethod(),
+							payload
+					);
+					assertServer("testServerLoginUserPlainText", Status.BAD_REQUEST, "Detected: text/plain", true);
+				}
+			}
+		);		
+	}	
 }

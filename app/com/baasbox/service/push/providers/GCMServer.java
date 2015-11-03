@@ -33,16 +33,19 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.simple.JSONValue;
 
-import play.Logger;
-
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.service.logging.PushLogger;
 import com.baasbox.exception.BaasBoxPushException;
 import com.baasbox.service.push.PushNotInitializedException;
 import com.baasbox.service.push.providers.Factory.ConfigurationKeys;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.android.gcm.server.InvalidRequestException;
 import com.google.android.gcm.server.Message;
+import com.google.android.gcm.server.MulticastResult;
+import com.google.android.gcm.server.Result;
 import com.google.android.gcm.server.Sender;
 import com.google.common.collect.ImmutableMap;
 
@@ -59,68 +62,86 @@ public class GCMServer extends PushProviderAbstract {
 
 	public boolean send(String message, List<String> deviceid, JsonNode bodyJson)
 			throws PushNotInitializedException, InvalidRequestException, UnknownHostException,IOException, PushTimeToLiveFormatException, PushCollapseKeyFormatException {
-		if (Logger.isDebugEnabled()) Logger.debug("GCM Push message: "+message+" to the device "+deviceid);
-		if (!isInit) {
-			return true;
-		}
-		JsonNode customDataNodes=bodyJson.get("custom");
-
-		Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
-
-		if(!(customDataNodes==null)){
-			if(customDataNodes.isTextual()) {
+		PushLogger pushLogger = PushLogger.getInstance();
+		pushLogger.addMessage("............ GCM Push Message: -%s- to the device(s) %s" , message, deviceid);
+		
+		try {
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("GCM Push message: "+message+" to the device "+deviceid);
+			if (!isInit) {
+				pushLogger.addMessage("............ GCMS is not initialized!");
+				return true;
+			}
+			JsonNode customDataNodes=bodyJson.get("custom");
+	
+			Map<String,JsonNode> customData = new HashMap<String,JsonNode>();
+	
+			if(!(customDataNodes==null)){
 				customData.put("custom",customDataNodes);
 			}
-			else {
-				for(JsonNode customDataNode : customDataNodes) {
-					customData.put("custom", customDataNodes);
+	
+			JsonNode collapse_KeyNode=bodyJson.findValue("collapse_key"); 
+			String collapse_key=null; 
+	
+			if(!(collapse_KeyNode==null)) {
+				if(!(collapse_KeyNode.isTextual())) throw new PushCollapseKeyFormatException("Collapse_key MUST be a String");
+				collapse_key=collapse_KeyNode.asText();
+			}
+			else collapse_key="";
+	
+			JsonNode timeToLiveNode=bodyJson.findValue("time_to_live");
+			int time_to_live = 0;
+	
+			if(!(timeToLiveNode==null)) {
+				if(!(timeToLiveNode.isNumber())) throw new PushTimeToLiveFormatException("Time_to_live MUST be a positive number or equal zero");
+				else if(timeToLiveNode.asInt() < 0) throw new PushTimeToLiveFormatException("Time_to_live MUST be a positive number or equal zero");
+				else if(timeToLiveNode.asInt()>MAX_TIME_TO_LIVE){
+					time_to_live=MAX_TIME_TO_LIVE;
 				}
+				else time_to_live=timeToLiveNode.asInt();
+	
 			}
-		}
-
-		JsonNode collapse_KeyNode=bodyJson.findValue("collapse_key"); 
-		String collapse_key=null; 
-
-		if(!(collapse_KeyNode==null)) {
-			if(!(collapse_KeyNode.isTextual())) throw new PushCollapseKeyFormatException("Collapse_key MUST be a String");
-			collapse_key=collapse_KeyNode.asText();
-		}
-		else collapse_key="";
-
-		JsonNode timeToLiveNode=bodyJson.findValue("time_to_live");
-		int time_to_live = 0;
-
-		if(!(timeToLiveNode==null)) {
-			if(!(timeToLiveNode.isNumber())) throw new PushTimeToLiveFormatException("Time_to_live MUST be a positive number or equal zero");
-			else if(timeToLiveNode.asInt() < 0) throw new PushTimeToLiveFormatException("Time_to_live MUST be a positive number or equal zero");
-			else if(timeToLiveNode.asInt()>MAX_TIME_TO_LIVE){
-				time_to_live=MAX_TIME_TO_LIVE;
+			else time_to_live=MAX_TIME_TO_LIVE; //IF NULL WE SET DEFAULT VALUE (4 WEEKS)
+	
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("collapse_key: " + collapse_key.toString());
+	
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("time_to_live: " + time_to_live);
+	
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Custom Data: " + customData.toString());
+			
+			pushLogger.addMessage("............ messgae: %s", message);
+			pushLogger.addMessage("............ collapse_key: %s", collapse_key);
+			pushLogger.addMessage("............ time_to_live: %s", time_to_live);
+			pushLogger.addMessage("............ custom: %s", customData);
+			pushLogger.addMessage("............ device(s): %s", deviceid);
+			
+	
+			Sender sender = new Sender(apikey);
+			Message msg = new Message.Builder().addData("message", message)
+					.addData("custom", customData.toString())
+					.collapseKey(collapse_key.toString())
+					.timeToLive(time_to_live)
+					.build();
+	
+			MulticastResult result = sender.send(msg, deviceid , 1);
+			
+			pushLogger.addMessage("............ %d message(s) sent", result.getTotal());
+			pushLogger.addMessage("................. success: %s", result.getSuccess());
+			pushLogger.addMessage("................. failure: %s", result.getFailure());
+			
+			for (Result r:result.getResults()){
+				pushLogger.addMessage("............ MessageId (null == error): %s",r.getMessageId());
+				pushLogger.addMessage("............... Error Code Name: %s",r.getErrorCodeName());	
+				pushLogger.addMessage("............... Canonincal Registration Id: %s",r.getCanonicalRegistrationId());
 			}
-			else time_to_live=timeToLiveNode.asInt();
-
+			// icallbackPush.onError(ExceptionUtils.getMessage(e));
+	
+			// icallbackPush.onSuccess();
+			return false;
+		} catch (Exception e) {
+			pushLogger.addMessage("Error sending push notification (GCM)...");
+			pushLogger.addMessage(ExceptionUtils.getMessage(e));
+			throw e;
 		}
-		else time_to_live=MAX_TIME_TO_LIVE; //IF NULL WE SET DEFAULT VALUE (4 WEEKS)
-
-		if (Logger.isDebugEnabled()) Logger.debug("collapse_key: " + collapse_key.toString());
-
-		if (Logger.isDebugEnabled()) Logger.debug("time_to_live: " + time_to_live);
-
-		if (Logger.isDebugEnabled()) Logger.debug("Custom Data: " + customData.toString());
-
-		Sender sender = new Sender(apikey);
-		Message msg = new Message.Builder().addData("message", message)
-				.addData("custom", customData.toString())
-				.collapseKey(collapse_key.toString())
-				.timeToLive(time_to_live)
-				.build();
-
-		sender.send(msg, deviceid , 1);
-
-
-		// icallbackPush.onError(e.getMessage());
-
-		// icallbackPush.onSuccess();
-		return false;
 
 	}
 

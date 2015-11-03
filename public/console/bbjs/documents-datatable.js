@@ -6,12 +6,12 @@ var documentDataArray= new Array();
 
    function loadDocumentsData(collectionName){
 	   if (collectionName!=null){
-	    	url=BBRoutes.com.baasbox.controllers.Document.getDocuments(collectionName).absoluteURL();
+	    	url = window.location.origin + BBRoutes.com.baasbox.controllers.Document.getDocuments(collectionName).url;
 	    	loadTable($('#documentTable'),documentsDataTableDef,url,documentDataArray); //defined in datatable.js
    		}
     }
    var documentsDataTableDef={
-			"sDom": "R<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span12'i><'span12 center'p>>",
+			"sDom": sDomGlobal,
 			"sPaginationType": "bootstrap",
 			"oLanguage": {"sLengthMenu": "_MENU_ records per page"},
 			"aoColumns": [{"mData": "_creation_date",sWidth:"85px","mRender": function ( data, type, full ) {
@@ -21,7 +21,7 @@ var documentDataArray= new Array();
 						   },
 						   {"mData": "id", sWidth:"78px","mRender": function ( data, type, full ) 	{
 				 				return "<span style='font-family:Courier'>"+data+"</span>";
-							}
+							},bSortable:false
 						   },
 			               {"mData": "_author"},
 			               {"mData": "@rid",sWidth:"50%","mRender": function ( data, type, full ) 	{
@@ -37,7 +37,7 @@ var documentDataArray= new Array();
 			               },
 			               {"mData": "id","mRender": function ( data, type, full ) {
 							   var obj=JSON.parse(JSON.stringify(full));
-			            	   return getActionButton("edit","document",data + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data+obj["@class"]) /*+ "&nbsp;" + getActionButton("acl","document",data+obj["@class"])*/;
+			            	   return getActionButton("edit","document",data + DOC_CLASS_SEPARATOR + obj["@class"]) + "&nbsp;" + getActionButton("delete","document",data + DOC_CLASS_SEPARATOR + obj["@class"]) /*+ "&nbsp;" + getActionButton("acl","document",data+obj["@class"])*/;
 			            	},bSortable:false,bSearchable:false
 			               }
 			               ],

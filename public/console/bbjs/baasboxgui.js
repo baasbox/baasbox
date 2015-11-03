@@ -18,7 +18,7 @@ angular.module("console", ['ui.ace'])
 		function prompt(message,defaultValue){
 			var defer = $q.defer();
 			var response = $window.prompt(message,defaultValue);
-			if (response==null){
+			if (!response || /^\s*$/.test(response)){ //http://stackoverflow.com/a/3261380/3023373
 				defer.reject();
 			} else {
 				defer.resolve(response);
@@ -26,6 +26,15 @@ angular.module("console", ['ui.ace'])
 			return defer.promise;
 		}
 		return prompt;
+	}).directive('showTail',function(){
+		return function(scope,elem,attrs) {
+			scope.$watch(function(){
+				return elem[0].value;
+			},function(e){
+				elem[0].scrollTop = elem[0].scrollHeight;
+			});
+
+		}
 	});
 
 
@@ -44,6 +53,7 @@ var settingPushDataArray;
 var refreshSessionToken;
 var settingPushMap = {};
 
+var DOC_CLASS_SEPARATOR = "___@___";
 
 $(document).ready(function(){
 	setup();
@@ -137,7 +147,7 @@ $('#dropDbConfirm').click(function(e){
 
 function dropDb()
 {
-	freezeConsole("Deleting your db","please wait...")
+	freezeConsole("Resetting your db","please wait...")
 	BBRoutes.com.baasbox.controllers.Admin.dropDb(5000).ajax(
 			{
 				error: function(data)	{
@@ -197,7 +207,8 @@ $('a.downloadExport').live('click',function(e){
 
 function downloadExportHref(name){
 	var reg = /(http:\/\/)(.*)/;
-	var uri = BBRoutes.com.baasbox.controllers.Admin.getExport(name).absoluteURL(false);
+	var uri = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.getExport(name).url;
+
 	var match = uri.match(reg);
 	if(match){
 		return match[1] + $("#login").scope().username+":"+$("#login").scope().password+"@"+match[2] + "?X-BB-SESSION="+ sessionStorage.sessionToken +"&X-BAASBOX-APPCODE="+ escape($("#login").scope().appcode);
@@ -220,6 +231,8 @@ $('.btn-adduser').click(function(e){
 	$(".groupUserPwd").removeClass("hide");
 	$("#txtUsername").removeClass("disabled");
 	$("#txtUsername").prop('disabled', false);
+	$("#txtUserId").removeClass("disabled");
+	$("#txtUserId").prop('disabled', false);
 	$('#addUserModal').modal('show');
 }); // Show Modal for Add User
 
@@ -276,6 +289,16 @@ $(".btn-action").live("click", function() {
             if(!confirm("Do you want to disable endpoints under '"+parameters+"' namespace?")) return;
             switchEndpoint(false,parameters);
             break;
+    case "drop":{
+    	switch (actionType)	{
+		case "user":
+			 if(!confirm("Do you want to drop user '"+ unescape(parameters) +"' and all its documents ?")) return;
+	            deleteUser(parameters);
+	            break;
+			break;
+    	break
+    	}
+    }
 	case "insert":
 		switch (actionType)	{
 		case "user":
@@ -304,8 +327,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 			//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			openDocumentEditForm(id,collection);
 			break;
 		case "asset":
@@ -324,11 +347,11 @@ $(".btn-action").live("click", function() {
         openFollowersModal(parameters);
             break;
     case "suspend":
-        if(!confirm("Do you want to suspend user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to suspend user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(true,parameters);
             break;
     case "activate":
-        if(!confirm("Do you want to enable user '"+parameters+"' ?")) return;
+        if(!confirm("Do you want to enable user '"+ unescape(parameters) +"' ?")) return;
             suspendOrActivateUser(false,parameters);
             break;
 	case "delete":
@@ -354,8 +377,8 @@ $(".btn-action").live("click", function() {
 			break;
 		case "document":
 		//in this case the parameter is pair ID/COLLECTION
-			var id=parameters.substring(0,36);
-			var collection=parameters.substr(36);
+			var id=parameters.substring(0,parameters.indexOf(DOC_CLASS_SEPARATOR));
+			var collection=parameters.substr(parameters.indexOf(DOC_CLASS_SEPARATOR) + DOC_CLASS_SEPARATOR.length);
 			if(!confirm("Are you sure you want to delete the '"+ id +"' document of the collection '"+collection+"' ?"))
 				return;
 			deleteDocument(collection,id);
@@ -365,8 +388,26 @@ $(".btn-action").live("click", function() {
 		}
 	});
 
+
+function deleteUser(userName){
+	userName=unescape(userName);
+    var route = BBRoutes.com.baasbox.controllers.Admin.dropUser(userName);
+    	route.ajax(
+    	        {
+    	            data: {"username": userName},
+    	            error: function(data){
+    	                alert(JSON.parse(data.responseText)["message"]);
+    	            },
+    	            success: function(data){
+    	                loadUserTable();
+    	            }
+    	        }
+    	    );
+}
+
 function suspendOrActivateUser(suspend,userName)
 {
+	userName=unescape(userName);
     var route = suspend?BBRoutes.com.baasbox.controllers.Admin.disable(userName):
                         BBRoutes.com.baasbox.controllers.Admin.enable(userName);
     route.ajax(
@@ -441,10 +482,13 @@ function deleteRole(roleName){
 }
 
 function openUserEditForm(editUserName){
+	editUserName = unescape(editUserName);
     var userObject;
 	resetAddUserForm();
 	$("#txtUsername").addClass("disabled");
 	$("#txtUsername").prop('disabled', true);
+	$("#txtUserId").addClass("disabled");
+	$("#txtUserId").prop('disabled', true);
 	$("#userTitle").text("Edit User information");
 	$(".groupUserPwd").addClass("hide");
 	for(i=0;i<userDataArray.length;i++)
@@ -453,32 +497,39 @@ function openUserEditForm(editUserName){
 			userObject = userDataArray[i];
 	}
 	$("#txtUsername").val(userObject.user.name);
+	$("#txtUserId").val(userObject.id);
     loadUserRole(userObject.user.roles[0].name);
 	$("#txtVisibleByTheUser").val(reverseJSON(userObject.visibleByTheUser)).trigger("change");
 	$("#txtVisibleByFriends").val(reverseJSON(userObject.visibleByFriends)).trigger("change");
 	$("#txtVisibleByRegisteredUsers").val(reverseJSON(userObject.visibleByRegisteredUsers)).trigger("change");
 	$("#txtVisibleByAnonymousUsers").val(reverseJSON(userObject.visibleByAnonymousUsers)).trigger("change");
+	$("#txtLoginInfo").val(reverseJSON(userObject.system));
 	$('#addUserModal').modal('show');
 }
 
 function openFollowersModal(user){
+	user = unescape(user);
     $("#followedUser").text(user);
     reloadFollowing(user);
     $("#followersModal").modal('show');
 }
 function openChangePasswordUserForm(changePassword){
+	changePassword=unescape(changePassword);
     resetChangePasswordUserForm()
     var userObject;
     $("#userTitle").text("Change password");
     $("#txtUserName").addClass("disabled");
     $("#txtUserName").prop('disabled', true);
-    //$(".groupUserPwd").removeClass("hide");
+    $("#txtUserId").addClass("disabled");
+    $("#txtUserId").prop('disabled', true);
+    $(".groupUserPwd").removeClass("hide");
     for(i=0;i<userDataArray.length;i++)
     {
         if(userDataArray[i].user.name == changePassword)
             userObject = userDataArray[i];
     }
     $("#txtUserName").val(userObject.user.name);
+    $("#txtUserId").val(userObject.id);
     $('#changePwdUserModal').modal('show');
 }
 
@@ -531,7 +582,11 @@ function openDocumentEditForm(id,collection){
 		docObject["@class"] = collection;
 	}
 	populateDocumentEditForm(docObject);
-
+	if (id==null){ //new doc the id can be supplied
+		//$("#txtDocumentId").prop("disabled", false); <<--- the server does not support it yet (only via plugin)
+	}else{ //we are updating the doc so the id cannot be modified
+		$("#txtDocumentId").prop("disabled", true); 
+	}
 	$('#addDocumentModal').modal('show');
 }
 
@@ -807,7 +862,8 @@ function addUser()
 {
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
-	var role = $("#cmbSelectRole").val();
+	var id = 		$("#txtUserId").val();
+	var role = 		$("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends = ($("#txtVisibleByFriends").val() == "") ? "{}": $("#txtVisibleByFriends").val();
 	var visibleByRegisteredUsers = ($("#txtVisibleByRegisteredUsers").val() == "") ? "{}": $("#txtVisibleByRegisteredUsers").val();
@@ -817,6 +873,7 @@ function addUser()
 			{
 				data: JSON.stringify({"username": userName,
 					"password": password,
+					"id": id,
 					"role": role,
 					"visibleByTheUser": jQuery.parseJSON(visibleByTheUser),
 					"visibleByFriends": jQuery.parseJSON(visibleByFriends),
@@ -840,6 +897,7 @@ function updateUser()
 {
 	var userName = $("#txtUsername").val();
 	var password = $("#txtPassword").val();
+	var password = $("#txtUserId").val();
 	var role = $("#cmbSelectRole").val();
 	var visibleByTheUser = ($("#txtVisibleByTheUser").val() == "") ? "{}": $("#txtVisibleByTheUser").val();
 	var visibleByFriends
@@ -1238,7 +1296,7 @@ $('#importDbForm').on('submit',function(){
 		return false;
 	}
 	var ext = $('#zipfile').val().split('.').pop().toLowerCase();
-	var serverUrl=BBRoutes.com.baasbox.controllers.Admin.importDb().absoluteURL();
+	var serverUrl=window.location.origin + BBRoutes.com.baasbox.controllers.Admin.importDb().url;
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1302,7 +1360,8 @@ $('#assetForm').submit(function() {
 	if ($.trim(assetMeta) == "")
 		assetMeta = "{}";
 
-	var serverUrl=BBRoutes.com.baasbox.controllers.Asset.post().absoluteURL();
+	var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Asset.post().url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1355,7 +1414,8 @@ $('#fileForm').submit(function() {
 	}
 
 
-	var serverUrl=BBRoutes.com.baasbox.controllers.File.storeFile().absoluteURL();
+	var serverUrl = BBRoutes.com.baasbox.controllers.File.storeFile().url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1441,7 +1501,7 @@ function getActionButton(action, actionType,parameters){
         tooltip="Change ACL..."
 		break;
     case "followers":
-        iconType="icon-user";
+        iconType="fa fa-users";
         classType="btn-info";
         labelName="";
         tooltip="Followees...."
@@ -1460,6 +1520,11 @@ function getActionButton(action, actionType,parameters){
 		iconType = "icon-trash";
 		classType = "btn-danger";
 		labelName = "Delete...";
+		break;
+	case "drop":
+		iconType = "icon-trash";
+		classType = "btn-danger";
+		labelName = "Drop";
 		break;
     case "suspend":
        iconType = "icon-off";
@@ -1523,10 +1588,15 @@ function setBradCrumb(type)
 		sBradCrumb = "Plugins";
 		break;
 	case "#permissions":
-		sBradCrumb = "Api Access";
+		sBradCrumb = "REST API Access";
 		break;		
 	case "#push_conf":
 		sBradCrumb = "Push Settings";
+		break;
+	case "#push_test":
+		sBradCrumb = "Push Test";
+		break;
+	case "#serverlog":
 		break;
 	}
 
@@ -1537,7 +1607,8 @@ function getFileIcon(type,id){
 	var sIcon="";
 	var iconPath = "img/AssetIcons/";
 	var sContent = "content";
-	var serverUrl=BBRoutes.com.baasbox.controllers.File.streamFile("").absoluteURL();
+	var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.File.streamFile("").url;
+	
 	if (window.location.protocol == "https:"){
 		serverUrl=serverUrl.replace("http:","https:");
 	}
@@ -1661,6 +1732,7 @@ function setupTables(){
 //        "oLanguage": {"sLengthMenu": "_MENU_ records per page"},
         "aoColumns": [
             {"mData": "endpoint.name"},
+            {"mData": "endpoint.description"},
             {"mData": "endpoint.status","mRender": function (data,type,full){
                    var classStyle ="label-success";
                    var text = "enabled";
@@ -1671,12 +1743,8 @@ function setupTables(){
                   return "<span class='label "+classStyle+"'>"+text+"</span> ";
             }},
             {"mData":"endpoint",mRender: function(data,type,full){
-                //console.log(JSON.stringify(data));
-                if(data.status){
-
-                }
                 return getActionButton(data.status?"disable":"enable", "endpoint", data.name);
-            }}],
+            },sWidth: '80px'}],
         "bRetrieve": true,
         "bDestroy": true
     }).makeEditable();
@@ -1884,6 +1952,12 @@ function setupMenu(){
 		$clink.parent('li').addClass('active');
 	});
 	$(".directLink").unbind("click");
+	$(".javascriptlink").click(function(e){
+		if($.browser.msie) e.which=1;
+		e.preventDefault();
+		var $clink=$(this);
+		callJsMenu($clink.attr('href'));
+	});
 	//initializeTours
 	$(".tour").click(function(){
 		for (var key in tours) {
@@ -1912,8 +1986,8 @@ function applySuccessMenu(action,data){
 		scope.data=data;
 	});
 	sessionStorage.latestMenu=action;
-	console.log(action);
-	console.log(scope);
+	//console.log(action);
+	//console.log(scope);
 }//applySuccessMenu
 
 function reloadFollowing(user){
@@ -1930,6 +2004,14 @@ function reloadFollowing(user){
             }
         }
     });
+}
+
+function callJsMenu(action){
+	switch (action)	{
+	case "#serverlog":
+		openLog(); //defined in log.js
+		break;
+	}
 }
 
 function callMenu(action){
@@ -2137,7 +2219,6 @@ function callMenu(action){
 
 
 				}
-
 				applySuccessMenu(action,settingSocialData);
 
 
@@ -2149,7 +2230,6 @@ function callMenu(action){
 		BBRoutes.com.baasbox.controllers.Admin.getExports().ajax({
 			success: function(data){
 				applySuccessMenu(action,data["data"]);
-
 			}
 		});
 		break;
@@ -2219,7 +2299,7 @@ function callMenu(action){
                     data = data["data"];
                     var arr = [];
                     for(var tag in data){
-                        arr.push({"endpoint": {"name": tag,"status": data[tag]}});
+                        arr.push({"endpoint": {"name": tag,"status": data[tag][0],"description":data[tag][1]}});
                     }
 
                     applySuccessMenu(action,arr);
@@ -2231,10 +2311,14 @@ function callMenu(action){
         case "#push_conf":
         	loadPushSettings(action);
             break;
+        case "#push_test":
+        	applySuccessMenu(action);
+            break;
 	}
 }//callMenu
 
 //PushConfController is defined into the push.js file
+//PushTestController is defined into the push.js file
 
 function PermissionsController($scope){}
 
@@ -2257,20 +2341,25 @@ function tryToLogin(user, pass,appCode){
 	BBRoutes.com.baasbox.controllers.User.login().ajax({
 		data:{username:user,password:pass,appcode:appCode},
 		success: function(data) {
-			sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
-			$('#password').val('');
-			//console.debug("login success");
-			//console.debug("data received: ");
-			//console.debug(data);
-			//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
-			//refresh the sessiontoken every 5 minutes
-			refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
-			var scope=$("#loggedIn").scope();
-			scope.$apply(function(){
-				scope.loggedIn=true;
-			});
-			sessionStorage.up ="yep";
-			callMenu("#dashboard");
+			//issue #579 - Hang on "Loading" spinner for non-admin login
+			if (data.data.user.roles[0].name!=="administrator"){
+				$("#errorLogin").removeClass("hide");
+			}else{
+				sessionStorage.sessionToken=data["data"]["X-BB-SESSION"];
+				$('#password').val('');
+				//console.debug("login success");
+				//console.debug("data received: ");
+				//console.debug(data);
+				//console.debug("sessionStorage.sessionToken: " + sessionStorage.sessionToken);
+				//refresh the sessiontoken every 5 minutes
+				refreshSessionToken=setInterval(function(){BBRoutes.com.baasbox.controllers.Generic.refreshSessionToken().ajax();},300000);
+				var scope=$("#loggedIn").scope();
+				scope.$apply(function(){
+					scope.loggedIn=true;
+				});
+				sessionStorage.up ="yep";
+				callMenu("#dashboard");
+		   }
 		},
 		error: function() {
 			$("#errorLogin").removeClass("hide");
@@ -2506,8 +2595,8 @@ function PushSettingsController($scope){
 			s.error ="File can't be empty"
 			return;
 		}
-		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
-		if (window.location.protocol == "https:"){
+		var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).url;
+    	if (window.location.protocol == "https:"){
 			serverUrl=serverUrl.replace("http:","https:");
 		}
 

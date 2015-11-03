@@ -19,6 +19,8 @@ package com.baasbox.service.storage;
 import java.security.InvalidParameterException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.DocumentDao;
 import com.baasbox.dao.GenericDao;
@@ -38,21 +40,22 @@ import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.InvalidJsonException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.query.JsonTree;
 import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import play.Logger;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 
 public class DocumentService {
@@ -61,15 +64,23 @@ public class DocumentService {
 	public static final String FIELD_LINKS = NodeDao.FIELD_LINK_TO_VERTEX;
 	private static final String OBJECT_QUERY_ALIAS = "result";
 
-	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException {
+
+	public static ODocument create(String collection, ObjectNode bodyJson) throws Throwable, InvalidCollectionException,InvalidModelException,ORecordDuplicatedException {
 		DocumentDao dao = DocumentDao.getInstance(collection);
 		DbHelper.requestTransaction();
 		ODocument doc = null;
 		try	{
 			doc = dao.create();
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
+			//since 0.9.4 clients can choose their own IDs (inside a plugin). So if provided we use them
+			if (bodyJson.get(BaasBoxPrivateFields.ID.toString())!=null && bodyJson.get(BaasBoxPrivateFields.ID.toString()).isTextual()){
+				String id=bodyJson.get("id").asText();
+				doc.field(BaasBoxPrivateFields.ID.toString(),id);
+				if (GenericDao.getInstance().getRidNodeByUUID(id)!=null) throw new ORecordDuplicatedException("An object with the supplied ID (" + id + ") already exists") ;
+			}
 			dao.save(doc);
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
@@ -79,6 +90,9 @@ public class DocumentService {
 			DbHelper.rollbackTransaction();
 			throw new UpdateOldVersionException("Are you trying to create a document with a @version field?");
 		}catch(AclNotValidException e){
+			DbHelper.rollbackTransaction();
+			throw e;
+		}catch(ORecordDuplicatedException e){
 			DbHelper.rollbackTransaction();
 			throw e;
 		}catch (Exception e){
@@ -111,6 +125,7 @@ public class DocumentService {
 		try{
 			DocumentDao dao = DocumentDao.getInstance(collectionName);
 			PermissionJsonWrapper acl = PermissionsHelper.returnAcl(bodyJson, true);
+			bodyJson=dao.removeClassAndRid(bodyJson);
 			dao.update(doc,(ODocument) (new ODocument()).fromJSON(bodyJson.toString()));
 			PermissionsHelper.setAcl(doc, acl);
 			DbHelper.commitTransaction();
@@ -181,6 +196,23 @@ public class DocumentService {
 		return dao.get(criteria);
 	}
 
+  /**
+   * Navigates and applies a query on a document link
+   * @param collectionName
+   * @param rid
+   * @param linkName
+   * @param criteria
+   * @return list of links satisfying criteria
+   */
+  public static List<ODocument> queryLink(String collectionName, String rid, String linkName, String linkDirection, QueryParams criteria) {
+    String select = String.format(NodeDao.LINKS_QUERY_FORMAT, linkDirection, linkName, collectionName, rid);
+    if (StringUtils.isEmpty(criteria.getFields())) {
+      criteria.fields("*");
+    }
+    String query = DbHelper.selectQueryBuilder(select, criteria.justCountTheRecords(), criteria);
+    return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
+  }
+
 	/**
 	 * @param rid
 	 * @return
@@ -240,7 +272,7 @@ public class DocumentService {
 			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		StringBuffer q = new StringBuffer("");
 
 		if(!pp.isMultiField() && !pp.isArray()){
@@ -277,8 +309,8 @@ public class DocumentService {
 	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
 		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
 		GenericDao gdao = GenericDao.getInstance();
-		ORID rid=gdao.getRidNodeByUUID(uuid);
-		ODocument doc = get(collection,rid.toString());
+		String rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid);
 		PermissionsHelper.setAcl(doc, acl);
 		return doc;
 	}
@@ -286,15 +318,25 @@ public class DocumentService {
     public static String getRidByString(String id, boolean isUUID) throws RidNotFoundException{
         String rid = null;
         if (isUUID) {
-            if (Logger.isDebugEnabled()) Logger.debug("id is an UUID, try to get a valid RID");
-            ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("id is an UUID, try to get a valid RID");
+            String orid = GenericDao.getInstance().getRidNodeByUUID(id);
             if (orid == null) throw new RidNotFoundException(id);
-            rid = orid.toString();
-            if (Logger.isDebugEnabled()) Logger.debug("Retrieved RID: "+ rid);
+            rid = orid;
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Retrieved RID: "+ rid);
         } else {
             rid = "#"+id;
         }
         return rid;
     }
+
+	public static boolean checkSyntax(String collectionName, QueryParams criteria) throws InvalidCollectionException, SqlInjectionException {
+		QueryParams checkCriteria = criteria.clone();
+		checkCriteria.page(0);
+		checkCriteria.recordPerPage(1);
+		checkCriteria.disablePaginationMore();
+		DocumentDao dao = DocumentDao.getInstance(collectionName);
+		dao.explainQuery(checkCriteria); //this is a trick to force the parser to evaluate the query
+		return true;
+	}
 
 }

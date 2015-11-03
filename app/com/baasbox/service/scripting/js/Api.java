@@ -18,18 +18,27 @@
 
 package com.baasbox.service.scripting.js;
 
-import com.baasbox.db.DbHelper;
-import com.baasbox.commands.exceptions.CommandException;
-import com.baasbox.commands.CommandRegistry;
-import com.baasbox.service.scripting.ScriptingService;
-import com.baasbox.service.scripting.base.JsonCallback;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import jdk.nashorn.internal.runtime.ECMAErrors;
 import jdk.nashorn.internal.runtime.ECMAException;
-import play.Logger;
 
-import java.io.IOException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+
+import com.baasbox.BBConfiguration;
+import com.baasbox.commands.CommandRegistry;
+import com.baasbox.commands.exceptions.CommandException;
+import com.baasbox.db.DbHelper;
+import com.baasbox.service.events.EventsService;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.service.scripting.ScriptingService;
+import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 
 /**
  *
@@ -42,10 +51,11 @@ public class Api {
     }
 
     public static String execCommand(String commandStr,JsonCallback callback){
+    	BaasBoxLogger.debug("Command to execute: "+commandStr);
         try {
-            JsonNode node = Json.mapper().readTree(commandStr);
+            JsonNode node = BBJson.mapper().readTree(commandStr);
             if (!node.isObject()){
-                Logger.error("Command is not an object");
+                BaasBoxLogger.error("Command is not an object");
                 throw ECMAErrors.typeError("Invalid command");
             }
             ObjectNode o = (ObjectNode)node;
@@ -55,18 +65,26 @@ public class Api {
             }
             JsonNode exec = CommandRegistry.execute(node,callback);
             String res = exec== null?null:exec.toString();
-            Logger.debug("Command result: "+res);
+            BaasBoxLogger.debug("Command result: "+res);
             return res;
         } catch (IOException e) {
-            Logger.error("IoError "+e.getMessage(),e);
+            BaasBoxLogger.error("IoError "+ExceptionUtils.getMessage(e),e);
             throw ECMAErrors.typeError(e,"Invalid command definition");
         } catch (CommandException e){
-            Logger.error("CommandError: "+e.getMessage(),e);
-            throw new ECMAException(e.getMessage(),e);
+            BaasBoxLogger.error("CommandError: "+ExceptionUtils.getMessage(e),e);
+            throw new ECMAException(ExceptionUtils.getMessage(e),e);
         }
     }
 
 
+    public static String getBaasBoxVersion(){
+        return BBConfiguration.getInstance().getApiVersion();
+    }
+
+    public static boolean isScriptLoggingActive(){
+    	return (EventsService.howManyScriptLoggerListener.get() > 0);
+    }
+    
     public static String currentUserName(){
         String currentUser = DbHelper.getCurrentHTTPUsername();
         return currentUser;
@@ -82,5 +100,23 @@ public class Api {
 
     public static Object require(String name){
         return NashornEngine.getNashorn().require(name);
+    }
+    
+    public static String btoa (String stringToConvert){
+    	try {
+			return Base64.encodeBase64String(stringToConvert.getBytes("UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
+    }
+    
+    public static String atob (String stringToConvert){
+    	try {
+			return new String(Base64.decodeBase64(stringToConvert),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			//REALLY?????
+			throw new Error(e);
+		}
     }
 }

@@ -6,15 +6,15 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import play.Logger;
 import play.Play;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class SocialLoginServiceMock extends SocialLoginService {
 	
 	private static String port = (Play.isTest())?System.getProperty("testserver.port", "3333"):System.getProperty("http.port", "9000");
-	private static String mockUrl = "http://localhost"+port;
+	private static String mockUrl = "http://localhost:"+port;
 	
 	public   String PREFIX = "";
 	public   String SOCIAL = "";
@@ -55,8 +55,14 @@ public class SocialLoginServiceMock extends SocialLoginService {
 		return "mock_verifier";
 	}
 
+
 	@Override
-	public Token getAccessTokenFromRequest(Request r, Session s) {
+  protected String saveToken(String k, Token t) {
+    return null;
+  }
+
+  @Override
+  public Token getAccessTokenFromRequest(Request r) {
 		return null;
 	}
 
@@ -67,7 +73,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	public UserInfo extractUserInfo(Response r) throws BaasBoxSocialException {
-		if (Logger.isDebugEnabled()) Logger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
+		if (BaasBoxLogger.isDebugEnabled() && r!=null)  BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		ui.setId("mockid_" + this.token);
 		ui.setUsername("mockusername_" + this.token);

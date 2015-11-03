@@ -19,7 +19,7 @@ package com.baasbox.db.hook;
 
 import java.util.Date;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.BBInternalConstants;
 import com.baasbox.dao.NodeDao;
@@ -40,7 +40,7 @@ public class Audit extends BaasBoxHook {
 	
 	@Override
 	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeCreate(ORecord<?> iRecord){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
 				if ( 
@@ -49,7 +49,7 @@ public class Audit extends BaasBoxHook {
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && (doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME) || doc.getSchemaClass().getName().equals("E") || doc.getSchemaClass().isSubClassOf("E"))){
-						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeCreate: creation of audit fields for document " + doc.getIdentity());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeCreate: creation of audit fields for document " + doc.getIdentity());
 						ODocument auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("type",BBInternalConstants.FIELD_AUDIT);
@@ -62,13 +62,13 @@ public class Audit extends BaasBoxHook {
 					}//doc.getClassName()
 				}
 		}//iRecord instanceof ODocument
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return RESULT.RECORD_NOT_CHANGED;
 	 }//onRecordBeforeCreate
 
 	@Override
 	 public com.orientechnologies.orient.core.hook.ORecordHook.RESULT onRecordBeforeUpdate (ORecord<?> iRecord){
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (iRecord instanceof ODocument){
 			ODocument doc = (ODocument)iRecord;
 				if ( 
@@ -77,18 +77,19 @@ public class Audit extends BaasBoxHook {
 					 ( doc.field("type")==null )
 					){
 					if(!doc.isEmbedded() && doc.getClassName()!=null && doc.getSchemaClass().isSubClassOf(NodeDao.CLASS_NODE_NAME)){
-						if (Logger.isDebugEnabled()) Logger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: " + iRecord.getIdentity());
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord:{} " , iRecord.getIdentity());
 						ODocument auditDoc = doc.field(BBInternalConstants.FIELD_AUDIT);
 						if (auditDoc==null) auditDoc = new ODocument();
 						Date data = new Date();
 						auditDoc.field("modifiedBy",iRecord.getDatabase().getUser().getDocument().getIdentity());
 						auditDoc.field("modifiedOn",data);
 						doc.field(BBInternalConstants.FIELD_AUDIT,auditDoc);	
+						if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("  AuditHook.onRecordBeforeUpdate: update of audit fields for ORecord: {} done." , iRecord.getIdentity());
 						return RESULT.RECORD_CHANGED;
 					}
 				}
 		}
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return RESULT.RECORD_NOT_CHANGED;
 	 }//onRecordBeforeUpdate
 

@@ -18,18 +18,16 @@
 
 package com.baasbox.service.sociallogin;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 
-import com.baasbox.configuration.SocialLoginConfiguration;
-
 import play.libs.Json;
 import play.mvc.Http.Request;
-import play.mvc.Http.Session;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class GithubLoginService extends SocialLoginService {
 
@@ -71,8 +69,14 @@ public class GithubLoginService extends SocialLoginService {
 		return r.getQueryString("code");
 	}
 
+
 	@Override
-	public Token getAccessTokenFromRequest(Request r,Session s) {
+  protected String saveToken(String k, Token t) {
+		throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Token getAccessTokenFromRequest(Request r) {
 		return null;
 	}
 

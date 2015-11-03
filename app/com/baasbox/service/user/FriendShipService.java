@@ -18,29 +18,24 @@
 
 package com.baasbox.service.user;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.baasbox.BBConfiguration;
-import com.baasbox.exception.AlreadyFriendsException;
-import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.exception.UserToFollowNotExistsException;
-import com.google.common.base.Strings;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import ch.qos.logback.classic.db.DBHelper;
 
 import com.baasbox.dao.RoleDao;
 import com.baasbox.dao.UserDao;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.exception.AlreadyFriendsException;
+import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.exception.UserToFollowNotExistsException;
 import com.baasbox.util.QueryParams;
-import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class FriendShipService {
@@ -60,28 +55,25 @@ public class FriendShipService {
 		return veryNewParams;
 	}
 
+	
     public static List<ODocument> getFollowing(String username,QueryParams criteria) throws SqlInjectionException {
-        OUser me = UserService.getOUserByUsername(username);
-        Set<ORole> roles = me.getRoles();
-        List<String> usernames = roles.parallelStream().map(ORole::getName)
-                .filter((x) -> x.startsWith(RoleDao.FRIENDS_OF_ROLE))
-                .map((m) -> StringUtils.difference(RoleDao.FRIENDS_OF_ROLE, m))
-                .collect(Collectors.toList());
-        if (username.isEmpty()){
-            return Collections.emptyList();
-        } else {
-            List<ODocument> followers = UserService.getUserProfileByUsernames(usernames,criteria);
-            return followers;
-        }
-
+    return UserDao.getInstance().getFollowing(username, criteria);
     }
 
+
+  public static String getFriendsOfQuery(String username, QueryParams criteria) {
+    String friendShipRole = RoleDao.getFriendRoleName(username);
+    criteria.where(getWhereFromCriteria(criteria));
+    criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
+    return DbHelper.selectQueryBuilder(UserDao.MODEL_NAME, criteria.justCountTheRecords(), criteria);
+  }
+
 	public static List<ODocument> getFriendsOf(String username, QueryParams criteria) throws InvalidCriteriaException, SqlInjectionException {
-		String friendShipRole=RoleDao.getFriendRoleName(username);
-		criteria.where(getWhereFromCriteria(criteria));
-		criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
-		UserDao udao= UserDao.getInstance();
-		return udao.get(criteria);
+    String friendShipRole = RoleDao.getFriendRoleName(username);
+    criteria.where(getWhereFromCriteria(criteria));
+    criteria.params(addFriendShipRoleToCriteria(criteria, friendShipRole));
+    UserDao udao = UserDao.getInstance();
+    return udao.get(criteria);
 	}
 
 	public static long getCountFriendsOf(String username, QueryParams criteria) throws InvalidCriteriaException, SqlInjectionException {

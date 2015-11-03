@@ -27,7 +27,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.dao.AssetDao;
@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class StatisticsService {
 
 		public static ImmutableMap data() throws SqlInjectionException, InvalidCollectionException{
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			UserDao userDao = UserDao.getInstance();
 			CollectionDao collDao = CollectionDao.getInstance();
 			AssetDao assetDao = AssetDao.getInstance();
@@ -74,8 +74,8 @@ public class StatisticsService {
 					"assets",assetsCount,
 					"files",filesCount
 					);
-			if (Logger.isDebugEnabled()) Logger.debug(response.toString());
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(response.toString());
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 
@@ -104,14 +104,14 @@ public class StatisticsService {
 							"size",size
 							));
 				}catch (Throwable e){
-					Logger.error(ExceptionUtils.getFullStackTrace(e));
+					BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
 				}
 			}
 			return collMap;
 		}
 		
 		public static String dbConfiguration() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
 			OGlobalConfiguration.dumpConfiguration(ps);
@@ -121,41 +121,42 @@ public class StatisticsService {
 			} catch (UnsupportedEncodingException e) {
 				content=baos.toString();
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return content;
 		}
 		
 		public static ImmutableMap db() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ODatabaseRecordTx db = DbHelper.getConnection();
 			HashMap dbProp= new HashMap();
+			HashMap map = new HashMap();
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
-			if (BBConfiguration.getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
-			else dbProp.put("path", "N/A");
-			dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
-			dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
-			dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
-			
-			HashMap map = new HashMap();
+			if (db != null){
+				if (BBConfiguration.getInstance().getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+				else dbProp.put("path", "N/A");
+				dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
+				dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
+				dbProp.put("locale.country", db.getStorage().getConfiguration().getLocaleCountry());
+				map.put("status", db.getStatus());
+			}
 			map.put("properties", dbProp);
-			map.put("status", db.getStatus());
 			map.put("configuration", dbConfiguration());
 			map.put("physical_size", DbHelper.getDBTotalSize());
 			map.put("datafile_freespace", DbHelper.getDBStorageFreeSpace());
-			map.put("size_threshold_percentage", BBConfiguration.getDBAlertThreshold());
-			
+
+			map.put("size_threshold_percentage", BBConfiguration.getInstance().getDBAlertThreshold());
 			
 			ImmutableMap response=ImmutableMap.builder().build().copyOf(map);
 
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap os() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
-			if (BBConfiguration.getStatisticsSystemOS()){
+			if (BBConfiguration.getInstance().getStatisticsSystemOS()){
 				response = ImmutableMap.of(
 						"os_name", System.getProperty("os.name"),
 						"os_arch",  System.getProperty("os.arch"),
@@ -170,27 +171,27 @@ public class StatisticsService {
 						"processors",  0
 						);				
 			}
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}
 		
 		public static ImmutableMap java() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response = ImmutableMap.of(
 					"java_class_version", System.getProperty("java.class.version"),
 					"java_vendor",  System.getProperty("java.vendor"),
 					"java_vendor_url",  System.getProperty("java.vendor.url"),
 					"java_version",  System.getProperty("java.version")
 					);
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}	
 		
 		public static ImmutableMap memory() {
-			if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 			ImmutableMap response=null;
 
-			if (BBConfiguration.getStatisticsSystemMemory()){
+			if (BBConfiguration.getInstance().getStatisticsSystemMemory()){
 				Runtime rt = Runtime.getRuntime(); 
 				long maxMemory=rt.maxMemory();
 				long freeMemory=rt.freeMemory();
@@ -210,7 +211,7 @@ public class StatisticsService {
 						);
 			}
 			
-			if (Logger.isTraceEnabled()) Logger.trace("Method End");
+			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 			return response;
 		}	
 		

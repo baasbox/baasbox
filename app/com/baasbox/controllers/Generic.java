@@ -18,14 +18,15 @@
 
 package com.baasbox.controllers;
 
-import play.Logger;
+
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.With;
 
-import com.baasbox.controllers.actions.filters.ConnectToDBFilter;
-import com.baasbox.controllers.actions.filters.UserCredentialWrapFilter;
+import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
+import com.baasbox.controllers.actions.filters.UserCredentialWrapFilterAsync;
+import com.baasbox.service.logging.BaasBoxLogger;
 
 public class Generic extends Controller{
 
@@ -33,13 +34,13 @@ public class Generic extends Controller{
 		response().setHeader("Allow", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT, DELETE");
 		response().setHeader("Access-Control-Allow-Origin", "*");
-		if (Logger.isDebugEnabled()) Logger.debug(Json.stringify(Json.toJson(request().headers())));
+		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug(Json.stringify(Json.toJson(request().headers())));
 		if (request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS")!=null)
 			response().setHeader("Access-Control-Allow-Headers",request().getHeader("ACCESS-CONTROL-REQUEST-HEADERS"));
 		return ok();
 	}
 	
-	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})
+	@With ({UserCredentialWrapFilterAsync.class,ConnectToDBFilterAsync.class})
 	public static Result refreshSessionToken(){
 		return ok(); 
 	}

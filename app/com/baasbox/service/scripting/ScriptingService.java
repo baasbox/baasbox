@@ -23,21 +23,21 @@ import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.service.webservices.HttpClientService;
 import com.baasbox.service.scripting.base.*;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.baasbox.service.logging.BaasBoxLogger;
 
-import play.Logger;
 import play.libs.EventSource;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+
 import play.libs.WS;
 
 /**
@@ -102,7 +102,7 @@ public class ScriptingService {
             Optional<ODocument> storage1 = Optional.ofNullable(storage);
 
             JsonNode current = storage1.map(ODocument::toJSON)
-                    .map(Json.mapper()::readTreeOrMissing)
+                    .map(BBJson.mapper()::readTreeOrMissing)
                     .orElse(NullNode.getInstance());
             if (current.isMissingNode()) throw new ScriptEvalException("Error reading local storage as json");
 
@@ -166,7 +166,7 @@ public class ScriptingService {
 
             }
         } catch (ScriptEvalException e){
-            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation failed: deleting");
             updateCacheVersion();
             dao.invalidate(updated);
             dao.revertToLastVersion(updated);
@@ -182,16 +182,16 @@ public class ScriptingService {
      * @throws ScriptException
      */
     public static ScriptStatus create(JsonNode script) throws ScriptException {
-        if (Logger.isTraceEnabled()) Logger.trace("Method start");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method start");
 
-        if (Logger.isDebugEnabled()) Logger.debug("Creating script");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Creating script");
         ScriptsDao dao = ScriptsDao.getInstance();
 
         ODocument doc = createScript(dao,script);
         compile(doc,true);
-        if (Logger.isDebugEnabled())Logger.debug("Script created");
+        if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("Script created");
 
-        if (Logger.isDebugEnabled())Logger.debug("Script installing");
+        if (BaasBoxLogger.isDebugEnabled())BaasBoxLogger.debug("Script installing");
         ScriptStatus status;
         ScriptCall installation = ScriptCall.install(doc);
         try {
@@ -199,15 +199,15 @@ public class ScriptingService {
             ScriptResult res = invoke(installation);
             status = res.toScriptStatus();
             if (!status.ok){
-                if (Logger.isDebugEnabled()) Logger.debug("Script installation aborted by the script");
+                if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation aborted by the script");
                 doc.delete();
             }
         } catch (ScriptEvalException e){
-            if (Logger.isDebugEnabled()) Logger.debug("Script installation failed: deleting - " + ExceptionUtils.getStackTrace(e));
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script installation failed: deleting - " + ExceptionUtils.getStackTrace(e));
             doc.delete();
             throw new ScriptException(e);
         }
-        if (Logger.isTraceEnabled()) Logger.trace("Method end");
+        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
         return status;
     }
 
@@ -278,7 +278,7 @@ public class ScriptingService {
     }
 
     public static ScriptResult invoke(ScriptCall call) throws ScriptEvalException{
-        if (Logger.isDebugEnabled()) Logger.debug("Invoking script: " + call.scriptName);
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Invoking script: " + call.scriptName);
         MAIN.set(call.scriptName);
         BaasboxScriptEngine engine = call.engine();
         try {
@@ -288,7 +288,7 @@ public class ScriptingService {
             if (e instanceof ScriptEvalException){
                 throw (ScriptEvalException)e;
             } else {
-                throw new ScriptEvalException(e.getMessage(),e);
+                throw new ScriptEvalException(ExceptionUtils.getMessage(e),e);
             }
         }finally {
             MAIN.set(null);
@@ -325,13 +325,13 @@ public class ScriptingService {
      * @throws ScriptEvalException
      */
     private static void compile(ODocument doc,boolean dropOnFailure) throws ScriptEvalException {
-        if (Logger.isDebugEnabled()) Logger.debug("Start Compile");
+        if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Start Compile");
         ScriptCall compile = ScriptCall.compile(doc);
         try {
             invoke(compile);
-            if (Logger.isDebugEnabled()) Logger.debug("End Compile");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("End Compile");
         } catch (ScriptEvalException e){
-            Logger.error("Failed Script compilation");
+            BaasBoxLogger.error("Failed Script compilation");
             if (dropOnFailure){
                 doc.delete();
             }else {
@@ -339,7 +339,7 @@ public class ScriptingService {
 
                 dao.revertToLastVersion(doc);
             }
-            if (Logger.isDebugEnabled()) Logger.debug("Script delete");
+            if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Script delete");
             throw e;
         }
     }
@@ -356,22 +356,38 @@ public class ScriptingService {
         boolean isLibrary =library==null?false:library.asBoolean();
         JsonNode activeNode = node.get(ScriptsDao.ACTIVE);
         boolean active = activeNode == null?false:activeNode.asBoolean();
-        ODocument doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
+        JsonNode encoded = node.get(ScriptsDao.ENCODED);
+        ODocument doc;
+        if (encoded!=null && encoded.isTextual()){
+        	String encodedValue=encoded.asText();
+        	doc = dao.create(name, language.name, code, isLibrary, active, initialStorage,encodedValue);
+        }else{
+        	doc = dao.create(name, language.name, code, isLibrary, active, initialStorage);
+        }
         return doc;
     }
 
 
     public static JsonNode callJsonSync(JsonNode req) throws Exception{
-        return callJsonSync(req.get("url").asText(),
-                req.get("method").asText(),
+    	JsonNode url = req.get("url");
+    	JsonNode method = req.get("method");
+    	JsonNode timeout = req.get("timeout");
+
+    	if (url == null || url instanceof NullNode ) throw new IllegalArgumentException("Missing URL to call");
+    	if (method == null || method instanceof NullNode ) throw new IllegalArgumentException("Missing method to use when calling the URL");
+    	
+    	return callJsonSync(
+    			url.asText(),
+    			method.asText(),
                 mapJson(req.get("params")),
                 mapJson(req.get("headers")),
-                req.get("body"));
+                req.get("body"),
+                (timeout != null && timeout.isNumber()) ? timeout.asInt() : null);
     }
 
 
     private static Map<String,List<String>> mapJson(JsonNode node){
-        if (node == null){
+        if (node == null || node instanceof NullNode){
             return null;
         }
         if (node.isObject()){
@@ -400,13 +416,22 @@ public class ScriptingService {
         }
     }
 
-    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body) throws Exception{
+    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body, Integer timeout) throws Exception{
         try {
-            ObjectNode node = Json.mapper().createObjectNode();
-            WS.Response resp = HttpClientService.callSync(url, method, params, headers, body.isValueNode() ? body.toString() : body);
+            ObjectNode node = BBJson.mapper().createObjectNode();
+            WS.Response resp = null;
+            
+            long startTime = System.nanoTime();
+            if (timeout==null) {
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body));
+            } else {
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body), timeout);            	
+            }
+            long endTime = System.nanoTime();
 
             int status = resp.getStatus();
             node.put("status",status);
+            node.put("execution_time", (endTime-startTime)/1000000L);
 
             String header = resp.getHeader("Content-Type");
             if (header==null ||  header.startsWith("text")){
@@ -419,7 +444,7 @@ public class ScriptingService {
 
             return node;
         } catch (Exception e) {
-            Logger.error("failed to connect: "+e.getMessage());
+            BaasBoxLogger.error("failed to connect: "+ ExceptionUtils.getMessage(e));
             throw e;
         }
 

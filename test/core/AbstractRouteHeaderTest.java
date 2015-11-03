@@ -3,10 +3,8 @@ package core;
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
 import static play.test.Helpers.HTMLUNIT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import org.junit.Test;
 
@@ -23,8 +21,9 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 		super();
 	}
 
-	@Test
+  @Test
 	public void testRouteNotValid() {
+		if (getMethod()==null) return;
 		running
 		(
 			getFakeApplication(), 
@@ -64,8 +63,9 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 		);		
 	}
 
-	@Test
+  @Test
 	public void testServerNotValid() {
+		if (getMethod()==null) return;
 		running
 		(
 			getTestServer(), 
@@ -105,5 +105,21 @@ public abstract class AbstractRouteHeaderTest extends AbstractTest {
 	        }
 		);
 	}
+
+  protected void grantToRole(String action, String role, String collection, String objectRid, String author) {
+    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/role/" + role);
+    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+    Result result = routeAndCall(request);
+    assertRoute(result, "grantPostToRegistered", 200, null, false);
+  }
+  
+  protected void grantToUser(String action, String userName, String collection, String objectRid, String author) {
+	    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/user/" + userName);
+	    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+	    Result result = routeAndCall(request);
+	    assertRoute(result, "grantPostToRegistered", 200, null, false);
+	  }
 
 }

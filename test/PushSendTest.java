@@ -1,27 +1,27 @@
-import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.UUID;
 
-import javax.ws.rs.core.MediaType;
-
-import org.apache.http.protocol.HTTP;
-import org.codehaus.jettison.json.JSONArray;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
-import com.baasbox.BBConfiguration;
-import com.baasbox.configuration.Push;
-import com.baasbox.security.SessionKeys;
-import com.fasterxml.jackson.databind.JsonNode;
-
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 import play.libs.Json;
-import play.mvc.Result;
 import play.mvc.Http.Status;
+import play.mvc.Result;
 import play.test.FakeRequest;
-import scala.Array;
+
+import com.baasbox.db.DbHelper;
+import com.baasbox.exception.BaasBoxPushException;
+import com.baasbox.exception.InvalidAppCodeException;
+import com.baasbox.security.SessionKeys;
+import com.baasbox.service.push.providers.APNServer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+
 import core.AbstractTest;
 import core.TestConfig;
 
@@ -71,7 +71,7 @@ public class PushSendTest extends AbstractTest {
 					
 //					there is the login_info in system object?
 					String url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-					Logger.debug("URL to check login_info in system: " + url);
+					BaasBoxLogger.debug("URL to check login_info in system: " + url);
 					request = new FakeRequest("GET",url);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
@@ -84,9 +84,8 @@ public class PushSendTest extends AbstractTest {
 					// Prepare test user
 					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUserNotAccess);
                     String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
-					String sAuthEnc = TestConfig.encodeAuth(sFakeUser, sPwd);
 					
-					// Create user
+                    // Create user
 					request = new FakeRequest("POST", "/user");
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withJsonBody(node, "POST");
@@ -94,7 +93,7 @@ public class PushSendTest extends AbstractTest {
 					assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUserNotAccess+"\"", true);
 
 					url="/users?fields=system%20as%20s&where=user.name%3D%22"+username+"%22";
-					Logger.debug("URL to check signupdate in system: " + url);
+					BaasBoxLogger.debug("URL to check signupdate in system: " + url);
 					request = new FakeRequest("GET",url);
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
@@ -118,13 +117,51 @@ public class PushSendTest extends AbstractTest {
 					result = routeAndCall(request);
 					assertRoute(result,"testSendPushWithNewApi - ok", 200, null, true);
 					
+					//test verbose for admins
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.AUTH_ADMIN_ENC);
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "Profiles computed:", true);
+					
+					//verbose is not active for reg users
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					//send a message to more than a device (up to 10) at the same time
+					//populate login_info with iOS Token
+					for (int i=0;i<=9;i++){
+						request = new FakeRequest("PUT","/push/enable/ios/"+ UUID.randomUUID());
+						request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+						request = request.withHeader(TestConfig.KEY_TOKEN, sessionToken);
+						result = routeAndCall(request);
+						assertRoute(result,"populate login_info",200,null,true);
+					}
+					node = updatePayloadFieldValue("/pushPayloadWithoutProfileSpecifiedWithUser.json", "users", new String[]{sFakeUser});
+					request = new FakeRequest("POST", "/push/message?verbose=true");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(sFakeUserNotAccess, sPwd));
+					request = request.withJsonBody(node,"POST");
+					result = routeAndCall(request);
+					assertRoute(result,"testSendPushWithNewApi - ok", 200, "has been sent", true);
+					
+					
 				}
 			}
 		);
 	}
 	
+	//Test for #592 NPE sending Push if content-available key is missing
 	
-	public void PushSendTest() {
+	@Test
+	public void TestApnServer(){
 		running
 		(
 			getFakeApplication(), 
@@ -132,13 +169,42 @@ public class PushSendTest extends AbstractTest {
 			{
 				public void run() 
 				{
+					String sFakeUserNotAccess = "testpushuser_" + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUserNotAccess);
+			        String sPwd = getPayloadFieldValue("/adminUserCreatePayload.json", "password");
 					
+					// Create user
+					FakeRequest request = new FakeRequest("POST", "/user");
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, "POST");
+					Result result = routeAndCall(request);
+					assertRoute(result, "routeCreateUser check username", Status.CREATED, "name\":\""+sFakeUserNotAccess+"\"", true);
+					
+					try{
+						DbHelper.open("1234567890", sFakeUserNotAccess, sPwd);
+						ObjectMapper om = BBJson.mapper();
+						JsonNode payload = om.readTree("{"+
+								"\"custom\" :     {"+
+								"		\"QBKey\" : \"12a535fb-5732-44e0-8a97-0a4688ba75ba\","+
+								"		\"QBName\" : \"QBPushNotificationName\""+
+								"},"+
+								"\"message\" : \"This is a message.\""+
+								"}");
+						boolean validate = APNServer.validatePushPayload(payload);
+						Assert.assertTrue("payload is not valid!", validate);
+					} catch (InvalidAppCodeException | BaasBoxPushException | IOException e) {
+						Assert.fail(ExceptionUtils.getFullStackTrace(e));
+					}finally{
+						if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed()) DbHelper.close(DbHelper.getConnection());
+					}
 				}
 			}
 		);
-		
 	}
 	
+				
+
 	
 	@Override
 	public String getRouteAddress() {

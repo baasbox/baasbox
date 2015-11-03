@@ -19,6 +19,7 @@ create property _BB_Node._links link _BB_NodeVertex;
 create property _BB_Node.id String;
 create property _BB_Node._author String;
 
+
 --user
 create class _BB_User extends _BB_Node;
 create class _BB_UserAttributes extends ORestricted;
@@ -28,6 +29,10 @@ create property _BB_User.visibleByFriend link _BB_UserAttributes;
 create property _BB_User.visibleByTheUser link _BB_UserAttributes;
 create property _BB_User._audit embedded;
 create property _BB_User.user link ouser;
+-- issue 447 - Restrict signup to 1 account per email
+create property _bb_userattributes.email string;
+--the enforcement of the uniqueness of registration email is performed by the code due the fact that there could be email fields in other profile sections
+create index _bb_userattributes.email notunique;
 
 
 --admin user
@@ -107,12 +112,13 @@ update orole set isrole=true
 --indices
 
 alter property ouser.name collate ci;
-create index _BB_Collection.name unique;
+create index _BB_Collection.name UNIQUE_HASH_INDEX;
 create index _BB_asset.name unique;
-create index _BB_Node.id unique;
-create index _BB_Permissions.tag unique;
+create index _BB_Node.id UNIQUE_HASH_INDEX;
+create index _BB_Permissions.tag UNIQUE_HASH_INDEX;
 ---bug on OrientDB index? (our issue #412) We have to define a "new" index to avoid class scan when looking for a username:
-create index _bb_user.user.name unique
+
+create index _bb_user.user.name unique;
 create index _bb_node._author notunique;
 create index _bb_node._creation_date notunique;
 
@@ -126,7 +132,7 @@ create index _BB_Index.key unique;
 --LINKS
 create property E.id String;
 alter property E.id notnull=true;
-create index E.id unique;
+create index E.id UNIQUE_HASH_INDEX;
 
 --Scripts
 create class _BB_Script;

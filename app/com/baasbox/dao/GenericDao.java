@@ -19,8 +19,9 @@ package com.baasbox.dao;
 import java.util.List;
 import java.util.UUID;
 
-import play.Logger;
+import com.baasbox.service.logging.BaasBoxLogger;
 
+import com.baasbox.BBCache;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
@@ -58,9 +59,9 @@ public class GenericDao {
 	
 	public ODocument get(ORID rid) {
 		ODatabaseRecordTx db =DbHelper.getConnection();
-		if (Logger.isTraceEnabled()) Logger.trace("Method Start");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		ODocument doc=db.load(rid);
-		if (Logger.isTraceEnabled()) Logger.trace("Method End");
+		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 		return doc;
 	}
 	
@@ -69,7 +70,7 @@ public class GenericDao {
 	 * @param id
 	 * @return
 	 */
-	public ORID getRidNodeByUUID(UUID id){
+	public String getRidNodeByUUID(UUID id){
 		return getRidNodeByUUID(id.toString());
 	}
 
@@ -78,11 +79,19 @@ public class GenericDao {
 	 * @param id
 	 * @return
 	 */
-	public ORID getRidNodeByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
-		ORID rid = (ORID) index.get(id);  
-		return rid;
+	public String getRidNodeByUUID(String id){
+		String toRet=BBCache.getRidFromUUID(id);
+		if (toRet==null){
+			ODatabaseRecordTx db =DbHelper.getConnection();
+			OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
+			ORID rid = (ORID) index.get(id);  
+			if (rid!=null){
+				toRet=rid.toString();
+				BBCache.cacheUUIDtoRID(id, toRet);
+				return toRet;
+			}else 
+				return null;
+		}else return toRet;
 	}
 	
 

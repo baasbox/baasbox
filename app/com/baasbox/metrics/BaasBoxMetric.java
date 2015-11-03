@@ -114,7 +114,7 @@ public class BaasBoxMetric {
 				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
-                    	return new File(BBConfiguration.getDBDir()).getFreeSpace();
+                    	return new File(BBConfiguration.getInstance().getDBFullPath()).getFreeSpace();
         			}				
 				});
 		
@@ -122,7 +122,7 @@ public class BaasBoxMetric {
 				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES)  {
 					@Override
                     public Long loadValue() {
-                    	return new File(BBConfiguration.getDBBackupDir()).getFreeSpace();
+                    	return new File(BBConfiguration.getInstance().getDBBackupDir()).getFreeSpace();
         			}				
 				});
 		
@@ -133,7 +133,7 @@ public class BaasBoxMetric {
 						boolean opened=false;
 						try{
 							if (DbHelper.getConnection()==null || DbHelper.getConnection().isClosed()) {
-								DbHelper.open(BBConfiguration.getAPPCODE(), BBConfiguration.getBaasBoxAdminUsername(), BBConfiguration.getBaasBoxAdminUsername());
+								DbHelper.open(BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxAdminUsername(), BBConfiguration.getInstance().getBaasBoxAdminUsername());
 								opened=true;
 							}
 							return DbHelper.getConnection().getSize();
@@ -150,14 +150,14 @@ public class BaasBoxMetric {
 				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
-							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()));
+							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getInstance().getDBFullPath()));
         			}				
 				});
 		registry.register(name(GAUGE_DB_MAX_SIZE_THRESHOLD),
 				new CachedGauge<BigInteger>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public BigInteger loadValue() {
-							return BBConfiguration.getDBSizeThreshold();
+							return BBConfiguration.getInstance().getDBSizeThreshold();
         			}				
 				});
 

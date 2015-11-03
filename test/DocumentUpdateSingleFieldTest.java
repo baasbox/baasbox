@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import org.json.JSONObject;
 import org.junit.Assert;
@@ -53,16 +53,16 @@ public class DocumentUpdateSingleFieldTest extends AbstractDocumentTest {
 
 	@Before
 	public void setDocument() throws JsonProcessingException, IOException {
-		document1 = new ObjectMapper()
+		document1 = BBJson.mapper()
 				.readTree("{\"total\":2,\"city\":\"rome\"}");
-		jsonForUpdate = new ObjectMapper().readTree("{\"data\":\"milan\"}");
-		jsonForArrayUpdate = new ObjectMapper()
+		jsonForUpdate = BBJson.mapper().readTree("{\"data\":\"milan\"}");
+		jsonForArrayUpdate = BBJson.mapper()
 				.readTree("{\"data\":[\"one\",\"two\",\"three\"]}");
-		jsonForArrayIndexUpdate = new ObjectMapper()
+		jsonForArrayIndexUpdate = BBJson.mapper()
 				.readTree("{\"data\":\"four\"}");
-		jsonForArrayObjectUpdate = new ObjectMapper()
+		jsonForArrayObjectUpdate = BBJson.mapper()
 				.readTree("{\"data\":[{\"title\":\"issue1\",\"description\":\"issue1-desc\",\"tags\":[\"1\",\"2\",\"3\"]}]}");
-		jsonForObjectStatusUpdate = new ObjectMapper()
+		jsonForObjectStatusUpdate = BBJson.mapper()
 				.readTree("{\"data\":\"ONGOING\"}");
 
 	}

@@ -23,6 +23,7 @@ import static play.test.Helpers.running;
 import java.util.Date;
 import java.util.UUID;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.json.JSONObject;
 import org.junit.Assert;
 
@@ -30,7 +31,7 @@ import com.baasbox.db.DbHelper;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractDocumentTest;
@@ -111,13 +112,13 @@ public class DocumentAclTest extends AbstractDocumentTest
 						CollectionService.create(collection);
 						
 						//
-						ObjectMapper obm=new ObjectMapper();
+						ObjectMapper obm=BBJson.mapper();
 						ObjectNode docJson = (ObjectNode)getPayload("/documentCreatePayload.json");
 						//ArrayNode allows=obm.readTree("[\"\"]");
 						//docJson.put(Permissions.ALLOW_READ, )
 						//DocumentService.create(collection, bodyJson)
 					} catch (Throwable e) {
-						Assert.fail(e.getMessage());
+						Assert.fail(ExceptionUtils.getMessage(e));
 					}
 				}
 			}

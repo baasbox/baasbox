@@ -23,8 +23,9 @@ import java.util.Iterator;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import play.Logger;
-
+import com.baasbox.BBConfiguration;
+import com.baasbox.configuration.Internal;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 
 public class Evolutions {
@@ -38,26 +39,36 @@ public class Evolutions {
 		preEvolutionTasks(db);
 		Evolutions evs=new Evolutions();
 		Collection<IEvolution> evolutions = evs.getEvolutionsFromVersion(fromVersion);
-		Logger.info("Found " + evolutions.size() + " evolutions to apply");
+		BaasBoxLogger.info("Found " + evolutions.size() + " evolutions to apply");
 		Iterator<IEvolution> it = evolutions.iterator();
 		while (it.hasNext()){
 			IEvolution ev = it.next();
-			Logger.info("Applying evolution to " + ev.getFinalVersion());
+			BaasBoxLogger.info("Applying evolution to " + ev.getFinalVersion());
 			ev.evolve(db);
+			BaasBoxLogger.info("DB version evolved to version " + ev.getFinalVersion());
+			Internal.DB_VERSION._setValue(ev.getFinalVersion());
 		}
 		postEvolutionTasks(db);
 	}
 	
 	private static void  preEvolutionTasks(ODatabaseRecordTx db){
-		Logger.info("Performing pre-evolutions tasks....");
+		BaasBoxLogger.info("Performing pre-evolutions tasks....");
 		//nothing todo at the moment
-		Logger.info("...end");
+		BaasBoxLogger.info("...end");
 	}
 	
 	private static void  postEvolutionTasks(ODatabaseRecordTx db){
-		Logger.info("Performing post-evolutions tasks....");
-		//nothing todo here at the moment
-		Logger.info("...end");
+		BaasBoxLogger.info("Performing post-evolutions tasks....");
+		 DbHelper.execMultiLineCommands(db,true,
+                 "rebuild index *");
+		if (BBConfiguration.getInstance().configuration.getBoolean(BBConfiguration.getInstance().ORIENT_START_CLUSTER)){
+			//in case of internal clustering support we have to drop some constaints because of http://orientdb.com/docs/last/orientdb.wiki/Graph-Schema.html#constraints
+			 DbHelper.execMultiLineCommands(db,true,
+	                 "alter property _BB_Node._links mandatory=false",
+	                 "alter property _BB_NodeVertex._node mandatory=false");
+			
+		}
+		BaasBoxLogger.info("...end");
 	}
 	
 	public Evolutions(){
@@ -75,7 +86,12 @@ public class Evolutions {
 		me.put(ev.getFinalVersion(), ev);
 		ev= (IEvolution)new Evolution_0_8_4();
 		me.put(ev.getFinalVersion(), ev);
+
 		ev = (IEvolution)new Evolution_0_9_0();
+		me.put(ev.getFinalVersion(),ev);
+		ev = (IEvolution)new Evolution_0_9_4();
+		me.put(ev.getFinalVersion(),ev);
+		ev = (IEvolution)new Evolution_1_0_0_M1();
 		me.put(ev.getFinalVersion(),ev);
 	}
 	

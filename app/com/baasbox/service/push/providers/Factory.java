@@ -49,7 +49,7 @@ public class Factory {
 		ANDROID_API_KEY,APPLE_TIMEOUT,IOS_CERTIFICATE,IOS_CERTIFICATE_PASSWORD,IOS_SANDBOX
 	}
 	public static IPushServer getIstance(VendorOS vendor){
-		if (BBConfiguration.getPushMock()){
+		if (BBConfiguration.getInstance().getPushMock()){
 			return new PushProviderMock();
 		}
 		switch (vendor) {
@@ -63,8 +63,8 @@ public class Factory {
 	
 	public static HashMap<VendorOS,IPushServer> getAllIstances(){
 		HashMap<VendorOS,IPushServer> ret = new HashMap<VendorOS,IPushServer>();
-		ret.put(VendorOS.IOS,BBConfiguration.getPushMock()?new PushProviderMock():new APNServer());
-		ret.put(VendorOS.ANDROID,BBConfiguration.getPushMock()?new PushProviderMock():new GCMServer());
+		ret.put(VendorOS.IOS,BBConfiguration.getInstance().getPushMock()?new PushProviderMock():new APNServer());
+		ret.put(VendorOS.ANDROID,BBConfiguration.getInstance().getPushMock()?new PushProviderMock():new GCMServer());
 		return ret;
 	}
 }

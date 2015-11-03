@@ -18,15 +18,15 @@
 
 package com.baasbox.commands;
 
+import com.baasbox.BBInternalConstants;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.baasbox.service.events.EventsService;
-import com.baasbox.util.JSONFormats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -35,14 +35,19 @@ import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 
 /**
  * Created by Andrea Tortorella on 01/07/14.
  */
 class ScriptsResource extends Resource {
     public static final Resource INSTANCE = new ScriptsResource();
+    private static FastDateFormat SDF = FastDateFormat.getInstance(BBInternalConstants.DATE_FORMAT_STRING);
 
     @Override
     public String name() {
@@ -74,10 +79,12 @@ class ScriptsResource extends Resource {
         if (idOfTheModule ==null){
             idOfTheModule =command.get(ScriptCommand.ID);
         }
-        ObjectNode message = Json.mapper().createObjectNode();
+
+        ObjectNode message = BBJson.mapper().createObjectNode();
         message.put("message",par);
+        message.put("args",par.get("args"));
         message.put("script",idOfTheModule);
-        message.put("date",new Date().toString());
+        message.put("date",SDF.format(new Date()));
         int publish = EventsService.publish(EventsService.StatType.SCRIPT, message);
         return IntNode.valueOf(publish);
     }
@@ -86,7 +93,7 @@ class ScriptsResource extends Resource {
         try {
             return ScriptingService.callJsonSync(command.get(ScriptCommand.PARAMS));
         } catch (Exception e) {
-            throw new CommandExecutionException(command,e.getMessage(),e);
+            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
         }
     }
 
@@ -132,14 +139,14 @@ class ScriptsResource extends Resource {
             try {
                 result = ScriptingService.swap(id,callback);
             } catch (ScriptException e) {
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         } else if ("trade".equals(action)){
             if (callback==null) throw new CommandExecutionException(command,"missing function callback");
             try {
                 result = ScriptingService.trade(id,callback);
             } catch (ScriptException e) {
-                throw new CommandExecutionException(command,e.getMessage(),e);
+                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
             }
         } else {
             throw new CommandParsingException(command,"unknown action: "+action);
@@ -149,7 +156,7 @@ class ScriptsResource extends Resource {
         } else {
             String s = result.toJSON();
             try {
-                ObjectNode jsonNode =(ObjectNode) Json.mapper().readTree(s);
+                ObjectNode jsonNode =(ObjectNode) BBJson.mapper().readTree(s);
                 jsonNode.remove("@version");
                 jsonNode.remove("@type");
                 return jsonNode;

@@ -18,12 +18,12 @@ function loadPushSettings(scopeName){
 				}
 				settingPushMap[k]=setting;
 			});
-			console.log(settingPushMap);
+			//console.log(settingPushMap);
 			settingPushMap.isLoaded=true;
 			applySuccessMenu(scopeName,settingPushMap);
 		}
 	});
-}
+};
 
 
 function PushConfController($scope){
@@ -36,100 +36,100 @@ function PushConfController($scope){
 		if (profileNumber==1) profile="profile1";
 		else profile="profile"+profileNumber;
 		return profile;
-	}
+	};
 	
 	_this.booleanValue=function(setting){
 		if (setting.type=="Boolean"){
 			if (setting.value==null) return false;
 			return setting.value=="true";
 		}else throw Exception (setting.key + " is not a boolean");
-	}
+	};
 	
 	_this.isEnabled=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.booleanValue(_this.data[profile+".push.profile.enable"]);
 		else return null;
-	}
+	};
 	
 	_this.isSandbox=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.booleanValue(_this.data[profile+".push.sandbox.enable"]);
 		else return false;
-	}
+	};
 	
 	_this.getEnableKey=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".push.profile.enable"];
 		else return null;
-	}
+	};
 	
 	_this.getSandboxKey=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".push.sandbox.enable"];
 		else return null;
-	}
+	};
 	
 	_this.getProductionAndroidKey=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".production.android.api.key"];
 		else return null;
-	}
+	};
 	
 	_this.getProductionIOSCertificate=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".production.ios.certificate"];
 		else return null;
-	}
+	};
 	
 	_this.getProductionIOSCertificatePassword=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".production.ios.certificate.password"];
 		else return null;
-	}
+	};
 	_this.getIOSTimeout=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".push.apple.timeout"];
 		else return null;
-	}
+	};
 	_this.getSandboxAndroidKey=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".sandbox.android.api.key"];
 		else return null;
-	}
+	};
 	
 	_this.getSandboxIOSCertificate=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".sandbox.ios.certificate"];
 		else return null;
-	}
+	};
 	
 	_this.getSandboxIOSCertificatePassword=function(profileNumber){
 		var profile=_this.getProfileName(profileNumber)
 		if (_this.data.isLoaded)
 			return _this.data[profile+".sandbox.ios.certificate.password"];
 		else return null;
-	}
+	};
 	
 	$scope.valueChanged = function(s){
 		_this.$apply(function(scope){
 			s.changed=true;
 		});
-	}
+	};
 
 	$scope.isChanged = function(s){
 		if (s) return s.changed
 		return false;
-	}
+	};
 	
 	$scope.updateInlineSetting = function(s,newValue){
 		var section="Push";
@@ -168,7 +168,7 @@ function PushConfController($scope){
 						});	
 					}
 				});
-	}//updateInlineSetting
+	};//updateInlineSetting
 	
 	$scope.updateFileSetting = function(s){
 		var section="Push";
@@ -178,7 +178,8 @@ function PushConfController($scope){
 			s.error ="File can't be empty"
 			return;
 		}
-		var serverUrl=BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).absoluteURL();
+		var serverUrl = window.location.origin + BBRoutes.com.baasbox.controllers.Admin.setConfiguration(section,"dummy",s.key, $scope.file.name).url;
+    	
 		if (window.location.protocol == "https:"){
 			serverUrl=serverUrl.replace("http:","https:");
 		}
@@ -207,7 +208,7 @@ function PushConfController($scope){
 				}
 		};
 		$('#'+$scope.keyName(s.key)).ajaxSubmit(options);
-	}//updateFileSetting
+	};//updateFileSetting
 	
 	$scope.set_color = function(k){
 		switch(k) {
@@ -225,12 +226,12 @@ function PushConfController($scope){
 	    	break;
 		}
 		return { "background-color": color };
-	}
+	};
 	
 	$scope.keyName = function(k){
 		if (k==null) return "";
 		return k.replace(/\./g,'');
-	}
+	};
 	$scope.setFiles = function(element) {
 	    $scope.$apply(function(scope) {
 	        scope.file =  element.files[0]
@@ -244,7 +245,39 @@ function PushConfController($scope){
 	
 	$scope.editing=function($event){
 		console.log($event);
-	}
-}
+	};
+};//PushConfController
 
+
+function PushTestController($scope){
+	$scope.payload=$("#push_template").html();
+	$scope.server_response="";
+	$scope.sending=false;
+	$scope.error=false;
+	$scope.sendPush = function(){
+		$scope.sending=true;
+		var url=window.location.origin + BBRoutes.com.baasbox.controllers.Push.sendUsers.url;
+		$.ajax({
+			type:"POST",
+			url:"/push/message?verbose=true",
+			data: $scope.payload,
+			contentType: "application/json",
+			processData: false
+		}).always(function (a, textStatus, b) {
+			$scope.$apply(function (){
+				//crazyness of JQuery https://github.com/jquery/api.jquery.com/issues/49#issue-5903283
+				var ajaxResult="";
+				if (textStatus==="error") ajaxResult=a;
+				else ajaxResult=b;
+				//------
+				$scope.sending=false;
+				$scope.server_response=
+					JSON.stringify(
+							JSON.parse(ajaxResult.responseText),{}
+							,2);
+				$scope.error=ajaxResult.status!=200;
+			});
+		});
+	};
+};
 

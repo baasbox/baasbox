@@ -18,69 +18,106 @@
 
 package com.baasbox.controllers;
 
+import static play.mvc.Controller.ctx;
+import static play.mvc.Controller.response;
+import static play.mvc.Results.forbidden;
+import static play.mvc.Results.ok;
+
+import java.util.Set;
+
+import play.mvc.Result;
+
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.SessionTokenAccess;
 import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.InvalidAppCodeException;
-import com.baasbox.service.events.EventsService;
 import com.baasbox.service.events.EventSource;
+import com.baasbox.service.events.EventsService;
+import com.baasbox.service.events.EventsService.StatType;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import play.Logger;
-import play.mvc.Result;
 
-import java.util.Set;
-
-import static play.mvc.Controller.*;
-import static play.mvc.Results.ok;
 
 /**
  * Created by eto on 13/10/14.
+ * 
+ * giastfader: added logging on SSE
  */
 public class EventsController {
 
+	
+	private static Result doTask(StatType typeOfLog){
+        response().setContentType("text/event-stream");
+        return ok(EventSource.source((eventSource) -> {
+        	
+            eventSource.onDisconnected(() -> {
+            		BaasBoxLogger.debug("Help! I'm loosing the connection..... (id: {})", eventSource.id);;
+            		boolean noMore=EventsService.removeListener(typeOfLog,eventSource);
+            		if (typeOfLog==StatType.SYSTEM_LOGGER){
+	            		if (noMore){
+	                       BaasBoxLogger.stopEventSourceLogging();
+	            		}
+            		}else if (typeOfLog==StatType.SCRIPT) {
+            			BaasBoxLogger.debug("Number of listeners for Script logger: {}" , EventsService.howManyScriptLoggerListener.getAndDecrement() -1);
+            			
+            		}
+            	});
+            EventsService.addListener(typeOfLog,eventSource);
+        }));
+	}
+	
+
     public static Result openLogger(){
+    	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
         try {
-            if (Logger.isTraceEnabled())Logger.trace("Method start");
-
-            SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
-            boolean okCredentials = sessionTokenAccess.setCredential(ctx());
-            if (!okCredentials) {
-                return CustomHttpCode.SESSION_TOKEN_EXPIRED.getStatus();
-            } else {
-                String username = (String) ctx().args.get("username");
-                if (username.equalsIgnoreCase(BBConfiguration.getBaasBoxUsername()) ||
-                        username.equalsIgnoreCase(BBConfiguration.getBaasBoxAdminUsername())) {
-                    return forbidden("The user " + username + " cannot acces via REST");
-                }
-            }
-            String appcode = (String) ctx().args.get("appcode");
-            String username = (String) ctx().args.get("username");
-            String password = (String) ctx().args.get("password");
-            try {
-                DbHelper.open(appcode, username, password);
-                OUser user = DbHelper.getConnection().getUser();
-                Set<ORole> roles = user.getRoles();
-                if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
-                    return forbidden("Logs can only be read by administrators");
-                }
-            } catch (InvalidAppCodeException e) {
-                return badRequest(e.getMessage());
-            } finally {
-                DbHelper.close(DbHelper.getConnection());
-            }
-
-            response().setContentType("text/event-stream");
-            return ok(EventSource.source((eventSource) -> {
-
-                eventSource.onDisconnected(() -> EventsService.removeLogListener(eventSource));
-                EventsService.addLogListener(eventSource);
-
-            }));
+            if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method start");
+            return doTask(StatType.SCRIPT);
         } finally {
-            if (Logger.isTraceEnabled()) Logger.trace("Method end");
+            if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
+        }
+    }
+    
+    public static Result openSystemLogger(){
+    	if (!checkAuth()) return forbidden("Please check your credentials. Only administrators can access this resource");
+        try {
+            if (BaasBoxLogger.isTraceEnabled())BaasBoxLogger.trace("Method start");
+            BaasBoxLogger.startEventSourceLogging();
+            return doTask(StatType.SYSTEM_LOGGER);
+        } finally {
+            if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method end");
+        }
+    }
+    
+    private static boolean checkAuth(){
+        SessionTokenAccess sessionTokenAccess = new SessionTokenAccess();
+        boolean okCredentials = sessionTokenAccess.setCredential(ctx());
+        if (!okCredentials) {
+            return false;
+        } else {
+            String username = (String) ctx().args.get("username");
+            if (username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()) ||
+                    username.equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxAdminUsername())) {
+                return false;
+            }
+        }
+        String appcode = (String) ctx().args.get("appcode");
+        String username = (String) ctx().args.get("username");
+        String password = (String) ctx().args.get("password");
+        try {
+            DbHelper.open(appcode, username, password);
+            OUser user = DbHelper.getConnection().getUser();
+            Set<ORole> roles = user.getRoles();
+            if (!roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))) {
+                return false;
+            }
+            return true;
+        } catch (InvalidAppCodeException e) {
+            return false;
+        } finally {
+            DbHelper.close(DbHelper.getConnection());
         }
     }
 }

@@ -17,27 +17,20 @@
 
 // @author: Marco Tibuzzi
 
-import static org.junit.Assert.fail;
 import static play.mvc.Http.Status.BAD_REQUEST;
 import static play.mvc.Http.Status.UNAUTHORIZED;
+import static play.test.Helpers.GET;
 import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
-import static play.test.Helpers.GET;
 import static play.test.Helpers.PUT;
-import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.route;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
-import static play.test.Helpers.testServer;
 
 import java.util.UUID;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +44,9 @@ import play.test.TestBrowser;
 
 import com.baasbox.dao.UserDao;
 import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -160,12 +155,58 @@ public class UserCreateTest extends AbstractUserTest
 					JsonNode jsonRes = Json.parse(body);
 					String token = jsonRes.get("data").get(SessionKeys.TOKEN.toString()).textValue();
 					Assert.assertNotNull(token);
-					Assert.assertFalse(SessionTokenProvider.getSessionTokenProvider().getSession(token).isEmpty());
+					Assert.assertFalse(SessionTokenProviderFactory.getSessionTokenProvider().getSession(token)==null);
 				}
 			}
 		);		
 	}
 
+	//issue 447 - Restrict signup to 1 account per email (User Management)
+	@Test
+	public void emailMustBeUnique()	{
+		running
+		(
+			getFakeApplication(), 
+			new Runnable() 
+			{
+				public void run() 
+				{
+					String sFakeUser = USER_TEST + UUID.randomUUID();
+					// Prepare test user
+					JsonNode node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					String email = UUID.randomUUID().toString() + "@example.com";
+					((ObjectNode)node.get("visibleByTheUser")).put("email", email);
+					// Create user
+					FakeRequest request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					Result result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 1", Status.CREATED, "email\":\""+email+"\"", true);
+				
+					sFakeUser = USER_TEST + UUID.randomUUID();
+					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					((ObjectNode)node.get("visibleByTheUser")).put("email", email);
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 2", Status.BAD_REQUEST, "Error signing up", true);
+				
+					sFakeUser = USER_TEST + UUID.randomUUID();
+					node = updatePayloadFieldValue("/adminUserCreatePayload.json", "username", sFakeUser);
+					((ObjectNode)node.get("visibleByFriends")).put("email", email);
+					request = new FakeRequest(getMethod(), getRouteAddress());
+					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+					request = request.withJsonBody(node, getMethod());
+					result = routeAndCall(request);
+					assertRoute(result, "emailMustBeUnique: 3", Status.CREATED, "email\":\""+email+"\"", true);
+								
+					
+				}
+			}
+		);		
+	}
+	
 	//https://github.com/baasbox/baasbox/issues/401
 	//500 error when visibleBy is null during signup 
 	@Test
@@ -226,7 +267,7 @@ public class UserCreateTest extends AbstractUserTest
 					request = request.withJsonBody(node, getMethod());
 					result = routeAndCall(request);
 					//it should be fail
-					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, sFakeUser2 + " already exists", true);
+					assertRoute(result, "routeCreateUserCaseInsensitive", Status.BAD_REQUEST, "Error signing up", true);
 					
 				}
 			}
