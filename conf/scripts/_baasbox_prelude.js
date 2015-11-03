@@ -261,18 +261,26 @@ var GLOBAL=this;
     Module.prototype.isLoggingActive = function (){
     	return Api.isScriptLoggingActive();
     }
+    
+    Module.prototype.setValueInCache = function(cacheType,key,value,ttl){
+    	return Api.setValueInCache(cacheType,key,value,ttl)
+    }
+    
+    Module.prototype.getValueFromCache = function(cacheType,key){
+    	return Api.getValueFromCache(cacheType,key);
+    }
+    
+    Module.prototype.removeValueFromCache = function(cacheType,key){
+    	return Api.removeValueFromCache(cacheType,key);
+    }
+    
 
     
     Object.defineProperty(Module.prototype,"Box",{configurable: false,enumberable:false});
     //Object.defineProperty(Module.prototype,"serve",{configurable:false,enumerable: false});
     Object.defineProperty(Module.prototype,"require",{configurable: false,enumerable: false});
 
-    // Module.prototype.Console = Object.create({
-    //    log: function(val) {
-    //        Internal.log(JSON.stringify(val));
-    //        _command({resource:'script',name:'log',params:{id: 'foo',message: val.toString()}});
-    //    }
-    //});
+    
 
 
     function ModuleRef(id,code) {

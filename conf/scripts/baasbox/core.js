@@ -782,7 +782,58 @@ Links.save = function(params){
   
 };
 //---------- END Links ------
+//---------- CACHE ----------
+var Cache = {};
+var validCacheScope = function(cacheScope){
+	return cacheScope && (cacheScope == 'app' || cacheScope == 'user')
+}
+var validateCacheParams = function(methodName,cacheScope,key){
+	var printInfo = function(){
+		return "cacheScope:"+cacheScope + " key: "+ key;
+	}
+	if(!cacheScope || !validCacheScope(cacheScope) ){
+		throw new TypeError("Invalid arguments:"+methodName +" needs a first string param that should be either app or user.Info:"+ printInfo()); 
+	}
+	if(!key){
+		throw new TypeError("Invalid arguments: "+methodName +" needs a second string param representing the key of your cache value.Info:"+printInfo()); 
+	}
+}
+Cache.set = function(key,obj,params){
+	var cacheScope = params.scope || 'user';
+	validateCacheParams("setValue()",cacheScope,key);
+	var ttl = 3600;
+	if(params.ttl && !isNaN(params.ttl)){
+		ttl = params.ttl;
+	}
+	setValueInCache(cacheScope,key,obj,ttl);
+	return {"key":key,"value":obj};
+}
 
+Cache.get = function(key,params){
+	var cacheScope = params.scope || 'user';
+	validateCacheParams("get",cacheScope,key);
+	return getValueFromCache(key,params);
+}
+
+Cache.remove = function(key,params){
+	var cacheScope = params.scope || 'user';
+	validateCacheParams("remove()",cacheScope,key);
+	removeValueFromCache(cacheScope,key);
+	return;
+	
+}
+
+Cache.getOrElse = function(key,params){
+	var cacheScope = params.scope || 'user';
+	var inCache = this.get(cacheScope,key);
+	var callback = params.callback;
+	if(!inCache){
+		return callback(key);
+	}else{
+		return inCache;
+	}
+};
+//---------- END Cache ------
 
 //---------- UTILS --------
 var Utils = {}
@@ -799,6 +850,7 @@ exports.log = log;
 exports.Links = Links;
 exports.Sessions = Sessions;
 exports.Utils = Utils;
+exports.Cache = Cache;
 
 
 exports.runAsAdmin=runAsAdmin;
