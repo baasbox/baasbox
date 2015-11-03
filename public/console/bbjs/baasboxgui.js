@@ -391,7 +391,7 @@ $(".btn-action").live("click", function() {
 
 function deleteUser(userName){
 	userName=unescape(userName);
-    var route = BBRoutes.com.baasbox.controllers.Admin.dropUser(userName);su
+    var route = BBRoutes.com.baasbox.controllers.Admin.dropUser(userName);
     	route.ajax(
     	        {
     	            data: {"username": userName},
