@@ -10,6 +10,8 @@ public enum CacheType {
 		switch(from.toLowerCase()){
 		case "global": return GLOBAL;
 		case "local": return LOCAL;
+		case "app": return GLOBAL;
+		case "user": return LOCAL;
 		default:throw new IllegalArgumentException(String.format("Unrecognized cache type %s",from));
 		}
 	}

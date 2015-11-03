@@ -262,12 +262,16 @@ var GLOBAL=this;
     	return Api.isScriptLoggingActive();
     }
     
-    Module.prototype.setValueInCache = function(cacheType,key,value){
-    	return Api.setValueInCache(cacheType,key,value)
+    Module.prototype.setValueInCache = function(cacheType,key,value,ttl){
+    	return Api.setValueInCache(cacheType,key,value,ttl)
     }
     
     Module.prototype.getValueFromCache = function(cacheType,key){
     	return Api.getValueFromCache(cacheType,key);
+    }
+    
+    Module.prototype.removeValueFromCache = function(cacheType,key){
+    	return Api.removeValueFromCache(cacheType,key);
     }
     
 

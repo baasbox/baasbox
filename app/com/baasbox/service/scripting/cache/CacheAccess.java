@@ -10,12 +10,12 @@ public class CacheAccess {
 		this.username = username;
 	}
 	
-	public void setValue(String cacheType,String key,Object value){
-		CacheType type = CacheType.fromString(cacheType);
+	public void setValue(String cacheScope,String key,Object value,Integer ttl){
+		CacheType type = CacheType.fromString(cacheScope);
 		if(type.equals(CacheType.LOCAL)){
-			BBCache.setValueInLocalCache(this.username,key,value);
+			BBCache.setValueInLocalCache(this.username,key,value,ttl);
 		}else{
-			BBCache.setValueInGlobalCache(key,value);
+			BBCache.setValueInGlobalCache(key,value,ttl);
 		}
 	}
 	
@@ -25,6 +25,15 @@ public class CacheAccess {
 			return BBCache.getValueFromLocalCache(this.username,key);
 		}else{
 			return BBCache.getValueFromGlobalCache(key);
+		}
+	}
+
+	public void removeValue(String cacheScope, String key) {
+		CacheType type = CacheType.fromString(cacheScope);
+		if(type.equals(CacheType.LOCAL)){
+			BBCache.removeValueFromLocalCache(this.username,key);
+		}else{
+			BBCache.removeValueFromGlobalCache(key);
 		}
 	}
 	

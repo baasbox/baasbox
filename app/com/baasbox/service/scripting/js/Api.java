@@ -104,12 +104,16 @@ public class Api {
         return NashornEngine.getNashorn().require(name);
     }
     
-    public static void setValueInCache(String cacheType,String key,Object value){
-    	new CacheAccess(currentUserName()).setValue(cacheType, key, value);
+    public static void setValueInCache(String cacheScope,String key,Object value,Integer ttl){
+    	new CacheAccess(currentUserName()).setValue(cacheScope, key, value,ttl);
     }
     
-    public static Object getValueFromCache(String cacheType,String key){
-    	return new CacheAccess(currentUserName()).getValue(cacheType, key);
+    public static Object getValueFromCache(String cacheScope,String key){
+    	return new CacheAccess(currentUserName()).getValue(cacheScope, key);
+    }
+    
+    public static void removeValueFromCache(String cacheScope,String key){
+    	new CacheAccess(currentUserName()).removeValue(cacheScope, key);
     }
     
     public static String btoa (String stringToConvert){

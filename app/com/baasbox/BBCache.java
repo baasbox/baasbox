@@ -1,11 +1,7 @@
 package com.baasbox;
 
-import java.io.Serializable;
-
 import play.cache.Cache;
 import play.mvc.Http;
-
-import com.baasbox.service.scripting.cache.CacheType;
 
 
 
@@ -61,14 +57,14 @@ public class BBCache {
 		Cache.remove(getUUIDKey()+uuid);
 	}
 	
-	public static void setValueInLocalCache(String username,String key,Object value){
+	public static void setValueInLocalCache(String username,String key,Object value,Integer ttl){
 		String appcode = (String) Http.Context.current().args.get("appcode");
-		Cache.set(String.format(LOCAL_CACHE_KEY_FORMAT,appcode,username,key), value);
+		Cache.set(String.format(LOCAL_CACHE_KEY_FORMAT,appcode,username,key), value,ttl);
 	}
 	
-	public static  void setValueInGlobalCache(String key,Object value){
+	public static  void setValueInGlobalCache(String key,Object value,Integer ttl){
 		String appcode = (String) Http.Context.current().args.get("appcode");
-		Cache.set(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key), value);
+		Cache.set(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key), value,ttl);
 	}
 	
 	public static Object getValueFromLocalCache(String username,String key){
@@ -81,4 +77,13 @@ public class BBCache {
 		return Cache.get(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key));
 	}
 
+	public static void removeValueFromLocalCache(String username, String key) {
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		Cache.remove(String.format(LOCAL_CACHE_KEY_FORMAT,appcode,username,key));
+	}
+	
+	public static void removeValueFromGlobalCache(String key){
+		String appcode = (String) Http.Context.current().args.get("appcode");
+		Cache.remove(String.format(GLOBAL_CACHE_KEY_FORMAT,appcode,key));
+	}
 }
