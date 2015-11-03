@@ -8,8 +8,8 @@ import play.mvc.Http;
 public class BBCache {
 
 	private static final String UUID_KEY=":uuid:";
-	private static final String GLOBAL_CACHE_KEY_FORMAT="%s:global:cache:%s";
-	private static final String LOCAL_CACHE_KEY_FORMAT="%s:%s:cache:%s";
+	private static final String GLOBAL_CACHE_KEY_FORMAT="%s:cache:app:%s";
+	private static final String LOCAL_CACHE_KEY_FORMAT="%s:cache:user:%s:%s";
 	public static final int UUID_TIMEOUT=0; //seconds, 0=unlimited
 	private static final String TAG_KEY=":tag:";
 	public static final int TAG_TIMEOUT=120;
