@@ -814,6 +814,9 @@ Cache.set = function(key,obj,params){
 }
 
 Cache.get = function(key,cacheScope){
+	if(!cacheScope){
+		cacheScope = 'user';
+	}
 	validateCacheParams("get",cacheScope,key);
 	return getValueFromCache(cacheScope,key);
 }
