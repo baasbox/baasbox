@@ -784,6 +784,10 @@ Links.save = function(params){
 //---------- END Links ------
 //---------- CACHE ----------
 var Cache = {};
+
+var DEFAULT_CALLBACK = function(key){
+	return null;
+}
 var validCacheScope = function(cacheScope){
 	return cacheScope && (cacheScope == 'app' || cacheScope == 'user')
 }
@@ -792,10 +796,10 @@ var validateCacheParams = function(methodName,cacheScope,key){
 		return "cacheScope:"+cacheScope + " key: "+ key;
 	}
 	if(!cacheScope || !validCacheScope(cacheScope) ){
-		throw new TypeError("Invalid arguments:"+methodName +" needs a first string param that should be either app or user.Info:"+ printInfo()); 
+		throw new TypeError("Invalid arguments:"+methodName +" needs a scope string param that should be either app or user.Info:"+ printInfo()); 
 	}
 	if(!key){
-		throw new TypeError("Invalid arguments: "+methodName +" needs a second string param representing the key of your cache value.Info:"+printInfo()); 
+		throw new TypeError("Invalid arguments: "+methodName +" needs a string param representing the key of your cache value.Info:"+printInfo()); 
 	}
 }
 Cache.set = function(key,obj,params){
@@ -806,27 +810,29 @@ Cache.set = function(key,obj,params){
 		ttl = params.ttl;
 	}
 	setValueInCache(cacheScope,key,obj,ttl);
-	return {"key":key,"value":obj};
+	return obj;
 }
 
-Cache.get = function(key,params){
-	var cacheScope = params.scope || 'user';
+Cache.get = function(key,cacheScope){
+	if(!cacheScope){
+		cacheScope = 'user';
+	}
 	validateCacheParams("get",cacheScope,key);
-	return getValueFromCache(key,params);
+	return getValueFromCache(cacheScope,key);
 }
 
 Cache.remove = function(key,params){
 	var cacheScope = params.scope || 'user';
 	validateCacheParams("remove()",cacheScope,key);
 	removeValueFromCache(cacheScope,key);
-	return;
+	return ;
 	
 }
 
 Cache.getOrElse = function(key,params){
 	var cacheScope = params.scope || 'user';
-	var inCache = this.get(cacheScope,key);
-	var callback = params.callback;
+	var inCache = this.get(key,cacheScope);
+	var callback = params.callback || DEFAULT_CALLBACK;
 	if(!inCache){
 		return callback(key);
 	}else{
