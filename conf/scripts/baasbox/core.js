@@ -784,6 +784,10 @@ Links.save = function(params){
 //---------- END Links ------
 //---------- CACHE ----------
 var Cache = {};
+
+var DEFAULT_CALLBACK = function(key){
+	return null;
+}
 var validCacheScope = function(cacheScope){
 	return cacheScope && (cacheScope == 'app' || cacheScope == 'user')
 }
@@ -806,7 +810,7 @@ Cache.set = function(key,obj,params){
 		ttl = params.ttl;
 	}
 	setValueInCache(cacheScope,key,obj,ttl);
-	return {"key":key,"value":obj};
+	return obj;
 }
 
 Cache.get = function(key,params){
@@ -819,14 +823,14 @@ Cache.remove = function(key,params){
 	var cacheScope = params.scope || 'user';
 	validateCacheParams("remove()",cacheScope,key);
 	removeValueFromCache(cacheScope,key);
-	return;
+	return ;
 	
 }
 
 Cache.getOrElse = function(key,params){
 	var cacheScope = params.scope || 'user';
 	var inCache = this.get(cacheScope,key);
-	var callback = params.callback;
+	var callback = params.callback || DEFAULT_CALLBACK;
 	if(!inCache){
 		return callback(key);
 	}else{
