@@ -42,10 +42,12 @@ import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -297,13 +299,29 @@ class DocumentsResource extends BaseRestResource {
         }
     }
 
+    
+    
 
     @Override
     protected JsonNode get(JsonNode command) throws CommandException{
         String collection = getCollectionName(command);
         String id = getDocumentId(command);
+        LinkQuery lq = getLinkQuery(command);
         try {
-            String rid = DocumentService.getRidByString(id, true);
+        String rid = DocumentService.getRidByString(id, true);
+        if(lq!=null){
+        	List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, lq.linkDir, QueryParams.getInstance().where(lq.where));
+        	JsonNode node = (JsonNode)BBJson.mapper().createArrayNode();
+        	if(documents.size()>0){
+        		String s = JSONFormats.prepareDocToJson(documents, JSONFormats.Formats.DOCUMENT_PUBLIC);
+        		node = BBJson.mapper().readTree(s);
+        		node.forEach(n->{
+        			((ObjectNode)n).remove(TO_REMOVE);
+        		});
+        		
+        	}
+            return node;
+        }else{
             ODocument document = DocumentService.get(collection, rid);
             if (document == null){
                 return null;
@@ -313,6 +331,7 @@ class DocumentsResource extends BaseRestResource {
 				node.remove(TO_REMOVE);
                 return node;
             }
+        }
         } catch (RidNotFoundException e) {
             return null;
         } catch (DocumentNotFoundException e) {
@@ -328,7 +347,20 @@ class DocumentsResource extends BaseRestResource {
         }
     }
 
-    private void alterGrants(JsonNode command,String collection,String docId,boolean users,boolean grant ) throws CommandParsingException, UserNotFoundException, DocumentNotFoundException, InvalidCollectionException, InvalidModelException, RoleNotFoundException {
+    private LinkQuery getLinkQuery(JsonNode command) throws CommandParsingException {
+    	LinkQuery lq = null;
+    	JsonNode params = command.get(ScriptCommand.PARAMS);
+		if(params.has(ScriptCommand.LINKS)){
+			try{
+			 lq = BBJson.mapper().treeToValue(params.get(ScriptCommand.LINKS), LinkQuery.class);
+			}catch(IOException ioe){
+				throw new CommandParsingException(command,"Unable to parse links from provided command:"+ExceptionUtils.getMessage(ioe));
+			}
+		}
+		return lq;
+	}
+
+	private void alterGrants(JsonNode command,String collection,String docId,boolean users,boolean grant ) throws CommandParsingException, UserNotFoundException, DocumentNotFoundException, InvalidCollectionException, InvalidModelException, RoleNotFoundException {
         JsonNode params = command.get(ScriptCommand.PARAMS);
         JsonNode node = users?params.get("users"):params.get("roles");
         if (node != null){
@@ -405,5 +437,17 @@ class DocumentsResource extends BaseRestResource {
     @Override
     public String name() {
         return RESOURCE_NAME;
+    }
+    
+    static class LinkQuery {
+    	@JsonProperty("linkName")
+    	String linkName;
+    	@JsonProperty("linkDir")
+    	String linkDir;
+    	@JsonProperty("where")
+    	String where;
+    	
+    	//For json serialization
+    	public LinkQuery(){}
     }
 }

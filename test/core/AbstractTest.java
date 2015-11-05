@@ -116,6 +116,22 @@ public abstract class AbstractTest extends FluentTest
 		}
 	}
 	
+	 protected void grantToRole(String action, String role, String collection, String objectRid, String author) {
+	    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/role/" + role);
+	    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+	    Result result = routeAndCall(request);
+	    assertRoute(result, "grantPostToRegistered", 200, null, false);
+	  }
+	  
+	  protected void grantToUser(String action, String userName, String collection, String objectRid, String author) {
+		    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/user/" + userName);
+		    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+		    Result result = routeAndCall(request);
+		    assertRoute(result, "grantPostToRegistered", 200, null, false);
+		  }
+	
 	public String createNewUser(String username) {
 		String sFakeUser = username + UUID.randomUUID();
 		// Prepare test user

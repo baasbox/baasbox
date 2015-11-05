@@ -520,23 +520,20 @@ Sessions.create = function(username,password){
 
 //--------   Documents --------
 var Documents = {};
-Documents.find = function(){
-    var coll = null,
+
+Documents.find = function(collectionName,idOrQuery,params){
+    var coll = collectionName,
         q = null,
+        queryLink = params.links,
         id = null;
-    switch (arguments.length){
-        case 2:
-            if(typeof arguments[1] === 'string') {
-                id = arguments[1];
-            } else {
-                q = arguments[1];
-            }
-        //fall through (missing break)
-        case 1:
-            coll = arguments[0];
+    if(typeof idOrQuery === 'string') {
+      id =idOrQuery;
+    } else {
+      q = idOrQuery
     }
+    coll = String(collectionName)
     if(!(typeof coll === 'string')){
-        throw new TypeError("you must specify a collection");
+        throw new TypeError("you must specify a collection"+(typeof coll) + ":"+coll);
     }
     if(id === null ){
         return _command({resource: 'documents',
@@ -550,7 +547,8 @@ Documents.find = function(){
                          name: 'get',
                          params:{
                              collection: coll,
-                             id: id
+                             id: id,
+                             links:queryLink
                          }});
     }
 };
