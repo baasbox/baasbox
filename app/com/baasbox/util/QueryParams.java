@@ -297,10 +297,11 @@ public class QueryParams implements IQueryParametersKeys{
                 }
                 query.put(k,ary);
             } else {
-                String[] o = {val.asText()};
-                query.put(k,o);
+            		String[] o = {val.asText()};
+            		query.put(k,o);
             }
         }
+        System.out.println("QUERY IS:"+query);
         return getParamsFromQueryString(query);
     }
 

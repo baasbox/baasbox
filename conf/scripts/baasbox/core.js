@@ -521,19 +521,23 @@ Sessions.create = function(username,password){
 //--------   Documents --------
 var Documents = {};
 
-Documents.find = function(collectionName,idOrQuery,params){
-    var coll = collectionName,
+Documents.find = function(){
+    var coll = null,
         q = null,
-        queryLink = params.links,
         id = null;
-    if(typeof idOrQuery === 'string') {
-      id =idOrQuery;
-    } else {
-      q = idOrQuery
+    switch (arguments.length){
+        case 2:
+            if(typeof arguments[1] === 'string') {
+                id = arguments[1];
+            } else {
+                q = arguments[1];
+            }
+        //fall through (missing break)
+        case 1:
+            coll = arguments[0];
     }
-    coll = String(collectionName)
     if(!(typeof coll === 'string')){
-        throw new TypeError("you must specify a collection"+(typeof coll) + ":"+coll);
+        throw new TypeError("you must specify a collection");
     }
     if(id === null ){
         return _command({resource: 'documents',
@@ -547,8 +551,7 @@ Documents.find = function(collectionName,idOrQuery,params){
                          name: 'get',
                          params:{
                              collection: coll,
-                             id: id,
-                             links:queryLink
+                             id: id
                          }});
     }
 };
@@ -639,6 +642,29 @@ Documents.save = function(){
 };
 
 //-------- End Documents --------
+
+//-------- Documents Links ------
+var dLinks = {};
+dLinks.find = function(collectionName,id,params){
+	 var coll = collectionName,
+     queryLink = params.links;
+	 if(!coll || !(typeof coll === 'string')){
+	        throw new TypeError("you must specify a collection");
+	    }
+	 if(!id || !(typeof id === 'string')){
+	        throw new TypeError("you must specify an id");
+	    }
+	 return _command({resource: 'documents',
+         name: 'get',
+         params:{
+             collection: coll,
+             id: id,
+             links:queryLink
+         }});
+	 
+}
+Documents.Links = dLinks;
+//----- End Documents Links ------
 
 var queryUsers = function(to){
     var ret = [];

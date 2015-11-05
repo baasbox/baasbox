@@ -42,6 +42,7 @@ import com.baasbox.service.storage.DocumentService;
 import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -310,7 +311,8 @@ class DocumentsResource extends BaseRestResource {
         try {
         String rid = DocumentService.getRidByString(id, true);
         if(lq!=null){
-        	List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, lq.linkDir, QueryParams.getInstance().where(lq.where));
+        	QueryParams qp = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(ScriptCommand.LINKS));
+        	List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, lq.linkDir,qp);
         	JsonNode node = (JsonNode)BBJson.mapper().createArrayNode();
         	if(documents.size()>0){
         		String s = JSONFormats.prepareDocToJson(documents, JSONFormats.Formats.DOCUMENT_PUBLIC);
@@ -439,13 +441,12 @@ class DocumentsResource extends BaseRestResource {
         return RESOURCE_NAME;
     }
     
+    @JsonIgnoreProperties(ignoreUnknown=true)
     static class LinkQuery {
     	@JsonProperty("linkName")
     	String linkName;
     	@JsonProperty("linkDir")
     	String linkDir;
-    	@JsonProperty("where")
-    	String where;
     	
     	//For json serialization
     	public LinkQuery(){}

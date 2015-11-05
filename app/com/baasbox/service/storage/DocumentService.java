@@ -206,6 +206,7 @@ public class DocumentService {
    */
   public static List<ODocument> queryLink(String collectionName, String rid, String linkName, String linkDirection, QueryParams criteria) {
     String select = String.format(NodeDao.LINKS_QUERY_FORMAT, linkDirection, linkName, collectionName, rid);
+    System.out.println("SELECT IS "+select);
     if (StringUtils.isEmpty(criteria.getFields())) {
       criteria.fields("*");
     }
