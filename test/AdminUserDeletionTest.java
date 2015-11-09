@@ -1,3 +1,4 @@
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.routeAndCall;
@@ -12,11 +13,9 @@ import org.junit.Test;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
-import static org.junit.Assert.assertTrue;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.dao.RoleDao;
-import com.baasbox.service.user.FriendShipService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -498,5 +497,9 @@ public class AdminUserDeletionTest extends AbstractRouteHeaderTest {
     }
 
   }
+  
+  
+   
+  
 
 }

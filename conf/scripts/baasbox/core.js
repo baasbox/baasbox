@@ -362,6 +362,17 @@ Users.me = function(){
     return Users.find(context.userName);
 };
 
+Users.remove = function(username){
+	return _command({resource: 'users',
+        name: 'delete',
+        params: {
+        	username:username
+        }
+    });
+};
+
+
+
 Users.save = function(uzr){
     var upd = {};
     if(arguments.length == 1 && typeof arguments[0] === 'object') {

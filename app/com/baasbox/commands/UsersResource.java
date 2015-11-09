@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.tools.ant.types.CommandlineJava.SysProperties;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -248,6 +249,7 @@ class UsersResource extends BaseRestResource {
 		if(!UserService.isAnAdmin(currentUser)){
 			throw new CommandExecutionException(command,"Error deleting user: this operation is only valid for admins");
 		}
+		
 		String username = getUsername(command);
 		OUser user = UserService.getOUserByUsername(username);
 		if (user == null) {

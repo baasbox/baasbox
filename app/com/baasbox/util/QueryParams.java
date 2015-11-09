@@ -301,7 +301,6 @@ public class QueryParams implements IQueryParametersKeys{
             		query.put(k,o);
             }
         }
-        System.out.println("QUERY IS:"+query);
         return getParamsFromQueryString(query);
     }
 
