@@ -563,7 +563,7 @@ public class Admin extends Controller {
         if (user == null) {
           return notFound();
         } else {
-          if(!checkUserIsDeletable(user)){
+          if(!UserService.checkUserIsDeletable(user)){
             return badRequest("user is not deletable");
           };
           // Remove all posts related to the deleting user
@@ -571,15 +571,12 @@ public class Admin extends Controller {
           return ok();
     }
   } catch (Exception e) {
-    e.printStackTrace();
     return internalServerError(e.getMessage());
   }
     }));
   }
 
-  private static boolean checkUserIsDeletable(OUser user) {
-    return !(user.getName().equals("admin") || UserService.isInternalUsername(user.getName()));
-  }
+ 
 /***
    * Drop an entire collection
    * Data are lost... forever

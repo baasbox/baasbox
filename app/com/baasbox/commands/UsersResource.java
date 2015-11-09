@@ -53,6 +53,7 @@ import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -60,296 +61,316 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  * Created by Andrea Tortorella on 02/07/14.
  */
 class UsersResource extends BaseRestResource {
-    public static final Resource INSTANCE = new UsersResource();
+	public static final Resource INSTANCE = new UsersResource();
 
-    @Override
-    protected ImmutableMap.Builder<String, ScriptCommand> baseCommands() {
-        return super.baseCommands().put("suspend", new ScriptCommand() {
-            @Override
-            public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                return suspend(command);
-            }
-        }).put("reactivate", new ScriptCommand() {
-            @Override
-            public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                return reactivate(command);
-            }
-        }).put("follow", this::friendshipUpdate)
-          .put("followers",getFriends(false))
-          .put("following",getFriends(true))
-          .put("changeUsername", this::changeUsername)
-          .put("changePassword", this::changePassword);
-    }
+	@Override
+	protected ImmutableMap.Builder<String, ScriptCommand> baseCommands() {
+		return super.baseCommands().put("suspend", new ScriptCommand() {
+			@Override
+			public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
+				return suspend(command);
+			}
+		}).put("reactivate", new ScriptCommand() {
+			@Override
+			public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
+				return reactivate(command);
+			}
+		}).put("follow", this::friendshipUpdate)
+		.put("followers",getFriends(false))
+		.put("following",getFriends(true))
+		.put("changeUsername", this::changeUsername)
+		.put("changePassword", this::changePassword);
+	}
 
-    private ScriptCommand getFriends(boolean following){
-        return (command,unused) ->{
-            JsonNode params = command.get(ScriptCommand.PARAMS);
-            if (params == null) throw new CommandParsingException(command,"missing required parameters");
-            JsonNode user = params.path("user");
-            JsonNode query = params.get("query");
-            if (!user.isTextual()) throw new CommandParsingException(command,"missing required paramter user as string");
-            if (query!=null && !query.isObject()) throw new CommandParsingException(command,"query must be a json object");
-            QueryParams qparams = QueryParams.getParamsFromJson(query);
-            try {
+	private ScriptCommand getFriends(boolean following){
+		return (command,unused) ->{
+			JsonNode params = command.get(ScriptCommand.PARAMS);
+			if (params == null) throw new CommandParsingException(command,"missing required parameters");
+			JsonNode user = params.path("user");
+			JsonNode query = params.get("query");
+			if (!user.isTextual()) throw new CommandParsingException(command,"missing required paramter user as string");
+			if (query!=null && !query.isObject()) throw new CommandParsingException(command,"query must be a json object");
+			QueryParams qparams = QueryParams.getParamsFromJson(query);
+			try {
 
-                List<ODocument> res = following ?
-                        FriendShipService.getFollowing(user.asText(), qparams) :
-                        FriendShipService.getFriendsOf(user.asText(), qparams);
-                String s = JSONFormats.prepareDocToJson(res, JSONFormats.Formats.USER);
+				List<ODocument> res = following ?
+						FriendShipService.getFollowing(user.asText(), qparams) :
+							FriendShipService.getFriendsOf(user.asText(), qparams);
+						String s = JSONFormats.prepareDocToJson(res, JSONFormats.Formats.USER);
 
-                return BBJson.mapper().readTreeOrMissing(s);
-            } catch (SqlInjectionException e){
-                throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-            }
-        };
-    }
+						return BBJson.mapper().readTreeOrMissing(s);
+			} catch (SqlInjectionException e){
+				throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+			}
+		};
+	}
 
-//    private JsonNode followers(JsonNode command, JsonCallback unused) throws CommandException{
-//        try {
-//            List<ODocument> friendsOf = FriendShipService.getFriendsOf(user.asText(), QueryParams.getParamsFromJson(query));
-//            String s = JSONFormats.prepareResponseToJson(friendsOf, JSONFormats.Formats.USER);
-//            return Json.mapper().readTreeOrMissing(s);
-//        } catch (SqlInjectionException | IOException e) {
-//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-//        }
-//    }
+	//    private JsonNode followers(JsonNode command, JsonCallback unused) throws CommandException{
+	//        try {
+	//            List<ODocument> friendsOf = FriendShipService.getFriendsOf(user.asText(), QueryParams.getParamsFromJson(query));
+	//            String s = JSONFormats.prepareResponseToJson(friendsOf, JSONFormats.Formats.USER);
+	//            return Json.mapper().readTreeOrMissing(s);
+	//        } catch (SqlInjectionException | IOException e) {
+	//            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+	//        }
+	//    }
 
-    protected JsonNode friendshipUpdate(JsonNode command,JsonCallback unused) throws CommandException {
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        if (params == null) throw new CommandParsingException(command,"missing required parameters");
-        JsonNode from = params.get("from");
-        JsonNode to = params.get("to");
-        JsonNode remove = params.get("remove");
-        if (from==null||!from.isTextual()||
-            to == null||!to.isTextual())
-            throw new CommandParsingException(command,"missing required user");
-        boolean unfollow;
-        if (remove == null){
-            unfollow = false;
-        } else if (remove.isBoolean()){
-            unfollow =remove.asBoolean();
-        } else {
-            throw new CommandParsingException(command,"wrong parameter remove");
-        }
-        if (unfollow){
-            return  doUnfollow(command, from.asText(), to.asText());
-        } else {
-            return doFollow(command, from.asText(), to.asText());
-        }
-    }
+	protected JsonNode friendshipUpdate(JsonNode command,JsonCallback unused) throws CommandException {
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		if (params == null) throw new CommandParsingException(command,"missing required parameters");
+		JsonNode from = params.get("from");
+		JsonNode to = params.get("to");
+		JsonNode remove = params.get("remove");
+		if (from==null||!from.isTextual()||
+				to == null||!to.isTextual())
+			throw new CommandParsingException(command,"missing required user");
+		boolean unfollow;
+		if (remove == null){
+			unfollow = false;
+		} else if (remove.isBoolean()){
+			unfollow =remove.asBoolean();
+		} else {
+			throw new CommandParsingException(command,"wrong parameter remove");
+		}
+		if (unfollow){
+			return  doUnfollow(command, from.asText(), to.asText());
+		} else {
+			return doFollow(command, from.asText(), to.asText());
+		}
+	}
 
-    private JsonNode doUnfollow(JsonNode command,String from,String to) throws CommandExecutionException{
-        try {
-            return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
-        } catch (Exception e) {
-            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-        }
-    }
+	private JsonNode doUnfollow(JsonNode command,String from,String to) throws CommandExecutionException{
+		try {
+			return BooleanNode.valueOf(FriendShipService.unfollow(from, to));
+		} catch (Exception e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+	}
 
-    private JsonNode doFollow(JsonNode command,String from,String to) throws CommandExecutionException{
-        try {
-            ODocument followed = FriendShipService.follow(from, to);
-            String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
-            return BBJson.mapper().readTree(s);
-        } catch (UserNotFoundException e) {
-            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-        } catch (AlreadyFriendsException e) {
-            return NullNode.getInstance();
-        } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-        } catch (Exception e) {
-            throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
-        }
-    }
-
-
+	private JsonNode doFollow(JsonNode command,String from,String to) throws CommandExecutionException{
+		try {
+			ODocument followed = FriendShipService.follow(from, to);
+			String s = JSONFormats.prepareDocToJson(followed, JSONFormats.Formats.USER);
+			return BBJson.mapper().readTree(s);
+		} catch (UserNotFoundException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		} catch (AlreadyFriendsException e) {
+			return NullNode.getInstance();
+		} catch (SqlInjectionException e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		} catch (Exception e) {
+			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
+		}
+	}
 
 
-    protected JsonNode suspend(JsonNode command) throws CommandException {
-        String username = getUsername(command);
 
-        try {
-            boolean inTransaction = DbHelper.isInTransaction();
-            if (inTransaction){
-                return BooleanNode.getFalse();
-            }
-            UserService.disableUser(username);
-        } catch (UserNotFoundException e) {
-            throw new CommandExecutionException(command,"User "+username+" does not exists");
-        } catch (OpenTransactionException e){
-            return BooleanNode.getFalse();
-            //throw new CommandExecutionException(command,"Transaction still open during suspend");
-        }
-        return BooleanNode.getTrue();
-    }
-    
-    protected JsonNode changeUsername(JsonNode command,JsonCallback unused) throws CommandException {
-    	String username = getUsername(command);
-    	JsonNode newUsernameJson = getParamField(command, "newUsername");
-    	if (newUsernameJson==null || !newUsernameJson.isTextual()) throw new CommandExecutionException(command,"invalid new username: "+newUsernameJson);
-    	String newUsername=newUsernameJson.asText();
-    	try {
+
+	protected JsonNode suspend(JsonNode command) throws CommandException {
+		String username = getUsername(command);
+
+		try {
+			boolean inTransaction = DbHelper.isInTransaction();
+			if (inTransaction){
+				return BooleanNode.getFalse();
+			}
+			UserService.disableUser(username);
+		} catch (UserNotFoundException e) {
+			throw new CommandExecutionException(command,"User "+username+" does not exists");
+		} catch (OpenTransactionException e){
+			return BooleanNode.getFalse();
+			//throw new CommandExecutionException(command,"Transaction still open during suspend");
+		}
+		return BooleanNode.getTrue();
+	}
+
+	protected JsonNode changeUsername(JsonNode command,JsonCallback unused) throws CommandException {
+		String username = getUsername(command);
+		JsonNode newUsernameJson = getParamField(command, "newUsername");
+		if (newUsernameJson==null || !newUsernameJson.isTextual()) throw new CommandExecutionException(command,"invalid new username: "+newUsernameJson);
+		String newUsername=newUsernameJson.asText();
+		try {
 			UserService.changeUsername(username, newUsername);
 		} catch (UserNotFoundException | OpenTransactionException
 				| SqlInjectionException e) {
 			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 		}
-    	return NullNode.getInstance();
-    }
+		return NullNode.getInstance();
+	}
 
-    protected JsonNode changePassword(JsonNode command,JsonCallback unused) throws CommandException {
-    	String username = getUsername(command);
-    	JsonNode newPasswordJson = getParamField(command, "newPassword");
-    	if (newPasswordJson==null || !newPasswordJson.isTextual()) throw new CommandExecutionException(command,"invalid new password: "+newPasswordJson);
-    	String newPassword=newPasswordJson.asText();
-    	try {
+	protected JsonNode changePassword(JsonNode command,JsonCallback unused) throws CommandException {
+		String username = getUsername(command);
+		JsonNode newPasswordJson = getParamField(command, "newPassword");
+		if (newPasswordJson==null || !newPasswordJson.isTextual()) throw new CommandExecutionException(command,"invalid new password: "+newPasswordJson);
+		String newPassword=newPasswordJson.asText();
+		try {
 			UserService.changePassword(username, newPassword);
 		} catch (UserNotFoundException | OpenTransactionException
 				| SqlInjectionException e) {
 			throw new CommandExecutionException(command,ExceptionUtils.getMessage(e),e);
 		}
-    	return NullNode.getInstance();
-    }
-    
-    private String getUsername(JsonNode command) throws CommandException {
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        JsonNode id = params.get("username");
-        if (id==null||!id.isTextual()){
-            throw new CommandParsingException(command,"missing user username");
-        }
+		return NullNode.getInstance();
+	}
 
-        String username = id.asText();
-        boolean internalUsername = UserService.isInternalUsername(username);
-        if (internalUsername){
-            throw new CommandExecutionException(command,"invalid user: "+username);
-        }
-        return username;
-    }
+	private String getUsername(JsonNode command) throws CommandException {
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		JsonNode id = params.get("username");
+		if (id==null||!id.isTextual()){
+			throw new CommandParsingException(command,"missing user username");
+		}
 
-    protected JsonNode reactivate(JsonNode command) throws CommandException {
-        String username = getUsername(command);
-        try {
-            if (DbHelper.isInTransaction()) return BooleanNode.getFalse();
-            UserService.enableUser(username);
+		String username = id.asText();
+		boolean internalUsername = UserService.isInternalUsername(username);
+		if (internalUsername){
+			throw new CommandExecutionException(command,"invalid user: "+username);
+		}
+		return username;
+	}
 
-        } catch (UserNotFoundException e) {
-            throw new CommandExecutionException(command,"user "+username+ " does not exists");
-        } catch (OpenTransactionException e){
-            return BooleanNode.getFalse();
-            //throw new CommandExecutionException(command,"transaction still open while altering user status");
-        }
-        return BooleanNode.getTrue();
-    }
-	
-    @Override
-    protected JsonNode delete(JsonNode command) throws CommandException {
-        throw new CommandNotImplementedException(command,"not implemented");
-    }
+	protected JsonNode reactivate(JsonNode command) throws CommandException {
+		String username = getUsername(command);
+		try {
+			if (DbHelper.isInTransaction()) return BooleanNode.getFalse();
+			UserService.enableUser(username);
 
-    @Override
-    protected JsonNode put(JsonNode command) throws CommandException {
-        String username = getUsername(command);
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        String role = params.get("role")!=null?params.get("role").asText():null;
-        JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
-        JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
-        JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
-        JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
-        try {
-            ODocument doc;
-            if (!params.has("id")){
-            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
-            }else{
-            	String id=params.get("id")!=null?params.get("id").asText():null;
-            	doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible,id);
-            }
-            String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
-            return BBJson.mapper().readTree(s);
-        } catch (Exception e) {
-            throw new CommandExecutionException(command,"Error updating user: "+ExceptionUtils.getMessage(e));
-        }
-    }
+		} catch (UserNotFoundException e) {
+			throw new CommandExecutionException(command,"user "+username+ " does not exists");
+		} catch (OpenTransactionException e){
+			return BooleanNode.getFalse();
+			//throw new CommandExecutionException(command,"transaction still open while altering user status");
+		}
+		return BooleanNode.getTrue();
+	}
 
-    @Override
-    protected JsonNode post(JsonNode command) throws CommandException {
-        try {
-            JsonNode params = command.get(ScriptCommand.PARAMS);
-            if (params==null||!params.isObject()) throw new CommandParsingException(command,"missing parameters");
-            String username = getUsername(command);
-            JsonNode password = params.get("password");
-            if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
-            JsonNode id = params.get(BaasBoxPrivateFields.ID.toString());
-            String idString=null;
-            if (!(id instanceof NullNode) && id!=null && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
-            if (!(id instanceof NullNode) && id!=null && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
-            if (!(id instanceof NullNode) && id!=null && id.isTextual()) idString=id.asText();
-            JsonNode roleNode = params.get("role");
-            String role;
-            if (roleNode == null){
-                role = DefaultRoles.REGISTERED_USER.getORole().getName();
-            } else if (roleNode.isTextual()){
-                role = roleNode.asText();
-            } else {
-                throw new CommandParsingException(command,"role parameter is not valid");
-            }
-            if (!RoleService.exists(role)){
-                throw new CommandExecutionException(command,"required role does not exists: "+role);
-            }
-            JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
-            JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
-            JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
-            JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+	@Override
+	protected JsonNode delete(JsonNode command) throws CommandException {
+		String currentUser = DbHelper.getCurrentHTTPUsername();
+		if(!UserService.isAnAdmin(currentUser)){
+			throw new CommandExecutionException(command,"Error deleting user: this operation is only valid for admins");
+		}
+		String username = getUsername(command);
+		OUser user = UserService.getOUserByUsername(username);
+		if (user == null) {
+			throw new CommandExecutionException(command,"Error deleting user: Username "+username+" does not exists"); 
+		} else {
+			if(!UserService.checkUserIsDeletable(user)){
+				throw new CommandExecutionException(command,"Error deleting user: Username "+username+" is not deletable");
+			};
+			try{
+				UserService.dropUser(user);
+			}catch(Throwable e){
+				throw new CommandExecutionException(command,"Error updating user: "+ExceptionUtils.getMessage(e));
+			}
+			return BooleanNode.getTrue();
+		}
+	}
 
-            ODocument user = UserService.signUp(username, password.asText(),
-                                                new Date(), role,
-                                                anonymousVisible,userVisible,friendsVisible, registeredVisible, false,idString);
-            String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
-            return BBJson.mapper().readTree(userNode);
-        } catch (InvalidJsonException | IOException e) {
-            throw new CommandExecutionException(command,"invalid json",e);
-        } catch (UserAlreadyExistsException | EmailAlreadyUsedException e) {
-            return NullNode.getInstance();
-        }
-    }
+	@Override
+	protected JsonNode put(JsonNode command) throws CommandException {
+		String username = getUsername(command);
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		String role = params.get("role")!=null?params.get("role").asText():null;
+		JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+		JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+		JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+		JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
+		try {
+			ODocument doc;
+			if (!params.has("id")){
+				doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible);
+			}else{
+				String id=params.get("id")!=null?params.get("id").asText():null;
+				doc=UserService.updateProfile(username, role, anonymousVisible, userVisible, friendsVisible, registeredVisible,id);
+			}
+			String s = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.USER);
+			return BBJson.mapper().readTree(s);
+		} catch (Exception e) {
+			throw new CommandExecutionException(command,"Error updating user: "+ExceptionUtils.getMessage(e));
+		}
+	}
 
-    @Override
-    protected JsonNode list(JsonNode command) throws CommandException {
-        JsonNode paramsNode = command.get(ScriptCommand.PARAMS);
-        QueryParams qp = QueryParams.getParamsFromJson(paramsNode);
-        try {
-            List<ODocument> users = UserService.getUsers(qp, true);
-            String response = prepareResponseToJson(users);
-            return BBJson.mapper().readTree(response);
-        } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command, "error executing command: " + ExceptionUtils.getMessage(e));
-        } catch (IOException e) {
-            throw new CommandExecutionException(command, "error parsing response: " + ExceptionUtils.getMessage(e));
-        }
-    }
+	@Override
+	protected JsonNode post(JsonNode command) throws CommandException {
+		try {
+			JsonNode params = command.get(ScriptCommand.PARAMS);
+			if (params==null||!params.isObject()) throw new CommandParsingException(command,"missing parameters");
+			String username = getUsername(command);
+			JsonNode password = params.get("password");
+			if (password==null||!password.isTextual()) throw new CommandParsingException(command,"missing required password");
+			JsonNode id = params.get(BaasBoxPrivateFields.ID.toString());
+			String idString=null;
+			if (!(id instanceof NullNode) && id!=null && !id.isTextual()) throw new CommandParsingException(command,"ID must be a string");
+			if (!(id instanceof NullNode) && id!=null && id.isTextual() && StringUtils.isBlank(id.asText())) throw new CommandParsingException(command,"ID cannot be empty or cannot contains only whitespaces");
+			if (!(id instanceof NullNode) && id!=null && id.isTextual()) idString=id.asText();
+			JsonNode roleNode = params.get("role");
+			String role;
+			if (roleNode == null){
+				role = DefaultRoles.REGISTERED_USER.getORole().getName();
+			} else if (roleNode.isTextual()){
+				role = roleNode.asText();
+			} else {
+				throw new CommandParsingException(command,"role parameter is not valid");
+			}
+			if (!RoleService.exists(role)){
+				throw new CommandExecutionException(command,"required role does not exists: "+role);
+			}
+			JsonNode userVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_ONLY_BY_THE_USER);
+			JsonNode friendsVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_FRIENDS_USER);
+			JsonNode registeredVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
+			JsonNode anonymousVisible = params.get(UserDao.ATTRIBUTES_VISIBLE_BY_ANONYMOUS_USER);
 
-    @Override
-    protected JsonNode get(JsonNode command) throws CommandException {
-        String user = getUsername(command);
-        try {
-            if (UserService.isInternalUsername(user)) return NullNode.getInstance();
-            ODocument doc = UserService.getUserProfilebyUsername(user);
-            if (doc == null){
-                return NullNode.getInstance();
-            }
-            String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
-            return BBJson.mapper().readTree(resp);
-        } catch (SqlInjectionException e) {
-            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
-        } catch (IOException e) {
-            throw new CommandExecutionException(command,"error parsing response: "+ExceptionUtils.getMessage(e));
-        }
-    }
+			ODocument user = UserService.signUp(username, password.asText(),
+					new Date(), role,
+					anonymousVisible,userVisible,friendsVisible, registeredVisible, false,idString);
+			String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
+			return BBJson.mapper().readTree(userNode);
+		} catch (InvalidJsonException | IOException e) {
+			throw new CommandExecutionException(command,"invalid json",e);
+		} catch (UserAlreadyExistsException | EmailAlreadyUsedException e) {
+			return NullNode.getInstance();
+		}
+	}
 
-    @Override
-    public String name() {
-        return "users";
-    }
-    
+	@Override
+	protected JsonNode list(JsonNode command) throws CommandException {
+		JsonNode paramsNode = command.get(ScriptCommand.PARAMS);
+		QueryParams qp = QueryParams.getParamsFromJson(paramsNode);
+		try {
+			List<ODocument> users = UserService.getUsers(qp, true);
+			String response = prepareResponseToJson(users);
+			return BBJson.mapper().readTree(response);
+		} catch (SqlInjectionException e) {
+			throw new CommandExecutionException(command, "error executing command: " + ExceptionUtils.getMessage(e));
+		} catch (IOException e) {
+			throw new CommandExecutionException(command, "error parsing response: " + ExceptionUtils.getMessage(e));
+		}
+	}
+
+	@Override
+	protected JsonNode get(JsonNode command) throws CommandException {
+		String user = getUsername(command);
+		try {
+			if (UserService.isInternalUsername(user)) return NullNode.getInstance();
+			ODocument doc = UserService.getUserProfilebyUsername(user);
+			if (doc == null){
+				return NullNode.getInstance();
+			}
+			String resp = JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
+			return BBJson.mapper().readTree(resp);
+		} catch (SqlInjectionException e) {
+			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
+		} catch (IOException e) {
+			throw new CommandExecutionException(command,"error parsing response: "+ExceptionUtils.getMessage(e));
+		}
+	}
+
+
+
+	@Override
+	public String name() {
+		return "users";
+	}
+
 	private String prepareResponseToJson(List<ODocument> listOfDoc) {
 		try {
 			for (ODocument doc : listOfDoc){
@@ -360,8 +381,8 @@ class UsersResource extends BaseRestResource {
 						Iterator<OIdentifiable> it = roles.iterator();
 						while (it.hasNext()){
 							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-						        it.remove();
-						    }
+								it.remove();
+							}
 						}
 					}
 				}

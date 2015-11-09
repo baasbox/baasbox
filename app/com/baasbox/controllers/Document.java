@@ -579,8 +579,6 @@ public class Document extends Controller {
         return badRequest("linkDir param must contain one of the following values: to(default),from or both");
       }
 	  
-	  
-	  
       QueryParams criteria = (QueryParams) ctx().args.get(IQueryParametersKeys.QUERY_PARAMETERS);
       return ok(JSONFormats.prepareResponseToJson(DocumentService.queryLink(collectionName, id, linkName, LinkDirection.map(linkDirection), criteria), JSONFormats.Formats.DOCUMENT));
     }));
