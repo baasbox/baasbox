@@ -279,6 +279,47 @@ public class DocumentLinkQueryTest extends BlogSampleTest {
 
       });
   }
+  
+  public void testLinkNavigationWithPagination() {
+	    running(
+	      getFakeApplication(),
+	      new Runnable()
+	      {
+	        public void run()
+	        {
+	          int minComments = 10;
+	          int minPosts = 1;
+	          shutdownTest(false,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+	          TestSetup ts = prepareTest(minPosts, minComments,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+	          assertTrue(ts.getAuthors().size() > 0);
+	          assertTrue(ts.getPostIds().size() > 0);
+	          assertTrue(ts.getCommentToAuthor().size() > 0);
+
+	          String postWithMoreComments = ts.getPostWithMoreComments();
+	          String comment = ts.getPostToComments().get(postWithMoreComments).get(0);
+	          int commentCount = ts.getPostToComments().get(postWithMoreComments).size();
+
+	          FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/comment?recordsPerPage=2&count=false");
+	          rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	          rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+	          Result r = routeAndCall(rq);
+	          assertRoute(r, "get link", 200, null, false);
+	          String content = contentAsString(r);
+	          try {
+	            JsonNode node = om.readTree(content);
+	            String author = node.get("data").get(0).get("_author").asText();
+	            Assert.assertEquals(author, ts.getCommentToAuthor().get(comment));
+	            Assert.assertEquals(node.get("data").size(), 2);
+	            
+	          } catch (IOException e) {
+	            e.printStackTrace();
+	          }
+
+	          shutdownTest(true,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+	        }
+
+	      });
+	  }
 
   @Test
   public void testWrongQueryParams() {
