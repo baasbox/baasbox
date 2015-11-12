@@ -939,6 +939,10 @@ public class UserService {
 		HooksManager.enableHidePasswordHook(DbHelper.getConnection(), true);
 	}
   }
+  
+  public static boolean checkUserIsDeletable(OUser user) {
+	    return !(user.getName().equals("admin") || UserService.isInternalUsername(user.getName()));
+	  }
 
  	public static boolean isAnAdmin(String username){
 		List<ODocument> res=(List<ODocument>) DbHelper.genericSQLStatementExecute(

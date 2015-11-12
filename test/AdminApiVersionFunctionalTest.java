@@ -37,6 +37,12 @@ import play.test.TestBrowser;
 import core.AbstractAdminTest;
 import core.TestConfig;
 
+/**
+ * Verifies that the endpoint /admin/apiVersion contains
+ * an object with the api_version key
+ * @author swampie1
+ *
+ */
 public class AdminApiVersionFunctionalTest extends AbstractAdminTest
 {
 	@Override
@@ -56,6 +62,7 @@ public class AdminApiVersionFunctionalTest extends AbstractAdminTest
 	{
 		Object obj = toJSON(sContent);
 		assertJSON(obj, "api_version");
+		assertJSON(obj, "edition");
 	}
 	
 	@Override
