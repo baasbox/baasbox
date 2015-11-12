@@ -19,6 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import play.mvc.Result;
+import play.mvc.SimpleResult;
 import play.test.FakeRequest;
 import play.test.Helpers;
 
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 
+import core.AbstractTest;
 import core.TestConfig;
 public class DocumentLinkPluginQueryTest extends BlogSampleTest{
 
@@ -76,7 +78,7 @@ public class DocumentLinkPluginQueryTest extends BlogSampleTest{
 	@Test
 	public void testLink() {
 		running(
-				fakeApplication(), 
+				AbstractTest.getFakeApplication(), 
 				new Runnable() 
 				{
 					public void run() 
@@ -100,7 +102,6 @@ public class DocumentLinkPluginQueryTest extends BlogSampleTest{
 						Result res = route(req);
 						Assert.assertEquals("GET VALUE FROM LINK PLUGIN",200,Helpers.status(res));
 						String content= contentAsString(res);
-						System.out.println("CONTENT:"+content);
 						try {
 							JsonNode node = om.readTree(content);
 							String author = node.get("data").get(0).get("_author").asText();
@@ -119,7 +120,7 @@ public class DocumentLinkPluginQueryTest extends BlogSampleTest{
 	@Test
 	public void testLinkWhere() {
 		running(
-				fakeApplication(), 
+				AbstractTest.getFakeApplication(), 
 				new Runnable() 
 				{
 					public void run() 
@@ -144,7 +145,7 @@ public class DocumentLinkPluginQueryTest extends BlogSampleTest{
 				          Result r = routeAndCall(rq);
 				          assertRoute(r, "get link", 200, null, false);
 
-				          String content = contentAsString(r);
+				          String content = chunkedContentAsString((SimpleResult)r);
 				          String commentFirstWord = null;
 				          int count = 0;
 				          try {

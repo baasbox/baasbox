@@ -106,7 +106,7 @@ public abstract class BlogSampleTest extends AbstractTest {
 	    });
 	  }
 
-	  private void createLink(String linkName, String postId, String rid, String commentAuthor) {
+	  void createLink(String linkName, String postId, String rid, String commentAuthor) {
 	    FakeRequest request = new FakeRequest(POST, "/link/" + postId + "/" + linkName + "/" + rid);
 	    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(commentAuthor, "passw1"));
@@ -257,6 +257,18 @@ public abstract class BlogSampleTest extends AbstractTest {
 
 		public void setPostToAuthors(Map<String, String> postToAuthors) {
 			this.postToAuthors = postToAuthors;
+		}
+
+		public String getPostWithLessComments() {
+			 String smallestPost = this.getPostToComments().keySet().iterator().next();
+		      int minPosts = this.getPostToComments().get(smallestPost).size();
+		      for (String k : this.getPostToComments().keySet()) {
+		        if (this.getPostToComments().get(k).size() > minPosts) {
+		        	minPosts = this.getPostToComments().get(k).size();
+		          smallestPost = k;
+		        }
+		      }
+		      return smallestPost;
 		}
 
 	  }

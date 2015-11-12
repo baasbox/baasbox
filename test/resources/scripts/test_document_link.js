@@ -1,7 +1,7 @@
 http().get(function(req){
     var collectionName = req.queryString.postCollection[0];
     var postId = req.queryString.postId[0];
-    var linksObject = {linkName:'comment',linkDir:'out'};
+    var linksObject = {linkName:'comment',linkDir:'to'};
     if(req.queryString.where){
     	linksObject.where = req.queryString.where[0]
     	 if(req.queryString.params){

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
+import com.baasbox.controllers.Document;
 import com.baasbox.controllers.actions.exceptions.RidNotFoundException;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -48,7 +49,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -99,262 +99,266 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Created by Andrea Tortorella on 30/06/14.
  */
 class DocumentsResource extends BaseRestResource {
-    public static final Resource INSTANCE = new DocumentsResource();
+	public static final Resource INSTANCE = new DocumentsResource();
 
-    private static final String RESOURCE_NAME = "documents";
+	private static final String RESOURCE_NAME = "documents";
 
-    private static final String COLLECTION = "collection";
-    private static final String QUERY = "query";
-    private static final String DATA = "data";
-    private static final String AUTHOR = "author";
+	private static final String COLLECTION = "collection";
+	private static final String QUERY = "query";
+	private static final String DATA = "data";
+	private static final String AUTHOR = "author";
 
-    @Override
-    protected ImmutableMap.Builder<String, ScriptCommand> baseCommands() {
-        return super.baseCommands().put("grant", new ScriptCommand() {
-            @Override
-            public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                return grant(command,true);
-            }
-        }).put("revoke", new ScriptCommand() {
-            @Override
-            public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
-                return grant(command,false);
-            }
-        });
-    }
+	@Override
+	protected ImmutableMap.Builder<String, ScriptCommand> baseCommands() {
+		return super.baseCommands().put("grant", new ScriptCommand() {
+			@Override
+			public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
+				return grant(command,true);
+			}
+		}).put("revoke", new ScriptCommand() {
+			@Override
+			public JsonNode execute(JsonNode command, JsonCallback callback) throws CommandException {
+				return grant(command,false);
+			}
+		});
+	}
 
-    private JsonNode grant(JsonNode command, boolean grant) throws CommandException {
-        validateHasParams(command);
-        String coll = getCollectionName(command);
-        String id = getDocumentId(command);
+	private JsonNode grant(JsonNode command, boolean grant) throws CommandException {
+		validateHasParams(command);
+		String coll = getCollectionName(command);
+		String id = getDocumentId(command);
 
-        try {
-            try {
-                String rid = DocumentService.getRidByString(id, true);
-                alterGrants(command, coll, rid, true, grant);
-                alterGrants(command, coll, rid, false, grant);
-            } catch (Exception e){
-                BaasBoxLogger.error("error",e);
-                throw  e;
-            }
-        } catch (UserNotFoundException e) {
+		try {
+			try {
+				String rid = DocumentService.getRidByString(id, true);
+				alterGrants(command, coll, rid, true, grant);
+				alterGrants(command, coll, rid, false, grant);
+			} catch (Exception e){
+				BaasBoxLogger.error("error",e);
+				throw  e;
+			}
+		} catch (UserNotFoundException e) {
 
-            throw new CommandExecutionException(command,"user not found exception");
-        } catch (DocumentNotFoundException e) {
-            throw new CommandExecutionException(command,"document not found exception");
-        } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"invalid colleciton exception");
-        } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"invalid model exception");
-        } catch (RoleNotFoundException e) {
-            throw new CommandExecutionException(command,"role not found exception");
-        } catch (RidNotFoundException e) {
-            throw new CommandExecutionException(command,"document "+id+" not found");
-        }
-        return BooleanNode.getTrue();
-    }
+			throw new CommandExecutionException(command,"user not found exception");
+		} catch (DocumentNotFoundException e) {
+			throw new CommandExecutionException(command,"document not found exception");
+		} catch (InvalidCollectionException e) {
+			throw new CommandExecutionException(command,"invalid colleciton exception");
+		} catch (InvalidModelException e) {
+			throw new CommandExecutionException(command,"invalid model exception");
+		} catch (RoleNotFoundException e) {
+			throw new CommandExecutionException(command,"role not found exception");
+		} catch (RidNotFoundException e) {
+			throw new CommandExecutionException(command,"document "+id+" not found");
+		}
+		return BooleanNode.getTrue();
+	}
 
-    @Override
-    protected JsonNode delete(JsonNode command) throws CommandException {
-        validateHasParams(command);
-        String coll = getCollectionName(command);
-        String id = getDocumentId(command);
-        String rid;
-        try {
-            rid = DocumentService.getRidByString(id,true);
-        } catch (RidNotFoundException e) {
-            return null;
-        }
-        try {
-            DocumentService.delete(coll,rid);
-        } catch (OSecurityException e) {
-            throw new CommandExecutionException(command, "you don't have permissions to delete: "+id);
-        } catch (ODatabaseException e){
-            return null;
-        } catch (Throwable e){
-            throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+ExceptionUtils.getMessage(e));
-        }
-        return null;
-    }
-
-
-    private String getCollectionName(JsonNode command) throws CommandParsingException {
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        JsonNode collNode = params.get(COLLECTION);
-        if (collNode == null|| !collNode.isTextual()){
-            throw new CommandParsingException(command,"invalid collection param: "+(collNode==null?"null":collNode.toString()));
-        }
-        return collNode.asText();
-    }
+	@Override
+	protected JsonNode delete(JsonNode command) throws CommandException {
+		validateHasParams(command);
+		String coll = getCollectionName(command);
+		String id = getDocumentId(command);
+		String rid;
+		try {
+			rid = DocumentService.getRidByString(id,true);
+		} catch (RidNotFoundException e) {
+			return null;
+		}
+		try {
+			DocumentService.delete(coll,rid);
+		} catch (OSecurityException e) {
+			throw new CommandExecutionException(command, "you don't have permissions to delete: "+id);
+		} catch (ODatabaseException e){
+			return null;
+		} catch (Throwable e){
+			throw new CommandExecutionException(command,"error executing delete command on "+id+ " message: "+ExceptionUtils.getMessage(e));
+		}
+		return null;
+	}
 
 
-    @Override
-    protected JsonNode put(JsonNode command) throws CommandException{
-        validateHasParams(command);
-        String coll = getCollectionName(command);
-        JsonNode data = getData(command);
-        String id = getDocumentId(command);
-        try {
-    		String rid=null;
-        	try{
-        		rid = DocumentService.getRidByString(id, true);
-        	} catch (RidNotFoundException e) {
-                //swallow
-            }	
-            ODocument doc=null;
-            if (rid!=null) //update
-            	doc = DocumentService.update(coll, rid, (ObjectNode)data);
-            else // save
-            	doc = DocumentService.create(coll, (ObjectNode)data);
-            String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
-            node.remove(TO_REMOVE);
-            //node.remove("@rid");
-            return node;
-        } catch (RidNotFoundException e) {
-            throw new CommandExecutionException(command,"document: "+id+" does not exists");
-        } catch (UpdateOldVersionException e) {
-            throw new CommandExecutionException(command,"document: "+id+" has a more recent version");
-        } catch (DocumentNotFoundException e) {
-            throw new CommandExecutionException(command,"document: "+id+" does not exists");
-        } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"invalid collection: "+coll);
-        } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+ExceptionUtils.getMessage(e));
-        } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"data do not represents a valid document, message: "+ExceptionUtils.getMessage(e));
-        } catch (IOException e) {
-            throw new CommandExecutionException(command,"error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
+	private String getCollectionName(JsonNode command) throws CommandParsingException {
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		JsonNode collNode = params.get(COLLECTION);
+		if (collNode == null|| !collNode.isTextual()){
+			throw new CommandParsingException(command,"invalid collection param: "+(collNode==null?"null":collNode.toString()));
+		}
+		return collNode.asText();
+	}
+
+
+	@Override
+	protected JsonNode put(JsonNode command) throws CommandException{
+		validateHasParams(command);
+		String coll = getCollectionName(command);
+		JsonNode data = getData(command);
+		String id = getDocumentId(command);
+		try {
+			String rid=null;
+			try{
+				rid = DocumentService.getRidByString(id, true);
+			} catch (RidNotFoundException e) {
+				//swallow
+			}	
+			ODocument doc=null;
+			if (rid!=null) //update
+				doc = DocumentService.update(coll, rid, (ObjectNode)data);
+			else // save
+				doc = DocumentService.create(coll, (ObjectNode)data);
+			String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
+			ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
+			node.remove(TO_REMOVE);
+			//node.remove("@rid");
+			return node;
+		} catch (RidNotFoundException e) {
+			throw new CommandExecutionException(command,"document: "+id+" does not exists");
+		} catch (UpdateOldVersionException e) {
+			throw new CommandExecutionException(command,"document: "+id+" has a more recent version");
+		} catch (DocumentNotFoundException e) {
+			throw new CommandExecutionException(command,"document: "+id+" does not exists");
+		} catch (InvalidCollectionException e) {
+			throw new CommandExecutionException(command,"invalid collection: "+coll);
+		} catch (InvalidModelException e) {
+			throw new CommandExecutionException(command,"error updating document (is the provided ID belonging to the provided collection?): "+id+" message: "+ExceptionUtils.getMessage(e));
+		} catch (JsonProcessingException e) {
+			throw new CommandExecutionException(command,"data do not represents a valid document, message: "+ExceptionUtils.getMessage(e));
+		} catch (IOException e) {
+			throw new CommandExecutionException(command,"error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (AclNotValidException e) {
-			 throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+ExceptionUtils.getMessage(e));
+			throw new CommandExecutionException(command,"error updating document (check the ACL fields): "+id+" message:"+ExceptionUtils.getMessage(e));
 		} catch (Throwable e){
 			BaasBoxLogger.error("error updating document: "+id,e);
 			throw new CommandExecutionException(command," error updating document: "+id+" message:"+ExceptionUtils.getMessage(e));
 		}
-    }
+	}
 
-    @Override
-    protected JsonNode post(JsonNode command) throws CommandException{
-        validateHasParams(command);
-        String collection = getCollectionName(command);
-        JsonNode data = getData(command);
-        String authorOverride = getAuthorOverride(command);
+	@Override
+	protected JsonNode post(JsonNode command) throws CommandException{
+		validateHasParams(command);
+		String collection = getCollectionName(command);
+		JsonNode data = getData(command);
+		String authorOverride = getAuthorOverride(command);
 
-        try {
-           ODocument doc =
-                    DocumentService.create(collection, (ObjectNode)data);
-//                    DocumentService.createOnBehalf(collection,authorOverride,data);
-            if (doc == null){
-                return null;
-            }
-            String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            JsonNode node = BBJson.mapper().readTree(fmt);
-            ObjectNode n =(ObjectNode)node;
-            n.remove(TO_REMOVE);
-//            n.remove("@rid");
-            return n;
-        } catch (InvalidCollectionException throwable) {
-            throw new CommandExecutionException(command,"invalid collection: "+collection);
-        } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
-        } catch (Throwable e) {
-            throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
-        }
-    }
+		try {
+			ODocument doc =
+					DocumentService.create(collection, (ObjectNode)data);
+			//                    DocumentService.createOnBehalf(collection,authorOverride,data);
+			if (doc == null){
+				return null;
+			}
+			String fmt = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
+			JsonNode node = BBJson.mapper().readTree(fmt);
+			ObjectNode n =(ObjectNode)node;
+			n.remove(TO_REMOVE);
+			//            n.remove("@rid");
+			return n;
+		} catch (InvalidCollectionException throwable) {
+			throw new CommandExecutionException(command,"invalid collection: "+collection);
+		} catch (InvalidModelException e) {
+			throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
+		} catch (Throwable e) {
+			throw new CommandExecutionException(command,"error creating document: "+ExceptionUtils.getMessage(e));
+		}
+	}
 
-    private String getAuthorOverride(JsonNode command) throws CommandParsingException{
-        JsonNode node = command.get(ScriptCommand.PARAMS).get(AUTHOR);
-        if (node != null && !node.isTextual()){
-            throw new CommandParsingException(command,"author must be a string");
+	private String getAuthorOverride(JsonNode command) throws CommandParsingException{
+		JsonNode node = command.get(ScriptCommand.PARAMS).get(AUTHOR);
+		if (node != null && !node.isTextual()){
+			throw new CommandParsingException(command,"author must be a string");
 
-        } else if (node != null){
-            return node.asText();
-        }
-        return null;
-    }
+		} else if (node != null){
+			return node.asText();
+		}
+		return null;
+	}
 
-    private JsonNode getData(JsonNode command) throws CommandParsingException {
-        JsonNode node = command.get(ScriptCommand.PARAMS).get(DATA);
-        if (node == null||(!node.isObject())){
-            throw new CommandParsingException(command,"missing required data parameter");
-        }
-        return node;
-    }
+	private JsonNode getData(JsonNode command) throws CommandParsingException {
+		JsonNode node = command.get(ScriptCommand.PARAMS).get(DATA);
+		if (node == null||(!node.isObject())){
+			throw new CommandParsingException(command,"missing required data parameter");
+		}
+		return node;
+	}
 
-    @Override
-    protected JsonNode list(JsonNode command) throws CommandException {
-        String collection= getCollectionName(command);
-        QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
+	@Override
+	protected JsonNode list(JsonNode command) throws CommandException {
+		String collection= getCollectionName(command);
+		QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
 
-        try {
-            List<ODocument> docs = DocumentService.getDocuments(collection, params);
+		try {
+			List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
-            String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
-            ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
+			String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
+			ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
 			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
-            return lst;
-        } catch (SqlInjectionException | IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
-        } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"invalid collection: "+collection,e);
-        }
-    }
+			return lst;
+		} catch (SqlInjectionException | IOException e) {
+			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
+		} catch (InvalidCollectionException e) {
+			throw new CommandExecutionException(command,"invalid collection: "+collection,e);
+		}
+	}
 
-    
-    
 
-    @Override
-    protected JsonNode get(JsonNode command) throws CommandException{
-        String collection = getCollectionName(command);
-        String id = getDocumentId(command);
-        LinkQuery lq = getLinkQuery(command);
-        try {
-        String rid = DocumentService.getRidByString(id, true);
-        if(lq!=null){
-        	QueryParams qp = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(ScriptCommand.LINKS));
-        	List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, lq.linkDir,qp);
-        	JsonNode node = (JsonNode)BBJson.mapper().createArrayNode();
-        	if(documents.size()>0){
-        		String s = JSONFormats.prepareDocToJson(documents, JSONFormats.Formats.DOCUMENT_PUBLIC);
-        		node = BBJson.mapper().readTree(s);
-        		node.forEach(n->{
-        			((ObjectNode)n).remove(TO_REMOVE);
-        		});
-        		
-        	}
-            return node;
-        }else{
-            ODocument document = DocumentService.get(collection, rid);
-            if (document == null){
-                return null;
-            } else {
-                String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
-                ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
-				node.remove(TO_REMOVE);
-                return node;
-            }
-        }
-        } catch (RidNotFoundException e) {
-            return null;
-        } catch (DocumentNotFoundException e) {
-            return null;
-        } catch (InvalidCollectionException e) {
-            throw new CommandExecutionException(command,"invalid collection: "+collection);
-        } catch (InvalidModelException e) {
-            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
-        } catch (JsonProcessingException e) {
-            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
-        } catch (IOException e) {
-            throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
-        }
-    }
 
-    private LinkQuery getLinkQuery(JsonNode command) throws CommandParsingException {
-    	LinkQuery lq = null;
-    	JsonNode params = command.get(ScriptCommand.PARAMS);
+
+	@Override
+	protected JsonNode get(JsonNode command) throws CommandException{
+		String collection = getCollectionName(command);
+		String id = getDocumentId(command);
+		LinkQuery lq = getLinkQuery(command);
+		try {
+			String rid = DocumentService.getRidByString(id, true);
+			if(lq!=null){
+				QueryParams qp = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(ScriptCommand.LINKS));
+
+				List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, Document.LinkDirection.map(lq.linkDir),qp);
+				JsonNode node = (JsonNode)BBJson.mapper().createArrayNode();
+				if(documents.size()>0){
+					String s = JSONFormats.prepareDocToJson(documents, JSONFormats.Formats.DOCUMENT_PUBLIC);
+					node = BBJson.mapper().readTree(s);
+					node.forEach(n->{
+						((ObjectNode)n).remove(TO_REMOVE);
+					});
+
+				}
+				return node;
+			}else{
+				ODocument document = DocumentService.get(collection, rid);
+				if (document == null){
+					return null;
+				} else {
+					String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
+					ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
+					node.remove(TO_REMOVE);
+					return node;
+				}
+			}
+		} catch (RidNotFoundException e) {
+			return null;
+		} catch (DocumentNotFoundException e) {
+			return null;
+		} catch (InvalidCollectionException e) {
+			throw new CommandExecutionException(command,"invalid collection: "+collection);
+		} catch (InvalidModelException e) {
+			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
+		} catch (JsonProcessingException e) {
+			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
+		} catch (IOException e) {
+			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
+		}
+	}
+
+	private LinkQuery getLinkQuery(JsonNode command) throws CommandParsingException {
+		LinkQuery lq = null;
+		JsonNode params = command.get(ScriptCommand.PARAMS);
 		if(params.has(ScriptCommand.LINKS)){
 			try{
-			 lq = BBJson.mapper().treeToValue(params.get(ScriptCommand.LINKS), LinkQuery.class);
+				lq = BBJson.mapper().treeToValue(params.get(ScriptCommand.LINKS), LinkQuery.class);
+				if (!lq.linkDir.matches(Document.LinkDirection.regexp())) {
+					throw new CommandParsingException(params,"linkDir param must contain one of the following values: to(default),from or both");
+				}
 			}catch(IOException ioe){
 				throw new CommandParsingException(command,"Unable to parse links from provided command:"+ExceptionUtils.getMessage(ioe));
 			}
@@ -363,92 +367,92 @@ class DocumentsResource extends BaseRestResource {
 	}
 
 	private void alterGrants(JsonNode command,String collection,String docId,boolean users,boolean grant ) throws CommandParsingException, UserNotFoundException, DocumentNotFoundException, InvalidCollectionException, InvalidModelException, RoleNotFoundException {
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        JsonNode node = users?params.get("users"):params.get("roles");
-        if (node != null){
-            JsonNode read = node.get("read");
-            if (read!=null){
-                alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
-            }
-            
-            //DEPRECATED
-            JsonNode write = node.get("write");
-            if (write!=null){
-                alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
-            }
-            
-            //issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
-            //we now have to maintain both due retro-compatibility 
-            JsonNode update = node.get("update");
-            if (update!=null){
-                alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
-            }
-            //------
-            
-            JsonNode delete = node.get("delete");
-            if (delete!=null){
-                alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);
-            }
-            JsonNode all= node.get("all");
-            if (all!=null){
-                alterGrantsTo(command,all,collection,docId,grant,users,Permissions.ALLOW);
-            }
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		JsonNode node = users?params.get("users"):params.get("roles");
+		if (node != null){
+			JsonNode read = node.get("read");
+			if (read!=null){
+				alterGrantsTo(command, read, collection, docId, grant, users, Permissions.ALLOW_READ);
+			}
 
-        }
-    }
+			//DEPRECATED
+			JsonNode write = node.get("write");
+			if (write!=null){
+				alterGrantsTo(command,write,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+			}
 
-    private void alterGrantsTo(JsonNode command, JsonNode to, String collection, String docId, boolean isGrant,boolean users, Permissions permission) throws CommandParsingException, UserNotFoundException, DocumentNotFoundException, InvalidCollectionException, InvalidModelException, RoleNotFoundException {
-        if (!to.isArray()) throw new CommandParsingException(command,"targets of permissions must be an array");
-        if (isGrant){
-           if (users){
-               for (JsonNode u: to){
-                   if (!u.isTextual()) throw new CommandParsingException(command,"invalid user name specified: "+u);
-                   DocumentService.grantPermissionToUser(collection,docId,permission,u.asText());
-               }
-           } else {
-               for (JsonNode r:to){
-                    if (!r.isTextual()) throw new CommandParsingException(command,"invalid role name specified: "+r);
-                    DocumentService.grantPermissionToRole(collection,docId,permission,r.asText());
-               }
-           }
-        } else {
-            if (users){
-                for (JsonNode u: to){
-                    if (!u.isTextual()) throw new CommandParsingException(command,"invalid user name specified: "+u);
-                    DocumentService.revokePermissionToUser(collection, docId, permission, u.asText());
-                }
-            } else {
-                for (JsonNode r:to){
-                    if (!r.isTextual()) throw new CommandParsingException(command,"invalid role name specified: "+r);
-                    DocumentService.revokePermissionToRole(collection, docId, permission, r.asText());
-                }
-            }
-        }
-    }
+			//issue 682 - field to grant/revoke update permission is "write" instead of "update" into the plugin engine
+			//we now have to maintain both due retro-compatibility 
+			JsonNode update = node.get("update");
+			if (update!=null){
+				alterGrantsTo(command,update,collection,docId,grant,users,Permissions.ALLOW_UPDATE);
+			}
+			//------
 
-    private String getDocumentId(JsonNode command) throws CommandException{
-        JsonNode params = command.get(ScriptCommand.PARAMS);
-        JsonNode id = params.get("id");
-        if (id==null||!id.isTextual()){
-            throw new CommandParsingException(command,"missing document id");
-        }
-        String idString = id.asText();
-        return idString;
-    }
+			JsonNode delete = node.get("delete");
+			if (delete!=null){
+				alterGrantsTo(command,delete,collection,docId,grant,users,Permissions.ALLOW_DELETE);
+			}
+			JsonNode all= node.get("all");
+			if (all!=null){
+				alterGrantsTo(command,all,collection,docId,grant,users,Permissions.ALLOW);
+			}
 
-    @Override
-    public String name() {
-        return RESOURCE_NAME;
-    }
-    
-    @JsonIgnoreProperties(ignoreUnknown=true)
-    static class LinkQuery {
-    	@JsonProperty("linkName")
-    	String linkName;
-    	@JsonProperty("linkDir")
-    	String linkDir;
-    	
-    	//For json serialization
-    	public LinkQuery(){}
-    }
+		}
+	}
+
+	private void alterGrantsTo(JsonNode command, JsonNode to, String collection, String docId, boolean isGrant,boolean users, Permissions permission) throws CommandParsingException, UserNotFoundException, DocumentNotFoundException, InvalidCollectionException, InvalidModelException, RoleNotFoundException {
+		if (!to.isArray()) throw new CommandParsingException(command,"targets of permissions must be an array");
+		if (isGrant){
+			if (users){
+				for (JsonNode u: to){
+					if (!u.isTextual()) throw new CommandParsingException(command,"invalid user name specified: "+u);
+					DocumentService.grantPermissionToUser(collection,docId,permission,u.asText());
+				}
+			} else {
+				for (JsonNode r:to){
+					if (!r.isTextual()) throw new CommandParsingException(command,"invalid role name specified: "+r);
+					DocumentService.grantPermissionToRole(collection,docId,permission,r.asText());
+				}
+			}
+		} else {
+			if (users){
+				for (JsonNode u: to){
+					if (!u.isTextual()) throw new CommandParsingException(command,"invalid user name specified: "+u);
+					DocumentService.revokePermissionToUser(collection, docId, permission, u.asText());
+				}
+			} else {
+				for (JsonNode r:to){
+					if (!r.isTextual()) throw new CommandParsingException(command,"invalid role name specified: "+r);
+					DocumentService.revokePermissionToRole(collection, docId, permission, r.asText());
+				}
+			}
+		}
+	}
+
+	private String getDocumentId(JsonNode command) throws CommandException{
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		JsonNode id = params.get("id");
+		if (id==null||!id.isTextual()){
+			throw new CommandParsingException(command,"missing document id");
+		}
+		String idString = id.asText();
+		return idString;
+	}
+
+	@Override
+	public String name() {
+		return RESOURCE_NAME;
+	}
+
+	@JsonIgnoreProperties(ignoreUnknown=true)
+	static class LinkQuery {
+		@JsonProperty("linkName")
+		String linkName;
+		@JsonProperty("linkDir")
+		String linkDir;
+
+		//For json serialization
+		public LinkQuery(){}
+	}
 }

@@ -1,6 +1,7 @@
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static play.test.Helpers.DELETE;
+import static play.test.Helpers.HTMLUNIT;
 import static play.test.Helpers.POST;
 import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.route;
@@ -9,6 +10,7 @@ import static play.test.Helpers.running;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,15 +18,20 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import play.libs.F.Callback;
 import play.mvc.Http.Status;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
+import play.test.TestBrowser;
 import utils.LoremIpsum;
 
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
@@ -60,6 +67,121 @@ public class DocumentLinkQueryTest extends BlogSampleTest {
 
   }
 
+  @Test
+  public void testLinkingNavigationWithFiles(){
+	  running(
+			  getTestServer(), 
+				HTMLUNIT, 
+				new Callback<TestBrowser>() 
+		        {
+					public void invoke(TestBrowser browser) 
+		        {
+	  int minComments = 3;
+      int minPosts = 1;
+      shutdownTest(false,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+      TestSetup ts = prepareTest(minPosts,minComments,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+      assertTrue(ts.getAuthors().size() > 0);
+      assertTrue(ts.getPostIds().size() > 0);
+      assertTrue(ts.getCommentToAuthor().size() > 0);
+      String postWithMoreComments = ts.getPostWithMoreComments();
+      String author = ts.getPostToAuthors().get(postWithMoreComments);
+      //Let's create a link with two files
+      String firstFileId = createFile("/logo_baasbox_lp.png", "image/png",author);
+      if(StringUtils.isEmpty(firstFileId)) fail();
+      String secondFileId = createFile("/logo_baasbox_lp.png", "image/png",author);
+      if(StringUtils.isEmpty(secondFileId)) fail();
+      createLink("attachment", postWithMoreComments, firstFileId, author);
+      createLink("attachment", postWithMoreComments, secondFileId, author);
+      FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/attachment");
+      rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+      rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+      Result r = routeAndCall(rq);
+      assertRoute(r, "get link", 200, null, false);
+      String content = contentAsString(r);
+      try {
+        JsonNode node = om.readTree(content);
+        Assert.assertEquals(node.get("data").size(), 2);
+        shutdownTest(true, PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+      
+		        }catch(Exception e){
+		        	fail();
+		        	}
+		        }
+		      });
+      
+  }
+  
+  @Test
+  public void testLinkingNavigationWithMixedDocumentAndFiles(){
+	  running(
+			  getTestServer(), 
+				HTMLUNIT, 
+				new Callback<TestBrowser>() 
+		        {
+					public void invoke(TestBrowser browser) 
+		        {
+	  int minComments = 3;
+      int minPosts = 1;
+      shutdownTest(false,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+      TestSetup ts = prepareTest(minPosts,minComments,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
+      assertTrue(ts.getAuthors().size() > 0);
+      assertTrue(ts.getPostIds().size() > 0);
+      assertTrue(ts.getCommentToAuthor().size() > 0);
+      String postWithMoreComments = ts.getPostWithMoreComments();
+      String postWithLessComments = ts.getPostWithLessComments();
+      String author = ts.getPostToAuthors().get(postWithMoreComments);
+      //Let's create a link with two files
+      String firstFileId = createFile("/logo_baasbox_lp.png", "image/png",author);
+      if(StringUtils.isEmpty(firstFileId)) fail();
+      createLink("attachment", postWithMoreComments, firstFileId, author);
+     
+      FakeRequest rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/attachment");
+      rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+      rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+      Result r = routeAndCall(rq);
+      assertRoute(r, "get link", 200, null, false);
+      String content = contentAsString(r);
+      try {
+        JsonNode node = om.readTree(content);
+        Assert.assertEquals(node.get("data").size(), 1);
+      }catch(Exception e){
+        	fail();
+      	}
+      createLink("attachment", postWithMoreComments, postWithLessComments, author);
+      rq = new FakeRequest("GET", "/document/" + PARENT_COLLECTION_NAME + "/" + postWithMoreComments + "/attachment");
+      rq = rq.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+      rq = rq.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+       r = routeAndCall(rq);
+      assertRoute(r, "get link", 200, null, false);
+       content = contentAsString(r);
+      try {
+        JsonNode node = om.readTree(content);
+        Assert.assertEquals(node.get("data").size(), 2);
+      }catch(Exception e){
+        	fail();
+      	}
+		        }
+		      });
+      
+      
+  }
+  
+  private String createFile(String fileName,String type,String author){
+	    Map<String, String> mParametersFile = new HashMap<String, String>();
+	  	mParametersFile.put("attachedData", getPayload("/adminAssetCreateMeta.json").toString());
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+		setMultipartFormData();
+		setFile("/logo_baasbox_lp.png", "image/png");
+		httpRequest(TestConfig.SERVER_URL+"/file", "POST", mParametersFile);
+		assertServer("createFile",201,  null,false);
+		try {
+			return BBJson.mapper().readTree(getResponse()).get("data").get("id").asText();
+		} catch (IOException e) {
+			return null;
+		}
+  }
+  
   @Test
   public void testLinkNavigation() {
     running(
@@ -117,7 +239,6 @@ public class DocumentLinkQueryTest extends BlogSampleTest {
       });
   }
 
-  @Test
   public void testLinkNavigationMassive() {
     running(
       getFakeApplication(),
@@ -274,8 +395,8 @@ public class DocumentLinkQueryTest extends BlogSampleTest {
       {
         public void run()
         {
-          int minComments = 5000;
-          int minPosts = 1000;
+          int minComments = 1000;
+          int minPosts = 500;
           shutdownTest(false,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
           TestSetup ts = prepareTest(minPosts, minComments,PARENT_COLLECTION_NAME,CHILD_COLLECTION_NAME);
           assertTrue(ts.getAuthors().size() > 0);
