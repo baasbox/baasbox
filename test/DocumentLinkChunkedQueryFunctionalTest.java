@@ -30,7 +30,7 @@ import com.google.common.collect.Lists;
 
 import core.TestConfig;
 
-public class DocumentLinkChunkedQueryTest extends BlogSampleTest {
+public class DocumentLinkChunkedQueryFunctionalTest extends BlogSampleTest {
 
 	public static String PARENT_COLLECTION_NAME = "posts2";
 	public static String CHILD_COLLECTION_NAME = "comments2";
