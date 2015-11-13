@@ -16,8 +16,6 @@ import java.util.UUID;
 
 import org.junit.Test;
 
-import com.baasbox.controllers.helpers.BaasBoxHelpers;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -102,7 +100,7 @@ public class UserListTest extends AbstractUsersTest {
           request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
           Result result = routeAndCall(request);
-          String content = new String(myContentAsBytes((SimpleResult) result));
+          String content = new String(chunkedContentAsBytes((SimpleResult) result));
 
           Map<String, String> headers = headers(result);
           assertNotNull(headers.get("Transfer-Encoding"));
@@ -120,7 +118,7 @@ public class UserListTest extends AbstractUsersTest {
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 
           result = routeAndCall(request);
-          content = new String(myContentAsBytes((SimpleResult) result));
+          content = new String(chunkedContentAsBytes((SimpleResult) result));
           assertNotNull(content);
           try{
             JsonNode jn = om.readTree(content);
@@ -135,7 +133,7 @@ public class UserListTest extends AbstractUsersTest {
           request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 
           result = routeAndCall(request);
-          content = new String(myContentAsBytes((SimpleResult) result));
+          content = new String(chunkedContentAsBytes((SimpleResult) result));
           assertNotNull(content);
           try {
             JsonNode jn = om.readTree(content);

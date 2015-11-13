@@ -103,18 +103,33 @@ public abstract class AbstractTest extends FluentTest
 	private boolean fUseCollector = false;
 	private Map<String, List<String>> responseHeaders;
 
-	public byte[] myContentAsBytes(SimpleResult result){
+	public byte[] chunkedContentAsBytes(SimpleResult result){
 		return BaasBoxHelpers.contentAsBytes(result.getWrappedResult());
 	}
 	
-	public String myContentAsString(SimpleResult result){
+	public String chunkedContentAsString(SimpleResult result){
 		try {
-			return new String(myContentAsBytes(result),"UTF-8");
+			return new String(chunkedContentAsBytes(result),"UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			Assert.fail(ExceptionUtils.getFullStackTrace(e));
 			throw new RuntimeException(e);
 		}
 	}
+	
+	 protected void grantToRole(String action, String role, String collection, String objectRid, String author) {
+	    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/role/" + role);
+	    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+	    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+	    Result result = routeAndCall(request);
+	    assertRoute(result, "grantPostToRegistered", 200, null, false);
+	  }
+	  
+	  protected void grantToUser(String action, String userName, String collection, String objectRid, String author) {
+		    FakeRequest request = new FakeRequest("PUT", "/document/" + collection + "/" + objectRid + "/" + action + "/user/" + userName);
+		    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(author, "passw1"));
+		    Result result = routeAndCall(request);
+		    assertRoute(result, "grantPostToRegistered", 200, null, false);
+		  }
 	
 	public String createNewUser(String username) {
 		String sFakeUser = username + UUID.randomUUID();
@@ -592,18 +607,18 @@ public abstract class AbstractTest extends FluentTest
 			}
 			else if (status(result) !=  nExptedStatus)
 			{
-				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result) + " Response <" + myContentAsString((SimpleResult)result) + ">"));
+				collector.addError(new Exception(sTestName + ". Http status code: Expected is: " + nExptedStatus + " got: " + status(result) + " Response <" + chunkedContentAsString((SimpleResult)result) + ">"));
 			}
 		}
 		else
 		{
 			Assert.assertNotNull(sTestName + ". Cannot route to specified address.", result);
-			Assert.assertEquals(sTestName + ". Http status code. Response <" + myContentAsString((SimpleResult)result) + ">", nExptedStatus, status(result));
+			Assert.assertEquals(sTestName + ". Http status code. Response <" + chunkedContentAsString((SimpleResult)result) + ">", nExptedStatus, status(result));
 		}
 
 		if (fCheckContent && result != null)
 		{
-			String sContent = myContentAsString((SimpleResult)result);
+			String sContent = chunkedContentAsString((SimpleResult)result);
 			if (sExpctedContent != null)
 			{
 				if (fUseCollector)
@@ -667,7 +682,7 @@ public abstract class AbstractTest extends FluentTest
 	
 	protected String getUuid(Result result)
 	{
-		return getUuid(myContentAsString((SimpleResult)result));
+		return getUuid(chunkedContentAsString((SimpleResult)result));
 	}
 	
 	protected String getUuid(String content)

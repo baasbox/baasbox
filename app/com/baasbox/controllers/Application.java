@@ -49,7 +49,7 @@ public class Application extends Controller {
   public static Result apiVersion() {
 	  ObjectNode result = Json.newObject();
 	  result.put("api_version", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
-	  result.put("edition", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
+	  result.put("edition", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION));
 	  return ok(result);
   }
   
