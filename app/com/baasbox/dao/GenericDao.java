@@ -80,18 +80,14 @@ public class GenericDao {
 	 * @return
 	 */
 	public String getRidNodeByUUID(String id){
-		String toRet=BBCache.getRidFromUUID(id);
-		if (toRet==null){
-			ODatabaseRecordTx db =DbHelper.getConnection();
-			OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
-			ORID rid = (ORID) index.get(id);  
-			if (rid!=null){
-				toRet=rid.toString();
-				BBCache.cacheUUIDtoRID(id, toRet);
-				return toRet;
-			}else 
-				return null;
-		}else return toRet;
+		ODatabaseRecordTx db =DbHelper.getConnection();
+		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
+		ORID rid = (ORID) index.get(id);  
+		if (rid!=null){
+			return rid.toString();
+		}else{
+			return null;
+		}
 	}
 	
 
