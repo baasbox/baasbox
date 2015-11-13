@@ -167,6 +167,11 @@ public abstract class AbstractTest extends FluentTest
 		return fakeApplication(new Configuration(additionalConfig).asMap());
 	}
 	
+	protected static FakeApplication getFakeApplicationWithRealPushProvider(){
+		Config additionalConfig = ConfigFactory.parseFile(new File("conf/pushTest.conf")).resolve();
+		return fakeApplication(new Configuration(additionalConfig).asMap());
+	}
+	
 	protected static FakeApplication getFakeApplicationChunkResponse() {
 	  	Config additionalConfigNoChunk = ConfigFactory.parseFile(new File("conf/chunk.conf")).resolve();
 		return fakeApplication(new Configuration(additionalConfigNoChunk).asMap());
