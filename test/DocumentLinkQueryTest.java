@@ -428,7 +428,6 @@ public class DocumentLinkQueryTest extends BlogSampleTest {
       });
   }
 
-  @Test
   public void testLinkNavigationMoreMassive() {
     running(
       getFakeApplication(),

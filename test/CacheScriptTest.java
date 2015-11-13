@@ -216,11 +216,13 @@ public class CacheScriptTest {
 			}
 			try {
 				Thread.sleep(3000);
+				getResult = getValueFromCache(username,"user", "key1");
+				System.out.println("RESULT:"+getResult);
 				JsonNode jn = BBJson.mapper().readTree(getResult);
 				Assert.assertEquals(404,jn.get("data").get("status").asInt());
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+				fail();
 			}
 			
 		});

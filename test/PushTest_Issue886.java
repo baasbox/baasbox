@@ -47,7 +47,7 @@ public class PushTest_Issue886 extends AbstractTest{
 			}
 		});
 	}
-	@Test
+	//@Test
 	public void PushSendWithPlugin(){
 		running
 		(
