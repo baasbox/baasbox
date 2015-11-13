@@ -17,7 +17,11 @@ http().get(function(req){
     if(!cacheKey || !cacheValue) {
         return {status:400,content:'key and value must be specified'}
     }else{
-        Box.Cache.set(cacheKey,cacheValue,{scope:cacheScope});
+    	var params = {scope:cacheScope};
+    	if(req.body.ttl){
+    		params.ttl = req.body.ttl;
+    	}
+        Box.Cache.set(cacheKey,cacheValue,params);
         return {status: 200};    
     }
     
