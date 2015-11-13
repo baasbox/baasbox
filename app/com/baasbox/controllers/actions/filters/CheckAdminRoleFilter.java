@@ -16,21 +16,14 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import java.util.Set;
-
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.service.user.UserService;
+
+import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http;
 import play.mvc.Http.Context;
-import play.mvc.Result;
-
-import com.baasbox.dao.RoleDao;
-import com.baasbox.db.DbHelper;
-import com.baasbox.enumerations.DefaultRoles;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import play.mvc.SimpleResult;
-import play.libs.F;
 
 
 public class CheckAdminRoleFilter extends Action.Simple{
@@ -43,11 +36,8 @@ public class CheckAdminRoleFilter extends Action.Simple{
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole for resource " + Http.Context.current().request());
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CheckAdminRole user: " + ctx.args.get("username"));
 		
-		OUser user=DbHelper.getConnection().getUser();
-		Set<ORole> roles=user.getRoles();
-		
 		F.Promise<SimpleResult> result=null;
-		if (roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()))){
+		if (UserService.isAnAdmin(ctx.args.get("username").toString())){
 			result = delegate.call(ctx);
 		}else {
 			result=F.Promise.<SimpleResult>pure(forbidden("User " + ctx.args.get("username") + " is not an administrator"));
