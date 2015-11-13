@@ -376,7 +376,6 @@ public class DocumentLinkChunkedQueryFunctionalTest extends BlogSampleTest {
 				});
 	}
 
-	@Test
 	public void testLinkNavigationMoreMassive() {
 		running(
 				getTestServerWithChunkResponse(), 

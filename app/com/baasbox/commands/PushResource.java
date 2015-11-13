@@ -97,7 +97,7 @@ class PushResource extends Resource {
             throw new CommandParsingException(command,"wrong profiles parameter");
         }
 
-        boolean[] errors = new boolean[users.size()];
+        boolean[] errors = new boolean[6];
         PushService ps = new PushService();
 
         try {
