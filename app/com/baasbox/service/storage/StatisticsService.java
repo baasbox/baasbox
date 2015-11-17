@@ -133,7 +133,7 @@ public class StatisticsService {
 			dbProp.put("version", OConstants.getVersion());
 			dbProp.put("url", OConstants.ORIENT_URL);
 			if (db != null){
-				if (BBConfiguration.getInstance().getStatisticsSystemOS()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
+				if (BBConfiguration.getInstance().getStatisticsSystemOS() && BBConfiguration.getInstance().isConfiguredDBLocal()) dbProp.put("path", db.getStorage().getConfiguration().getDirectory());
 				else dbProp.put("path", "N/A");
 				dbProp.put("timezone", db.getStorage().getConfiguration().getTimeZone());
 				dbProp.put("locale.language", db.getStorage().getConfiguration().getLocaleLanguage());
