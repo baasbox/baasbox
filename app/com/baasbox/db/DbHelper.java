@@ -125,7 +125,13 @@ public class DbHelper {
 
 
 	public static BigInteger getDBTotalSize(){
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getInstance().getDBFullPath()));
+		BigInteger toRet;
+		if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+			toRet=FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getInstance().getDBFullPath()));
+		}else {
+			toRet=BigInteger.ZERO;
+		}
+		return toRet;
 	}
 	
 	public static BigInteger getDBStorageFreeSpace(){
@@ -740,7 +746,7 @@ public class DbHelper {
 					dbFreeze=true;
 				}
 			}
-			DbHelper.shutdownDB(false);
+			//DbHelper.shutdownDB(false);
 			
 			db=getConnection(); 
 			BaasBoxLogger.info("...unregistering hooks...");
@@ -757,7 +763,7 @@ public class DbHelper {
 					BaasBoxLogger.info("Restore db: " + m);
 				}
 			});
-			
+			 oi.setPreserveRids(true);
 			 oi.setIncludeManualIndexes(true);
 			 oi.setUseLineFeedForRecords(true);
 			 oi.setPreserveClusterIDs(true);
