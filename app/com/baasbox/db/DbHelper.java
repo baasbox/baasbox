@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
-
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -81,6 +81,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -768,10 +769,21 @@ public class DbHelper {
 			 oi.setUseLineFeedForRecords(true);
 			 oi.setPreserveClusterIDs(true);
 			 oi.setPreserveRids(true);
+			 BaasBoxLogger.info("...dropping old indexes...");
+			 Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
+			 dbd.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
+				 if(idx.isAutomatic()) {
+					 BaasBoxLogger.info("...dropping {} index",idx.getName());
+					 dbd.getMetadata().getIndexManager().dropIndex(idx.getName());
+					 indexesToRebuild.add(idx);
+				 }
+			 });
+			 dbd.getMetadata().getIndexManager().flush();
+			 dbd.getMetadata().getIndexManager().reload();
+			 
 			 BaasBoxLogger.info("...starting import procedure...");
 			 oi.importDatabase();
 			 oi.close();
-			
 			 BaasBoxLogger.info("...setting up internal user credential...");
 			 updateDefaultUsers();
 			 BaasBoxLogger.info("...setting up DataBase attributes...");

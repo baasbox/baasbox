@@ -298,7 +298,7 @@ public class UserService {
 			      if (role==null) profile=dao.create(username, password);
 			      else profile=dao.create(username, password,role);
 			      
-			      ORID userRid = ((ORID)profile.field("user")).getIdentity();
+			      ORID userRid = ((ORID)profile.field("user",ORID.class)).getIdentity();
 			      ORole friendRole=RoleDao.createFriendRole(username);
 			      friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
 			      friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
