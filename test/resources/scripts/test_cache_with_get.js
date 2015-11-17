@@ -4,11 +4,11 @@ http().get(function(req){
     if(!cacheKey){
         return {status:400,content:'key must be specified'}
     }
-    var result = Box.Cache.getOrElse(cacheKey,{scope:cacheScope,callback:function(key){
-        return {status:404}
-    }})
+    var result = Box.Cache.get(cacheKey,cacheScope)
     if(result){
     	return {status: 200,content:result};
+    }else{
+    	return {status:404,content:undefined}
     }
 }).post(function(req){
     var cacheScope = req.body.cacheScope || 'app'
@@ -17,11 +17,7 @@ http().get(function(req){
     if(!cacheKey || !cacheValue) {
         return {status:400,content:'key and value must be specified'}
     }else{
-    	var params = {scope:cacheScope};
-    	if(req.body.ttl){
-    		params.ttl = req.body.ttl;
-    	}
-        Box.Cache.set(cacheKey,cacheValue,params);
+        Box.Cache.set(cacheKey,cacheValue,{scope:cacheScope});
         return {status: 200};    
     }
     

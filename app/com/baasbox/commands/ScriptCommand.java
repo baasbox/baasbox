@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public abstract interface ScriptCommand {
     public static final String NAME= "name";
     public static final String PARAMS="params";
+    public static final String LINKS="links";
     public static final String RESOURCE = "resource";
     public static final String ID = "mod";
     public static final String MAIN="main";

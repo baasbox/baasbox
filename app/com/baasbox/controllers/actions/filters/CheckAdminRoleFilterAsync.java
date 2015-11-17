@@ -16,18 +16,14 @@
  */
 package com.baasbox.controllers.actions.filters;
 
-import com.baasbox.dao.RoleDao;
 import com.baasbox.db.DbHelper;
-import com.baasbox.enumerations.DefaultRoles;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.baasbox.service.user.UserService;
+
 import play.Logger;
 import play.libs.F;
 import play.mvc.Action;
 import play.mvc.Http.Context;
 import play.mvc.SimpleResult;
-
-import java.util.Set;
 
 
 public class CheckAdminRoleFilterAsync extends Action.Simple{
@@ -43,9 +39,7 @@ public class CheckAdminRoleFilterAsync extends Action.Simple{
 		return F.Promise.promise(()->{
 			try {
 				DbHelper.openFromContext(ctx);
-				OUser user=DbHelper.getConnection().getUser();
-				Set<ORole> roles=user.getRoles();
-				return roles.contains(RoleDao.getRole(DefaultRoles.ADMIN.toString()));
+				return UserService.isAnAdmin(ctx.args.get("username").toString());
 			} finally {
 				DbHelper.close(DbHelper.getConnection());
 			}

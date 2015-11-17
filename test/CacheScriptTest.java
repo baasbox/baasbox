@@ -32,7 +32,8 @@ import core.TestConfig;
 
 public class CacheScriptTest {
 
-	private final static String TEST_CALL="test.script_request_"+ScriptTestHelpers.randomScriptName();
+	private final static String TEST_CALL="test.cache_request_"+ScriptTestHelpers.randomScriptName();
+	private final static String TEST_CALL_WITH_GET="test.cache_with_get_request_"+ScriptTestHelpers.randomScriptName();
 	private final static String BODY_REQ = "{\"cacheScope\":\"%s\",\"key\":\"%s\",\"value\":%s}";
 	private final static String BODY_WITH_TTL = "{\"cacheScope\":\"%s\",\"key\":\"%s\",\"value\":%s,\"ttl\":%d}";
 	@BeforeClass
@@ -41,6 +42,7 @@ public class CacheScriptTest {
 			try {
 				DbHelper.open("1234567890", "admin", "admin");
 				ScriptTestHelpers.createScript(TEST_CALL, "/scripts/test_cache.js");
+				ScriptTestHelpers.createScript(TEST_CALL_WITH_GET, "/scripts/test_cache_with_get.js");
 			}catch (Throwable e){
 				fail(ExceptionUtils.getStackTrace(e));
 			} finally {
@@ -68,6 +70,20 @@ public class CacheScriptTest {
 		Assert.assertEquals("SET VALUE IN CACHE",200,Helpers.status(res));
 
 	}
+	
+	
+	private  String getSimpleValueFromCache(String username,String cacheType,String key) {
+		FakeRequest req = new FakeRequest("GET","/plugin/"+TEST_CALL_WITH_GET+"?cacheScope="+cacheType+"&key="+key);
+		req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
+		req = req.withHeader(TestConfig.KEY_AUTH,TestConfig.encodeAuth(username,"passw1"));
+		req = req.withHeader(CONTENT_TYPE,"application/json");
+		Result res = route(req);
+		Assert.assertEquals("GET VALUE FROM CACHE",200,Helpers.status(res));
+		String content= contentAsString(res);
+		return content;
+
+	}
+	
 	private  String getValueFromCache(String username,String cacheType,String key) {
 		FakeRequest req = new FakeRequest("GET","/plugin/"+TEST_CALL+"?cacheScope="+cacheType+"&key="+key);
 		req = req.withHeader(TestConfig.KEY_APPCODE,TestConfig.VALUE_APPCODE);
@@ -200,6 +216,32 @@ public class CacheScriptTest {
 			}
 			try {
 				Thread.sleep(3000);
+				getResult = getValueFromCache(username,"user", "key1");
+				System.out.println("RESULT:"+getResult);
+				JsonNode jn = BBJson.mapper().readTree(getResult);
+				Assert.assertEquals(404,jn.get("data").get("status").asInt());
+			} catch (Exception e) {
+				e.printStackTrace();
+				fail();
+			}
+			
+		});
+	}
+	
+	@Test
+	public void testSimpleGet() {
+		running(fakeApplication(),()->{
+			String username = new AdminUserFunctionalTest().createNewUser("user1");
+			writeValueInCache(username, "user", "simple_key1", "simple value",0);
+			String getResult = getSimpleValueFromCache(username,"user", "simple_key1");
+			try{
+				JsonNode jn = BBJson.mapper().readTree(getResult);
+			 	Assert.assertEquals("simple value",jn.get("data").asText());
+			}catch(IOException ioe){
+				fail(ioe.getMessage());
+			}
+			removeValueFromCache(username,"user","simple_key1");
+			try {
 				JsonNode jn = BBJson.mapper().readTree(getResult);
 				Assert.assertEquals(404,jn.get("data").get("status").asInt());
 			} catch (Exception e) {
