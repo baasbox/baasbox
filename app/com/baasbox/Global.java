@@ -135,24 +135,25 @@ public class Global extends GlobalSettings {
 				  OGlobalConfiguration.DB_POOL_MAX.setValue(config.getString("akka.actor.default-dispatcher.fork-join-executor.parallelism-max"));
 			  }
 			  
-			  Orient.instance().startup();
-			  ODatabaseDocumentTx db = null;
-			  try{
-				db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(BBConfiguration.getInstance().DB_PATH) );
-				if (!db.exists()) {
-					info("DB does not exist, BaasBox will create a new one");
-					db.create();
-					justCreated  = true;
-                    info("DB has been create successfully");
-                   
-				}
-			  } catch (Throwable e) {
-					error("!! Error initializing BaasBox!", e);
-					error(ExceptionUtils.getFullStackTrace(e));
-					throw e;
-			  } finally {
-		    	 if (db!=null && !db.isClosed()) db.close();
-			  }
+			  if (config.getString(IBBConfigurationKeys.DB_STORAGE).equalsIgnoreCase("plocal")){
+				  Orient.instance().startup();
+				  ODatabaseDocumentTx db = null;
+				  try{
+					db =  Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:" + config.getString(IBBConfigurationKeys.DB_PATH) );
+					if (!db.exists()) {
+						info("DB does not exist, BaasBox will create a new one");
+						db.create();
+						justCreated  = true;
+	                    info("DB has been create successfully");       
+					}
+				  } catch (Throwable e) {
+						error("!! Error initializing BaasBox!", e);
+						error(ExceptionUtils.getFullStackTrace(e));
+						throw e;
+				  } finally {
+			    	 if (db!=null && !db.isClosed()) db.close();
+				  }
+			  }	//creation of the local db
 		    }catch (Throwable e){
 		    	error("!! Error initializing BaasBox!", e);
 		    	error("Abnormal BaasBox termination.");
@@ -192,7 +193,8 @@ public class Global extends GlobalSettings {
     	info("Updating default users passwords...");
     	try {
     		db = DbHelper.open( BBConfiguration.getInstance().getAPPCODE(), BBConfiguration.getInstance().getBaasBoxAdminUsername(), BBConfiguration.getInstance().getBaasBoxAdminPassword());
-    		DbHelper.evolveDB(db);
+    		//evolve the DB only if it is local (embedded)
+    		if (BBConfiguration.getInstance().isConfiguredDBLocal()) DbHelper.evolveDB(db);
 			DbHelper.updateDefaultUsers();
 			info("Initializing session manager");
 	    	ISessionTokenProvider stp = SessionTokenProviderFactory.getSessionTokenProvider();
