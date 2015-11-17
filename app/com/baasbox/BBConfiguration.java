@@ -112,6 +112,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return this.configuration.getString(DB_PATH);
 	}
 	
+	public String getDBStorageType(){
+		return this.configuration.getString(DB_STORAGE);
+	}
+	
+	public boolean isConfiguredDBLocal(){
+		return getDBStorageType().equalsIgnoreCase("plocal");
+	}
+	
 	public  String getDBDir(){
 		if (getDBFullPath().lastIndexOf(File.separator) > -1)
 			return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));

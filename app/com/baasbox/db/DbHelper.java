@@ -459,7 +459,7 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 
-		String databaseName=BBConfiguration.getInstance().getDBFullPath();
+		String databaseName=BBConfiguration.getInstance().getDBStorageType() + ":" + BBConfiguration.getInstance().getDBFullPath();
 		
 		/* these will be necessary when BaasBox will support OrientDB clusters */
 		/*
@@ -473,8 +473,7 @@ public class DbHelper {
 					+ username);
 		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
-		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
-				+ databaseName, username, password);
+		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, databaseName, username, password);
 
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
@@ -482,6 +481,14 @@ public class DbHelper {
 		DbHelper.password.set(password);
 
 		return getConnection();
+	}
+	
+	public static boolean isConnectionLocal(){
+		return isConnectionLocal(getConnection());
+	}
+
+	private static boolean isConnectionLocal(ODatabaseRecordTx connection) {
+		return connection.getStorage().getName().equals("plocal");
 	}
 
 	public static boolean isConnectedAsAdmin(boolean excludeInternal) {
