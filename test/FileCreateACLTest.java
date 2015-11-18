@@ -141,7 +141,6 @@ public class FileCreateACLTest extends AbstractFileTest
 		mParametersFile.put(PARAM_DATA, getPayload("/adminAssetCreateMeta.json").toString());
 		mParametersFile.put("acl", "{\"read\":{\"roles\":[\"anonymous\"]}");
 		
-
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		setMultipartFormData();
@@ -151,17 +150,48 @@ public class FileCreateACLTest extends AbstractFileTest
 		assertServer("MalformedACL_bb_code", Status.BAD_REQUEST, "bb_code\":\"40002", true);
 		
 		
+		mParametersFile.put("acl", "{\"read\":{\"roles\":[\"anonmous\"]}}");
+		httpRequest(getURLAddress(), getMethod(), mParametersFile);
+		assertServer("ROLE_NOT_EXIST", Status.BAD_REQUEST, "The role anonmous does not exist", true);
+		
+		mParametersFile.put("acl", "{\"read\":{\"roles\":[\"registered\",\"anonmous\"]}}");
+		httpRequest(getURLAddress(), getMethod(), mParametersFile);
+		assertServer("ROLE_NOT_EXIST", Status.BAD_REQUEST, "The role anonmous does not exist", true);
+		
+		
+		mParametersFile.put("acl", "{\"read\":{\"users\":[\"adm\"]}}");
+		httpRequest(getURLAddress(), getMethod(), mParametersFile);
+		assertServer("USER_NOT_EXIST", Status.BAD_REQUEST, "The user adm does not exist", true);
+		
+		mParametersFile.put("acl", "{\"read\":{\"users\":[\"admin\",\"adm\"]}}");
+		httpRequest(getURLAddress(), getMethod(), mParametersFile);
+		assertServer("USER_NOT_EXIST_2", Status.BAD_REQUEST, "The user adm does not exist", true);
+		
 		mParametersFile.put("acl", "{\"read\":{\"roles\":[\"anonymous\"]}}");
 		httpRequest(getURLAddress(), getMethod(), mParametersFile);
-		assertServer("MalformedACL_OK", Status.OK, null, false);
+		assertServer("ACL_OK", Status.CREATED, null, true);
 		String uuid1=getUuid();
 		
 		//The file can be read without authentication
 		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		removeHeader(TestConfig.KEY_AUTH);
 		httpRequest(getURLAddress()+"/"+uuid1, "GET");
-		assertServer("checkACL", Status.OK, null, true);
+		assertServer("checkACL", Status.OK, null, false);
+		
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		mParametersFile.put("acl", "{\"read\":{\"roles\":[\"registered\"]}}");
+		httpRequest(getURLAddress(), getMethod(), mParametersFile);
+		assertServer("ACL_OK_2", Status.CREATED, null, true);
+		String uuid2=getUuid();
 	
+		//The file cannot be read without authentication
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		removeHeader(TestConfig.KEY_AUTH);
+		httpRequest(getURLAddress()+"/"+uuid2, "GET");
+		assertServer("checkACL_2", Status.NOT_FOUND, uuid2 + " file was not found", false);
+		
+		serverDeleteFile(uuid2);
 		serverDeleteFile(uuid1);
 	}
 	

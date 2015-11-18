@@ -20,12 +20,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -37,16 +39,6 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.json.simple.JSONObject;
-
-import play.libs.F;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Http.MultipartFormData;
-import play.mvc.Http.MultipartFormData.FilePart;
-import play.mvc.Http.Response;
-import play.mvc.Result;
-import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.configuration.ImagesConfiguration;
@@ -73,19 +65,30 @@ import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.ErrorToResult;
 import com.baasbox.util.IQueryParametersKeys;
 import com.baasbox.util.JSONFormats;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.primitives.Ints;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
+import play.libs.F;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Http.MultipartFormData;
+import play.mvc.Http.MultipartFormData.FilePart;
+import play.mvc.Http.Response;
+import play.mvc.Result;
+import play.mvc.With;
 
 
 public class File extends Controller {
@@ -152,6 +155,8 @@ public class File extends Controller {
 				 * }
 				 */
             String aclJsonString;
+            final ArrayList<String> aclUsernames = new ArrayList<String>();
+            final ArrayList<String> aclRoles = new ArrayList<String>();
             if (acl != null && datas.length > 0) {
                 aclJsonString = acl[0];
                 ObjectMapper mapper = BBJson.mapper();
@@ -163,8 +168,8 @@ public class File extends Controller {
                             status(CustomHttpCode.ACL_JSON_FIELD_MALFORMED.getBbCode(), "The 'acl' field is malformed")
                     );
                 }
-					/*check if the roles and users are valid*/
-                Iterator<Entry<String, JsonNode>> it = aclJson.fields();
+				/*check if the roles and users are valid*/
+                Iterator<Entry<String, JsonNode>> it = aclJson.fields();                
                 while (it.hasNext()) {
                     //check for permission read/update/delete/all
                     Entry<String, JsonNode> next = it.next();
@@ -179,7 +184,7 @@ public class File extends Controller {
                             return F.Promise.pure(status(CustomHttpCode.ACL_USER_OR_ROLE_KEY_UNKNOWN.getBbCode(),
                                             "The key '" + next2.getKey() + "' is invalid. Valid ones are 'users' or 'roles'"));
                         }
-                        //check for the existance of users/roles
+                       /* //check for the existance of users/roles
                         JsonNode arrNode = next2.getValue();
                         if (arrNode.isArray()) {
                             for (final JsonNode objNode : arrNode) {
@@ -196,27 +201,50 @@ public class File extends Controller {
                         } else {
                             return F.Promise.pure(status(CustomHttpCode.JSON_VALUE_MUST_BE_ARRAY.getBbCode(),
                                     "The '" + next2.getKey() + "' value must be an array"));
+                        }*/                      
+                        JsonNode arrNode = next2.getValue();
+                        if (arrNode.isArray()) {
+                            for (final JsonNode objNode : arrNode) {
+                                //checks the existence users and/or roles
+                                if (next2.getKey().equals("users")) {
+                                    aclUsernames.add(objNode.asText());
+                                }
+                                if (next2.getKey().equals("roles")) {
+                                    aclRoles.add(objNode.asText());
+                                }
+                            }
+                        } else {
+                            return F.Promise.pure(status(CustomHttpCode.JSON_VALUE_MUST_BE_ARRAY.getBbCode(),
+                                    "The '" + next2.getKey() + "' value must be an array"));
                         }
                     }
 
                 }
-
             } else {
                 aclJsonString = "{}";
             }
 
             return F.Promise.promise(DbHelper.withDbFromContext(ctx(),
                     ()->{
-                        java.io.File fileContent = file.getFile();
+                        //check the existence of users and roles defined into the acl 
+                    	Object[] notExistingUsername = aclUsernames.stream().filter(x->!UserService.exists(x)).toArray();
+                    	if (notExistingUsername.length>0){
+                    		return status(CustomHttpCode.ACL_USER_DOES_NOT_EXIST.getBbCode(),
+                                    "The user " + notExistingUsername[0] + " does not exist");
+                    	}
+                    	
+                    	Object[] notExistingRole = aclRoles.stream().filter(x->!RoleService.exists(x)).toArray();
+                    	if (notExistingRole.length>0){
+                    		return status(CustomHttpCode.ACL_ROLE_DOES_NOT_EXIST.getBbCode(),
+                                    "The role " + notExistingRole[0] + " does not exist");
+                    	}
+                    	
+                    	
+                    	java.io.File fileContent = file.getFile();
                         String fileName = file.getFilename();
-			   /*String contentType = file.getContentType();
-			    if (contentType==null || contentType.isEmpty() || contentType.equalsIgnoreCase("application/octet-stream")){	//try to guess the content type
-			    	InputStream is = new BufferedInputStream(new FileInputStream(fileContent));
-			    	contentType = URLConnection.guessContentTypeFromStream(is);
-			    	if (contentType==null || contentType.isEmpty()) contentType="application/octet-stream";
-			    }*/
+
                         InputStream is = null;
-		    	/* extract file metadata and content */
+                        /* extract file metadata and content */
                         try {
                             is = new FileInputStream(fileContent);
                             BodyContentHandler contenthandler = new BodyContentHandler(-1);
