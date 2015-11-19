@@ -68,6 +68,8 @@ POST	/logout/:pushToken	    			com.baasbox.controllers.User.logoutWithDevice(pus
 # @tag(baasbox.account)
 POST 	/logout								com.baasbox.controllers.User.logoutWithoutDevice()
 
+# @tag(baasbox.account)
+POST	/generateLayerToken					com.baasbox.controllers.User.generateLayerToken()
 
 # @tag(baasbox.social)
 GET		/social		    		    				com.baasbox.controllers.Social.socialLogins()

@@ -39,7 +39,13 @@ public enum Application implements IProperties{
 
 	NETWORK_HTTP_SSL("network.http.ssl", "Set to TRUE if the BaasBox server is reached via SSL through a reverse proxy.", Boolean.class),	
 	NETWORK_HTTP_URL("network.http.url", "The public url of the BaasBox server. I.e. the url used by the App to contact BaasBox, without the protocol prefix (i.e. http://) and PORT", String.class),
-	NETWORK_HTTP_PORT("network.http.port", "The public TCP port used by the App to contact BaasBox. Please note: when behind a reverse proxy, this could be different from the port used by BaasBox.", Integer.class);	
+	NETWORK_HTTP_PORT("network.http.port", "The public TCP port used by the App to contact BaasBox. Please note: when behind a reverse proxy, this could be different from the port used by BaasBox.", Integer.class),
+
+	LAYER_API_PRIVATE_KEY("layerapi.private.key","Layer API private key",String.class),
+	LAYER_API_PROVIDER_ID("layerapi.provider.id","Layer API provider (ie: layer:///providers/XXXX-XXX)", String.class),
+	LAYER_API_ENABLED("layerapi.link.enabled","Layer API link enable flag", Boolean.class),
+    LAYER_API_KEY_ID("layerapi.key.id","Layer API key id (ie: layer:///keys/XXXX-XXX)", String.class),
+;
 	
 	private final String                 key;
 	private final Class<?>               type;

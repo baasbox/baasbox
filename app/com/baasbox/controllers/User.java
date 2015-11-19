@@ -26,6 +26,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.baasbox.exception.*;
+import com.baasbox.configuration.Application;
+import com.baasbox.service.sociallogin.*;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
@@ -96,7 +98,7 @@ public class User extends Controller {
 		return JSONFormats.prepareResponseToJson(doc,JSONFormats.Formats.USER);
 	}
 
-
+	
 	static String prepareResponseToJson(List<ODocument> listOfDoc) {
 		response().setContentType("application/json");
 		try {
@@ -618,6 +620,65 @@ public class User extends Controller {
 		if (!StringUtils.isEmpty(token)) SessionTokenProvider.getSessionTokenProvider().removeSession(token);
 		return ok("user logged out");
 	} 
+	
+	/***
+	 * Generate LAYER API token for the user.
+	 * parameters: 
+	 * username
+	 * nonce: nonce received from Layer authentication request on client
+	 * @return
+	 * @throws SqlInjectionException 
+	 * @throws IOException 
+	 * @throws JsonProcessingException 
+	 */
+	@With ({UserCredentialWrapFilter.class,ConnectToDBFilter.class})	
+	public static Result generateLayerToken() throws SqlInjectionException, JsonProcessingException, IOException {
+		String nonce="";
+		
+		RequestBody body = request().body();
+		//BaasBoxLogger.debug ("Login called. The body is: {}", body);
+		if (body==null) return badRequest("missing data: is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE));
+		Map<String, String[]> bodyUrlEncoded = body.asFormUrlEncoded();
+		if (bodyUrlEncoded!=null){
+			if(bodyUrlEncoded.get("nonce")==null) return badRequest("The 'nonce' field is missing");
+			else nonce=bodyUrlEncoded.get("nonce")[0];
+
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Nonce " + nonce);
+		}else{
+			JsonNode bodyJson = body.asJson();
+			if (bodyJson==null) return badRequest("missing data : is the body x-www-form-urlencoded or application/json? Detected: " + request().getHeader(CONTENT_TYPE));
+			if(bodyJson.get("nonce")==null) return badRequest("The 'nonce' field is missing");
+			else nonce=bodyJson.get("nonce").asText();
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Nonce " + nonce);
+		}
+
+		String result = "";  
+		try {
+			result = prepareResponseToJson(UserService.getCurrentUser());
+			String username=UserService.getCurrentUser().field("username");	
+			Boolean layerEnabled = com.baasbox.configuration.Application.LAYER_API_ENABLED.getValueAsBoolean();						
+			if (!layerEnabled) {
+				return badRequest("Layer tokens are disabled. Visit console to enable it.");
+			}
+
+			try {
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken requested for user: " + username);
+				NonceServiceToken tokenGenerator = new NonceServiceToken();
+				String token = tokenGenerator.GetNonceToken(username, nonce);
+				result = result.substring(0,result.lastIndexOf("}")) + ",\"LayerToken\":\"" + token + "\"}";
+			} catch (Exception ex) {
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken generation error: " + ex.getMessage());
+				return badRequest("Could not generate LAYER API token: " + ex.getMessage());
+			}
+		} catch (Exception ex) {
+			if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken generation error: " + ex.getMessage());
+			return badRequest("Could not generate LAYER API token: " + ex.getMessage());
+		}
+		
+		ObjectMapper mapper = new ObjectMapper();
+		JsonNode jn = mapper.readTree(result);
+		return ok(jn);
+	}
 
 	/***
 	 * Login the user.
@@ -690,8 +751,8 @@ public class User extends Controller {
 		try{
 			db = DbHelper.open(appcode,username, password);
 			user =  prepareResponseToJson(UserService.getCurrentUser());
-
-
+			
+			
 			if (loginData!=null){
 				JsonNode loginInfo=null;
 				try{
@@ -726,7 +787,7 @@ public class User extends Controller {
 		ObjectMapper mapper = new ObjectMapper();
 		user = user.substring(0,user.lastIndexOf("}")) + ",\""+SessionKeys.TOKEN.toString()+"\":\""+ (String) sessionObject.get(SessionKeys.TOKEN)+"\"}";
 		JsonNode jn = mapper.readTree(user);
-
+		
 		return ok(jn);
 	}
 
