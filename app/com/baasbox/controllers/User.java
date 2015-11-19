@@ -654,8 +654,10 @@ public class User extends Controller {
 
 		String result = "";  
 		try {
+			ODocument doc = UserService.getCurrentUser();
 			result = prepareResponseToJson(UserService.getCurrentUser());
-			String username=UserService.getCurrentUser().field("username");	
+			
+			String username=doc.field("user.name");	
 			Boolean layerEnabled = com.baasbox.configuration.Application.LAYER_API_ENABLED.getValueAsBoolean();						
 			if (!layerEnabled) {
 				return badRequest("Layer tokens are disabled. Visit console to enable it.");

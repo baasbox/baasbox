@@ -64,7 +64,7 @@ public class NonceServiceToken {
             signature.initSign(privateKey);
             signature.update(text.getBytes());      
             byte[] data = signature.sign();
-            String hexString = getHexString(data);
+            String hexString = Base64.getEncoder().encodeToString(data);
             return hexString;
     }
     
@@ -100,7 +100,7 @@ public class NonceServiceToken {
     	String nSha = GetSHA256(n, pair.getPrivate());
     	token = n + "." + nSha;
     	
-		return Base64.getEncoder().encodeToString(token.getBytes());
+		return token;
 		    
 	}
 }
