@@ -22,14 +22,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.storage.StorageUtils;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -39,6 +38,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class LinkDao {
 	public static final String MODEL_NAME = "E";
+	private static final String searchSQL = "select from " + MODEL_NAME + " where id=?";
 	
 	//private static final String QUERY_BASE="select *,out._node as from,in._node as to from E ";
 	private static final String QUERY_BASE="select *,out._node as out,in._node as in from " + MODEL_NAME;
@@ -99,9 +99,8 @@ public class LinkDao {
 	 * @return
 	 */
 	public static ORID getRidLinkByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex(LinkDao.MODEL_NAME + ".id");
-		ORID rid = (ORID) index.get(id);  
-		return rid;
+		OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder(searchSQL);
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{id});
+		return output.size()==0?null:output.get(0).getIdentity();
 	}
 }

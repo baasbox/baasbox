@@ -16,7 +16,7 @@
  */
 package com.baasbox.dao;
 
-import com.baasbox.service.logging.BaasBoxLogger;
+import java.util.List;
 
 import com.baasbox.dao.exception.CollectionAlreadyExistsException;
 import com.baasbox.dao.exception.InvalidCollectionException;
@@ -25,6 +25,9 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.OpenTransactionException;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.orientechnologies.orient.core.command.OCommand;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -34,10 +37,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
 public class CollectionDao extends NodeDao {
-	private final static String MODEL_NAME="_BB_Collection";
+	public final static String MODEL_NAME="_BB_Collection";
 	public final static String NAME="name";
-	private static final String COLLECTION_NAME_INDEX = "_BB_Collection.name";
-	public static final String COLLECTION_NAME_REGEX="(?i)^[A-Z-][A-Z0-9_-]*$";
+	public final static String COLLECTION_NAME_REGEX="(?i)^[A-Z-][A-Z0-9_-]*$";
+	
+	protected final static String searchSQL = "select from " + MODEL_NAME + " where name = ?"; 
+	
+	protected OCommandRequest searchCommand(){
+		return DbHelper.genericSQLStatementCommandBuilder(searchSQL);
+	}
 	
 	public static CollectionDao getInstance(){
 		return new CollectionDao();
@@ -117,18 +125,16 @@ public class CollectionDao extends NodeDao {
 	
 	public boolean existsCollection(String collectionName) throws SqlInjectionException{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
-		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
+		ODocument result = getByName(collectionName);
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-		return (record!=null) ;
+		return (result!=null) ;
 	}
 	
 	public ODocument getByName(String collectionName) throws SqlInjectionException{
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-		OIndex idx = db.getMetadata().getIndexManager().getIndex(COLLECTION_NAME_INDEX);
-		OIdentifiable record = (OIdentifiable) idx.get( collectionName );
-		if (record==null) return null;
-		return db.load(record.getIdentity());
+		List<ODocument> output = DbHelper.commandExecute(searchCommand(), new String[]{collectionName});
+		if (output.size()==0) return null;
+		return output.get(0);
 	}
 	
 	@Override

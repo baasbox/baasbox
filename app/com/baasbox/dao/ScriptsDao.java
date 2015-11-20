@@ -228,8 +228,9 @@ public class ScriptsDao {
     }
 
     private OIdentifiable findByName(String name){
-        OIndex idx = db.getMetadata().getIndexManager().getIndex(INDEX);
-        return (OIdentifiable)idx.get(name);
+    	OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder("select from " + MODEL_NAME + " where name=?");
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{name});
+		return output.size()==0?null:output.get(0);
     }
 
     public void invalidate(ODocument script) {
@@ -237,14 +238,9 @@ public class ScriptsDao {
         save(script);
     }
 
-    public ODocument getByNameLocked(String name) {
-        OIndex idx = db.getMetadata().getIndexManager().getIndex(INDEX);
-        OIdentifiable idf =(OIdentifiable)idx.get(name);
-        if (idf == null){
-            return null;
-        }
+    public ODocument getByNameLocked(String name) {			
+    	OIdentifiable idf = findByName(name);
         ODocument doc = db.load(idf.getIdentity(), null, false, false, OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
-
         return doc;
     }
 

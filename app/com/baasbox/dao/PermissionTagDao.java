@@ -210,8 +210,10 @@ public class PermissionTagDao  {
     //todo implement delete
 
     private OIdentifiable findByName(String tagName) throws SqlInjectionException{
-        OIndex idx = db.getMetadata().getIndexManager().getIndex(INDEX);
-        return  (OIdentifiable)idx.get(tagName);
+    	OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder("select from " + MODEL_NAME + " where tag=?");
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{tagName});
+		if (output.size()==0) return null;
+		return output.get(0);
     }
 
 
