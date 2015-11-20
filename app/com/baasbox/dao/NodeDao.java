@@ -58,7 +58,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class NodeDao  {
 
-	public final String MODEL_NAME;
+	public String MODEL_NAME;
+	
 	public static final String CLASS_NODE_NAME = "_BB_Node";
 	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	

@@ -803,10 +803,13 @@ public class DbHelper {
 		//check for evolutions
 		 BaasBoxLogger.info("...looking for evolutions...");
 		 String fromVersion="";
-		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+
+		 List<ODocument> qryResult = (List<ODocument>)DbHelper.genericSQLStatementExecute("select from (select expand(indexes) from metadata:indexmanager) where name = '_bb_internal'",null);
+		 if (qryResult.size() > 0){
 			 BaasBoxLogger.warn("...DB is < 0.7 ....");
-			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
-			 ODocument od = db.load(o);
+			 qryResult = (List<ODocument>)DbHelper.genericSQLStatementExecute("select from index:_bb_internal where key = ?",new String[]{Internal.DB_VERSION.getKey()});
+			 ODocument od = db.load((ORID)qryResult.get(0).field("rid",ORID.class));
+			 BaasBoxLogger.debug("******: " + od);
 			 fromVersion=od.field("value");
 		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
 		 BaasBoxLogger.info("...db version is: " + fromVersion);

@@ -34,6 +34,7 @@ import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -123,9 +124,9 @@ public class UserDao extends NodeDao  {
   }
 
 	public boolean existsUserName(String username){
-		OIndex idx = db.getMetadata().getIndexManager().getIndex(USER_NAME_INDEX);
-		OIdentifiable record = (OIdentifiable) idx.get( username );
-		return (record!=null);
+		OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder("select from OUSER where name=? limit 1");
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{username});
+		return (output.size()>0);
 	}
 
 	public ODocument getByUserName(String username) throws SqlInjectionException{
