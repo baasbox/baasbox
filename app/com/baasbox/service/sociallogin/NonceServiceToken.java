@@ -68,7 +68,7 @@ public class NonceServiceToken {
             return hexString;
     }
     
-	public String GetNonceToken(String username, String nonce) throws Exception {
+	public String GetNonceToken(String userId, String nonce) throws Exception {
 		String token = "";
 
 		/* LOAD LAYER PARAMETERS */
@@ -92,7 +92,7 @@ public class NonceServiceToken {
     	long expirationTime = currentTimeInSeconds + 10000;
     	
     	// DEBUG ONLY    	
-    	String claim = "{\"iss\":\"" + layerProviderID + "\",\"prn\":\"" + username + "\",\"iat\":" + currentTimeInSeconds + ",\"exp\":" + expirationTime + ",\"nce\":\"" + nonce + "\"}";
+    	String claim = "{\"iss\":\"" + layerProviderID + "\",\"prn\":\"" + userId + "\",\"iat\":" + currentTimeInSeconds + ",\"exp\":" + expirationTime + ",\"nce\":\"" + nonce + "\"}";
     	String c = Base64.getEncoder().encodeToString(claim.getBytes());
     	    	
     	/* CREATE JWT FOR LAYER*/

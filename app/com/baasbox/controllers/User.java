@@ -624,7 +624,6 @@ public class User extends Controller {
 	/***
 	 * Generate LAYER API token for the user.
 	 * parameters: 
-	 * username
 	 * nonce: nonce received from Layer authentication request on client
 	 * @return
 	 * @throws SqlInjectionException 
@@ -657,16 +656,16 @@ public class User extends Controller {
 			ODocument doc = UserService.getCurrentUser();
 			result = prepareResponseToJson(UserService.getCurrentUser());
 			
-			String username=doc.field("user.name");	
+			String userid=doc.field("id");	
 			Boolean layerEnabled = com.baasbox.configuration.Application.LAYER_API_ENABLED.getValueAsBoolean();						
 			if (!layerEnabled) {
 				return badRequest("Layer tokens are disabled. Visit console to enable it.");
 			}
 
 			try {
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken requested for user: " + username);
+				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken requested for user: " + userid);
 				NonceServiceToken tokenGenerator = new NonceServiceToken();
-				String token = tokenGenerator.GetNonceToken(username, nonce);
+				String token = tokenGenerator.GetNonceToken(userid, nonce);
 				result = result.substring(0,result.lastIndexOf("}")) + ",\"LayerToken\":\"" + token + "\"}";
 			} catch (Exception ex) {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("NonceToken generation error: " + ex.getMessage());
