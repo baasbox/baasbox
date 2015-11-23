@@ -192,7 +192,7 @@ class DocumentsResource extends BaseRestResource {
 	protected JsonNode put(JsonNode command) throws CommandException{
 		validateHasParams(command);
 		String coll = getCollectionName(command);
-		JsonNode data = getData(command);
+		ObjectNode data = (ObjectNode) getData(command);
 		String id = getDocumentId(command);
 		try {
 			String rid=null;
@@ -203,9 +203,11 @@ class DocumentsResource extends BaseRestResource {
 			}	
 			ODocument doc=null;
 			if (rid!=null) //update
-				doc = DocumentService.update(coll, rid, (ObjectNode)data);
-			else // save
-				doc = DocumentService.create(coll, (ObjectNode)data);
+				doc = DocumentService.update(coll, rid, data);
+			else {// save
+				data.put("id", id);
+				doc = DocumentService.create(coll, data);
+			}
 			String json = JSONFormats.prepareDocToJson(doc, JSONFormats.Formats.DOCUMENT_PUBLIC);
 			ObjectNode node = (ObjectNode) BBJson.mapper().readTree(json);
 			node.remove(TO_REMOVE);
