@@ -162,7 +162,7 @@ public class User extends Controller {
       if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
         if (BaasBoxLogger.isDebugEnabled())
           BaasBoxLogger.info("Prepare to sending chunked response..");
-        return getUsersChunked();
+        return getUsersChunked(true);
       }
 			List<ODocument> profiles = UserService.getUsers(criteria,true);
 			String result = prepareResponseToJson(profiles);
@@ -176,10 +176,13 @@ public class User extends Controller {
 		});
 	}
 
-  private static Result getUsersChunked() {
+  private static Result getUsersChunked(boolean excludeInternals) {
     final Context ctx = Http.Context.current.get();
     QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     String select = "";
+    if(excludeInternals){
+    	UserService.excludeInternalUsersFromCriteria(criteria);
+    }
     try {
       DbHelper.openFromContext(ctx);
       select = DbHelper.selectQueryBuilder(UserDao.MODEL_NAME, criteria.justCountTheRecords(), criteria);
