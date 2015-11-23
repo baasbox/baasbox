@@ -34,6 +34,8 @@ create property _bb_userattributes.email string;
 --the enforcement of the uniqueness of registration email is performed by the code due the fact that there could be email fields in other profile sections
 create index _bb_userattributes.email notunique;
 
+--delete OrientDB default users
+delete from OUser where name in ['reader','writer'];
 
 --admin user
 insert into _BB_User set user = (select from ouser where name='admin'), _links = (insert into _BB_NodeVertex set _node=null), _creation_date = sysdate(), signUpDate = sysdate();
