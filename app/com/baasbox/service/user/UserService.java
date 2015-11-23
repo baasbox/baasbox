@@ -730,23 +730,24 @@ public class UserService {
 		DbHelper.requestTransaction();
 		try{
 			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-			Map<String,ODocument>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
+			Map<String,Map>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
 			if(ssoTokens == null){
-				ssoTokens = new HashMap<String,ODocument>();
+				ssoTokens = new HashMap<String,Map>();
 			}
 
-			String jsonRep = userInfo.toJson();
-			ssoTokens.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON(jsonRep));
+			ssoTokens.put(userInfo.getFrom(), userInfo.toMap());
 			systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
-			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();
+			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			
 			ODocument registeredUserProp = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 			Map socialdata=registeredUserProp.field("_social");
 			if(socialdata == null){
 				socialdata = new HashMap<String,ODocument>();
 			}
-			socialdata.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON("{\"id\":\""+userInfo.getId()+"\"}"));
+			HashMap socialId = new HashMap<>(1);
+			socialId.put("id", userInfo.getId());
+			socialdata.put(userInfo.getFrom(),socialId);
 			registeredUserProp.field("_social",socialdata);
 			registeredUserProp.save();
 			user.save();
