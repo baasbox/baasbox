@@ -73,9 +73,11 @@ import com.eaio.uuid.UUID;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -737,7 +739,7 @@ public class DbHelper {
 	
 	public static void importData(String appcode,File newFile) throws UnableToImportDbException{
 		if (newFile==null) throw new UnableToImportDbException("Cannot import file. The reference is null");
-		ODatabaseRecordTx db = null;
+		final ODatabaseRecordTx db = getConnection();
 		try{
 			BaasBoxLogger.info("Initializing restore operation..:");
 			BaasBoxLogger.info("...dropping the old db..:");
@@ -749,7 +751,6 @@ public class DbHelper {
 			}
 			//DbHelper.shutdownDB(false);
 			
-			db=getConnection(); 
 			BaasBoxLogger.info("...unregistering hooks...");
 			HooksManager.unregisteredAll(db);
 			BaasBoxLogger.info("...drop the O-Classes...");
@@ -757,7 +758,7 @@ public class DbHelper {
 
 			 db.getMetadata().getSchema().dropClass("OSchedule");
 			 db.getMetadata().getSchema().dropClass("ORIDs");
-			   ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
+			ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
 			ODatabaseImport oi = new ODatabaseImport(dbd, newFile.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
@@ -769,17 +770,19 @@ public class DbHelper {
 			 oi.setUseLineFeedForRecords(true);
 			 oi.setPreserveClusterIDs(true);
 			 oi.setPreserveRids(true);
-			 BaasBoxLogger.info("...dropping old indexes...");
+			 //BaasBoxLogger.info("...dropping old indexes...");
+			 db.getMetadata().getIndexManager().flush();
+			 db.getMetadata().getIndexManager().reload();
 			 Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
-			 dbd.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
+			 db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
 				 if(idx.isAutomatic()) {
 					 BaasBoxLogger.info("...dropping {} index",idx.getName());
-					 dbd.getMetadata().getIndexManager().dropIndex(idx.getName());
+					 db.getMetadata().getIndexManager().dropIndex(idx.getName());
 					 indexesToRebuild.add(idx);
 				 }
 			 });
-			 dbd.getMetadata().getIndexManager().flush();
-			 dbd.getMetadata().getIndexManager().reload();
+			 db.getMetadata().getIndexManager().flush();
+			 db.getMetadata().getIndexManager().reload();
 			 
 			 BaasBoxLogger.info("...starting import procedure...");
 			 oi.importDatabase();
