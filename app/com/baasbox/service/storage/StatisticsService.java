@@ -95,13 +95,16 @@ public class StatisticsService {
 					numberOfRecords=docDao.getCount();
 					OClass myClass = db.getMetadata().getSchema().getClass(collectionName);
 					long size=0;
-					for (int clusterId : myClass.getClusterIds()) {
-					  size += db.getClusterRecordSizeById(clusterId);
+					//the total record size is available only in plocal databases
+					if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+						for (int clusterId : myClass.getClusterIds()) {
+						  size += db.getClusterRecordSizeById(clusterId);
+						}
 					}
 					collMap.add(ImmutableMap.of(
 							"name",collectionName,
 							"records", numberOfRecords,
-							"size",size
+							"size", (BBConfiguration.getInstance().isConfiguredDBLocal() ? size:"")
 							));
 				}catch (Throwable e){
 					BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
