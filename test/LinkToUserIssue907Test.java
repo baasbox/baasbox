@@ -103,7 +103,7 @@ public class LinkToUserIssue907Test extends BlogSampleTest {
 							httpRequest(TestConfig.SERVER_URL+"/document/" + PARENT_COLLECTION_NAME+"?"+sb.toString(), "GET");
 							int count = 0;
 							res = om.readTree(getResponse());
-							count = res.get("data").get("countLinks").asInt();
+							count = res.get("data").get(0).get("countLinks").asInt();
 							assertEquals(1,count);
 							//httpRequest(TestConfig.SERVER_URL+ "/document/"+PARENT_COLLECTION_NAME+"/"+postWithMoreComments,"DELETE");
 						}catch(Exception e){
