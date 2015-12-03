@@ -106,7 +106,7 @@ public abstract class BlogSampleTest extends AbstractTest {
 	    });
 	  }
 
-	  void createLink(String linkName, String postId, String rid, String commentAuthor) {
+	  protected void createLink(String linkName, String postId, String rid, String commentAuthor) {
 	    FakeRequest request = new FakeRequest(POST, "/link/" + postId + "/" + linkName + "/" + rid);
 	    request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 	    request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.encodeAuth(commentAuthor, "passw1"));

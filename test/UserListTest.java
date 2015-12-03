@@ -123,7 +123,7 @@ public class UserListTest extends AbstractUsersTest {
           try{
             JsonNode jn = om.readTree(content);
             assertTrue(jn.get("data").isArray());
-            assertTrue("testing that size of data (" + jn.get("data").size() + ") is 2", jn.get("data").size() == 2);
+            assertTrue("testing that size of data (" + jn.get("data").size() + ") is 1", jn.get("data").size() == 1);
           }catch(IOException e){
             fail("unable to parse json");
           }
