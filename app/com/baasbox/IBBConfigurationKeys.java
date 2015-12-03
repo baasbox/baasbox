@@ -52,7 +52,9 @@ public interface IBBConfigurationKeys {
 	
 	public static final String SOCIAL_MOCK = "baasbox.social.mock";
 	public static final String PUSH_MOCK = "baasbox.push.mock";
-	
+
+    public static final String APP_CONTEXT = "application.context";
+
 	
 	@Deprecated
 	public static final String REALM = "authorization.basic.realm";
