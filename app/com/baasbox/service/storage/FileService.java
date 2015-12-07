@@ -40,6 +40,7 @@ import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.FileNotFoundException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.AclNotValidException.Type;
@@ -49,6 +50,7 @@ import com.baasbox.exception.FileTooBigException;
 import com.baasbox.exception.InvalidSizePatternException;
 import com.baasbox.exception.RoleNotFoundException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.storage.StorageUtils.WritebleImageFormat;
 import com.baasbox.service.user.RoleService;
@@ -81,7 +83,7 @@ public class FileService {
 			ODocument doc=dao.create(fileName,contentType,contentLength,is,metadata,contentString);
 			if (data!=null && !data.trim().isEmpty()) {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
-				doc.merge(metaDoc, true, false);
+				dao.merge(doc,metaDoc);
 			}
 			dao.save(doc);
 			return doc;
@@ -91,17 +93,26 @@ public class FileService {
 				String aclJsonString, String contentType, long length,
 				InputStream is, HashMap<String, Object> extractedMetaData,
 				String extractedContent) throws Throwable {
-			ODocument doc = createFile(fileName, dataJson, contentType, length, is, extractedMetaData,
-					extractedContent);
-			//sets the permissions
-			ObjectMapper mapper = BBJson.mapper();
-			JsonNode aclJson=null;
+			ODocument doc=null;
 			try{
-				aclJson = mapper.readTree(aclJsonString);
-			}catch(JsonProcessingException e){
+				DbHelper.requestTransaction();
+				doc = createFile(fileName, dataJson, contentType, length, is, extractedMetaData,
+						extractedContent);
+				//sets the permissions
+				ObjectMapper mapper = BBJson.mapper();
+				JsonNode aclJson=null;
+				try{
+					aclJson = mapper.readTree(aclJsonString);
+				}catch(JsonProcessingException e){
+					throw e;
+				}
+				setAcl(doc, aclJson);
+				DbHelper.commitTransaction();
+			} catch (Exception e){
+				DbHelper.rollbackTransaction();
+				BaasBoxLogger.error("Error creating a file", e);
 				throw e;
 			}
-			setAcl(doc, aclJson);
 			return doc;
 		}//createFile with permission
 		
@@ -132,9 +143,9 @@ public class FileService {
 					 if (listOfElements.isArray()) {
 						    for (final JsonNode element : listOfElements) {
 						       if (usersOrRoles.getKey().equalsIgnoreCase("users"))
-						    	   grantPermissionToUser((String)doc.field("id"), actionPermission, element.asText());
+						    	   grantPermissionToUser(doc, actionPermission, element.asText());
 						       else 
-						    	   grantPermissionToRole((String)doc.field("id"), actionPermission, element.asText());
+						    	   grantPermissionToRole(doc, actionPermission, element.asText());
 						    }
 					 }
 				}
@@ -192,6 +203,13 @@ public class FileService {
 			return PermissionsHelper.grant(doc, permission, role);
 		}
 
+		public static ODocument grantPermissionToRole(ODocument doc,Permissions permission, String rolename) 
+				throws RoleNotFoundException, FileNotFoundException, SqlInjectionException, InvalidModelException {
+			ORole role=RoleDao.getRole(rolename);
+			if (role==null) throw new RoleNotFoundException(rolename);
+			if (doc==null) throw new FileNotFoundException("Document is null");
+			return PermissionsHelper.grant(doc, permission, role);
+		}
 
 		public static ODocument revokePermissionToRole(String id,
 				Permissions permission, String rolename) throws RoleNotFoundException, FileNotFoundException, SqlInjectionException, InvalidModelException  {
@@ -202,11 +220,26 @@ public class FileService {
 			return PermissionsHelper.revoke(doc, permission, role);
 		}	
 		
+		public static ODocument revokePermissionToRole(ODocument doc,
+				Permissions permission, String rolename) throws RoleNotFoundException, FileNotFoundException, SqlInjectionException, InvalidModelException  {
+			ORole role=RoleDao.getRole(rolename);
+			if (role==null) throw new RoleNotFoundException(rolename);
+			if (doc==null) throw new FileNotFoundException("Document is null");
+			return PermissionsHelper.revoke(doc, permission, role);
+		}
+		
 		public static ODocument grantPermissionToUser(String id, Permissions permission, String username) throws UserNotFoundException, RoleNotFoundException, FileNotFoundException, SqlInjectionException, IllegalArgumentException, InvalidModelException  {
 			OUser user=UserService.getOUserByUsername(username);
 			if (user==null) throw new UserNotFoundException(username);
 			ODocument doc = getById(id);
 			if (doc==null) throw new FileNotFoundException(id);
+			return PermissionsHelper.grant(doc, permission, user);
+		}
+		
+		public static ODocument grantPermissionToUser(ODocument doc, Permissions permission, String username) throws UserNotFoundException, RoleNotFoundException, FileNotFoundException, SqlInjectionException, IllegalArgumentException, InvalidModelException  {
+			OUser user=UserService.getOUserByUsername(username);
+			if (user==null) throw new UserNotFoundException(username);
+			if (doc==null) throw new FileNotFoundException("Document is null");
 			return PermissionsHelper.grant(doc, permission, user);
 		}
 
@@ -217,6 +250,14 @@ public class FileService {
 			if (doc==null) throw new FileNotFoundException(id);
 			return PermissionsHelper.revoke(doc, permission, user);
 		}
+		
+		public static ODocument revokePermissionToUser(ODocument doc, Permissions permission, String username) throws UserNotFoundException, RoleNotFoundException, FileNotFoundException, SqlInjectionException, IllegalArgumentException, InvalidModelException {
+			OUser user=UserService.getOUserByUsername(username);
+			if (user==null) throw new UserNotFoundException(username);
+			if (doc==null) throw new FileNotFoundException("Document is null");
+			return PermissionsHelper.revoke(doc, permission, user);
+		}
+		
 		
 		/**
 		 * 
