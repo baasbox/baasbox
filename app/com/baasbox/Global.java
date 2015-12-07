@@ -340,7 +340,7 @@ public class Global extends GlobalSettings {
 	    			  // + "<entry name=\"server.cache.staticResources\" value=\"false\"/>"
 	    			   + "<entry name=\"log.console.level\" value=\"WARNING\"/>"
 	    			   + "<entry name=\"log.file.level\" value=\"WARNING\"/>"
-	    			   // + "<entry value=\""+BBConfiguration.getInstance().getDBDir()+"\" name=\"server.database.path\" />"
+	    			   + "<entry value=\"./db/\" name=\"server.database.path\" />"
 	    			  // + "<entry name=\"server.database.path\"  "
 	    			  // + "		 value=\"" + BBConfiguration.getInstance().getDBFullPath() + "\"/>"
 	    			  // + "		 value=\"" + dbPath.toAbsolutePath().toString() + "/\"/>"
