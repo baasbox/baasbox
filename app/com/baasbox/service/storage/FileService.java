@@ -160,6 +160,7 @@ public class FileService {
 				ODocument metaDoc=(new ODocument()).fromJSON("{ '"+DATA_FIELD_NAME+"' : " + data + "}");
 				doc.merge(metaDoc, true, false);
 			}
+			DbHelper.setRIDinCurrentTransaction(doc.field(BaasBoxPrivateFields.ID.toString()), doc.getIdentity().toString());
 			dao.save(doc);
 			return doc;
 		}	
