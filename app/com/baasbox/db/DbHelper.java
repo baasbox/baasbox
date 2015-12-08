@@ -230,9 +230,9 @@ public class DbHelper {
 		//patch for issue #469
 		if (StringUtils.isEmpty(criteria.getWhere()) && getConnection() != null){
 			final OUser user = getConnection().getUser();
-			if (user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) 
+			if (!UserService.isAnAdmin(user.getName())) {
 				 ret += " where 1=1";
-
+			}
 		}
 		if (!count && !StringUtils.isEmpty(criteria.getGroupBy())) {
 			ret += " group by ( " + criteria.getGroupBy() + " )";
