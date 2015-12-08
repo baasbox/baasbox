@@ -399,8 +399,8 @@ public class UserService {
 			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
 			            PermissionsHelper.changeOwner(profile, userRid);
 			            
-			            
 			            profile.save();
+			            DbHelper.setRIDinCurrentTransaction(profile.field(BaasBoxPrivateFields.ID.toString()), profile.getIdentity().toString());
 			            DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
 				    DbHelper.rollbackTransaction();

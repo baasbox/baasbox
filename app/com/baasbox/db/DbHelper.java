@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
@@ -70,6 +71,7 @@ import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
+import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -112,6 +114,21 @@ public class DbHelper {
 		};
 	};
 
+	private static ThreadLocal<Map<String,String>> transientRidsInTransaction = new ThreadLocal<Map<String,String>>() {
+		protected Map<String,String> initialValue() {
+			return Maps.newHashMap();
+		};
+	};
+	
+	public static String getRIDfromCurrentTransaction(String id){
+		if (isInTransaction())	return transientRidsInTransaction.get().get(id);
+		else return null;
+	}
+	
+	public static void setRIDinCurrentTransaction(String id, String rid){
+		if (isInTransaction()) transientRidsInTransaction.get().put(id, rid);
+	}
+	
 	private static ThreadLocal<String> username = new ThreadLocal<String>() {
 		protected String initialValue() {
 			return "";
@@ -165,6 +182,7 @@ public class DbHelper {
 			if (BaasBoxLogger.isTraceEnabled())
 				BaasBoxLogger.trace("Begin transaction");
 			db.begin();
+			transientRidsInTransaction.get().clear();
 		}
 		tranCount.set(tranCount.get().intValue() + 1);
 		if (BaasBoxLogger.isDebugEnabled())
@@ -187,6 +205,7 @@ public class DbHelper {
 			if (tranCount.get() == 0) {
 				db.commit();
 				db.getTransaction().close();
+				transientRidsInTransaction.get().clear();
 			}
 		} else
 			throw new NoTransactionException(
@@ -207,6 +226,7 @@ public class DbHelper {
 				BaasBoxLogger.debug("Rollback transaction");
 			db.getTransaction().rollback();
 			db.getTransaction().close();
+			transientRidsInTransaction.get().clear();
 			tranCount.set(0);
 		}
 		if (BaasBoxLogger.isDebugEnabled())

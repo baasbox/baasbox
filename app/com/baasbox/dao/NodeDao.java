@@ -165,6 +165,7 @@ public abstract class NodeDao  {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
+				DbHelper.setRIDinCurrentTransaction(token.toString(), doc.getIdentity().toString());
 				DbHelper.commitTransaction();
 				return doc;
 		}catch (Throwable e){
