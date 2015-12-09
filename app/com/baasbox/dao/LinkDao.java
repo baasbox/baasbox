@@ -67,6 +67,7 @@ public class LinkDao {
 			edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
 			edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
 			edge.save();
+			DbHelper.setRIDinCurrentTransaction(edge.getRecord().field(BaasBoxPrivateFields.ID.toString()), edge.getIdentity().toString());
 			DbHelper.commitTransaction();
 		}catch (DocumentNotFoundException e){
 			DbHelper.rollbackTransaction();
@@ -101,6 +102,16 @@ public class LinkDao {
 	public static ORID getRidLinkByUUID(String id){
 		OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder(searchSQL);
 		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{id});
-		return output.size()==0?null:output.get(0).getIdentity();
+		if (output.size()==0){
+			if (DbHelper.isInTransaction()) {
+				//maybe the id belongs to an object created inside a current transaction
+				String stringRID=DbHelper.getRIDfromCurrentTransaction(id);
+				if (stringRID==null) return null;
+				return GenericDao.getInstance().get(stringRID).getIdentity();
+			}else{
+				return null;
+			}
+		}
+		return output.get(0).getIdentity();
 	}
 }
