@@ -98,6 +98,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME = "db.sql";
+	private static final String EMPTY_DB_FILE_NAME = "empty_db_exported.json.gz";
 	private static final String CONFIGURATION_FILE_NAME = "configuration.conf";
 
 	private static volatile boolean dbFreeze = false;
@@ -422,23 +423,63 @@ public class DbHelper {
 	}
 
 	public static void shutdownDB(boolean repopulate) {
-		ODatabaseRecordTx db = null;
-
 		try {
 			// WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
-			db = getConnection();
+			final ODatabaseRecordTx db = getConnection();
 
 			synchronized(DbHelper.class)  {
 				if(!dbFreeze){
 					dbFreeze = true;
 				}
-				db.drop();
-				db.close();
-				db.create();
-				db.getLevel1Cache().clear();
-				db.getLevel2Cache().clear();
-				db.reload();
-				db.getMetadata().reload();
+				if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+					db.drop();
+					db.close();
+					db.create();
+					db.getLevel1Cache().clear();
+					db.getLevel2Cache().clear();
+					db.reload();
+					db.getMetadata().reload();
+				}else{  //remote DB
+					//when using remote ODB there is no way to drop or create a new database using an admin user
+					//we can simulate drop() and create() importing a new empty ODB database
+					InputStream is=null;
+					if (Play.application().isProd())
+						is = Play.application().resourceAsStream(EMPTY_DB_FILE_NAME);
+					else
+						is = new FileInputStream(Play.application().getFile(
+								"conf/" + EMPTY_DB_FILE_NAME));
+					ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
+					ODatabaseImport oi = new ODatabaseImport(dbd, is, new OCommandOutputListener() {
+						@Override
+						public void onMessage(String m) {
+							BaasBoxLogger.info("Restore db (for drop): " + m);
+						}
+					});
+					oi.setPreserveRids(true);
+					oi.setIncludeManualIndexes(true);
+					oi.setUseLineFeedForRecords(true);
+					oi.setPreserveClusterIDs(true);
+					oi.setPreserveRids(true);
+					oi.setDeleteRIDMapping(true);
+					oi.setIncludeSchema(true);
+					oi.setIncludeClusterDefinitions(true);
+					db.getMetadata().getIndexManager().flush();
+					db.getMetadata().getIndexManager().reload();
+					Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
+					db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
+						 if(idx.isAutomatic()) {
+							 BaasBoxLogger.info("...dropping {} index",idx.getName());
+							 db.getMetadata().getIndexManager().dropIndex(idx.getName());
+							 indexesToRebuild.add(idx);
+						 }
+					});
+					db.getMetadata().getIndexManager().flush();
+					db.getMetadata().getIndexManager().reload();
+					 
+					BaasBoxLogger.info("...starting import procedure...");
+					oi.importDatabase();
+					oi.close();
+				}
 				if (repopulate) {
 					HooksManager.registerAll(db);
 					setupDb();
