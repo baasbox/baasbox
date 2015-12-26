@@ -98,7 +98,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME = "db.sql";
-	private static final String EMPTY_DB_FILE_NAME = "empty_db_exported.json.gz";
+	private static final String EMPTY_DB_FILE_NAME = "empty_db_exported.json";
 	private static final String CONFIGURATION_FILE_NAME = "configuration.conf";
 
 	private static volatile boolean dbFreeze = false;
@@ -439,6 +439,10 @@ public class DbHelper {
 					db.getLevel2Cache().clear();
 					db.reload();
 					db.getMetadata().reload();
+					if (repopulate) {
+						HooksManager.registerAll(db);
+						setupDb();
+					}
 				}else{  //remote DB
 					//when using remote ODB there is no way to drop or create a new database using an admin user
 					//we can simulate drop() and create() importing a new empty ODB database
@@ -455,34 +459,10 @@ public class DbHelper {
 							BaasBoxLogger.info("Restore db (for drop): " + m);
 						}
 					});
-					oi.setPreserveRids(true);
-					oi.setIncludeManualIndexes(true);
-					oi.setUseLineFeedForRecords(true);
-					oi.setPreserveClusterIDs(true);
-					oi.setPreserveRids(true);
-					oi.setDeleteRIDMapping(true);
-					oi.setIncludeSchema(true);
-					oi.setIncludeClusterDefinitions(true);
-					db.getMetadata().getIndexManager().flush();
-					db.getMetadata().getIndexManager().reload();
-					Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
-					db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
-						 if(idx.isAutomatic()) {
-							 BaasBoxLogger.info("...dropping {} index",idx.getName());
-							 db.getMetadata().getIndexManager().dropIndex(idx.getName());
-							 indexesToRebuild.add(idx);
-						 }
-					});
-					db.getMetadata().getIndexManager().flush();
-					db.getMetadata().getIndexManager().reload();
-					 
-					BaasBoxLogger.info("...starting import procedure...");
-					oi.importDatabase();
+					startImport(db, oi);
 					oi.close();
-				}
-				if (repopulate) {
+					evolveDB(db);
 					HooksManager.registerAll(db);
-					setupDb();
 				}
 			}
 		} catch (Throwable e) {
@@ -493,6 +473,32 @@ public class DbHelper {
 			}
 		}
 
+	}
+
+	private static void startImport(final ODatabaseRecordTx db, ODatabaseImport oi) {
+		oi.setPreserveRids(true);
+		oi.setIncludeManualIndexes(true);
+		oi.setUseLineFeedForRecords(true);
+		oi.setPreserveClusterIDs(true);
+		oi.setPreserveRids(true);
+		oi.setDeleteRIDMapping(true);
+		oi.setIncludeSchema(true);
+		oi.setIncludeClusterDefinitions(true);
+		db.getMetadata().getIndexManager().flush();
+		db.getMetadata().getIndexManager().reload();
+		Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
+		db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
+			 if(idx.isAutomatic()) {
+				 BaasBoxLogger.info("...dropping {} index",idx.getName());
+				 db.getMetadata().getIndexManager().dropIndex(idx.getName());
+				 indexesToRebuild.add(idx);
+			 }
+		});
+		db.getMetadata().getIndexManager().flush();
+		db.getMetadata().getIndexManager().reload();
+		 
+		BaasBoxLogger.info("...starting import procedure...");
+		oi.importDatabase();
 	}
 
 	public static ODatabaseRecordTx getOrOpenConnection(String appcode,
@@ -826,27 +832,7 @@ public class DbHelper {
 					BaasBoxLogger.info("Restore db: " + m);
 				}
 			});
-			 oi.setPreserveRids(true);
-			 oi.setIncludeManualIndexes(true);
-			 oi.setUseLineFeedForRecords(true);
-			 oi.setPreserveClusterIDs(true);
-			 oi.setPreserveRids(true);
-			 //BaasBoxLogger.info("...dropping old indexes...");
-			 db.getMetadata().getIndexManager().flush();
-			 db.getMetadata().getIndexManager().reload();
-			 Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
-			 db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
-				 if(idx.isAutomatic()) {
-					 BaasBoxLogger.info("...dropping {} index",idx.getName());
-					 db.getMetadata().getIndexManager().dropIndex(idx.getName());
-					 indexesToRebuild.add(idx);
-				 }
-			 });
-			 db.getMetadata().getIndexManager().flush();
-			 db.getMetadata().getIndexManager().reload();
-			 
-			 BaasBoxLogger.info("...starting import procedure...");
-			 oi.importDatabase();
+			 startImport(db, oi);
 			 oi.close();
 			 BaasBoxLogger.info("...setting up internal user credential...");
 			 updateDefaultUsers();

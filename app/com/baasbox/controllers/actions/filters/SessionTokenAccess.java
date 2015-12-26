@@ -38,7 +38,7 @@ public class SessionTokenAccess implements IAccessMethod  {
 		if (token!=null) {
 			  if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Received session token " + token);
 			  SessionObject sessionData = SessionTokenProviderFactory.getSessionTokenProvider().getSession(token);
-			  if (sessionData!=null){
+			  if (sessionData!=null && sessionData.getUsername()!=null){
 				  	if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Token identified: ");
 					ctx.args.put("username", sessionData.getUsername());
 					ctx.args.put("password", sessionData.getPassword());
