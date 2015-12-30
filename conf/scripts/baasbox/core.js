@@ -867,7 +867,7 @@ Cache.remove = function(key,params){
 Cache.getOrElse = function(key,params){
 	var cacheScope = params.scope || 'user';
 	var inCache = this.get(key,cacheScope);
-	var callback = params.callback || DEFAULT_CALLBACK;
+	var callback = params.callback || DEFAULT_CALLBACK;
 	if(!inCache){
 		return callback(key);
 	}else{

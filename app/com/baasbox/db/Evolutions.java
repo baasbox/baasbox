@@ -95,6 +95,8 @@ public class Evolutions {
 		me.put(ev.getFinalVersion(),ev);
 		ev = (IEvolution)new Evolution_a_000_009_005_001();
 		me.put(ev.getFinalVersion(),ev);
+		ev = (IEvolution)new Evolution_a_000_009_005_010();
+		me.put(ev.getFinalVersion(),ev);
 	}
 	
 	public Collection<IEvolution> getEvolutions(){
