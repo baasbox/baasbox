@@ -253,18 +253,27 @@ public class UserService {
             JsonNode friendsAttributes,
             JsonNode appUsersAttributes,boolean generated,String id) throws InvalidJsonException,UserAlreadyExistsException, EmailAlreadyUsedException{
 		
-		ODocument profile=signUp( username,
-         password,
-         signupDate,
-         role,
-         nonAppUserAttributes,
-         privateAttributes,
-         friendsAttributes,
-         appUsersAttributes, generated);
-		//since 0.9.4 we can indicate an arbitrary id for users.
-		if (StringUtils.isNotBlank(id)){
-			profile.field(BaasBoxPrivateFields.ID.toString(),id);
-			profile.save();
+		DbHelper.requestTransaction();
+		ODocument profile = null;
+		try{
+			profile=signUp( username,
+	         password,
+	         signupDate,
+	         role,
+	         nonAppUserAttributes,
+	         privateAttributes,
+	         friendsAttributes,
+	         appUsersAttributes, generated);
+			//since 0.9.4 we can indicate an arbitrary id for users.
+			if (StringUtils.isNotBlank(id)){
+				profile.field(BaasBoxPrivateFields.ID.toString(),id);
+				profile.save();
+			}
+			DbHelper.commitTransaction();
+		}catch (Exception e){
+			DbHelper.rollbackTransaction();
+			BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
+			throw e;
 		}
 		return profile;
 	}

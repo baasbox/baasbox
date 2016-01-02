@@ -58,6 +58,8 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
+import ch.qos.logback.classic.db.DBHelper;
+
 /**
  * Created by Andrea Tortorella on 02/07/14.
  */
@@ -293,6 +295,7 @@ class UsersResource extends BaseRestResource {
 
 	@Override
 	protected JsonNode post(JsonNode command) throws CommandException {
+		DbHelper.requestTransaction();
 		try {
 			JsonNode params = command.get(ScriptCommand.PARAMS);
 			if (params==null||!params.isObject()) throw new CommandParsingException(command,"missing parameters");
@@ -324,12 +327,19 @@ class UsersResource extends BaseRestResource {
 			ODocument user = UserService.signUp(username, password.asText(),
 					new Date(), role,
 					anonymousVisible,userVisible,friendsVisible, registeredVisible, false,idString);
+			DbHelper.commitTransaction();
+			user.reload();
 			String userNode = JSONFormats.prepareDocToJson(user, JSONFormats.Formats.USER);
 			return BBJson.mapper().readTree(userNode);
 		} catch (InvalidJsonException | IOException e) {
+			DbHelper.rollbackTransaction();
 			throw new CommandExecutionException(command,"invalid json",e);
 		} catch (UserAlreadyExistsException | EmailAlreadyUsedException e) {
+			DbHelper.rollbackTransaction();
 			return NullNode.getInstance();
+		} catch (Exception e){
+			DbHelper.rollbackTransaction();
+			throw e;
 		}
 	}
 
