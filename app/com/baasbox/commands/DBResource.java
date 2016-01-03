@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -154,11 +155,14 @@ class DBResource extends Resource {
 
     private static JsonNode switchUser(JsonNode command,JsonCallback callback) throws CommandException {
         try {
-            DbHelper.reconnectAsAdmin();
+            ODatabaseRecordTx c = DbHelper.reconnectAsAdmin();
             return callback.call(NullNode.getInstance());
         }catch (SwitchUserContextException e){
         	throw new CommandExecutionException(command,"Cannot switch to admin! Did you leave an open transaction?");
-    	}finally {
+    	}catch (Exception e){
+    		BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
+    		throw e;
+    	} finally {
     		try{
     			DbHelper.reconnectAsAuthenticatedUser();
     		}catch(OSecurityAccessException e){
