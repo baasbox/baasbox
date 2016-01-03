@@ -107,6 +107,7 @@ public class CollectionDao extends NodeDao {
 		save(doc);
 		
 		//create new class
+		db.getMetadata().getSchema().reload();
 		OClass documentClass = db.getMetadata().getSchema().getClass(CLASS_NODE_NAME);
 		db.getMetadata().getSchema().createClass(collectionName, documentClass);
 		
