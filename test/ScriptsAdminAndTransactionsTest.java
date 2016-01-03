@@ -136,7 +136,7 @@ public class ScriptsAdminAndTransactionsTest {
                 Result result = routeAndCall(req);
                 String resultString = contentAsString(result);
                 JsonNode resp = BBJson.mapper().readTree(resultString);
-                assertTrue(resp.path("data").path("exists").asBoolean());
+                assertTrue("An error has occured; " + resp.toString(),resp.path("data").path("exists").asBoolean());
 
             } catch (Exception  e){
                 fail(ExceptionUtils.getStackTrace(e));
