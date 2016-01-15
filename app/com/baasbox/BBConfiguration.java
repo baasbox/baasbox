@@ -165,7 +165,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	}
 	
 	public  Boolean isChunkedEnabled(){
-		return this.configuration.getBoolean(CHUNKED_RESPONSE);
+		return this.configuration.getBoolean(CHUNKED_RESPONSE) && !this.isConfiguredDBLocal();
 	}
 	
 	public  int getChunkSize(){
