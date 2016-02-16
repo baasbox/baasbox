@@ -72,12 +72,20 @@ public class JSONFormats {
 		return ret;
 	}
 
-    public static String prepareDocToJson(ODocument doc,JSONFormats.Formats format){
+    public static String prepareDocToJson(ODocument doc,String format){
         return doc.toJSON(format.toString());
     }
+    
+    public static String prepareDocToJson(ODocument doc,JSONFormats.Formats format){
+        return prepareDocToJson(doc, format.toString());
+    }
 
-    public static String prepareDocToJson(List<ODocument> docs,JSONFormats.Formats format){
+    public static String prepareDocToJson(List<ODocument> docs,String format){
         return OJSONWriter.listToJSON(docs,format.toString());
+    }
+    
+    public static String prepareDocToJson(List<ODocument> docs,JSONFormats.Formats format){
+        return prepareDocToJson(docs,format.toString());
     }
 
 

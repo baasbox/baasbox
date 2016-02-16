@@ -287,11 +287,12 @@ class DocumentsResource extends BaseRestResource {
 	protected JsonNode list(JsonNode command) throws CommandException {
 		String collection= getCollectionName(command);
 		QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
-
+		String fetchPlan = getDocumentFetchPlan(command);
 		try {
 			List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
-			String s = JSONFormats.prepareDocToJson(docs, JSONFormats.Formats.DOCUMENT_PUBLIC);
+			String usableFetchPlan = (fetchPlan==null) ? JSONFormats.Formats.DOCUMENT_PUBLIC.toString() : fetchPlan;
+			String s = JSONFormats.prepareDocToJson(docs, usableFetchPlan);
 			ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
 			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
 			return lst;
@@ -310,6 +311,7 @@ class DocumentsResource extends BaseRestResource {
 		String collection = getCollectionName(command);
 		String id = getDocumentId(command);
 		LinkQuery lq = getLinkQuery(command);
+		String fetchPlan = getDocumentFetchPlan(command);
 		try {
 			String rid = DocumentService.getRidByString(id, true);
 			if(lq!=null){
@@ -331,7 +333,8 @@ class DocumentsResource extends BaseRestResource {
 				if (document == null){
 					return null;
 				} else {
-					String s = JSONFormats.prepareDocToJson(document, JSONFormats.Formats.DOCUMENT_PUBLIC);
+					String usableFetchPlan = (fetchPlan==null) ? JSONFormats.Formats.DOCUMENT_PUBLIC.toString() : fetchPlan;
+					String s = JSONFormats.prepareDocToJson(document, usableFetchPlan);
 					ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
 					node.remove(TO_REMOVE);
 					return node;
@@ -440,6 +443,17 @@ class DocumentsResource extends BaseRestResource {
 		}
 		String idString = id.asText();
 		return idString;
+	}
+	
+	private String getDocumentFetchPlan(JsonNode command) throws CommandException{
+		JsonNode params = command.get(ScriptCommand.PARAMS);
+		JsonNode fp = params.get("fetchPlan");
+		if (fp==null) return null;
+		if (!fp.isTextual()){
+			throw new CommandParsingException(command,"fetchPlan must be a string");
+		}
+		String fpString = fp.asText();
+		return fpString;
 	}
 
 	@Override
