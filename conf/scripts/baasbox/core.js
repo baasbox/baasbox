@@ -535,8 +535,12 @@ var Documents = {};
 Documents.find = function(){
     var coll = null,
         q = null,
-        id = null;
+        id = null,
+    	fetchPlan = null;
     switch (arguments.length){
+    	case 3:
+    		fetchPlan = arguments[12];
+    	//fall through (missing break)
         case 2:
             if(typeof arguments[1] === 'string') {
                 id = arguments[1];
@@ -555,14 +559,16 @@ Documents.find = function(){
                          name: 'list',
                          params: {
                              collection: coll,
-                             query: q
+                             query: q,
+                             fetchPlan: fetchPlan
                          }});
     } else {
         return _command({resource: 'documents',
                          name: 'get',
                          params:{
                              collection: coll,
-                             id: id
+                             id: id,
+                             fetchPlan: fetchPlan
                          }});
     }
 };
@@ -659,6 +665,7 @@ var dLinks = {};
 dLinks.find = function(collectionName,id,params){
 	 var coll = collectionName,
      queryLink = params.links;
+	 fetchPlan = params.fetchPlan;
 	 if(!coll || !(typeof coll === 'string')){
 	        throw new TypeError("you must specify a collection");
 	    }
@@ -670,10 +677,11 @@ dLinks.find = function(collectionName,id,params){
          params:{
              collection: coll,
              id: id,
-             links:queryLink
+             links:queryLink,
+             fetchPlan: fetchPlan
          }});
-	 
 }
+
 Documents.Links = dLinks;
 //----- End Documents Links ------
 
