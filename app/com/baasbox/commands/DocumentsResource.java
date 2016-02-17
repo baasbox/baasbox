@@ -33,6 +33,7 @@ import com.baasbox.dao.exception.InvalidCollectionException;
 import com.baasbox.dao.exception.InvalidModelException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
+import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
 import com.baasbox.exception.AclNotValidException;
 import com.baasbox.exception.RoleNotFoundException;
@@ -287,19 +288,24 @@ class DocumentsResource extends BaseRestResource {
 	protected JsonNode list(JsonNode command) throws CommandException {
 		String collection= getCollectionName(command);
 		QueryParams params = QueryParams.getParamsFromJson(command.get(ScriptCommand.PARAMS).get(QUERY));
-		String fetchPlan = getDocumentFetchPlan(command);
+		String fetchPlan = super.getFetchPlan(command);
 		try {
 			List<ODocument> docs = DocumentService.getDocuments(collection, params);
 
 			String usableFetchPlan = (fetchPlan==null) ? JSONFormats.Formats.DOCUMENT_PUBLIC.toString() : fetchPlan;
+			BaasBoxLogger.debug("FetchPlan: " + usableFetchPlan);
+			
+			DbHelper.filterOUserPasswords(true);
 			String s = JSONFormats.prepareDocToJson(docs, usableFetchPlan);
 			ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
-			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
+			if (fetchPlan==null) lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE));
 			return lst;
 		} catch (SqlInjectionException | IOException e) {
 			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch (InvalidCollectionException e) {
 			throw new CommandExecutionException(command,"invalid collection: "+collection,e);
+		} finally {
+			DbHelper.filterOUserPasswords(false);
 		}
 	}
 
@@ -311,7 +317,8 @@ class DocumentsResource extends BaseRestResource {
 		String collection = getCollectionName(command);
 		String id = getDocumentId(command);
 		LinkQuery lq = getLinkQuery(command);
-		String fetchPlan = getDocumentFetchPlan(command);
+		String fetchPlan = super.getFetchPlan(command);
+		String usableFetchPlan = (fetchPlan==null) ? JSONFormats.Formats.DOCUMENT_PUBLIC.toString() : fetchPlan;
 		try {
 			String rid = DocumentService.getRidByString(id, true);
 			if(lq!=null){
@@ -319,10 +326,12 @@ class DocumentsResource extends BaseRestResource {
 
 				List<ODocument> documents =  DocumentService.queryLink(collection, id, lq.linkName, Document.LinkDirection.map(lq.linkDir),qp);
 				JsonNode node = (JsonNode)BBJson.mapper().createArrayNode();
+				
+				DbHelper.filterOUserPasswords(true);
 				if(documents.size()>0){
-					String s = JSONFormats.prepareDocToJson(documents, JSONFormats.Formats.DOCUMENT_PUBLIC);
+					String s = JSONFormats.prepareDocToJson(documents, usableFetchPlan);
 					node = BBJson.mapper().readTree(s);
-					node.forEach(n->{
+					if (fetchPlan==null) node.forEach(n->{
 						((ObjectNode)n).remove(TO_REMOVE);
 					});
 
@@ -333,10 +342,9 @@ class DocumentsResource extends BaseRestResource {
 				if (document == null){
 					return null;
 				} else {
-					String usableFetchPlan = (fetchPlan==null) ? JSONFormats.Formats.DOCUMENT_PUBLIC.toString() : fetchPlan;
 					String s = JSONFormats.prepareDocToJson(document, usableFetchPlan);
 					ObjectNode node = (ObjectNode) BBJson.mapper().readTree(s);
-					node.remove(TO_REMOVE);
+					if (fetchPlan==null) node.remove(TO_REMOVE);
 					return node;
 				}
 			}
@@ -352,6 +360,8 @@ class DocumentsResource extends BaseRestResource {
 			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
 		} catch (IOException e) {
 			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e));
+		} finally {
+			DbHelper.filterOUserPasswords(false);
 		}
 	}
 
@@ -445,17 +455,6 @@ class DocumentsResource extends BaseRestResource {
 		return idString;
 	}
 	
-	private String getDocumentFetchPlan(JsonNode command) throws CommandException{
-		JsonNode params = command.get(ScriptCommand.PARAMS);
-		JsonNode fp = params.get("fetchPlan");
-		if (fp==null) return null;
-		if (!fp.isTextual()){
-			throw new CommandParsingException(command,"fetchPlan must be a string");
-		}
-		String fpString = fp.asText();
-		return fpString;
-	}
-
 	@Override
 	public String name() {
 		return RESOURCE_NAME;

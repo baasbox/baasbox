@@ -73,7 +73,7 @@ public class JSONFormats {
 	}
 
     public static String prepareDocToJson(ODocument doc,String format){
-        return doc.toJSON(format.toString());
+        return doc.toJSON(format);
     }
     
     public static String prepareDocToJson(ODocument doc,JSONFormats.Formats format){
@@ -81,7 +81,7 @@ public class JSONFormats {
     }
 
     public static String prepareDocToJson(List<ODocument> docs,String format){
-        return OJSONWriter.listToJSON(docs,format.toString());
+        return OJSONWriter.listToJSON(docs,format);
     }
     
     public static String prepareDocToJson(List<ODocument> docs,JSONFormats.Formats format){
