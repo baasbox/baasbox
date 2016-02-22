@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.ImmutableMap;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -81,6 +82,17 @@ class DBResource extends Resource {
     	BaasBoxLogger.debug("Executing query from a plugin: " + statement);
     	BaasBoxLogger.debug("...depth: " + depth);
     	
+    	JsonNode fetchPlanNode = jParams.get("fetchPlan");
+    	String fetchPlan = JSONFormats.Formats.GENERIC.toString();
+    	
+    	if (!BBJson.isNull(fetchPlanNode)){
+    		if (fetchPlanNode.isTextual()){
+    			fetchPlan="fetchPlan:" + ((TextNode) fetchPlanNode).asText().trim();
+    		} else {
+    			throw new CommandParsingException(c,"fetchPlan must be a string");
+    		}
+    	}
+    	
         ArrayNode qryParams = (ArrayNode) jParams.get("array_of_params");
         
         ArrayList params=new ArrayList();
@@ -91,7 +103,8 @@ class DBResource extends Resource {
         ArrayNode lst;
 		try {
 	        List listToReturn = (List) DbHelper.genericSQLStatementExecute("select " + statement, params.toArray());
-	        String s = JSONFormats.prepareResponseToJson(listToReturn, JSONFormats.Formats.GENERIC+depth,true);
+	        DbHelper.filterOUserPasswords(true);
+	        String s = JSONFormats.prepareDocToJson(listToReturn, fetchPlan + depth);
 	        BaasBoxLogger.debug("Query result: ");
 	        BaasBoxLogger.debug(s);
 			lst = (ArrayNode)BBJson.mapper().readTree(s);
@@ -99,6 +112,8 @@ class DBResource extends Resource {
 			 throw new CommandExecutionException(c,"error executing command: "+ExceptionUtils.getMessage(e),e);
 		} catch(OQueryParsingException e){
 			throw new CommandExecutionException(c,"Error parsing query: "+ExceptionUtils.getMessage(e),e);
+		} finally {
+			DbHelper.filterOUserPasswords(false);
 		}
         return lst;
     }

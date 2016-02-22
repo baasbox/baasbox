@@ -24,15 +24,13 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang.exception.ExceptionUtils;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.baasbox.configuration.ImagesConfiguration;
-import com.baasbox.controllers.CustomHttpCode;
 import com.baasbox.dao.FileDao;
 import com.baasbox.dao.PermissionsHelper;
 import com.baasbox.dao.RoleDao;
@@ -53,12 +51,16 @@ import com.baasbox.exception.UserNotFoundException;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.StorageUtils.ImageDimensions;
 import com.baasbox.service.storage.StorageUtils.WritebleImageFormat;
-import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class FileService {
 	public static final String DATA_FIELD_NAME="attachedData";
@@ -185,7 +187,38 @@ public class FileService {
 			FileDao dao = FileDao.getInstance();
 			ODocument file=getById(id);
 			if (file==null) throw new FileNotFoundException();
-			dao.delete(file.getIdentity());
+			try {
+				DbHelper.requestTransaction();
+				
+				//delete the BLOB
+				ORecordBytes fileBlob = file.field("file");
+				DbHelper.getConnection().delete(fileBlob);
+				//delete the resized BLOBs
+				Map resizedImages = (Map)file.field("resized");
+				if (resizedImages!=null){
+					resizedImages.values().forEach(x->{
+						DbHelper.getConnection().delete((ORecordBytes)x);
+					});
+				}
+				
+				//delete the extracted metadata
+				ODocument fileMetadata = ((ODocument)file.field("metadata"));
+				if (fileMetadata!=null) DbHelper.getConnection().delete(fileMetadata);
+				
+				//deleted the extracted file content
+				ODocument fileTextContent = ((ODocument)file.field("text_content"));
+				if (fileTextContent!=null) DbHelper.getConnection().delete(fileTextContent);
+				
+				//delete the file object
+				dao.delete(file.getIdentity());
+				
+				DbHelper.commitTransaction();
+			}catch (Exception e){
+				BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(e));
+				DbHelper.rollbackTransaction();
+				throw e;
+			}
+
 		}
 
 

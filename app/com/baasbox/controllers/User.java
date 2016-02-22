@@ -23,24 +23,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.stringtemplate.v4.ST;
-
-import play.Play;
-import play.api.templates.Html;
-import play.libs.F;
-import play.libs.Json;
-import play.mvc.BodyParser;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Http.Context;
-import play.mvc.Http.RequestBody;
-import play.mvc.Result;
-import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
@@ -84,11 +73,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import play.Play;
+import play.api.templates.Html;
+import play.libs.F;
+import play.libs.Json;
+import play.mvc.BodyParser;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Http.Context;
+import play.mvc.Http.RequestBody;
+import play.mvc.Result;
+import play.mvc.With;
 
 //@Api(value = "/user", listingPath = "/api-docs.{format}/user", description = "Operations about users")
 public class User extends Controller {
@@ -101,21 +102,20 @@ public class User extends Controller {
 	static String prepareResponseToJson(List<ODocument> listOfDoc) {
 		response().setContentType("application/json");
 		try {
+			//remove from the users' roles attribute those roles that indicate friendships
 			for (ODocument doc : listOfDoc){
-				doc.detach();
+				doc.detach(); //detaching record to avoid dirty update on DB
 				if ( doc.field("user") instanceof ODocument) {
-					OMVRBTreeRIDSet roles = ((ODocument) doc.field("user")).field("roles");
-					if (roles.size()>1){
-						Iterator<OIdentifiable> it = roles.iterator();
-						while (it.hasNext()){
-							if (((ODocument)it.next().getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME)) {
-								it.remove();
-							}
-						}
-					}
+					Set<ORID> roles = ((ODocument) doc.field("user")).field("roles");
+					List<ORID> finalRoles = Lists.newArrayList();
+					finalRoles.addAll(roles);
+					finalRoles.removeIf(r->{
+						return ((ODocument)r.getRecord()).field("name").toString().startsWith(FriendShipService.FRIEND_ROLE_NAME);
+					});
+					((ODocument) doc.field("user")).field("roles",finalRoles);	//here is why we have detached the record. We do not want to save it, ever!
 				}
 			}
-			return  JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
+			return JSONFormats.prepareResponseToJson(listOfDoc,JSONFormats.Formats.USER);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -162,7 +162,7 @@ public class User extends Controller {
       if (BBConfiguration.getInstance().isChunkedEnabled() && request().version().equals(HttpConstants.HttpProtocol.HTTP_1_1)) {
         if (BaasBoxLogger.isDebugEnabled())
           BaasBoxLogger.info("Prepare to sending chunked response..");
-        return getUsersChunked();
+        return getUsersChunked(true);
       }
 			List<ODocument> profiles = UserService.getUsers(criteria,true);
 			String result = prepareResponseToJson(profiles);
@@ -177,10 +177,13 @@ public class User extends Controller {
 		});
 	}
 
-  private static Result getUsersChunked() {
+  private static Result getUsersChunked(boolean excludeInternals) {
     final Context ctx = Http.Context.current.get();
     QueryParams criteria = (QueryParams) ctx.args.get(IQueryParametersKeys.QUERY_PARAMETERS);
     String select = "";
+    if(excludeInternals){
+    	UserService.excludeInternalUsersFromCriteria(criteria);
+    }
     try {
       DbHelper.openFromContext(ctx);
       select = DbHelper.selectQueryBuilder(UserDao.MODEL_NAME, criteria.justCountTheRecords(), criteria);

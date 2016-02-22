@@ -91,7 +91,8 @@ public class LinkDao {
 
 	public void deleteLink(String linkId) {
 		ORID linkRid = getRidLinkByUUID(linkId);
-		DbHelper.getConnection().delete(linkRid);
+		OCommandRequest command = DbHelper.genericSQLStatementCommandBuilder("delete edge " + linkRid);
+		DbHelper.genericSQLCommandExecute(command, null);
 	}
 	
 	/***

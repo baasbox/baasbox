@@ -105,6 +105,19 @@ public class UserService {
 		}
 	}
 
+	public static void excludeInternalUsersFromCriteria(QueryParams criteria){
+		String where="user.name not in ?" ;
+		if (!StringUtils.isEmpty(criteria.getWhere())) {
+			where += " and (" + criteria.getWhere() + ")";
+		}
+		Object[] params = criteria.getParams();
+		Object[] injectedParams = new String[]{BBConfiguration.getInstance().getBaasBoxAdminUsername(),
+				BBConfiguration.getInstance().getBaasBoxUsername()};
+		Object[] newParams = ArrayUtils.addAll(new Object[]{injectedParams},params);
+		criteria.where(where);
+		criteria.params(newParams);
+	}
+	
     public static List<ODocument> getUsers(QueryParams criteria,boolean excludeInternal) throws SqlInjectionException {
         if (excludeInternal) {
             String where="user.name not in ['" 
@@ -116,6 +129,7 @@ public class UserService {
                 where += " and (" + criteria.getWhere() + ")";
             }
             criteria.where(where);
+
         }
         return getUsers(criteria);
     }
