@@ -118,7 +118,7 @@ DB.rollback = function(){
 };
 
 
-DB.select = function(query,array_of_params,depth){
+DB.select = function(query,array_of_params,options){
 	if(! (typeof query === 'string')){
 		 throw new TypeError("missing query statement");
 	}
@@ -127,9 +127,11 @@ DB.select = function(query,array_of_params,depth){
     }
 	return _command({resource: 'db',
         name: 'select',
-        params: {query:query,
+        params: {
+        	query:query,
         	array_of_params:array_of_params,
-        	depth:depth
+        	depth: options ? options.depth : null,
+        	fetchPlan: options ? options.fetchPlan : null
         }
 	});
 };
@@ -565,8 +567,7 @@ Documents.find = function(){
                          name: 'get',
                          params:{
                              collection: coll,
-                             id: id,
-                             fetchPlan: q.fetchPlan
+                             id: id
                          }});
     }
 };

@@ -103,7 +103,7 @@ class DBResource extends Resource {
 		try {
 	        List listToReturn = (List) DbHelper.genericSQLStatementExecute("select " + statement, params.toArray());
 	        DbHelper.filterOUserPasswords(true);
-	        String s = JSONFormats.prepareResponseToJson(listToReturn, fetchPlan + depth,true);
+	        String s = JSONFormats.prepareDocToJson(listToReturn, fetchPlan + depth);
 	        BaasBoxLogger.debug("Query result: ");
 	        BaasBoxLogger.debug(s);
 			lst = (ArrayNode)BBJson.mapper().readTree(s);
