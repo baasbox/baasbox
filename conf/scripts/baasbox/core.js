@@ -118,7 +118,7 @@ DB.rollback = function(){
 };
 
 
-DB.select = function(query,array_of_params,depth){
+DB.select = function(query,array_of_params,options){
 	if(! (typeof query === 'string')){
 		 throw new TypeError("missing query statement");
 	}
@@ -127,9 +127,11 @@ DB.select = function(query,array_of_params,depth){
     }
 	return _command({resource: 'db',
         name: 'select',
-        params: {query:query,
+        params: {
+        	query:query,
         	array_of_params:array_of_params,
-        	depth:depth
+        	depth: options ? options.depth : null,
+        	fetchPlan: options ? options.fetchPlan : null
         }
 	});
 };
@@ -535,8 +537,10 @@ var Documents = {};
 Documents.find = function(){
     var coll = null,
         q = null,
-        id = null;
+        id = null,
+    	fetchPlan = null;
     switch (arguments.length){
+    	//fall through (missing break)
         case 2:
             if(typeof arguments[1] === 'string') {
                 id = arguments[1];
@@ -555,7 +559,8 @@ Documents.find = function(){
                          name: 'list',
                          params: {
                              collection: coll,
-                             query: q
+                             query: q,
+                             fetchPlan: q.fetchPlan
                          }});
     } else {
         return _command({resource: 'documents',
@@ -659,6 +664,7 @@ var dLinks = {};
 dLinks.find = function(collectionName,id,params){
 	 var coll = collectionName,
      queryLink = params.links;
+	 fetchPlan = params.fetchPlan;
 	 if(!coll || !(typeof coll === 'string')){
 	        throw new TypeError("you must specify a collection");
 	    }
@@ -670,10 +676,11 @@ dLinks.find = function(collectionName,id,params){
          params:{
              collection: coll,
              id: id,
-             links:queryLink
+             links:queryLink,
+             fetchPlan: fetchPlan
          }});
-	 
 }
+
 Documents.Links = dLinks;
 //----- End Documents Links ------
 
