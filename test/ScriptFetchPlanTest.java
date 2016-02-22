@@ -64,7 +64,7 @@ public class ScriptFetchPlanTest {
 				assertEquals("Evaluating 2 _allowRead", true, BBJson.isNull(objRes2.get("_allowRead")));
 				assertEquals("Evaluating 2 _allowUpdate", true, BBJson.isNull(objRes2.get("_allowUpdate")));
 				assertEquals("Evaluating 2 _allowDelete", true, BBJson.isNull(objRes2.get("_allowDelete")));
-				assertEquals("Evaluating 2 _allow", "[\"#5:3\"]", objRes2.get("_allow").toString());
+				assertEquals("Evaluating 2 _allow", "[\"#5:", objRes2.get("_allow").toString().substring(0, 5));
 				
 				ObjectNode auditRes2 = (ObjectNode) objRes2.get("_audit");
 				assertEquals("_audit 2 type field", "_audit", auditRes2.get("type").asText());
@@ -81,7 +81,7 @@ public class ScriptFetchPlanTest {
 				assertEquals("Evaluating 3 _allowUpdate", true, BBJson.isNull(objRes3.get("_allowUpdate")));
 				assertEquals("Evaluating 3 _allowDelete", true, BBJson.isNull(objRes3.get("_allowDelete")));
 				assertEquals("Evaluating 3 _allow", true, objRes3.get("_allow").isArray());
-				assertEquals("Evaluating 3 _allow rid", "\"#5:3\"", objRes3.get("_allow").get(0).get("@rid").toString());
+				assertEquals("Evaluating 3 _allow rid", "\"#5:", objRes3.get("_allow").get(0).get("@rid").toString().substring(0, 4));
 				assertEquals("Evaluating 3 _allow class", "\"OUser\"", objRes3.get("_allow").get(0).get("@class").toString());
 				assertEquals("Evaluating 3 _allow name", "\"baasbox\"", objRes3.get("_allow").get(0).get("name").toString());
 				assertEquals("Evaluating 3 _author", "\"baasbox\"", objRes3.get("_author").toString());
@@ -97,7 +97,7 @@ public class ScriptFetchPlanTest {
 				assertEquals("Evaluating 4 _allowUpdate", true, BBJson.isNull(objRes4.get("_allowUpdate")));
 				assertEquals("Evaluating 4 _allowDelete", true, BBJson.isNull(objRes4.get("_allowDelete")));
 				assertEquals("Evaluating 4 _allow", true, objRes4.get("_allow").isArray());
-				assertEquals("Evaluating 4 _allow rid", "[\"#5:3\"]", objRes4.get("_allow").toString());
+				assertEquals("Evaluating 4 _allow rid", "[\"#5:", objRes4.get("_allow").toString().substring(0,5));
 				assertEquals("Evaluating 4 _author", "\"baasbox\"", objRes4.get("_author").toString());
 				assertEquals("Evaluating 4 @class", "\"fetchplan_test\"", objRes4.get("@class").toString());
 				assertEquals("Evaluating 4 _audit", false, BBJson.isNull(objRes4.get("_audit")));
