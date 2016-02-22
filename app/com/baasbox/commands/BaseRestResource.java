@@ -24,6 +24,7 @@ import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
@@ -112,6 +113,16 @@ public abstract class BaseRestResource extends Resource {
 	        JsonNode params = command.get(ScriptCommand.PARAMS);
 	        JsonNode id = params.get(field);
 	        return id;
+	}
+	protected String getFetchPlan(JsonNode command) throws CommandException {
+		JsonNode fp = getParamField(command, "fetchPlan");
+		
+		if (BBJson.isNull(fp)) return null;
+		if (!fp.isTextual()){
+			throw new CommandParsingException(command,"fetchPlan must be a string");
+		}
+		String fpString = "fetchPlan:" + fp.asText().trim();
+		return fpString;
 	}
 
 }

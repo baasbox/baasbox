@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.MissingNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -60,5 +61,12 @@ public final class BBJson {
     }
     public static ObjectMapperExt mapper(){
         return MAPPER;
+    }
+    
+    public static boolean isNull (JsonNode value){
+    	return
+    			value == null
+    			|| value instanceof NullNode
+    			|| value instanceof MissingNode;
     }
 }
