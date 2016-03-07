@@ -171,7 +171,8 @@ public class User extends Controller {
 			 if (t instanceof SqlInjectionException) {
 				 return badRequest(ExceptionUtils.getMessage(t) + " -- " + ExceptionUtils.getRootCauseMessage(t));
 			 } else {
-				 return internalServerError();
+				 BaasBoxLogger.error(ExceptionUtils.getFullStackTrace(t));
+				 return internalServerError(ExceptionUtils.getFullStackTrace(t));
 			 }
 		});
 	}

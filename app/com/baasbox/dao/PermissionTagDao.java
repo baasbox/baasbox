@@ -19,8 +19,7 @@
 package com.baasbox.dao;
 
 import java.util.List;
-
-import play.cache.Cache;
+import java.util.Map;
 
 import com.baasbox.BBCache;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
@@ -28,12 +27,16 @@ import com.baasbox.dao.exception.PermissionTagAlreadyExistsException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.QueryParams;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import play.cache.Cache;
 
 /**
  *
@@ -100,13 +103,15 @@ public class PermissionTagDao  {
         } catch (SqlInjectionException e){
             throw new InvalidPermissionTagException(e);
         }
-        ODocument document = new ODocument(MODEL_NAME);
-        document.field(TAG,name);
-        document.field(DESCRIPTION,description);
-        document.field(ENABLED,enabled);
-        document.save();
+        
+        ObjectNode document = BBJson.mapper().createObjectNode();
+        document.put(TAG,name);
+        document.put(DESCRIPTION,description);
+        document.put(ENABLED,enabled);        
+        String insertSQL = "insert into " + MODEL_NAME + " CONTENT " + document.toString();
+        ODocument execOutcome = (ODocument)DbHelper.genericSQLStatementExecute(insertSQL, null);
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-        return document;
+        return execOutcome;
     }
 
     /**
@@ -210,8 +215,10 @@ public class PermissionTagDao  {
     //todo implement delete
 
     private OIdentifiable findByName(String tagName) throws SqlInjectionException{
-        OIndex idx = db.getMetadata().getIndexManager().getIndex(INDEX);
-        return  (OIdentifiable)idx.get(tagName);
+    	OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder("select from " + MODEL_NAME + " where tag=?");
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{tagName});
+		if (output.size()==0) return null;
+		return output.get(0);
     }
 
 

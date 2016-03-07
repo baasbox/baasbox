@@ -21,7 +21,9 @@ package com.baasbox.service.sociallogin;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
 
@@ -95,6 +97,9 @@ public class UserInfo {
 	}
 	public String toJson() {
 		return Json.stringify(Json.toJson(this));
+	}
+	public Map toMap(){
+		return BBJson.mapper().convertValue(Json.toJson(this), HashMap.class);
 	}
 	
 	

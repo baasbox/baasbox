@@ -38,6 +38,7 @@ import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.TestBrowser;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -109,8 +110,11 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 		request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 		Result result = routeAndCall(request);
-		assertRoute(result, "getCollection 1", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":0,\"size\":0", true);
-		
+		if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+			assertRoute(result, "getCollection 1", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":0,\"size\":0", true);
+		}else{
+			assertRoute(result, "getCollection 1", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":0,\"size\":\"\"", true);	
+		}
 		//create two doc
 		JsonNode document1;
 		try {
@@ -146,10 +150,13 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
 			request = request.withHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
 			Result result4 = routeAndCall(request);
-			assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
-			BaasBoxLogger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));
-			
-			} catch (JsonProcessingException e) {
+			if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+				assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":6", true);
+			}else{
+				assertRoute(result4, "getCollection 4. content of the collection: " + play.test.Helpers.contentAsString(result) + "\nThe error is: ", Status.OK, "{\"name\":\""+collectionName+"\",\"records\":2,\"size\":\"\"", true);				
+			}
+			BaasBoxLogger.debug("AdminCollectionFunctionalTest - check result - getCollection 4 - : " + play.test.Helpers.contentAsString(result));	
+		} catch (JsonProcessingException e) {
 			Assert.fail(ExceptionUtils.getMessage(e));
 		} catch (IOException e) {
 			Assert.fail(ExceptionUtils.getMessage(e));

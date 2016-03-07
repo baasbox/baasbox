@@ -1,20 +1,16 @@
+import static org.junit.Assert.assertFalse;
 import static play.test.Helpers.running;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import static org.junit.Assert.*;
+import java.util.List;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.db.DbHelper;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 import core.AbstractTest;
 
@@ -34,7 +30,7 @@ public class DateFormatTest extends AbstractTest {
 				{
 					try{
 					DbHelper.open("1234567890", "admin", "admin");
-					OResultSet result1=(OResultSet)DbHelper.genericSQLStatementExecute("select sysdate()",new String[]{});
+					List result1=(List)DbHelper.genericSQLStatementExecute("select sysdate()",new String[]{});
 					ODocument res1 = (ODocument)result1.get(0);
 					String jsonString1= res1.toJSON();
 					ObjectMapper om = BBJson.mapper();
@@ -43,7 +39,7 @@ public class DateFormatTest extends AbstractTest {
 					String seconds1=dateString1.substring(17,19);
 					String milliseconds1=dateString1.substring(20,23);
 					Thread.sleep(1000);
-					OResultSet result2=(OResultSet)DbHelper.genericSQLStatementExecute("select sysdate()",new String[]{});
+					List result2=(List)DbHelper.genericSQLStatementExecute("select sysdate()",new String[]{});
 					ODocument res2 = (ODocument)result2.get(0);
 					String jsonString2= res2.toJSON();
 					JsonNode json2 = om.readTree(jsonString2);
@@ -53,7 +49,7 @@ public class DateFormatTest extends AbstractTest {
 					
 					assertFalse("seconds and milliseconds should be different: " + dateString1 + " " + dateString2, ("0"+seconds1).equals(milliseconds1) && ("0"+seconds2).equals(milliseconds2));
 					}catch(Throwable e){
-						assertFail(ExceptionUtils.getMessage(e));
+						assertFail(ExceptionUtils.getFullStackTrace(e));
 						DbHelper.close(DbHelper.getConnection());
 					}
 				}

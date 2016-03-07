@@ -27,9 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import java.util.Arrays;
-
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
@@ -70,17 +71,21 @@ import com.baasbox.service.user.RoleService;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
 import com.eaio.uuid.UUID;
+import com.google.common.collect.Maps;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -93,6 +98,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public class DbHelper {
 
 	private static final String SCRIPT_FILE_NAME = "db.sql";
+	private static final String EMPTY_DB_FILE_NAME = "empty_db_exported.json";
 	private static final String CONFIGURATION_FILE_NAME = "configuration.conf";
 
 	private static volatile boolean dbFreeze = false;
@@ -109,6 +115,21 @@ public class DbHelper {
 		};
 	};
 
+	private static ThreadLocal<Map<String,String>> transientRidsInTransaction = new ThreadLocal<Map<String,String>>() {
+		protected Map<String,String> initialValue() {
+			return Maps.newHashMap();
+		};
+	};
+	
+	public static String getRIDfromCurrentTransaction(String id){
+		if (isInTransaction())	return transientRidsInTransaction.get().get(id);
+		else return null;
+	}
+	
+	public static void setRIDinCurrentTransaction(String id, String rid){
+		if (isInTransaction()) transientRidsInTransaction.get().put(id, rid);
+	}
+	
 	private static ThreadLocal<String> username = new ThreadLocal<String>() {
 		protected String initialValue() {
 			return "";
@@ -125,7 +146,13 @@ public class DbHelper {
 
 
 	public static BigInteger getDBTotalSize(){
-		return FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getInstance().getDBFullPath()));
+		BigInteger toRet;
+		if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+			toRet=FileUtils.sizeOfDirectoryAsBigInteger(new File (BBConfiguration.getInstance().getDBFullPath()));
+		}else {
+			toRet=BigInteger.ZERO;
+		}
+		return toRet;
 	}
 	
 	public static BigInteger getDBStorageFreeSpace(){
@@ -156,6 +183,7 @@ public class DbHelper {
 			if (BaasBoxLogger.isTraceEnabled())
 				BaasBoxLogger.trace("Begin transaction");
 			db.begin();
+			transientRidsInTransaction.get().clear();
 		}
 		tranCount.set(tranCount.get().intValue() + 1);
 		if (BaasBoxLogger.isDebugEnabled())
@@ -178,6 +206,7 @@ public class DbHelper {
 			if (tranCount.get() == 0) {
 				db.commit();
 				db.getTransaction().close();
+				transientRidsInTransaction.get().clear();
 			}
 		} else
 			throw new NoTransactionException(
@@ -198,6 +227,7 @@ public class DbHelper {
 				BaasBoxLogger.debug("Rollback transaction");
 			db.getTransaction().rollback();
 			db.getTransaction().close();
+			transientRidsInTransaction.get().clear();
 			tranCount.set(0);
 		}
 		if (BaasBoxLogger.isDebugEnabled())
@@ -221,9 +251,9 @@ public class DbHelper {
 		//patch for issue #469
 		if (StringUtils.isEmpty(criteria.getWhere()) && getConnection() != null){
 			final OUser user = getConnection().getUser();
-			if (user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) 
+			if (!UserService.isAnAdmin(user.getName())) {
 				 ret += " where 1=1";
-
+			}
 		}
 		if (!count && !StringUtils.isEmpty(criteria.getGroupBy())) {
 			ret += " group by ( " + criteria.getGroupBy() + " )";
@@ -393,26 +423,46 @@ public class DbHelper {
 	}
 
 	public static void shutdownDB(boolean repopulate) {
-		ODatabaseRecordTx db = null;
-
 		try {
 			// WE GET THE CONNECTION BEFORE SETTING THE SEMAPHORE
-			db = getConnection();
+			final ODatabaseRecordTx db = getConnection();
 
 			synchronized(DbHelper.class)  {
 				if(!dbFreeze){
 					dbFreeze = true;
 				}
-				db.drop();
-				db.close();
-				db.create();
-				db.getLevel1Cache().clear();
-				db.getLevel2Cache().clear();
-				db.reload();
-				db.getMetadata().reload();
-				if (repopulate) {
+				if (BBConfiguration.getInstance().isConfiguredDBLocal()){
+					db.drop();
+					db.close();
+					db.create();
+					db.getLevel1Cache().clear();
+					db.getLevel2Cache().clear();
+					db.reload();
+					db.getMetadata().reload();
+					if (repopulate) {
+						HooksManager.registerAll(db);
+						setupDb();
+					}
+				}else{  //remote DB
+					//when using remote ODB there is no way to drop or create a new database using an admin user
+					//we can simulate drop() and create() importing a new empty ODB database
+					InputStream is=null;
+					if (Play.application().isProd())
+						is = Play.application().resourceAsStream(EMPTY_DB_FILE_NAME);
+					else
+						is = new FileInputStream(Play.application().getFile(
+								"conf/" + EMPTY_DB_FILE_NAME));
+					ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
+					ODatabaseImport oi = new ODatabaseImport(dbd, is, new OCommandOutputListener() {
+						@Override
+						public void onMessage(String m) {
+							BaasBoxLogger.info("Restore db (for drop): " + m);
+						}
+					});
+					startImport(db, oi);
+					oi.close();
+					evolveDB(db);
 					HooksManager.registerAll(db);
-					setupDb();
 				}
 			}
 		} catch (Throwable e) {
@@ -423,6 +473,32 @@ public class DbHelper {
 			}
 		}
 
+	}
+
+	private static void startImport(final ODatabaseRecordTx db, ODatabaseImport oi) {
+		oi.setPreserveRids(true);
+		oi.setIncludeManualIndexes(true);
+		oi.setUseLineFeedForRecords(true);
+		oi.setPreserveClusterIDs(true);
+		oi.setPreserveRids(true);
+		oi.setDeleteRIDMapping(true);
+		oi.setIncludeSchema(true);
+		oi.setIncludeClusterDefinitions(true);
+		db.getMetadata().getIndexManager().flush();
+		db.getMetadata().getIndexManager().reload();
+		Set<OIndex> indexesToRebuild = new HashSet<OIndex>();
+		db.getMetadata().getIndexManager().getIndexes().stream().forEach(idx->{
+			 if(idx.isAutomatic()) {
+				 BaasBoxLogger.info("...dropping {} index",idx.getName());
+				 db.getMetadata().getIndexManager().dropIndex(idx.getName());
+				 indexesToRebuild.add(idx);
+			 }
+		});
+		db.getMetadata().getIndexManager().flush();
+		db.getMetadata().getIndexManager().reload();
+		 
+		BaasBoxLogger.info("...starting import procedure...");
+		oi.importDatabase();
 	}
 
 	public static ODatabaseRecordTx getOrOpenConnection(String appcode,
@@ -459,7 +535,7 @@ public class DbHelper {
 			throw new ShuttingDownDBException();
 		}
 
-		String databaseName=BBConfiguration.getInstance().getDBFullPath();
+		String databaseName=BBConfiguration.getInstance().getDBStorageType() + ":" + BBConfiguration.getInstance().getDBFullPath();
 		
 		/* these will be necessary when BaasBox will support OrientDB clusters */
 		/*
@@ -473,8 +549,7 @@ public class DbHelper {
 					+ username);
 		
 		ODatabaseDocumentPool odp=ODatabaseDocumentPool.global();
-		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, "plocal:"
-				+ databaseName, username, password);
+		ODatabaseDocumentTxPooled conn=new ODatabaseDocumentTxPooled(odp, databaseName, username, password);
 
 		HooksManager.registerAll(getConnection());
 		DbHelper.appcode.set(appcode);
@@ -483,13 +558,19 @@ public class DbHelper {
 
 		return getConnection();
 	}
+	
+	public static boolean isConnectionLocal(){
+		return isConnectionLocal(getConnection());
+	}
+
+	private static boolean isConnectionLocal(ODatabaseRecordTx connection) {
+		return connection.getStorage().getName().equals("plocal");
+	}
 
 	public static boolean isConnectedAsAdmin(boolean excludeInternal) {
 		if (getConnection()==null) return false;
 		OUser user = getConnection().getUser();
-		Set<ORole> roles = user.getRoles();
-		boolean isAdminRole = roles.contains(RoleDao.getRole(DefaultRoles.ADMIN
-				.toString()));
+		boolean isAdminRole = UserService.isAnAdmin(user.getName());
 		return excludeInternal ? isAdminRole
 				&& !BBConfiguration.getInstance().getBaasBoxAdminUsername().equals(
 						user.getName()) : isAdminRole;
@@ -723,7 +804,7 @@ public class DbHelper {
 	
 	public static void importData(String appcode,File newFile) throws UnableToImportDbException{
 		if (newFile==null) throw new UnableToImportDbException("Cannot import file. The reference is null");
-		ODatabaseRecordTx db = null;
+		final ODatabaseRecordTx db = getConnection();
 		try{
 			BaasBoxLogger.info("Initializing restore operation..:");
 			BaasBoxLogger.info("...dropping the old db..:");
@@ -733,9 +814,8 @@ public class DbHelper {
 					dbFreeze=true;
 				}
 			}
-			DbHelper.shutdownDB(false);
+			//DbHelper.shutdownDB(false);
 			
-			db=getConnection(); 
 			BaasBoxLogger.info("...unregistering hooks...");
 			HooksManager.unregisteredAll(db);
 			BaasBoxLogger.info("...drop the O-Classes...");
@@ -743,22 +823,15 @@ public class DbHelper {
 
 			 db.getMetadata().getSchema().dropClass("OSchedule");
 			 db.getMetadata().getSchema().dropClass("ORIDs");
-			   ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
+			ODatabaseDocumentTx dbd = new ODatabaseDocumentTx(db);
 			ODatabaseImport oi = new ODatabaseImport(dbd, newFile.getAbsolutePath(), new OCommandOutputListener() {
 				@Override
 				public void onMessage(String m) {
 					BaasBoxLogger.info("Restore db: " + m);
 				}
 			});
-			
-			 oi.setIncludeManualIndexes(true);
-			 oi.setUseLineFeedForRecords(true);
-			 oi.setPreserveClusterIDs(true);
-			 oi.setPreserveRids(true);
-			 BaasBoxLogger.info("...starting import procedure...");
-			 oi.importDatabase();
+			 startImport(db, oi);
 			 oi.close();
-			
 			 BaasBoxLogger.info("...setting up internal user credential...");
 			 updateDefaultUsers();
 			 BaasBoxLogger.info("...setting up DataBase attributes...");
@@ -803,10 +876,13 @@ public class DbHelper {
 		//check for evolutions
 		 BaasBoxLogger.info("...looking for evolutions...");
 		 String fromVersion="";
-		 if (db.getMetadata().getIndexManager().getIndex("_bb_internal")!=null){
+
+		 List<ODocument> qryResult = (List<ODocument>)DbHelper.genericSQLStatementExecute("select from (select expand(indexes) from metadata:indexmanager) where name = '_bb_internal'",null);
+		 if (qryResult.size() > 0){
 			 BaasBoxLogger.warn("...DB is < 0.7 ....");
-			 ORID o = (ORID) db.getMetadata().getIndexManager().getIndex("_bb_internal").get(Internal.DB_VERSION.getKey());
-			 ODocument od = db.load(o);
+			 qryResult = (List<ODocument>)DbHelper.genericSQLStatementExecute("select from index:_bb_internal where key = ?",new String[]{Internal.DB_VERSION.getKey()});
+			 ODocument od = db.load((ORID)qryResult.get(0).field("rid",ORID.class));
+			 BaasBoxLogger.debug("******: " + od);
 			 fromVersion=od.field("value");
 		 }else fromVersion=Internal.DB_VERSION.getValueAsString();
 		 BaasBoxLogger.info("...db version is: " + fromVersion);

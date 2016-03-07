@@ -31,6 +31,8 @@ public interface IBBConfigurationKeys {
 	public static final String ROOT_AS_ADMIN = "baasbox.root.admin";
 	
 	public static final String DB_PATH = "orient.baasbox.path";
+	public static final String DB_STORAGE = "orient.baasbox.engine";
+	
 	public static final String DB_BACKUP_PATH = "orient.baasbox.backup.path";
 	public static final String APP_CODE = "application.code";
 	public static final String API_VERSION = "api.version";

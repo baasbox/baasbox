@@ -58,7 +58,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public abstract class NodeDao  {
 
-	public final String MODEL_NAME;
+	public String MODEL_NAME;
+	
 	public static final String CLASS_NODE_NAME = "_BB_Node";
 	public static final String CLASS_VERTEX_NAME = "_BB_NodeVertex";
 	
@@ -164,6 +165,7 @@ public abstract class NodeDao  {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
+				DbHelper.setRIDinCurrentTransaction(token.toString(), doc.getIdentity().toString());
 				DbHelper.commitTransaction();
 				return doc;
 		}catch (Throwable e){
@@ -183,7 +185,19 @@ public abstract class NodeDao  {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
 	}
 	
-
+	public void merge(ODocument originalDocument, ODocument documentToMerge) throws UpdateOldVersionException  {
+		if (documentToMerge.getVersion()!=0 && documentToMerge.getVersion()!=originalDocument.getVersion()) throw new UpdateOldVersionException("The document to merge is older than the stored one v" +documentToMerge.getVersion() + " vs v"+documentToMerge.getVersion(),documentToMerge.getVersion(), originalDocument.getVersion());
+		//backup the baasbox's fields 
+		HashMap<String,Object> map = backupBaasBoxFields(originalDocument);
+		//remove backupBaasBoxFields from data that will be merged
+		documentToMerge=removeClassAndRid(documentToMerge);
+		//update the document
+		originalDocument.merge(documentToMerge, true, false);
+		//restore the baasbox's fields
+		restoreBaasBoxFields(originalDocument, map);
+		originalDocument.save();
+	}
+	
 	public void update(ODocument originalDocument, ODocument documentToMerge) throws UpdateOldVersionException  {
 		if (documentToMerge.getVersion()!=0 && documentToMerge.getVersion()!=originalDocument.getVersion()) throw new UpdateOldVersionException("The document to merge is older than the stored one v" +documentToMerge.getVersion() + " vs v"+documentToMerge.getVersion(),documentToMerge.getVersion(), originalDocument.getVersion());
 		//backup the baasbox's fields 

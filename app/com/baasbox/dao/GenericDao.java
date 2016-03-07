@@ -80,14 +80,17 @@ public class GenericDao {
 	 * @return
 	 */
 	public String getRidNodeByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex("_BB_Node.id");
-		ORID rid = (ORID) index.get(id);  
-		if (rid!=null){
-			return rid.toString();
-		}else{
-			return null;
+		OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder("select from _BB_node where id=? limit 1");
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{id});
+		if (output.size()==0){
+			if (DbHelper.isInTransaction()) {
+				//maybe the id belongs to an object created inside a current transaction
+				return DbHelper.getRIDfromCurrentTransaction(id);
+			}else{
+				return null;
+			}
 		}
+		return output.get(0).getIdentity().toString();		
 	}
 	
 
