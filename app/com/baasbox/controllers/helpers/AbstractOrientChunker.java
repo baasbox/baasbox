@@ -128,7 +128,9 @@ public abstract class  AbstractOrientChunker extends StringChunks {
 					}
 				}); //setResultListener
 				OCommandRequest command = DbHelper.getConnection().command(qry);
+				DbHelper.filterOUserPasswords(true);
 				command.execute(criteria.getParams());
+				DbHelper.filterOUserPasswords(false);
 	    	}catch (Exception e) {
 	    		String exceptionMessage = ExceptionUtils.getFullStackTrace(e);
 	    		BaasBoxLogger.error(exceptionMessage);
