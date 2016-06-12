@@ -99,7 +99,11 @@ public class ScriptInvoker extends Controller{
         ObjectNode reqJson = BBJson.mapper().createObjectNode();
         reqJson.put("pathParams",pathParams);
         reqJson.put("pluginName",pluginName);
-        reqJson.put("acceptedTypes", BBJson.mapper().valueToTree(request().acceptedTypes()));
+        reqJson.put("acceptedTypes", BBJson.mapper().valueToTree(
+        		request().acceptedTypes().stream().map(x->{
+        			return x.mediaType() + "/" + x.mediaSubType();
+        		}).collect(Collectors.toList()))
+        );
         reqJson.put("acceptLanguages", BBJson.mapper().valueToTree(
         		request().acceptLanguages().stream().map(language->{
         					return language.code();
@@ -110,7 +114,7 @@ public class ScriptInvoker extends Controller{
         reqJson.put("path",request().path());
         reqJson.put("remote",request.remoteAddress()); //deprecated
         reqJson.put("remoteAddress",request.remoteAddress());
-        reqJson.put("uri",request().uri());
+        reqJson.put("uri",request().uri()); //path + querystring
         
         reqJson.put("username",UserService.isInternalUsername(DbHelper.getCurrentHTTPUsername()) ? "" : DbHelper.getCurrentHTTPUsername());
         reqJson.put("appcode",DbHelper.getCurrentAppCode());
