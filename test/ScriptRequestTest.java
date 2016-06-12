@@ -96,10 +96,16 @@ public class ScriptRequestTest {
             JsonNode node = BBJson.mapper().readTreeOrMissing(content);
             JsonNode data = node.get("data");
             assertEquals(method,data.get("method").asText());
-            assertEquals(PATH.substring(1),data.get("path").asText());
+            assertEquals("/plugin/" + TEST_CALL + PATH,data.get("path").asText());
+            assertEquals(PATH.substring(1),data.get("pathParams").asText());
+            assertEquals("/plugin/" + TEST_CALL + PATH + QUERY,data.get("uri").asText());
             assertNotNull(data.get("remote"));
+            assertNotNull(data.get("remoteAddress"));
+            assertNotNull(data.get("pluginName"));
+            assertEquals(TEST_CALL,data.get("pluginName").asText());
             assertEquals(QSTRINGJSON,data.get("queryString"));
             assertEquals(HEADER_VALUE,data.path("headers").path(HEADER_KEY).path(0).asText());
+            
             asserts.accept(data);
         });
     }

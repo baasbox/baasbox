@@ -392,7 +392,7 @@ public class JsonQueryTest {
 	public void testComplexQuery() throws Exception{
 		Random r = new Random();
 		
-		URL u = new URL("https://google-api-go-client.googlecode.com/hg-history/adc5d697472e6769364e3d60214e7251dcada595/drive/v2/drive-api.json?rand="+r.nextInt(50000));
+		URL u = new URL("https://raw.githubusercontent.com/google/google-api-go-client/master/drive/v2/drive-api.json?rand="+r.nextInt(50000));
          BufferedReader reader = new BufferedReader(new InputStreamReader(u.openStream()));
          String line;
          StringBuffer content = new StringBuffer();
@@ -428,7 +428,7 @@ public class JsonQueryTest {
 	public void testComplexWrite() throws Exception{
 		Random r = new Random();
 		
-		URL u = new URL("https://google-api-go-client.googlecode.com/hg-history/adc5d697472e6769364e3d60214e7251dcada595/drive/v2/drive-api.json?rand="+r.nextInt(50000));
+		URL u = new URL("https://raw.githubusercontent.com/google/google-api-go-client/master/drive/v2/drive-api.json?rand="+r.nextInt(50000));
          BufferedReader reader = new BufferedReader(new InputStreamReader(u.openStream()));
          String line;
          StringBuffer content = new StringBuffer();
@@ -459,7 +459,7 @@ public class JsonQueryTest {
  		JsonNode result = jn.path("resources").path("about").path("methods").path("get").path("scopes");
  		assertTrue(result instanceof ArrayNode);
  		ArrayNode arrNode = (ArrayNode)result;
- 		assertEquals(5,arrNode.size());
+ 		assertEquals(7,arrNode.size());
  		assertEquals(arrNode.get(4).asText(),res.get(4).asText());
  		
 		
