@@ -19,6 +19,9 @@
 package com.baasbox.controllers;
 
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -97,7 +100,18 @@ public class ScriptInvoker extends Controller{
         Map<String, String[]> query = request.queryString();
         pathParams=pathParams == null ? "/" : pathParams; //i.e. /plugin/plugin.name/this/is/the/path/params/variable
         ObjectNode reqJson = BBJson.mapper().createObjectNode();
-        reqJson.put("pathParams",pathParams);
+        reqJson.put("pathParamsString",pathParams);
+        reqJson.put("pathParams", BBJson.mapper().valueToTree(
+        		Arrays.stream(pathParams.split("/")).map(x->{
+        			try {
+						return URLDecoder.decode(x, StandardCharsets.UTF_8.name());
+					} catch (Exception e) {
+						// swallow
+						BaasBoxLogger.warn(ExceptionUtils.getFullStackTrace(e));
+						return x;
+					}
+        		}).collect(Collectors.toList()))        
+        );
         reqJson.put("pluginName",pluginName);
         reqJson.put("acceptedTypes", BBJson.mapper().valueToTree(
         		request().acceptedTypes().stream().map(x->{
