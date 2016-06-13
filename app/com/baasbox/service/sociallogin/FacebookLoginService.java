@@ -69,7 +69,7 @@ public class FacebookLoginService extends SocialLoginService{
 
 	@Override
 	public String userInfoUrl() {
-		return "https://graph.facebook.com/me";
+		return "https://graph.facebook.com/me?fields=id,email,gender,link,name";
 	}
 
 	
