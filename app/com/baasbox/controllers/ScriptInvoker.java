@@ -23,6 +23,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ObjectUtils;
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import ch.qos.logback.classic.db.DBHelper;
 import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Http;
@@ -137,6 +139,11 @@ public class ScriptInvoker extends Controller{
         reqJson.put("queryString",queryJson);
         JsonNode headersJson = BBJson.mapper().valueToTree(headers);
         reqJson.put("headers",headersJson);
+        
+        reqJson.put("requestId", UUID.randomUUID().toString());
+        reqJson.put("serverTimestamp", System.currentTimeMillis());
+        reqJson.put("serverVersion", BBConfiguration.getInstance().getApiVersion());
+        reqJson.put("serverDBVersion", BBConfiguration.getInstance().getDBVersion());
         
         if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
             String textBody = body == null ? null : body.asText();

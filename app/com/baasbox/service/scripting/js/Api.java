@@ -21,9 +21,6 @@ package com.baasbox.service.scripting.js;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import jdk.nashorn.internal.runtime.ECMAErrors;
-import jdk.nashorn.internal.runtime.ECMAException;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -37,9 +34,11 @@ import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.JsonCallback;
 import com.baasbox.service.scripting.cache.CacheAccess;
 import com.baasbox.util.BBJson;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import jdk.nashorn.internal.runtime.ECMAErrors;
+import jdk.nashorn.internal.runtime.ECMAException;
 
 
 /**
@@ -82,16 +81,30 @@ public class Api {
     public static String getBaasBoxVersion(){
         return BBConfiguration.getInstance().getApiVersion();
     }
+    
+    public static String getDBVersion(){
+        return BBConfiguration.getInstance().getDBVersion();
+    }
 
     public static boolean isScriptLoggingActive(){
     	return (EventsService.howManyScriptLoggerListener.get() > 0);
     }
     
     public static String currentUserName(){
-        String currentUser = DbHelper.getCurrentHTTPUsername();
+        String currentUser = DbHelper.getCurrentUserNameFromConnection();
         return currentUser;
     }
 
+    public static String callerUserName(){
+        String currentUser = DbHelper.getCurrentHTTPUsername();
+        return currentUser;
+    }
+    
+    public static boolean isAdminContext(){
+        return DbHelper.isConnectedAsAdmin(false);
+    }
+
+    
     public static void connectAsAdmin(){
         DbHelper.reconnectAsAdmin();
     }
