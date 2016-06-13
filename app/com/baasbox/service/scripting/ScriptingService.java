@@ -425,9 +425,9 @@ public class ScriptingService {
             
             long startTime = System.nanoTime();
             if (timeout==null) {
-            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body));
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ?  (body.isTextual() ? body.asText() : body.toString()) : body));
             } else {
-            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? body.toString() : body), timeout);            	
+            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? (body.isTextual() ? body.asText() : body.toString()) : body), timeout);            	
             }
             long endTime = System.nanoTime();
 

@@ -19,17 +19,16 @@
 package com.baasbox.controllers;
 
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-
-import play.libs.F;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
-import play.mvc.With;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.controllers.actions.filters.ConnectToDBFilterAsync;
@@ -42,10 +41,18 @@ import com.baasbox.service.scripting.ScriptingService;
 import com.baasbox.service.scripting.base.ScriptCall;
 import com.baasbox.service.scripting.base.ScriptEvalException;
 import com.baasbox.service.scripting.base.ScriptResult;
+import com.baasbox.service.user.UserService;
 import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import ch.qos.logback.classic.db.DBHelper;
+import play.libs.F;
+import play.mvc.Controller;
+import play.mvc.Http;
+import play.mvc.Result;
+import play.mvc.With;
 
 
 /**
@@ -59,9 +66,8 @@ public class ScriptInvoker extends Controller{
     @With({UserOrAnonymousCredentialsFilterAsync.class,
            ConnectToDBFilterAsync.class,
            ExtractQueryParameters.class})
-    public static F.Promise<Result> invoke(String name,String path){
+    public static F.Promise<Result> invoke(String name,String params){
         return F.Promise.promise(DbHelper.withDbFromContext(ctx(),()-> {
-
 
             ODocument serv = null;
             if (request().body().asText() != null && request().body().isMaxSizeExceeded())//fixes issue_561
@@ -74,7 +80,7 @@ public class ScriptInvoker extends Controller{
             if (serv == null) {
                 return notFound("Script does not exists");
             }
-            JsonNode reqAsJson = serializeRequest(path, request());
+            JsonNode reqAsJson = serializeRequest(params, request(),name);
 
             try {
                 ScriptResult result = ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
@@ -88,19 +94,57 @@ public class ScriptInvoker extends Controller{
         }));
     }
 
-    public static JsonNode serializeRequest(String path,Http.Request request){
+    public static JsonNode serializeRequest(String pathParams,Http.Request request,String pluginName){
         Http.RequestBody body = request.body();
        
         Map<String, String[]> headers = request.headers();
         String method = request.method();
         Map<String, String[]> query = request.queryString();
-        path=path==null?"/":path;
+        pathParams=pathParams == null ? "/" : pathParams; //i.e. /plugin/plugin.name/this/is/the/path/params/variable
         ObjectNode reqJson = BBJson.mapper().createObjectNode();
+        reqJson.put("pathParamsString",pathParams);
+        reqJson.put("pathParams", BBJson.mapper().valueToTree(
+        		Arrays.stream(pathParams.split("/")).map(x->{
+        			try {
+						return URLDecoder.decode(x, StandardCharsets.UTF_8.name());
+					} catch (Exception e) {
+						// swallow
+						BaasBoxLogger.warn(ExceptionUtils.getFullStackTrace(e));
+						return x;
+					}
+        		}).collect(Collectors.toList()))        
+        );
+        reqJson.put("pluginName",pluginName);
+        reqJson.put("acceptedTypes", BBJson.mapper().valueToTree(
+        		request().acceptedTypes().stream().map(x->{
+        			return x.mediaType() + "/" + x.mediaSubType();
+        		}).collect(Collectors.toList()))
+        );
+        reqJson.put("acceptLanguages", BBJson.mapper().valueToTree(
+        		request().acceptLanguages().stream().map(language->{
+        					return language.code();
+        		}).collect(Collectors.toList()))
+        );
+        reqJson.put("host", request().host());
         reqJson.put("method",method);
-        reqJson.put("path",path);
-        reqJson.put("remote",request.remoteAddress());
-
-
+        reqJson.put("path",request().path());
+        reqJson.put("remote",request.remoteAddress()); //deprecated
+        reqJson.put("remoteAddress",request.remoteAddress());
+        reqJson.put("uri",request().uri()); //path + querystring
+        
+        reqJson.put("username",UserService.isInternalUsername(DbHelper.getCurrentHTTPUsername()) ? "" : DbHelper.getCurrentHTTPUsername());
+        reqJson.put("appcode",DbHelper.getCurrentAppCode());
+        
+        JsonNode queryJson = BBJson.mapper().valueToTree(query);
+        reqJson.put("queryString",queryJson);
+        JsonNode headersJson = BBJson.mapper().valueToTree(headers);
+        reqJson.put("headers",headersJson);
+        
+        reqJson.put("requestId", UUID.randomUUID().toString());
+        reqJson.put("serverTimestamp", System.currentTimeMillis());
+        reqJson.put("serverVersion", BBConfiguration.getInstance().getApiVersion());
+        reqJson.put("serverDBVersion", BBConfiguration.getInstance().getDBVersion());
+        
         if (!StringUtils.containsIgnoreCase(request.getHeader(CONTENT_TYPE), "application/json")) {
             String textBody = body == null ? null : body.asText();
             if (textBody == null) {
@@ -115,10 +159,6 @@ public class ScriptInvoker extends Controller{
             reqJson.put("body", body.asJson());
         }
         
-        JsonNode queryJson = BBJson.mapper().valueToTree(query);
-        reqJson.put("queryString",queryJson);
-        JsonNode headersJson = BBJson.mapper().valueToTree(headers);
-        reqJson.put("headers",headersJson);
         BaasBoxLogger.debug("Serialized request to pass to the script: ");
         BaasBoxLogger.debug(reqJson.toString());
         return reqJson;

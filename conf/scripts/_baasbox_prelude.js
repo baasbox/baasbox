@@ -199,7 +199,28 @@ var GLOBAL=this;
                             },
                       enumerable: true,
                       configurable: false},
-
+                      
+                      "pluginName":
+                      {get: function(){
+                    	  		return this.main;
+                            },
+                       enumerable: true,
+                       configurable: false},
+                       
+                       "serverVersion":
+                       {get: function(){
+                                 return Api.getBaasBoxVersion();
+                             },
+                        enumerable: true,
+                        configurable: false},
+                        
+                        "serverDBVersion":
+                        {get: function(){
+                                  return Api.getDBVersion();
+                              },
+                         enumerable: true,
+                         configurable: false},
+                        
                       "main":
                       {get: function(){
                                 return Api.mainModule();
