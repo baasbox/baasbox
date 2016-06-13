@@ -851,7 +851,7 @@ Cache.set = function(key,obj,params){
 	if(params.ttl && !isNaN(params.ttl)){
 		ttl = params.ttl;
 	}
-	setValueInCache(cacheScope,key,obj,ttl);
+	setValueInCache(cacheScope,key,JSON.stringify(obj),ttl);
 	return obj;
 }
 
@@ -860,7 +860,8 @@ Cache.get = function(key,cacheScope){
 		cacheScope = 'user';
 	}
 	validateCacheParams("get",cacheScope,key);
-	return getValueFromCache(cacheScope,key);
+	var value=getValueFromCache(cacheScope,key);
+	return JSON.parse(value);
 }
 
 Cache.remove = function(key,params){
