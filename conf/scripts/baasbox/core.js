@@ -32,7 +32,7 @@ exports.version = __getBaasBoxVersion(); //defined in _baasbox_prelude.js
 //-------- WS (Remote API calls) --------
 
 var WS = {};
-var wsRequest = function(method,url,body,params,headers,timeout){
+var wsRequest = function(method,url,body,params,headers,timeout,attempts){
     return _command({resource: 'script',
                      name: 'ws',
                      params: {
@@ -41,29 +41,30 @@ var wsRequest = function(method,url,body,params,headers,timeout){
                          params: params,
                          headers: headers,
                          body: body,
-                         timeout:timeout
+                         timeout:timeout,
+                         attempts:attempts ? attempts :1
                      }});
 };
 
 WS.post = function(url,body,opts){
     opts =opts||{};
-    return wsRequest('post',url,body,opts.params,opts.headers,opts.timeout);
+    return wsRequest('post',url,body,opts.params,opts.headers,opts.timeout,opts.attempts);
 };
 
 WS.get = function(url,opts){
     opts=opts||{};
-    return wsRequest('get',url,null,opts.params,opts.headers,opts.timeout);
+    return wsRequest('get',url,null,opts.params,opts.headers,opts.timeout,opts.attempts);
 };
 
 WS.put = function(url,body,opts){
     opts = opts||{};
-    return wsRequest('put',url,body,opts.params,opts.headers,opts.timeout);
+    return wsRequest('put',url,body,opts.params,opts.headers,opts.timeout,opts.attempts);
 };
 
 
 WS.delete = function(url,opts){
     opts = opts||{};
-    return wsRequest('delete',url,null,opts.params,opts.headers,opts.timeout);
+    return wsRequest('delete',url,null,opts.params,opts.headers,opts.timeout,opts.attempts);
 };
 //-------- END WS --------
 
