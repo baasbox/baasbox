@@ -372,6 +372,8 @@ public class ScriptingService {
     	JsonNode url = req.get("url");
     	JsonNode method = req.get("method");
     	JsonNode timeout = req.get("timeout");
+    	JsonNode attempts = req.get("attempts");
+    	
 
     	if (url == null || url instanceof NullNode ) throw new IllegalArgumentException("Missing URL to call");
     	if (method == null || method instanceof NullNode ) throw new IllegalArgumentException("Missing method to use when calling the URL");
@@ -382,7 +384,8 @@ public class ScriptingService {
                 mapJson(req.get("params")),
                 mapJson(req.get("headers")),
                 req.get("body"),
-                (timeout != null && timeout.isNumber()) ? timeout.asInt() : null);
+                (timeout != null && timeout.isNumber()) ? timeout.asInt() : null,
+                (attempts != null && attempts.isNumber()) ? attempts.asInt() : 1);
     }
 
 
@@ -416,23 +419,29 @@ public class ScriptingService {
         }
     }
 
-    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body, Integer timeout) throws Exception{
+    private static JsonNode callJsonSync(String url,String method,Map<String,List<String>> params,Map<String,List<String>> headers,JsonNode body, Integer timeout, int attempts) throws Exception{
         try {
             ObjectNode node = BBJson.mapper().createObjectNode();
             WS.Response resp = null;
             
             long startTime = System.nanoTime();
-            if (timeout==null) {
-            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ?  (body.isTextual() ? body.asText() : body.toString()) : body));
-            } else {
-            	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? (body.isTextual() ? body.asText() : body.toString()) : body), timeout);            	
+            for (int attempt_number = 1;attempt_number <= attempts; attempt_number++){
+            	BaasBoxLogger.info("attempt n. " + attempt_number);
+            	try	{
+	                if (timeout==null) {
+	                	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ?  (body.isTextual() ? body.asText() : body.toString()) : body));
+	                } else {
+	                	resp = HttpClientService.callSync(url, method, params, headers, body==null ? null:(body.isValueNode() ? (body.isTextual() ? body.asText() : body.toString()) : body), timeout);            	
+	                }
+	                if (resp.getStatus() < 400 ) break; //if everything went fine, do not retry to execute the call
+            	} catch (Exception e) {
+            		if (attempt_number==attempts) throw e;
+                 }
             }
-            long endTime = System.nanoTime();
-
+            long endTime = System.nanoTime(); 
             int status = resp.getStatus();
             node.put("status",status);
             node.put("execution_time", (endTime-startTime)/1000000L);
-
             String header = resp.getHeader("Content-Type");
             if (header==null ||  header.startsWith("text")){
                 node.put("body",resp.getBody());
@@ -441,7 +450,7 @@ public class ScriptingService {
             } else {
                 node.put("body",resp.getBody());
             }
-
+            
             return node;
         } catch (Exception e) {
             BaasBoxLogger.error("failed to connect: "+ ExceptionUtils.getMessage(e));
