@@ -1,4 +1,4 @@
-FROM dockerfile/java:oracle-java8
+FROM java:8
 MAINTAINER Cesare Rocchi <c.rocchi@baasbox.com>
 WORKDIR /baasbox
 
@@ -9,3 +9,4 @@ RUN mv baasbox-*/ baasbox/
 RUN chmod +x baasbox/start
 EXPOSE 9000
 ENTRYPOINT baasbox/start
+h
