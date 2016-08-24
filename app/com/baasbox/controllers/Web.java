@@ -29,7 +29,7 @@ public class Web extends Controller {
 				  File file = fileToReturn.toFile();
 				  if (!file.isDirectory()) { 
 					  BaasBoxLogger.debug("WWW file found: " + uri);
-					  response().setHeader("Content-disposition",""); 
+					  response().setHeader("Content-Disposition","inline"); 
 					  return ok(fileToReturn.toFile()); //returns the file
 				  } else { 
 					  //if the URI is a folder/directory, then search for the index.html file
@@ -39,7 +39,7 @@ public class Web extends Controller {
 						  return Files.exists(xPath);
 					  }).findFirst();
 					  if (index.isPresent()){
-						  response().setHeader("Content-disposition",""); 
+						  response().setHeader("Content-Disposition","inline"); 
 						  return ok(wwwDir.resolve(index.get()).toFile());
 					  } 
 				  } //if (!file.isDirectory()) 

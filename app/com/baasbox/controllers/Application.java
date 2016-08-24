@@ -54,7 +54,7 @@ public class Application extends Controller {
 			  return Files.exists(fileToReturn);
 		  }).findFirst();
 		  if (BBConfiguration.getInstance().isWWWEnabled() && index.isPresent()){
-			  response().setHeader("Content-disposition",""); 
+			  response().setHeader("Content-Disposition","inline"); 
 			  return ok(wwwDir.resolve(index.get()).toFile());
 		  } else {
 			  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
