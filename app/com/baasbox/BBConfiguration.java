@@ -63,9 +63,9 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	private  BigInteger dbSizeThreshold=BigInteger.ZERO;
 	private  boolean isDBSizeThresholdOverridden=false;
 
-	private Boolean enableWWW = false;;
+	private Boolean enableWeb = false;;
 
-	private boolean isEnableWWWOverridden = false; 
+	private boolean isEnableWebOverridden = false; 
 	
 	
 	@Deprecated
@@ -245,35 +245,36 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return this.configuration.getBoolean(ORIENT_START_CLUSTER);
 	}
 	
-	public String getWWWPath(){
-		return this.configuration.getString(WWW_PATH);
+	public String getWebPath(){
+		return this.configuration.getString(WEB_PATH);
 	}
 	
-	public List<String> getIndexFiles(){
-		return this.configuration.getStringList(WWW_INDEX_FILES);	
+	public List<String> getWebIndexFiles(){
+		return this.configuration.getStringList(WEB_INDEX_FILES);	
 	}
 	
-	public boolean isWWWEnabled(){
-		if (!this.isEnableWWWOverridden && this.configuration.getBoolean(WWW_ENABLE)!=null) 
-			return this.configuration.getBoolean(WWW_ENABLE);
-		return this.enableWWW;
+	public boolean isWebEnabled(){
+		if (!this.isEnableWebOverridden && this.configuration.getBoolean(WEB_ENABLE)!=null) {
+			return this.configuration.getBoolean(WEB_ENABLE);
+		} 
+		return this.enableWeb;
 	}
 
-	public void setWWWEnable(boolean newValue) {
-		synchronized(this.enableWWW){
-			this.enableWWW=newValue;
-			this.isEnableWWWOverridden=true;
+	public void setWebEnable(boolean newValue) {
+		synchronized(this.enableWeb){
+			this.enableWeb=newValue;
+			this.isEnableWebOverridden=true;
 	    }
 		if (newValue){
-			BaasBoxLogger.info("WWW service has been enabled");
-			BaasBoxLogger.info("WWW folder is " + getWWWAbsolutePath());
+			BaasBoxLogger.info("Static Web Service has been enabled");
+			BaasBoxLogger.info("WWW folder is " + getWebAbsolutePath());
 		} else {
-			BaasBoxLogger.info("WWW service has been disabled");
+			BaasBoxLogger.info("Static Web Service has been disabled");
 		}
 	}
 
-	public String getWWWAbsolutePath() {
-		return Paths.get(getWWWPath()).toFile().getAbsolutePath();
+	public String getWebAbsolutePath() {
+		return Paths.get(getWebPath()).toFile().getAbsolutePath();
 	}
 	
 }

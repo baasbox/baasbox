@@ -258,8 +258,8 @@ public class Global extends GlobalSettings {
     		}
     	}
     	
-    	if (BBConfiguration.getInstance().isWWWEnabled() && !Files.exists(Paths.get(BBConfiguration.getInstance().getWWWAbsolutePath()))){
-	    	String wwwPath = BBConfiguration.getInstance().getWWWPath();
+    	if (BBConfiguration.getInstance().isWebEnabled() && !Files.exists(Paths.get(BBConfiguration.getInstance().getWebAbsolutePath()))){
+	    	String wwwPath = BBConfiguration.getInstance().getWebPath();
 	    	info ("Creating www folder: " + wwwPath);
 	    	try {
 		    	boolean wwwOutcome = new File(wwwPath).mkdirs();
@@ -282,8 +282,8 @@ public class Global extends GlobalSettings {
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getInstance().getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
-	    if (BBConfiguration.getInstance().isWWWEnabled()){
-	    	info("WWW folder is " + BBConfiguration.getInstance().getWWWAbsolutePath());
+	    if (BBConfiguration.getInstance().isWebEnabled()){
+	    	info("WWW folder is " + BBConfiguration.getInstance().getWebAbsolutePath());
 	    }
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");

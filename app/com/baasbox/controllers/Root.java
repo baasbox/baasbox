@@ -316,7 +316,7 @@ public class Root extends Controller {
 			JsonNode bodyJson= body.asJson();
 			JsonNode newDBAlert = bodyJson.get(BBConfiguration.getInstance().DB_ALERT_THRESHOLD);
 			JsonNode newDBSize = bodyJson.get(BBConfiguration.getInstance().DB_SIZE_THRESHOLD);
-			JsonNode enableWWW = bodyJson.get(BBConfiguration.getInstance().WWW_ENABLE);
+			JsonNode enableWWW = bodyJson.get(BBConfiguration.getInstance().WEB_ENABLE);
 			
 			try{
 				if (newDBAlert!=null && !newDBAlert.isInt() && newDBAlert.asInt()<1) {
@@ -326,7 +326,7 @@ public class Root extends Controller {
 					throw new IllegalArgumentException(BBConfiguration.getInstance().DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
 				}
 				if (enableWWW!=null && !enableWWW.isBoolean())	{
-					throw new IllegalArgumentException(BBConfiguration.getInstance().WWW_ENABLE + " must be a boolean");
+					throw new IllegalArgumentException(BBConfiguration.getInstance().WEB_ENABLE + " must be a boolean");
 				}
 			}catch (Throwable e){
 				return F.Promise.pure(badRequest(ExceptionUtils.getMessage(e)));
@@ -339,13 +339,13 @@ public class Root extends Controller {
 				BBConfiguration.getInstance().setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
 			}
 			if (enableWWW!=null) {
-				BBConfiguration.getInstance().setWWWEnable(enableWWW.asBoolean());
+				BBConfiguration.getInstance().setWebEnable(enableWWW.asBoolean());
 			}
 			
 			Map<String, Object> ret = ImmutableMap.of(
 					BBConfiguration.getInstance().DB_ALERT_THRESHOLD, BBConfiguration.getInstance().getDBAlertThreshold(),
 					BBConfiguration.getInstance().DB_SIZE_THRESHOLD, BBConfiguration.getInstance().getDBSizeThreshold(),
-					BBConfiguration.getInstance().WWW_ENABLE, BBConfiguration.getInstance().isWWWEnabled()
+					BBConfiguration.getInstance().WEB_ENABLE, BBConfiguration.getInstance().isWebEnabled()
 					);
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));

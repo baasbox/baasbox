@@ -21,8 +21,8 @@ public class Web extends Controller {
 	 * @return
 	 */
 	 public static Result getFile(String uri) {
-		  if (BBConfiguration.getInstance().isWWWEnabled()){
-			  Path wwwDir = Paths.get(BBConfiguration.getInstance().getWWWPath());
+		  if (BBConfiguration.getInstance().isWebEnabled()){
+			  Path wwwDir = Paths.get(BBConfiguration.getInstance().getWebPath());
 			  Path fileToReturn = wwwDir.resolve(uri);
 			  boolean fileExists = Files.exists(fileToReturn);
 			  if (fileExists){ //the requested file has been found into the web folder
@@ -34,7 +34,7 @@ public class Web extends Controller {
 				  } else { 
 					  //if the URI is a folder/directory, then search for the index.html file
 					  BaasBoxLogger.debug("The uri is a folder: " + uri);
-					  Optional<String> index = BBConfiguration.getInstance().getIndexFiles().stream().filter(indexFileName ->{
+					  Optional<String> index = BBConfiguration.getInstance().getWebIndexFiles().stream().filter(indexFileName ->{
 						  Path xPath = wwwDir.resolve(indexFileName);
 						  return Files.exists(xPath);
 					  }).findFirst();

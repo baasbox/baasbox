@@ -25,6 +25,7 @@ import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import play.api.templates.Html;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
@@ -42,25 +43,31 @@ public class Application extends Controller {
 		  return ok(views.html.admin.index.render(version,edition));
 	  } 
 
+	  private static Html getDefaultIndexFile(){
+		  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
+		  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
+		  return views.html.index.render(version,edition);
+	  }
 	  
 	/***
 	 * renders the splashscreen or the default index file into the www folder
 	 * @return
 	 */
 	  public static Result index() {
-		  Path wwwDir = Paths.get(BBConfiguration.getInstance().getWWWPath());
-		  Optional<String> index = BBConfiguration.getInstance().getIndexFiles().stream().filter(indexFileName ->{
-			  Path fileToReturn = wwwDir.resolve(indexFileName);
-			  return Files.exists(fileToReturn);
-		  }).findFirst();
-		  if (BBConfiguration.getInstance().isWWWEnabled() && index.isPresent()){
-			  response().setHeader("Content-Disposition","inline"); 
-			  return ok(wwwDir.resolve(index.get()).toFile());
-		  } else {
-			  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
-			  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
-			  return ok(views.html.index.render(version,edition));
+		  if (BBConfiguration.getInstance().isWebEnabled()) {
+			  Path wwwDir = Paths.get(BBConfiguration.getInstance().getWebPath());
+			  Optional<String> index = BBConfiguration.getInstance().getWebIndexFiles().stream().filter(indexFileName ->{
+				  Path fileToReturn = wwwDir.resolve(indexFileName);
+				  return Files.exists(fileToReturn);
+			  }).findFirst();
+			  if (index.isPresent()){
+				  response().setHeader("Content-Disposition","inline"); 
+				  return ok(wwwDir.resolve(index.get()).toFile());
+			  } else {
+				  return ok(getDefaultIndexFile());
+			  }
 		  }
+		  return ok(getDefaultIndexFile());
 	  } //index()
 
 	  public static Result apiVersion() {
