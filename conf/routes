@@ -420,7 +420,8 @@ POST	/root/configuration         							com.baasbox.controllers.Root.overrideCon
 GET		/root/configuration										com.baasbox.controllers.Root.getOverridableConfiguration()
 
 # Home page & general API
-GET		/refresh					com.baasbox.controllers.Generic.refreshSessionToken()
-GET     /                           com.baasbox.controllers.Application.index()
-GET 	/*file						com.baasbox.controllers.MyAssets.at(path="/public/", file)
-OPTIONS /*dummy						com.baasbox.controllers.Generic.getOptions(dummy: String)
+GET		/refresh												com.baasbox.controllers.Generic.refreshSessionToken()
+GET     /                           							com.baasbox.controllers.Application.index()
+GET 	/____embedded_console___/*file							com.baasbox.controllers.MyAssets.at(path="/public/", file)
+GET		/*file													com.baasbox.controllers.Web.getFile(file: String)
+OPTIONS /*dummy													com.baasbox.controllers.Generic.getOptions(dummy: String)

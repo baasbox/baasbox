@@ -316,12 +316,18 @@ public class Root extends Controller {
 			JsonNode bodyJson= body.asJson();
 			JsonNode newDBAlert = bodyJson.get(BBConfiguration.getInstance().DB_ALERT_THRESHOLD);
 			JsonNode newDBSize = bodyJson.get(BBConfiguration.getInstance().DB_SIZE_THRESHOLD);
+			JsonNode enableWWW = bodyJson.get(BBConfiguration.getInstance().WWW_ENABLE);
+			
 			try{
 				if (newDBAlert!=null && !newDBAlert.isInt() && newDBAlert.asInt()<1) {
 					throw new IllegalArgumentException(BBConfiguration.getInstance().DB_ALERT_THRESHOLD + " must be a positive integer value");
 				}
-				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0)
+				if (newDBSize!=null && !newDBSize.isLong() && newDBSize.asInt()<0)	{
 					throw new IllegalArgumentException(BBConfiguration.getInstance().DB_SIZE_THRESHOLD + " must be a positive integer value, or 0 to disable it");
+				}
+				if (enableWWW!=null && !enableWWW.isBoolean())	{
+					throw new IllegalArgumentException(BBConfiguration.getInstance().WWW_ENABLE + " must be a boolean");
+				}
 			}catch (Throwable e){
 				return F.Promise.pure(badRequest(ExceptionUtils.getMessage(e)));
 			}
@@ -332,10 +338,15 @@ public class Root extends Controller {
 			if (newDBSize!=null) {
 				BBConfiguration.getInstance().setDBSizeThreshold(BigInteger.valueOf(newDBSize.asLong()));
 			}
-			Map<String, ? extends Number> ret = ImmutableMap.of(
+			if (enableWWW!=null) {
+				BBConfiguration.getInstance().setWWWEnable(enableWWW.asBoolean());
+			}
+			
+			Map<String, Object> ret = ImmutableMap.of(
 					BBConfiguration.getInstance().DB_ALERT_THRESHOLD, BBConfiguration.getInstance().getDBAlertThreshold(),
-					BBConfiguration.getInstance().DB_SIZE_THRESHOLD, BBConfiguration.getInstance().getDBSizeThreshold());
-
+					BBConfiguration.getInstance().DB_SIZE_THRESHOLD, BBConfiguration.getInstance().getDBSizeThreshold(),
+					BBConfiguration.getInstance().WWW_ENABLE, BBConfiguration.getInstance().isWWWEnabled()
+					);
 			try {
 				return F.Promise.pure(ok(BBJson.mapper().writeValueAsString(ret)));
 			} catch (JsonProcessingException e) {

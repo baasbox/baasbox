@@ -18,14 +18,19 @@ package com.baasbox;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.nio.file.Paths;
+import java.util.List;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import play.Configuration;
 import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
+
 
 	private static BBConfiguration me = null;
 	
@@ -56,7 +61,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	//the db size Threshold in bytes
 	private  BigInteger dbSizeThreshold=BigInteger.ZERO;
-	private  boolean isDBSizeThresholdOverridden=false; 
+	private  boolean isDBSizeThresholdOverridden=false;
+
+	private Boolean enableWWW = false;;
+
+	private boolean isEnableWWWOverridden = false; 
 	
 	
 	@Deprecated
@@ -236,5 +245,35 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return this.configuration.getBoolean(ORIENT_START_CLUSTER);
 	}
 	
+	public String getWWWPath(){
+		return this.configuration.getString(WWW_PATH);
+	}
+	
+	public List<String> getIndexFiles(){
+		return this.configuration.getStringList(WWW_INDEX_FILES);	
+	}
+	
+	public boolean isWWWEnabled(){
+		if (!this.isEnableWWWOverridden && this.configuration.getBoolean(WWW_ENABLE)!=null) 
+			return this.configuration.getBoolean(WWW_ENABLE);
+		return this.enableWWW;
+	}
+
+	public void setWWWEnable(boolean newValue) {
+		synchronized(this.enableWWW){
+			this.enableWWW=newValue;
+			this.isEnableWWWOverridden=true;
+	    }
+		if (newValue){
+			BaasBoxLogger.info("WWW service has been enabled");
+			BaasBoxLogger.info("WWW folder is " + getWWWAbsolutePath());
+		} else {
+			BaasBoxLogger.info("WWW service has been disabled");
+		}
+	}
+
+	public String getWWWAbsolutePath() {
+		return Paths.get(getWWWPath()).toFile().getAbsolutePath();
+	}
 	
 }
