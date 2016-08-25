@@ -6,6 +6,8 @@
 
 # Ignore Play! working directory #
 /db
+/www
+/web
 eclipse
 log
 certificates

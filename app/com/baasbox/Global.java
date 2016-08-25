@@ -24,8 +24,10 @@ import static play.mvc.Results.badRequest;
 import static play.mvc.Results.internalServerError;
 import static play.mvc.Results.notFound;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -35,6 +37,30 @@ import java.util.UUID;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang.math.NumberUtils;
+
+import com.baasbox.configuration.Internal;
+import com.baasbox.configuration.IosCertificateHandler;
+import com.baasbox.configuration.PropertiesConfigurationHelper;
+import com.baasbox.db.DbHelper;
+import com.baasbox.metrics.BaasBoxMetric;
+import com.baasbox.security.ISessionTokenProvider;
+import com.baasbox.security.ScriptingSandboxSecurityManager;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.security.SessionTokenProviderMemory;
+import com.baasbox.service.logging.BaasBoxLogger;
+import com.baasbox.service.storage.StatisticsService;
+import com.baasbox.util.BBJson;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 
 import play.Application;
 import play.Configuration;
@@ -47,29 +73,6 @@ import play.libs.F;
 import play.libs.Json;
 import play.mvc.Http.RequestHeader;
 import play.mvc.SimpleResult;
-
-import com.baasbox.configuration.Internal;
-import com.baasbox.configuration.IosCertificateHandler;
-import com.baasbox.configuration.PropertiesConfigurationHelper;
-import com.baasbox.db.DbHelper;
-import com.baasbox.metrics.BaasBoxMetric;
-import com.baasbox.security.ISessionTokenProvider;
-import com.baasbox.security.ScriptingSandboxSecurityManager;
-import com.baasbox.security.SessionTokenProviderMemory;
-import com.baasbox.security.SessionTokenProviderFactory;
-import com.baasbox.service.logging.BaasBoxLogger;
-import com.baasbox.service.storage.StatisticsService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 
 public class Global extends GlobalSettings {
 	static {
@@ -255,6 +258,19 @@ public class Global extends GlobalSettings {
     		}
     	}
     	
+    	if (BBConfiguration.getInstance().isWebEnabled() && !Files.exists(Paths.get(BBConfiguration.getInstance().getWebAbsolutePath()))){
+	    	String wwwPath = BBConfiguration.getInstance().getWebPath();
+	    	info ("Creating www folder: " + wwwPath);
+	    	try {
+		    	boolean wwwOutcome = new File(wwwPath).mkdirs();
+		    	if (wwwOutcome) info ("...done");
+		    	else error("There was an error creating the www folder. Please check the folder path/name");
+	    	} catch (Exception e){
+	    		error ("There was an error creating the www folder.");
+	    		error (ExceptionUtils.getFullStackTrace(e));
+	    	}
+    	}
+    	
     	//prepare the Welcome Message
 	    String port=Play.application().configuration().getString("http.port");
 	    if (port==null) port="9000";
@@ -266,6 +282,9 @@ public class Global extends GlobalSettings {
 	    info("To login into the administration console go to http://" + address +":" + port + "/console");
 	    info("Default credentials are: user:admin pass:admin (if you did not changed it) AppCode: " + BBConfiguration.getInstance().getAPPCODE());
 	    info("Documentation is available at http://www.baasbox.com/documentation");
+	    if (BBConfiguration.getInstance().isWebEnabled()){
+	    	info("WWW folder is " + BBConfiguration.getInstance().getWebAbsolutePath());
+	    }
 		debug("Global.onStart() ended");
 	    info("BaasBox is Ready.");
 	  }

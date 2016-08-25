@@ -64,6 +64,9 @@ public interface IBBConfigurationKeys {
 	public static final String SESSION_ENCRYPT = "baasbox.sessions.encrypt";
 	public static final String APPLICATION_SECRET = "application.secret";
 	
+	public static final String WEB_ENABLE = "web.enable";
+	public static final String WEB_PATH = "web.path";
+	public static final String WEB_INDEX_FILES = "web.index_files";
 	
 	@Deprecated
 	public static final String REALM = "authorization.basic.realm";

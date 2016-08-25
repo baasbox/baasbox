@@ -18,14 +18,19 @@ package com.baasbox;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.nio.file.Paths;
+import java.util.List;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import com.baasbox.service.logging.BaasBoxLogger;
 
 import play.Configuration;
 import play.Play;
 
 public class BBConfiguration implements IBBConfigurationKeys {
+
 
 	private static BBConfiguration me = null;
 	
@@ -56,7 +61,11 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	
 	//the db size Threshold in bytes
 	private  BigInteger dbSizeThreshold=BigInteger.ZERO;
-	private  boolean isDBSizeThresholdOverridden=false; 
+	private  boolean isDBSizeThresholdOverridden=false;
+
+	private Boolean enableWeb = false;;
+
+	private boolean isEnableWebOverridden = false; 
 	
 	
 	@Deprecated
@@ -236,5 +245,36 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return this.configuration.getBoolean(ORIENT_START_CLUSTER);
 	}
 	
+	public String getWebPath(){
+		return this.configuration.getString(WEB_PATH);
+	}
+	
+	public List<String> getWebIndexFiles(){
+		return this.configuration.getStringList(WEB_INDEX_FILES);	
+	}
+	
+	public boolean isWebEnabled(){
+		if (!this.isEnableWebOverridden && this.configuration.getBoolean(WEB_ENABLE)!=null) {
+			return this.configuration.getBoolean(WEB_ENABLE);
+		} 
+		return this.enableWeb;
+	}
+
+	public void setWebEnable(boolean newValue) {
+		synchronized(this.enableWeb){
+			this.enableWeb=newValue;
+			this.isEnableWebOverridden=true;
+	    }
+		if (newValue){
+			BaasBoxLogger.info("Static Web Service has been enabled");
+			BaasBoxLogger.info("WWW folder is " + getWebAbsolutePath());
+		} else {
+			BaasBoxLogger.info("Static Web Service has been disabled");
+		}
+	}
+
+	public String getWebAbsolutePath() {
+		return Paths.get(getWebPath()).toFile().getAbsolutePath();
+	}
 	
 }

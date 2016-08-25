@@ -16,14 +16,19 @@
  */
 package com.baasbox.controllers;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import play.libs.Json;
-import play.mvc.Controller;
-import play.mvc.Result;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
 
 import com.baasbox.BBConfiguration;
 import com.baasbox.IBBConfigurationKeys;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import play.api.templates.Html;
+import play.libs.Json;
+import play.mvc.Controller;
+import play.mvc.Result;
 
 
 public class Application extends Controller {
@@ -37,21 +42,40 @@ public class Application extends Controller {
 		  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
 		  return ok(views.html.admin.index.render(version,edition));
 	  } 
+
+	  private static Html getDefaultIndexFile(){
+		  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
+		  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
+		  return views.html.index.render(version,edition);
+	  }
 	  
-	//renders the spashscreen
-  public static Result index() {
-	  String version = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION);
-	  String edition = BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION);
-	  return ok(views.html.index.render(version,edition));
-  }
+	/***
+	 * renders the splashscreen or the default index file into the www folder
+	 * @return
+	 */
+	  public static Result index() {
+		  if (BBConfiguration.getInstance().isWebEnabled()) {
+			  Path wwwDir = Paths.get(BBConfiguration.getInstance().getWebPath());
+			  Optional<String> index = BBConfiguration.getInstance().getWebIndexFiles().stream().filter(indexFileName ->{
+				  Path fileToReturn = wwwDir.resolve(indexFileName);
+				  return Files.exists(fileToReturn);
+			  }).findFirst();
+			  if (index.isPresent()){
+				  response().setHeader("Content-Disposition","inline"); 
+				  return ok(wwwDir.resolve(index.get()).toFile());
+			  } else {
+				  return ok(getDefaultIndexFile());
+			  }
+		  }
+		  return ok(getDefaultIndexFile());
+	  } //index()
 
-
-  public static Result apiVersion() {
-	  ObjectNode result = Json.newObject();
-	  result.put("api_version", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
-	  result.put("edition", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION));
-	  return ok(result);
-  }
+	  public static Result apiVersion() {
+		  ObjectNode result = Json.newObject();
+		  result.put("api_version", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.API_VERSION));
+		  result.put("edition", BBConfiguration.getInstance().configuration.getString(IBBConfigurationKeys.EDITION));
+		  return ok(result);
+	  }
   
 
 }
