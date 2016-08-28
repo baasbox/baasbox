@@ -318,7 +318,7 @@ public class WrapResponse {
 			if (BBConfiguration.getInstance().getWrapResponse()){
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Wrapping the response");
 				final int statusCode = result.getWrappedSimpleResult().header().status();
-        if (isRedirect(statusCode)) {
+				if (isRedirect(statusCode)) {
 				  return result;
 				}
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Executed API: "  + ctx.request() + " , return code " + statusCode);

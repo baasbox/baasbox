@@ -84,7 +84,20 @@ public class ScriptInvoker extends Controller{
 
             try {
                 ScriptResult result = ScriptingService.invoke(ScriptCall.rest(serv, reqAsJson));
-                return status(result.status(), result.content());
+                if (!BBJson.isNull(result.headers()) && result.headers().isObject()){
+                	((ObjectNode) result.headers()).fields().forEachRemaining(x->{
+                		if (!BBJson.isNull(x.getValue())){
+                			response().setHeader(x.getKey(), x.getValue().asText());
+                		}
+                	});
+                }
+                JsonNode content = result.content();
+                if (response().getHeaders().get("Content-Type")==null || response().getHeaders().get("Content-Type")=="application/json"){
+                	return status(result.status(), content);
+                } else {
+                	return status(result.status(), content.asText());
+                }
+                
             } catch (ScriptEvalException e) {
             	if (DbHelper.getConnection()!=null && !DbHelper.getConnection().isClosed() && DbHelper.isInTransaction())
             		DbHelper.rollbackTransaction();
