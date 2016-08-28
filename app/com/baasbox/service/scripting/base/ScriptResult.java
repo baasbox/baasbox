@@ -19,6 +19,7 @@
 package com.baasbox.service.scripting.base;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.MissingNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
@@ -76,6 +77,14 @@ public final class ScriptResult {
         JsonNode content = node.get("content");
         if (content==null) return TextNode.valueOf("");
         return content;
+    }
+    
+    public JsonNode headers(){
+        if (!Type.OBJECT.equals(type)) return MissingNode.getInstance();
+        JsonNode node = (JsonNode)data;
+        JsonNode headers = node.get("headers");
+        if (headers==null) return MissingNode.getInstance();
+        return headers;
     }
 
 
