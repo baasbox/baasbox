@@ -120,7 +120,16 @@ public class UserService {
 	
     public static List<ODocument> getUsers(QueryParams criteria,boolean excludeInternal) throws SqlInjectionException {
         if (excludeInternal) {
-           excludeInternalUsersFromCriteria(criteria);
+            String where="user.name not in ['" 
+            			+ BBConfiguration.getInstance().getBaasBoxAdminUsername() 
+            			+ "','"
+            			+ BBConfiguration.getInstance().getBaasBoxUsername()
+            			+ "']";
+            if (!StringUtils.isEmpty(criteria.getWhere())) {
+                where += " and (" + criteria.getWhere() + ")";
+            }
+            criteria.where(where);
+
         }
         return getUsers(criteria);
     }
@@ -258,18 +267,27 @@ public class UserService {
             JsonNode friendsAttributes,
             JsonNode appUsersAttributes,boolean generated,String id) throws InvalidJsonException,UserAlreadyExistsException, EmailAlreadyUsedException{
 		
-		ODocument profile=signUp( username,
-         password,
-         signupDate,
-         role,
-         nonAppUserAttributes,
-         privateAttributes,
-         friendsAttributes,
-         appUsersAttributes, generated);
-		//since 0.9.4 we can indicate an arbitrary id for users.
-		if (StringUtils.isNotBlank(id)){
-			profile.field(BaasBoxPrivateFields.ID.toString(),id);
-			profile.save();
+		DbHelper.requestTransaction();
+		ODocument profile = null;
+		try{
+			profile=signUp( username,
+	         password,
+	         signupDate,
+	         role,
+	         nonAppUserAttributes,
+	         privateAttributes,
+	         friendsAttributes,
+	         appUsersAttributes, generated);
+			//since 0.9.4 we can indicate an arbitrary id for users.
+			if (StringUtils.isNotBlank(id)){
+				profile.field(BaasBoxPrivateFields.ID.toString(),id);
+				profile.save();
+			}
+			DbHelper.commitTransaction();
+		}catch (Exception e){
+			DbHelper.rollbackTransaction();
+			BaasBoxLogger.error(ExceptionUtils.getStackTrace(e));
+			throw e;
 		}
 		return profile;
 	}
@@ -302,7 +320,7 @@ public class UserService {
 			      if (role==null) profile=dao.create(username, password);
 			      else profile=dao.create(username, password,role);
 			      
-			      ORID userRid = ((ORID)profile.field("user")).getIdentity();
+			      ORID userRid = ((ORID)profile.field("user",ORID.class)).getIdentity();
 			      ORole friendRole=RoleDao.createFriendRole(username);
 			      friendRole.getDocument().field(RoleService.FIELD_ASSIGNABLE,true);
 			      friendRole.getDocument().field(RoleService.FIELD_MODIFIABLE,false);
@@ -404,8 +422,8 @@ public class UserService {
 			            PermissionsHelper.grantRead(profile, RoleDao.getRole(DefaultRoles.ANONYMOUS_USER.toString()));
 			            PermissionsHelper.changeOwner(profile, userRid);
 			            
-			            
 			            profile.save();
+			            DbHelper.setRIDinCurrentTransaction(profile.field(BaasBoxPrivateFields.ID.toString()), profile.getIdentity().toString());
 			            DbHelper.commitTransaction();
 				}catch( OSerializationException e ){
 				    DbHelper.rollbackTransaction();
@@ -734,23 +752,24 @@ public class UserService {
 		DbHelper.requestTransaction();
 		try{
 			ODocument systemProps=user.field(UserDao.ATTRIBUTES_SYSTEM);
-			Map<String,ODocument>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
+			Map<String,Map>  ssoTokens = systemProps.field(UserDao.SOCIAL_LOGIN_INFO);
 			if(ssoTokens == null){
-				ssoTokens = new HashMap<String,ODocument>();
+				ssoTokens = new HashMap<String,Map>();
 			}
 
-			String jsonRep = userInfo.toJson();
-			ssoTokens.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON(jsonRep));
+			ssoTokens.put(userInfo.getFrom(), userInfo.toMap());
 			systemProps.field(UserDao.SOCIAL_LOGIN_INFO,ssoTokens);
-			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			systemProps.save();
+			user.field(UserDao.ATTRIBUTES_SYSTEM,systemProps);
 			
 			ODocument registeredUserProp = user.field(UserDao.ATTRIBUTES_VISIBLE_BY_REGISTERED_USER);
 			Map socialdata=registeredUserProp.field("_social");
 			if(socialdata == null){
 				socialdata = new HashMap<String,ODocument>();
 			}
-			socialdata.put(userInfo.getFrom(), (ODocument)new ODocument().fromJSON("{\"id\":\""+userInfo.getId()+"\"}"));
+			HashMap socialId = new HashMap<>(1);
+			socialId.put("id", userInfo.getId());
+			socialdata.put(userInfo.getFrom(),socialId);
 			registeredUserProp.field("_social",socialdata);
 			registeredUserProp.save();
 			user.save();

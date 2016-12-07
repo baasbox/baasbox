@@ -2,12 +2,17 @@ package com.baasbox.db;
 
 import java.util.UUID;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 /**
  * Created by eto on 10/23/14.
@@ -37,6 +42,8 @@ public class Evolution_0_9_4 implements IEvolution {
 
     private void insertIdforUsers(ODatabaseRecordTx db) {
     	BaasBoxLogger.info("Generating IDs for users ...");
+    	
+    	if (BBConfiguration.getInstance().isConfiguredDBLocal()){
     	// UUID() function is not available in OrientDB 1.7.10, so we have to define a one of ours
     	OSQLEngine.getInstance().registerFunction("bb_uuid",
     	                                          new OSQLFunctionAbstract("bb_uuid", 0, 0) {
@@ -56,6 +63,28 @@ public class Evolution_0_9_4 implements IEvolution {
     	 DbHelper.execMultiLineCommands(db,true,
                  "update _BB_User set id=bb_uuid();");
     	 OSQLEngine.getInstance().unregisterFunction("bb_uuid");
+    	 
+    	}else{ //ODB 1.7.10 does not support custom SQL function when a remote connection is used
+    		final String selectSQL = "select from _BB_User";
+        	
+        	final OSQLAsynchQuery<ODocument> qry = new OSQLAsynchQuery<ODocument>(selectSQL);
+    		
+    		qry.setResultListener(new OCommandResultListener() {
+    			@Override
+    			public boolean result(Object iRecord) {
+    				String updateSQL = "update " + ((ODocument)iRecord).getIdentity() + " set uuid = ?";
+    				DbHelper.genericSQLStatementExecute(updateSQL, new String[]{UUID.randomUUID().toString()});
+    				return true;
+    			}
+
+    			@Override
+    			public void end() {
+    				//nothing
+    			}
+    		});
+    		OCommandRequest command = DbHelper.getConnection().command(qry);
+    		command.execute();
+    	}
     	BaasBoxLogger.info("...done");
 	}
 

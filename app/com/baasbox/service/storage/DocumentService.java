@@ -82,6 +82,7 @@ public class DocumentService {
 				if (GenericDao.getInstance().getRidNodeByUUID(id)!=null) throw new ORecordDuplicatedException("An object with the supplied ID (" + id + ") already exists") ;
 			}
 			dao.save(doc);
+			DbHelper.setRIDinCurrentTransaction(doc.field(BaasBoxPrivateFields.ID.toString()), doc.getIdentity().toString());
 			DbHelper.commitTransaction();
 		}catch (OSerializationException e){
 			DbHelper.rollbackTransaction();

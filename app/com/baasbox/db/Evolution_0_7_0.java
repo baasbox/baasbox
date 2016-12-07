@@ -150,7 +150,7 @@ public class Evolution_0_7_0 implements IEvolution {
 					Entry<Object, OIdentifiable> entry = it.next();
 					String key = (String) entry.getKey();
 					Object valueOnDb=entry.getValue();
-					valueOnDb=db.load((ORID)valueOnDb);
+					if (valueOnDb instanceof ORID) valueOnDb=db.load((ORID)valueOnDb);
 					if (valueOnDb!=null){
 						BaasBoxLogger.info(".....   key: " + key);
 						Object value=((ODocument)valueOnDb).field("value");

@@ -24,9 +24,16 @@ public class DocumentCutter {
 			}
 			if (doc.getClassName()!=null && doc.getClassName().equalsIgnoreCase("ouser")) doc.removeField("password");
 			for(String s:doc.fieldNames()){
-				 if(doc.field(s) !=null && doc.fieldType(s)!=null && doc.fieldType(s).equals(OType.STRING) && ((String)doc.field(s)).contains("{SHA-256}")) doc.removeField(s);
+				 if(doc.field(s) !=null 
+						 && doc.fieldType(s)!=null 
+						 && doc.fieldType(s).equals(OType.STRING) 
+						 && ((String)doc.field(s)).contains("{SHA-256}")
+				) 
+					 doc.removeField(s);
 	             if(doc.field(s) !=null && doc.field(s) instanceof ODocument){
-	                     doc.field(s, getCuttedDocInternal((ODocument)doc.field(s),preserveAcl));
+	                     doc.field(s, 
+	                    		 getCuttedDocInternal((ODocument)doc.field(s),
+	                    		 preserveAcl));
 	             }
 			}
 		}

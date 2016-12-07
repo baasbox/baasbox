@@ -69,18 +69,24 @@ public class UserCredentialWrapFilterAsync extends Action.Simple {
 						.equalsIgnoreCase(
 								BBConfiguration.getInstance().getBaasBoxAdminUsername())
 						||
-						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername()))
+						((String)ctx.args.get("username")).equalsIgnoreCase(BBConfiguration.getInstance().getBaasBoxUsername())){
 					tempResult=F.Promise.<SimpleResult>pure(forbidden("The user " +ctx.args.get("username")+ " cannot access via REST"));
-			}
-			//one last thing: is the root user that is trying to access?
-			String username = (String)ctx.args.get("username");
-			String password = (String)ctx.args.get("password");
-			if (BBConfiguration.getInstance().isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getInstance().getRootPassword())){
-				//then override username and password
-				ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxAdminUsername());
-				ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxAdminPassword());
-			}
-			
+				}else{
+					//one last thing: is the root user that is trying to access?
+					String username = (String)ctx.args.get("username");
+					String password = (String)ctx.args.get("password");
+					//the following check is necessary if we are using a remote connection because "root" is a valid user for ODB and we do not want to give direct access to the DB
+					if (username.equals("root") && !BBConfiguration.getInstance().isRootAsAdmin()){
+						tempResult=F.Promise.<SimpleResult>pure(unauthorized("User root is not authorized to access"));
+					}
+					//BTW if root can access as admin, we override its username
+					if (BBConfiguration.getInstance().isRootAsAdmin() && username.equals("root") && password.equals(BBConfiguration.getInstance().getRootPassword())){
+						//then override username and password
+						ctx.args.put("username", BBConfiguration.getInstance().getBaasBoxAdminUsername());
+						ctx.args.put("password", BBConfiguration.getInstance().getBaasBoxAdminPassword());
+					}
+				}
+			} //tempResult == null
 			//if everything is ok.....
 			//executes the request
 			if (tempResult==null) tempResult = delegate.call(ctx);

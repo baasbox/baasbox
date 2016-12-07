@@ -18,6 +18,7 @@
 
 package com.baasbox.service.scripting;
 
+import com.baasbox.BBConfiguration;
 import com.baasbox.dao.ScriptsDao;
 import com.baasbox.dao.exception.ScriptException;
 import com.baasbox.dao.exception.SqlInjectionException;
@@ -95,6 +96,7 @@ public class ScriptingService {
         try {
             script = dao.getByNameLocked(name);
             if (script == null) throw new ScriptException("Script not found");
+            if (BBConfiguration.getInstance().isConfiguredDBLocal()) script.lock(true);
             ODocument retScript = before ? script.copy() : script;
 
             ODocument storage = script.<ODocument>field(ScriptsDao.LOCAL_STORAGE);
@@ -119,7 +121,7 @@ public class ScriptingService {
             return field;
         } finally {
             if (script != null) {
-                script.unlock();
+            	if (BBConfiguration.getInstance().isConfiguredDBLocal()) script.unlock();
             }
         }
     }

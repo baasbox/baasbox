@@ -68,7 +68,7 @@ public class Evolution_0_9_0 implements IEvolution {
     
     private void addRoleFlag(ODatabaseRecordTx db) {
         BaasBoxLogger.info("Adding role flag on class OROLE...");
-        DbHelper.execMultiLineCommands(db,true,
+        DbHelper.execMultiLineCommands(db,true,false,
         		"create property orole.isrole boolean;",
         		"update orole set isrole=true");
         BaasBoxLogger.info("...done!");

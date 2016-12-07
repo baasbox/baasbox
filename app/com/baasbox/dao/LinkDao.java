@@ -22,8 +22,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import com.baasbox.service.logging.BaasBoxLogger;
-
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
@@ -40,6 +38,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class LinkDao {
 	public static final String MODEL_NAME = "E";
+	private static final String searchSQL = "select from " + MODEL_NAME + " where id=?";
 	
 	//private static final String QUERY_BASE="select *,out._node as from,in._node as to from E ";
 	private static final String QUERY_BASE="select *,out._node as out,in._node as in from " + MODEL_NAME;
@@ -68,6 +67,7 @@ public class LinkDao {
 			edge.getRecord().field(BaasBoxPrivateFields.AUTHOR.toString(),DbHelper.currentUsername());
 			edge.getRecord().field(BaasBoxPrivateFields.CREATION_DATE.toString(),new Date());
 			edge.save();
+			DbHelper.setRIDinCurrentTransaction(edge.getRecord().field(BaasBoxPrivateFields.ID.toString()), edge.getIdentity().toString());
 			DbHelper.commitTransaction();
 		}catch (DocumentNotFoundException e){
 			DbHelper.rollbackTransaction();
@@ -101,9 +101,18 @@ public class LinkDao {
 	 * @return
 	 */
 	public static ORID getRidLinkByUUID(String id){
-		ODatabaseRecordTx db =DbHelper.getConnection();
-		OIndex<?> index = db.getMetadata().getIndexManager().getIndex(LinkDao.MODEL_NAME + ".id");
-		ORID rid = (ORID) index.get(id);  
-		return rid;
+		OCommandRequest searchCommand = DbHelper.genericSQLStatementCommandBuilder(searchSQL);
+		List<ODocument> output = DbHelper.commandExecute(searchCommand, new String[]{id});
+		if (output.size()==0){
+			if (DbHelper.isInTransaction()) {
+				//maybe the id belongs to an object created inside a current transaction
+				String stringRID=DbHelper.getRIDfromCurrentTransaction(id);
+				if (stringRID==null) return null;
+				return GenericDao.getInstance().get(stringRID).getIdentity();
+			}else{
+				return null;
+			}
+		}
+		return output.get(0).getIdentity();
 	}
 }
