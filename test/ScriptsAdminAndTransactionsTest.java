@@ -9,22 +9,30 @@ import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.routeAndCall;
 import static play.test.Helpers.running;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import play.mvc.Http;
 import play.mvc.Result;
 import play.test.FakeRequest;
 
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import core.TestConfig;
@@ -50,6 +58,7 @@ public class ScriptsAdminAndTransactionsTest {
     public static void initTest(){
         running(fakeApplication(),()->{
             try {
+            	setUpContext();
                 DbHelper.open("1234567890", "admin", "admin");
                 createUser();
                 CollectionService.create(TEST_COLLECTION);
@@ -64,11 +73,29 @@ public class ScriptsAdminAndTransactionsTest {
         });
     }
 
+    public static void setUpContext() throws Exception {
+    	Http.Request mockRequest = mock(Http.Request.class);
+        when(mockRequest.remoteAddress()).thenReturn("127.0.0.1");
+        when(mockRequest.getHeader("User-Agent")).thenReturn("mocked user-agent");
+        
+        Map<String, String> flashData = Collections.emptyMap();
+        Map<String, Object> argData = new HashMap();
+        argData.put("appcode", "1234567890");
+        Long id = 2L;
+        play.api.mvc.RequestHeader header = mock(play.api.mvc.RequestHeader.class);
+        Http.Context context = new Http.Context(id, header, mockRequest, flashData, flashData, argData);
+        Http.Context.current.set(context);
+    }
+    
+    @Before
+    public void setContest() throws Exception{
+    	setUpContext();
+    }
     @Test
     public void canRunCodeTransactionally(){
         running(fakeApplication(),()->{
             try {
-                ObjectMapper mapper = Json.mapper();
+                ObjectMapper mapper = BBJson.mapper();
                 String operation = "normal";
                 ObjectNode node =mapper.createObjectNode();
                 node.put("collection",TEST_COLLECTION);
@@ -100,7 +127,7 @@ public class ScriptsAdminAndTransactionsTest {
         running(fakeApplication(),()->{
             try {
                 String collName = "script-collection-"+UUID.randomUUID();
-                ObjectNode node = Json.mapper().createObjectNode();
+                ObjectNode node = BBJson.mapper().createObjectNode();
                 node.put("coll",collName);
                 FakeRequest req = new FakeRequest(POST, "/plugin/"+TEST_SUDO);
                 req = req.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -108,7 +135,7 @@ public class ScriptsAdminAndTransactionsTest {
                 req = req.withJsonBody(node);
                 Result result = routeAndCall(req);
                 String resultString = contentAsString(result);
-                JsonNode resp = Json.mapper().readTree(resultString);
+                JsonNode resp = BBJson.mapper().readTree(resultString);
                 assertTrue(resp.path("data").path("exists").asBoolean());
 
             } catch (Exception  e){

@@ -25,9 +25,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.lang3.ObjectUtils;
-
-import com.baasbox.service.logging.BaasBoxLogger;
 
 import com.baasbox.commands.exceptions.CommandException;
 import com.baasbox.commands.exceptions.CommandExecutionException;
@@ -36,12 +33,11 @@ import com.baasbox.commands.exceptions.CommandNotSupportedException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.SqlInjectionException;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.LinkService;
+import com.baasbox.util.BBJson;
 import com.baasbox.util.JSONFormats;
-import com.baasbox.util.QueryParams;
 import com.baasbox.util.JSONFormats.Formats;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -129,7 +125,7 @@ class LinksResource extends BaseRestResource {
 		JsonNode node;
 		ObjectNode n;
 		try {
-			node = Json.mapper().readTree(fmt);
+			node = BBJson.mapper().readTree(fmt);
 			n =(ObjectNode)node;
 		} catch (IOException e) {
 			throw new CommandExecutionException(command,"error executing command: "+ExceptionUtils.getMessage(e),e);
@@ -184,7 +180,7 @@ class LinksResource extends BaseRestResource {
 		try {
 			listOfLinks = LinkService.getLink(params);
 			String s = JSONFormats.prepareDocToJson(listOfLinks, JSONFormats.Formats.LINK);
-			ArrayNode lst = (ArrayNode)Json.mapper().readTree(s);
+			ArrayNode lst = (ArrayNode) BBJson.mapper().readTree(s);
 			lst.forEach((j)->((ObjectNode)j).remove(TO_REMOVE).remove("@rid"));			
 			StreamSupport.stream(lst.spliterator(),false)
 				.flatMap(x -> Stream.of(x.get("in"),x.get("out")))
@@ -208,7 +204,7 @@ class LinksResource extends BaseRestResource {
 		ObjectNode node=null;
 		String s = JSONFormats.prepareDocToJson(link, JSONFormats.Formats.LINK);
 		try {
-			node = (ObjectNode)Json.mapper().readTree(s);
+			node = (ObjectNode) BBJson.mapper().readTree(s);
 			node.remove(TO_REMOVE).remove("@rid");
 			((ObjectNode)node.get("in")).remove(TO_REMOVE).remove("@rid");
 			((ObjectNode)node.get("out")).remove(TO_REMOVE).remove("@rid");

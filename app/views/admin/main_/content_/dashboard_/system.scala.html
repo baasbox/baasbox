@@ -48,6 +48,13 @@
 											<i ng-show="alertThreshold()==2" title="The database has exceeded the maximum allowed size ({{formatSize(data.db.datafile_freespace)}})." class="icon icon-color icon-remove"></i>                          
 										</a>
 									</li>
+									<li>
+										<a href="#">
+											<i class="icon32 icon-black icon-copy"></i>
+											<span class="blue">Schema Version</span>                             
+											<span class="green"  style="width:50% !important" >{{data.installation.db_version}}</span>                                    
+										</a>
+									</li>
 									<span class="red" ng-show="alertThreshold()==2">The database has exceeded the maximum allowed size ({{formatSize(data.db.datafile_freespace)}}).<br/>BaasBox <strong>will continue to work</strong>, but consider to <strong>upgrade</strong> the storage size.</span>
 									<span class="yellow" ng-show="alertThreshold()==1">The database reached {{100-data.db.size_threshold_percentage}}% of the current limit ({{formatSize(data.db.datafile_freespace)}}).<br/>Please consider to <strong>upgrade</strong> the storage size.</span>
 								</ul>

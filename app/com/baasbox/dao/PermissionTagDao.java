@@ -18,21 +18,22 @@
 
 package com.baasbox.dao;
 
-import com.baasbox.controllers.Generic;
+import java.util.List;
+
+import play.cache.Cache;
+
+import com.baasbox.BBCache;
 import com.baasbox.dao.exception.InvalidPermissionTagException;
-import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.PermissionTagAlreadyExistsException;
+import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.db.DbHelper;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.QueryParams;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import com.baasbox.service.logging.BaasBoxLogger;
-
-import java.util.List;
 
 /**
  *
@@ -165,6 +166,7 @@ public class PermissionTagDao  {
             doc.save();
             changed = true;
         }
+        Cache.remove(BBCache.getTagKey()+tagName);
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
         return changed;
     }
@@ -176,13 +178,21 @@ public class PermissionTagDao  {
      * @throws SqlInjectionException
      * @throws com.baasbox.dao.exception.InvalidPermissionTagException
      */
-    public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException {
+    public boolean isEnabled(String tagName) throws SqlInjectionException, InvalidPermissionTagException,Exception {
         if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
-        ODocument doc = getByName(tagName);
-        if (doc==null) throw new InvalidPermissionTagException("tag not found");
-        boolean enabled = doc.<Boolean>field(ENABLED);
-        if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
-        return enabled;
+        try {
+			return Cache.getOrElse(BBCache.getTagKey() + tagName, ()->{
+				ODocument doc = getByName(tagName);
+		        if (doc==null) throw new InvalidPermissionTagException("tag not found");
+		        return doc.<Boolean>field(ENABLED);
+		    }, BBCache.TAG_TIMEOUT);
+		} catch (Exception e) {
+			BaasBoxLogger.error ("Error retrieving tagName: " + tagName,e);
+			throw e;
+		} finally {
+			  if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+		}
+        
     }
 
     public List<ODocument> getAll(){

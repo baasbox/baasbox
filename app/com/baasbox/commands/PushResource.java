@@ -31,7 +31,7 @@ import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.commands.exceptions.CommandParsingException;
 import com.baasbox.service.push.PushService;
 import com.baasbox.service.scripting.base.JsonCallback;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.IntNode;
@@ -102,7 +102,7 @@ class PushResource extends Resource {
 
         try {
             ps.send(message,users,profiles,body,errors);
-            Json.ObjectMapperExt mapper = Json.mapper();
+            BBJson.ObjectMapperExt mapper = BBJson.mapper();
             boolean someOk = false;
             boolean someFail = false;
             for (boolean error:errors){

@@ -71,8 +71,8 @@ public class AdminCredentialWrapFilter extends Action.Simple {
 		WrapResponse wr = new WrapResponse();
 		SimpleResult result=wr.wrap(ctx, tempResult);
 		
-		
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
+
 	    return F.Promise.<SimpleResult>pure(result);
 	}
 

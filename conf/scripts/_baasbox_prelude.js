@@ -243,6 +243,20 @@ var GLOBAL=this;
         }
         return mod.module.exports;
     };
+    
+    Module.prototype.btoa = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.btoa(stringToConvert);
+    }
+    
+    Module.prototype.atob = function (stringToConvert){
+    	if (typeof stringToConvert !== 'string'){
+            throw new TypeError("btoa needs a single string argument");
+        }
+    	return Api.atob(stringToConvert);
+    }
 
     Module.prototype.isLoggingActive = function (){
     	return Api.isScriptLoggingActive();

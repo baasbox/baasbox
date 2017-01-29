@@ -24,12 +24,12 @@ import java.util.List;
 import com.google.common.collect.ImmutableMap;
 
 public interface ISessionTokenProvider {
-		public ImmutableMap<SessionKeys, ? extends Object> setSession(String AppCode, String username, String Password);
-		public ImmutableMap<SessionKeys, ? extends Object> getSession(String token);
-		public ImmutableMap<SessionKeys, ? extends Object> getCurrent();
+		public SessionObject setSession(String AppCode, String username, String Password);
+		public SessionObject getSession(String token);
+		public SessionObject getCurrent();
 		public void removeSession(String token);
 		public void setTimeout(long timeoutInMilliseconds);
 		public Enumeration<String> getTokens();
-		public List<ImmutableMap<SessionKeys, ? extends Object>> getSessions(String username);		
+		public List<SessionObject> getSessions(String username);		
 		
 }

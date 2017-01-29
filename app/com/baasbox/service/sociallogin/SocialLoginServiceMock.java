@@ -14,7 +14,7 @@ import play.mvc.Http.Session;
 public class SocialLoginServiceMock extends SocialLoginService {
 	
 	private static String port = (Play.isTest())?System.getProperty("testserver.port", "3333"):System.getProperty("http.port", "9000");
-	private static String mockUrl = "http://localhost"+port;
+	private static String mockUrl = "http://localhost:"+port;
 	
 	public   String PREFIX = "";
 	public   String SOCIAL = "";
@@ -67,7 +67,7 @@ public class SocialLoginServiceMock extends SocialLoginService {
 
 	@Override
 	public UserInfo extractUserInfo(Response r) throws BaasBoxSocialException {
-		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
+		if (BaasBoxLogger.isDebugEnabled() && r!=null)  BaasBoxLogger.debug("FacebookLoginServiceMock.extractUserInfo: " + r.getCode() + ": " + r.getBody());
 		UserInfo ui = new UserInfo();
 		ui.setId("mockid_" + this.token);
 		ui.setUsername("mockusername_" + this.token);

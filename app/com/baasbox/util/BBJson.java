@@ -16,21 +16,23 @@
  * limitations under the License.
  */
 
-package com.baasbox.service.scripting.js;
+package com.baasbox.util;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.codahale.metrics.json.MetricsModule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.MissingNode;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Andrea Tortorella on 23/06/14.
  */
-public class Json {
-    private static final ObjectMapperExt MAPPER = new ObjectMapperExt();
+public final class BBJson {
+    private static final ObjectMapperExt MAPPER = new ObjectMapperExt().registerModule(new MetricsModule(TimeUnit.SECONDS,TimeUnit.SECONDS,false));
 
     public static class ObjectMapperExt  extends ObjectMapper{
 
@@ -40,6 +42,12 @@ public class Json {
             } catch (IOException e) {
                 return MissingNode.getInstance();
             }
+        }
+
+        @Override
+        public ObjectMapperExt registerModule(Module module) {
+            super.registerModule(module);
+            return this;
         }
     }
 

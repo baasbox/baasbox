@@ -11,17 +11,16 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import play.Logger;
 import play.mvc.Result;
 import play.test.FakeRequest;
 import play.test.Helpers;
 
-import com.baasbox.security.SessionKeys;
-import com.baasbox.security.SessionTokenProvider;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.security.SessionObject;
+import com.baasbox.security.SessionTokenProviderFactory;
+import com.baasbox.util.BBJson;
+import com.baasbox.util.BBJson.ObjectMapperExt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ImmutableMap;
 
 import core.AbstractUserTest;
 import core.TestConfig;
@@ -33,7 +32,7 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 
     private static TreeSet<String>  sRandUsers;
     private static String sTestUser;
-    private static final Json.ObjectMapperExt mapper = Json.mapper();
+    private static final ObjectMapperExt mapper = BBJson.mapper();
     private static final String USER_PREFIX = "script-sessions-test-";
     private static String key;
     private String user1=null;
@@ -87,6 +86,7 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 			});
     }
 
+    
     @Test
     public void test(){
     	running
@@ -97,22 +97,23 @@ public class ScriptSessionTokensCommandTest  extends AbstractUserTest{
 				public void run() 
 				{
 					try{
-						List<ImmutableMap<SessionKeys, ? extends Object>> sessions = SessionTokenProvider.getSessionTokenProvider().getSessions(user1);
+						setUpContext();
+						List<SessionObject> sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);
 						Assert.assertEquals(1, sessions.size());
-						Assert.assertEquals(true,sessions.get(0).get(SessionKeys.USERNAME).equals(user1));
-						Assert.assertEquals("token1: " + token1 + ", received: " + sessions.get(0).get(SessionKeys.TOKEN),true,sessions.get(0).get(SessionKeys.TOKEN).equals(token1));
+						Assert.assertEquals(true,sessions.get(0).getUsername().equals(user1));
+						Assert.assertEquals("token1: " + token1 + ", received: " + sessions.get(0).getToken(),true,sessions.get(0).getToken().equals(token1));
 						  
-						List<ImmutableMap<SessionKeys, ? extends Object>> sessionsUser2 = SessionTokenProvider.getSessionTokenProvider().getSessions(user2);
+						List<SessionObject> sessionsUser2 = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user2);
 						Assert.assertEquals(1, sessionsUser2.size());
-						Assert.assertEquals(true,sessionsUser2.get(0).get(SessionKeys.USERNAME).equals(user2));
-						Assert.assertEquals(true,sessionsUser2.get(0).get(SessionKeys.TOKEN).equals(token2));
+						Assert.assertEquals(true,sessionsUser2.get(0).getUsername().equals(user2));
+						Assert.assertEquals(true,sessionsUser2.get(0).getToken().equals(token2));
 						  
-						SessionTokenProvider.getSessionTokenProvider().removeSession(token1);
-						sessions = SessionTokenProvider.getSessionTokenProvider().getSessions(user1);
+						SessionTokenProviderFactory.getSessionTokenProvider().removeSession(token1);
+						sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);
 						Assert.assertEquals(0, sessions.size());
 						
-						SessionTokenProvider.getSessionTokenProvider().setSession("1234567890", user1, password);
-						sessions = SessionTokenProvider.getSessionTokenProvider().getSessions(user1);
+						SessionTokenProviderFactory.getSessionTokenProvider().setSession("1234567890", user1, password);
+						sessions = SessionTokenProviderFactory.getSessionTokenProvider().getSessions(user1);
 						Assert.assertEquals(1, sessions.size());
 						
 					}catch(Exception e){

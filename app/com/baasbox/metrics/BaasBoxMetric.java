@@ -114,7 +114,7 @@ public class BaasBoxMetric {
 				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
-                    	return new File(BBConfiguration.getDBDir()).getFreeSpace();
+                    	return new File(BBConfiguration.getDBFullPath()).getFreeSpace();
         			}				
 				});
 		
@@ -150,7 +150,7 @@ public class BaasBoxMetric {
 				new CachedGauge<Long>(CACHE_TIMEOUT, TimeUnit.MINUTES) {
 					@Override
                     public Long loadValue() {
-							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBDir()));
+							return FileUtils.sizeOfDirectory(new File (BBConfiguration.getDBFullPath()));
         			}				
 				});
 		registry.register(name(GAUGE_DB_MAX_SIZE_THRESHOLD),

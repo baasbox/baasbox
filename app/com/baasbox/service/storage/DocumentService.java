@@ -44,7 +44,7 @@ import com.baasbox.service.query.MissingNodeException;
 import com.baasbox.service.query.PartsParser;
 import com.baasbox.service.user.UserService;
 import com.baasbox.util.QueryParams;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -252,7 +252,7 @@ public class DocumentService {
 			ObjectNode bodyJson, PartsParser pp) throws MissingNodeException, InvalidCollectionException,InvalidModelException, ODatabaseException, IllegalArgumentException, DocumentNotFoundException {
 		ODocument od = get(rid);
 		if (od==null) throw new InvalidParameterException(rid + " is not a valid document");
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		StringBuffer q = new StringBuffer("");
 
 		if(!pp.isMultiField() && !pp.isArray()){
@@ -289,8 +289,8 @@ public class DocumentService {
 	public static ODocument setAcl(String collection, String uuid, PermissionJsonWrapper acl) throws ODatabaseException, IllegalArgumentException, InvalidCollectionException, InvalidModelException, DocumentNotFoundException, AclNotValidException{
 		if (acl.getAclJson()==null)  acl.empty(); //force permission to nobody if no acl ha been set at all
 		GenericDao gdao = GenericDao.getInstance();
-		ORID rid=gdao.getRidNodeByUUID(uuid);
-		ODocument doc = get(collection,rid.toString());
+		String rid=gdao.getRidNodeByUUID(uuid);
+		ODocument doc = get(collection,rid);
 		PermissionsHelper.setAcl(doc, acl);
 		return doc;
 	}
@@ -299,14 +299,24 @@ public class DocumentService {
         String rid = null;
         if (isUUID) {
             if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("id is an UUID, try to get a valid RID");
-            ORID orid = GenericDao.getInstance().getRidNodeByUUID(id);
+            String orid = GenericDao.getInstance().getRidNodeByUUID(id);
             if (orid == null) throw new RidNotFoundException(id);
-            rid = orid.toString();
+            rid = orid;
             if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Retrieved RID: "+ rid);
         } else {
             rid = "#"+id;
         }
         return rid;
     }
+
+	public static boolean checkSyntax(String collectionName, QueryParams criteria) throws InvalidCollectionException, SqlInjectionException {
+		QueryParams checkCriteria = criteria.clone();
+		checkCriteria.page(0);
+		checkCriteria.recordPerPage(1);
+		checkCriteria.disablePaginationMore();
+		DocumentDao dao = DocumentDao.getInstance(collectionName);
+		dao.explainQuery(checkCriteria); //this is a trick to force the parser to evaluate the query
+		return true;
+	}
 
 }

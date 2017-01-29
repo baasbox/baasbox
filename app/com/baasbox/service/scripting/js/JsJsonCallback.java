@@ -1,9 +1,9 @@
 package com.baasbox.service.scripting.js;
 
 import com.baasbox.service.scripting.base.JsonCallback;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import jdk.nashorn.api.scripting.ScriptUtils;
 
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class JsJsonCallback implements JsonCallback{
             Internal.log("stringed");
             if (val instanceof String) {
                 try {
-                    return Json.mapper().readTree((String)val);
+                    return BBJson.mapper().readTree((String)val);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

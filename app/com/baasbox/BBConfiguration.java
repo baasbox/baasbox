@@ -16,6 +16,7 @@
  */
 package com.baasbox;
 
+import java.io.File;
 import java.math.BigInteger;
 
 import org.apache.commons.lang.BooleanUtils;
@@ -38,6 +39,7 @@ public class BBConfiguration implements IBBConfigurationKeys {
 	//the db size Threshold in bytes
 	private static BigInteger dbSizeThreshold=BigInteger.ZERO;
 	private static boolean isDBSizeThresholdOverridden=false; 
+	private static final boolean _isRedisActive = BBConfiguration.configuration.getString("redisplugin").equals("enabled");
 	
 	
 	@Deprecated
@@ -77,6 +79,10 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getBoolean(WRITE_ACCESS_LOG);
 	}
 	
+	public static boolean isRedisActive(){
+		return _isRedisActive;
+	}
+	
 	public static String getApiVersion(){
 		return configuration.getString(API_VERSION);
 	}
@@ -85,8 +91,14 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(DB_VERSION);
 	}
 	
-	public static String getDBDir(){
+	public static String getDBFullPath(){
 		return configuration.getString(DB_PATH);
+	}
+	
+	public static String getDBDir(){
+		if (getDBFullPath().lastIndexOf(File.separator) > -1)
+			return getDBFullPath().substring(0,getDBFullPath().lastIndexOf(File.separator));
+		else return getDBFullPath();
 	}
 	
 	public static Boolean getWrapResponse(){
@@ -118,8 +130,34 @@ public class BBConfiguration implements IBBConfigurationKeys {
 		return configuration.getString(ROOT_PASSWORD);
 	}
 
+	public static boolean isRootAsAdmin() {
+		Boolean rootAsAdmin=configuration.getBoolean(ROOT_AS_ADMIN);
+		return rootAsAdmin==null?false:rootAsAdmin.booleanValue();
+	}
+	
 	public static int getImportExportBufferSize(){
 		return configuration.getInt(DB_IMPORT_EXPORT_BUFFER_SIZE);
+	}
+	
+	public static Boolean isChunkedEnabled(){
+		return configuration.getBoolean(CHUNKED_RESPONSE);
+	}
+	
+	public static int getChunkSize(){
+		return configuration.getInt(CHUNK_SIZE);
+	}
+	
+	//sessions
+	public static Boolean isSessionEncryptionEnabled(){
+		return configuration.getBoolean(SESSION_ENCRYPT);
+	}
+	
+	public static String getApplicationSecret(){
+		return configuration.getString(APPLICATION_SECRET);
+	}
+	
+	public static String getSecretDefault(){
+		return "CHANGE_ME";
 	}
 	
 	//metrics
@@ -163,4 +201,22 @@ public class BBConfiguration implements IBBConfigurationKeys {
 			isDBSizeThresholdOverridden=true;
 	    }
 	}
+	
+	public static Boolean getOrientEnableRemoteConnection() {
+		return configuration.getBoolean(ORIENT_ENABLE_REMOTE_CONNECTION);
+	}
+
+	public static String getOrientListeningPorts() {
+		return configuration.getString(ORIENT_LISTENING_PORTS);
+	}
+
+	public static String getOrientListeningAddress() {
+		return configuration.getString(ORIENT_LISTENING_ADDRESS);
+	}
+	
+	public static Boolean getOrientStartCluster() {
+		return configuration.getBoolean(ORIENT_START_CLUSTER);
+	}
+	
+	
 }

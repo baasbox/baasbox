@@ -32,10 +32,11 @@ import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 
 public class HooksManager { 
 	public static void registerAll(ODatabaseRecordTx db){
-		
+
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Registering hooks...");
 		//we have to check if the hooks have been already registered since the connections could be reused due to pool 
+
 		boolean register=true;
 		//OrientDB 1.7: 
 		Map<ORecordHook, HOOK_POSITION> hooks = db.getHooks();
@@ -86,7 +87,7 @@ public class HooksManager {
 		while (it.hasNext()){
 			ORecordHook h = it.next();
 			if (h instanceof HidePassword) {
-				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("Enable: "+ enable+ " " + ((BaasBoxHook) h).getHookName() + " hook");
+				if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Enable: "+ enable+ " " + ((BaasBoxHook) h).getHookName() + " hook");
 				((HidePassword) h).enable(enable);
 				break;
 			}

@@ -37,9 +37,12 @@ import javax.ws.rs.core.MediaType;
 
 
 
+
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import play.libs.F.Callback;
 import play.mvc.Result;
@@ -126,6 +129,20 @@ public abstract class AbstractDocumentTest extends AbstractRouteHeaderTest
 			sAddress,
 			POST,
 			"/documentCreatePayload.json"
+		);
+	}
+	
+
+	public void serverCreateDocument(String collectionName,
+			JsonNode document) {
+		setHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
+		setHeader(TestConfig.KEY_AUTH, TestConfig.AUTH_ADMIN_ENC);
+		setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+		httpRequest
+		( 
+			getURLAddress(collectionName),
+			POST,
+			document
 		);
 	}
 

@@ -41,7 +41,7 @@ import play.test.TestBrowser;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import core.AbstractAdminTest;
 import core.TestConfig;
@@ -114,7 +114,7 @@ public class AdminCollectionFunctionalTest extends AbstractAdminTest
 		//create two doc
 		JsonNode document1;
 		try {
-			document1 = new ObjectMapper().readTree("{\"total\":2,\"city\":\"rome\"}");
+			document1 = BBJson.mapper().readTree("{\"total\":2,\"city\":\"rome\"}");
 		
 			request = new FakeRequest("POST", "/document/" + collectionName);
 			request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);

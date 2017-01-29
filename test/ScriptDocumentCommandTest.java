@@ -8,9 +8,14 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.running;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -22,16 +27,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import play.Logger;
+import play.mvc.Http;
 
 import com.baasbox.commands.CommandRegistry;
 import com.baasbox.commands.ScriptCommand;
 import com.baasbox.commands.ScriptCommands;
 import com.baasbox.commands.exceptions.CommandExecutionException;
 import com.baasbox.db.DbHelper;
-import com.baasbox.service.scripting.js.Json;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
 import com.baasbox.service.user.UserService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -43,12 +49,25 @@ public class ScriptDocumentCommandTest {
 
     private final static String TEST_COLLECTION = "script_command_test_coll_"+UUID.randomUUID();
     private static volatile List<String> sGenIds;
-    private static final Json.ObjectMapperExt MAPPER = Json.mapper();
+    private static final BBJson.ObjectMapperExt MAPPER = BBJson.mapper();
 
-
-    private static List<String> createRandomDocuments(int howMany){
+    public static void setUpContext() throws Exception {
+    	Http.Request mockRequest = mock(Http.Request.class);
+        when(mockRequest.remoteAddress()).thenReturn("127.0.0.1");
+        when(mockRequest.getHeader("User-Agent")).thenReturn("mocked user-agent");
+        
+        Map<String, String> flashData = Collections.emptyMap();
+        Map<String, Object> argData = new HashMap();
+        argData.put("appcode", "1234567890");
+        Long id = 2L;
+        play.api.mvc.RequestHeader header = mock(play.api.mvc.RequestHeader.class);
+        Http.Context context = new Http.Context(id, header, mockRequest, flashData, flashData, argData);
+        Http.Context.current.set(context);
+    }
+    
+    private static List<String> createRandomDocuments(int howMany) throws Exception{
         Random rand = new Random();
-        Json.ObjectMapperExt mapper = Json.mapper();
+        BBJson.ObjectMapperExt mapper = BBJson.mapper();
         return IntStream.rangeClosed(0, howMany - 1).mapToObj((x) -> {
             ObjectNode node = mapper.createObjectNode();
             node.put("generated", "generated-" + rand.nextInt());
@@ -67,7 +86,8 @@ public class ScriptDocumentCommandTest {
 
 
     @BeforeClass
-    public static void initTestser(){
+    public static void initTestser() throws Exception{
+    	setUpContext();
         running(fakeApplication(),()->{
             try {
                 DbHelper.open("1234567890","admin","admin");

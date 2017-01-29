@@ -21,8 +21,14 @@ public interface IBBConfigurationKeys {
 	public static final String ADMIN_PASSWORD = "orient.baasbox.admin_password";
 	public static final String ANONYMOUS_USERNAME = "orient.baasbox.user";
 	public static final String ANONYMOUS_PASSWORD = "orient.baasbox.password";
+	public static final String ORIENT_ENABLE_REMOTE_CONNECTION = "orient.listener.enable";
+	public static final String ORIENT_LISTENING_PORTS = "orient.listener.ports";
+	public static final String ORIENT_LISTENING_ADDRESS = "orient.listener.address";
+	public static final String ORIENT_START_CLUSTER = "orient.cluster.enable";
+	
 	public static final String ROOT_PASSWORD = "baasbox.root.password";
 	public static final String CAPTURE_METRICS = "baasbox.metrics.activate";
+	public static final String ROOT_AS_ADMIN = "baasbox.root.admin";
 	
 	public static final String DB_PATH = "orient.baasbox.path";
 	public static final String DB_BACKUP_PATH = "orient.baasbox.backup.path";
@@ -34,6 +40,8 @@ public interface IBBConfigurationKeys {
 	public static final String QUERY_RECORD_PER_PAGE = "query.record_per_page";
 	public static final String QUERY_RECORD_DEPTH = "query.record_depth";
 	public static final String WRAP_RESPONSE="baasbox.wrapresponse";
+	public static final String CHUNKED_RESPONSE="baasbox.list.response.chunked";
+	public static final String CHUNK_SIZE="baasbox.list.response.chunk.size";
 	
 	public static final String PUSH_CERTIFICATES_FOLDER = "push.baasbox.certificates.folder";
 	public static final String MVCC_MAX_RETRIES = "orient.baasbox.MVCC.maxRetries";
@@ -52,6 +60,9 @@ public interface IBBConfigurationKeys {
 	
 	public static final String SOCIAL_MOCK = "baasbox.social.mock";
 	public static final String PUSH_MOCK = "baasbox.push.mock";
+	
+	public static final String SESSION_ENCRYPT = "baasbox.sessions.encrypt";
+	public static final String APPLICATION_SECRET = "application.secret";
 	
 	
 	@Deprecated

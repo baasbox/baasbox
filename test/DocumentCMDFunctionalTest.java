@@ -41,7 +41,7 @@ import org.junit.Test;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 import play.libs.F.Callback;
 import play.mvc.Http.Status;
@@ -84,7 +84,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -120,7 +120,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 				public void run() {
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();
 					String id=UUID.randomUUID().toString();
-					ObjectMapper om=new ObjectMapper();
+					ObjectMapper om=BBJson.mapper();
 					String docString="{\"id\":\""+id+"\",\"key\":\"value_"+id+"\"}";
 				 	FakeRequest request = new FakeRequest(POST, getRouteAddress(sFakeCollection));
 					request = request.withHeader(TestConfig.KEY_APPCODE, TestConfig.VALUE_APPCODE);
@@ -141,7 +141,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 
 			{
 				public void run() 
@@ -307,7 +307,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServer(), 
+			getTestServerWithChunkResponse(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {
@@ -416,7 +416,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	public void testEmptyBody(){
 		running
 		(
-			getFakeApplication(), 
+				getFakeApplication(), 
 			new Runnable() 	{
 				public void run() {
 					String sFakeCollection = new AdminCollectionFunctionalTest().routeCreateCollection();		
@@ -434,7 +434,7 @@ public class DocumentCMDFunctionalTest extends AbstractDocumentTest
 	{
 		running
 		(
-			getTestServer(), 
+			getTestServerWithChunkResponse(), 
 			HTMLUNIT, 
 			new Callback<TestBrowser>() 
 	        {

@@ -28,7 +28,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import com.baasbox.BBConfiguration;
 import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.util.ConfigurationFileContainer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 
 public class IosCertificateHandler implements IPropertyChangeCallback{
 
@@ -55,7 +55,7 @@ public class IosCertificateHandler implements IPropertyChangeCallback{
 		if(iCurrentValue!=null){
 			if(iCurrentValue instanceof String){
 				try {
-					currentValue =new ObjectMapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
+					currentValue =BBJson.mapper().readValue(iCurrentValue.toString(), ConfigurationFileContainer.class);
 				} catch (Exception e) {
 					if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("unable to convert value to ConfigurationFileContainer");
 				}

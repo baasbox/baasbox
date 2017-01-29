@@ -21,8 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-import com.baasbox.exception.UserNotFoundException;
-import com.baasbox.service.logging.BaasBoxLogger;
+import ch.qos.logback.classic.db.DBHelper;
+
+import com.baasbox.BBCache;
 import com.baasbox.dao.exception.DocumentNotFoundException;
 import com.baasbox.dao.exception.InvalidCriteriaException;
 import com.baasbox.dao.exception.InvalidModelException;
@@ -30,9 +31,11 @@ import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UpdateOldVersionException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.Permissions;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -48,7 +51,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 
@@ -147,6 +149,7 @@ public abstract class NodeDao  {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		OrientGraph db = DbHelper.getOrientGraphConnection();
 		try{
+				DbHelper.requestTransaction();
 				ODocument doc = new ODocument(this.MODEL_NAME);
 				ODocument vertex = db.addVertex("class:" + CLASS_VERTEX_NAME,FIELD_TO_DOCUMENT_FIELD,doc).getRecord();
 				doc.field(FIELD_LINK_TO_VERTEX,vertex);
@@ -155,8 +158,11 @@ public abstract class NodeDao  {
 				if (BaasBoxLogger.isDebugEnabled()) BaasBoxLogger.debug("CreateUUID.onRecordBeforeCreate: " + doc.getIdentity() + " -->> " + token.toString());
 				doc.field(BaasBoxPrivateFields.ID.toString(),token.toString());
 				doc.field(BaasBoxPrivateFields.AUTHOR.toString(),db.getRawGraph().getUser().getName());
-			    return doc;
+				if (!DbHelper.isInTransaction()) BBCache.cacheUUIDtoRID(token.toString(),doc.getIdentity().toString());
+				DbHelper.commitTransaction();
+				return doc;
 		}catch (Throwable e){
+			DbHelper.rollbackTransaction();
 			throw e;
 		}finally{
 			if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method End");
@@ -187,7 +193,24 @@ public abstract class NodeDao  {
 	}
 	
 
-
+	public Object explainQuery(QueryParams criteria) throws SqlInjectionException{
+		try{
+			OCommandRequest command = DbHelper.genericSQLStatementCommandBuilder("explain " + DbHelper.selectQueryBuilder(MODEL_NAME, false, criteria));
+			Object toRet = DbHelper.genericSQLCommandExecute(command, criteria.getParams());
+			return toRet;
+		}catch (OCommandExecutionException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OQueryParsingException e ){
+			throw new InvalidCriteriaException("Invalid criteria. Please check if your querystring is encoded in a corrected way. Double check the single-quote and the quote characters",e);
+		}catch (OCommandSQLParsingException e){
+			throw new InvalidCriteriaException(e);
+		}catch (StringIndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
+		}catch (IndexOutOfBoundsException e){
+			throw new InvalidCriteriaException("Invalid criteria. Please check your query, the syntax and the parameters",e);
+		}
+	}
+	
 	public List<ODocument> get(QueryParams criteria) throws SqlInjectionException, InvalidCriteriaException {
 		if (BaasBoxLogger.isTraceEnabled()) BaasBoxLogger.trace("Method Start");
 		List<ODocument> result = null;

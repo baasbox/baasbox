@@ -4,19 +4,26 @@ import static org.junit.Assert.fail;
 import static play.test.Helpers.fakeApplication;
 import static play.test.Helpers.running;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Test;
 
-import com.baasbox.service.logging.BaasBoxLogger;
+import play.mvc.Http;
 
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.enumerations.Permissions;
-import com.baasbox.service.scripting.js.Json;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.storage.CollectionService;
 import com.baasbox.service.storage.DocumentService;
+import com.baasbox.util.BBJson;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -24,7 +31,20 @@ public class TestGrantInTransaction {
     public static final String USER = "admin";
     public static final String COLL = "collssdas"+UUID.randomUUID();
 
-
+    public void setUpContext() throws Exception {
+    	Http.Request mockRequest = mock(Http.Request.class);
+        when(mockRequest.remoteAddress()).thenReturn("127.0.0.1");
+        when(mockRequest.getHeader("User-Agent")).thenReturn("mocked user-agent");
+        
+        Map<String, String> flashData = Collections.emptyMap();
+        Map<String, Object> argData = new HashMap();
+        argData.put("appcode", "1234567890");
+        Long id = 2L;
+        play.api.mvc.RequestHeader header = mock(play.api.mvc.RequestHeader.class);
+        Http.Context context = new Http.Context(id, header, mockRequest, flashData, flashData, argData);
+        Http.Context.current.set(context);
+    }
+    
     @Test
     public void testSwitchUser(){
         running(fakeApplication(),
@@ -32,10 +52,10 @@ public class TestGrantInTransaction {
                     @Override
                     public void run() {
                         try {
-
+                        	setUpContext();
                             DbHelper.open("1234567890", USER, USER);
                             ODocument coll = CollectionService.create(COLL);
-                            ObjectNode node = Json.mapper().createObjectNode();
+                            ObjectNode node = BBJson.mapper().createObjectNode();
                             node.put("ciao","ciao");
                             DbHelper.requestTransaction();
                             ODocument doc = DocumentService.create(COLL, node);

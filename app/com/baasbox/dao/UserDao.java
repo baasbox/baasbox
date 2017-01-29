@@ -22,14 +22,15 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.util.StringUtils;
 
-import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.dao.exception.SqlInjectionException;
 import com.baasbox.dao.exception.UserAlreadyExistsException;
 import com.baasbox.db.DbHelper;
 import com.baasbox.enumerations.DefaultRoles;
 import com.baasbox.exception.OpenTransactionException;
 import com.baasbox.exception.UserNotFoundException;
+import com.baasbox.service.logging.BaasBoxLogger;
 import com.baasbox.service.sociallogin.UserInfo;
 import com.baasbox.service.storage.BaasBoxPrivateFields;
 import com.baasbox.util.QueryParams;
@@ -65,6 +66,9 @@ public class UserDao extends NodeDao  {
 	public final static String USER_SIGNUP_DATE="signUpDate";
 	public final static String ATTRIBUTES_SYSTEM="system";
 	public static final String GENERATED_USERNAME = "generated_username";
+  private static final String USERNAME_PLACEHOLDER = "<USERNAME_PLACEHOLDER>";
+  protected static final String GET_FOLLOWING_FROM_FORMAT = "(select from _bb_user where user.name in (select name.substring(11) from (select expand(roles) from ouser where name = '"
+    + USERNAME_PLACEHOLDER + "') where name like 'friends_of_%'))";
 
 	public static UserDao getInstance(){
 		return new UserDao();
@@ -197,6 +201,13 @@ public class UserDao extends NodeDao  {
 		user.setAccountStatus(STATUSES.ACTIVE);
 		user.save();
 	}
+
+  public List<ODocument> getFollowing(String username, QueryParams criteria) {
+    String queryString = StringUtils.replace(GET_FOLLOWING_FROM_FORMAT, USERNAME_PLACEHOLDER, username);
+    String query = DbHelper.selectQueryBuilder(queryString, criteria.justCountTheRecords(), criteria);
+    return (List<ODocument>) DbHelper.genericSQLStatementExecute(query, criteria.getParams());
+
+  }
 
 	public void changeUsername(String currentUsername, String newUsername) throws UserNotFoundException {
 		if (existsUserName(currentUsername)){

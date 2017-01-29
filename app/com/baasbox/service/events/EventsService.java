@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.LongAdder;
 import com.baasbox.util.EmptyConcurrentMap;
 import com.fasterxml.jackson.databind.JsonNode;
 
+
 /**
  * Stub service for sse connections
  * Created by Andrea Tortorella on 12/09/14.

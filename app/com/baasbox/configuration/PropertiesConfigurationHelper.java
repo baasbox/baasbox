@@ -35,7 +35,7 @@ import com.baasbox.service.push.providers.PushInvalidApiKeyException;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper; import com.baasbox.util.BBJson;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 
@@ -123,7 +123,7 @@ public class PropertiesConfigurationHelper {
 	
 	public static String dumpConfigurationAsJson(){
 		ImmutableCollection<String> keys = CONFIGURATION_SECTIONS.keySet();  
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = BBJson.mapper();
 		JsonFactory jfactory = mapper.getJsonFactory();
 		StringWriter sw = new StringWriter();	
 		try{
@@ -131,7 +131,7 @@ public class PropertiesConfigurationHelper {
 			gen.writeStartArray();	
 			for (String v: keys){
 				String st = dumpConfigurationAsJson(v);
-				ObjectMapper op= new ObjectMapper();
+				ObjectMapper op= BBJson.mapper();
 				JsonNode p = op.readTree(st);
 				BaasBoxLogger.debug("OBJECT:" + p.toString());
 				BaasBoxLogger.debug("STRING:" + st);
